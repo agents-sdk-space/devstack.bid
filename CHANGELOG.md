@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-10
+
+### Added
+
+- **NVX UI design tokens** (`src/app/tokens.css`): semantic colour, spacing (4px unit), radius, typography (Geist + IBM Plex Sans Thai + Geist Mono), shadow and motion tokens for light and dark, mapped into the Tailwind v4 theme; honours `prefers-reduced-motion`.
+- **Component library** (`src/components/ui`): Button, Input, Textarea, Select, Field/Label, Checkbox, Switch, Segmented, Card, Badge, Tabs, Dialog/Sheet, Toast, Tooltip, CodeBlock (copy + toast), Stepper, EmptyState, Skeleton/Spinner, Kbd — Radix UI primitives for interactive parts.
+- **Living style guide** at `/design` (Thai + English) showing every token and component variant with usage snippets.
+- **Command palette** (Ctrl/⌘ + K) to jump to pages and templates, open a template in the builder, and toggle theme/language.
+- **Mobile navigation** sheet and a search trigger in the header.
+- **Builder wizard**: 4-stage Stepper flow (Start → Configure → Review & reorder → Export) with a sticky stack summary; "Ask AI / Pick a template" tabs.
+- **Drag-and-drop step reordering** (dnd-kit) with full keyboard support and bilingual screen-reader announcements; the ↑/↓ buttons remain.
+- **Toast feedback** for copy, download, share link, add/remove step, reset, plan loaded.
+- **AI agent loading skeleton**, idle empty state, and error empty state with "Try again" / "Use offline planner".
+- Empty states for "no templates match" (clear filters), "all steps removed" (reset) and the 404 page.
+- `docs/UI-FRAMEWORK.md` (TH + EN): tokens, components, how to add a component, accessibility rules.
+- Component tests (Testing Library + jsdom) and a WCAG contrast test for token pairs in both themes.
+
+### Changed
+
+- Home, catalog, template detail (breadcrumb, sticky sidebar), builder and AI agent panel rebuilt on NVX UI; all raw palette colours replaced by semantic tokens.
+- Thai font switched from Noto Sans Thai to IBM Plex Sans Thai.
+- The builder now opens at the matching stage: shared links → Review, `#t=<template>` links → Configure.
+
+### Removed
+
+- Legacy global utility classes (`.card`, `.btn-*`, `.input`, `.chip`, `.label`, `.code`) in favour of components.
+
 ## [0.1.0] - 2026-10-10
 
 ### Added
@@ -26,5 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vitest unit tests (21), `npm run export` CLI for contributors, MIT license, README (TH+EN),
   CONTRIBUTING, CODE_OF_CONDUCT, `.env.example`.
 
-[Unreleased]: https://github.com/OWNER/nvx-stack-builder/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/OWNER/nvx-stack-builder/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/OWNER/nvx-stack-builder/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/OWNER/nvx-stack-builder/releases/tag/v0.1.0
