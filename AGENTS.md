@@ -7,3 +7,75 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# AGENTS.md — operating NVX Stack Builder
+
+NVX Stack Builder is a Next.js 16.4 app (App Router, React 19, TypeScript, Tailwind v4) that turns developer setup commands into ordered, de-duplicated, bilingual (TH/EN) **Stack Templates**. Users pick a template or ask the AI planner, then reorder, edit, share and download `setup.sh` / `setup.ps1` / a starter zip. It is deployed as a Cloudflare Worker through `@opennextjs/cloudflare`.
+
+Full playbook (TH + EN): [docs/agents/AGENT-PLAYBOOK.md](docs/agents/AGENT-PLAYBOOK.md). Machine-readable map: [docs/agents/platform-manifest.json](docs/agents/platform-manifest.json). Docs index: [docs/README.md](docs/README.md).
+
+## Repo map
+
+- `src/data/templates/*` holds the template data (10 templates). The registry is `src/data/templates/index.ts`, and the ids for the 404 rewrite are in `src/data/template-ids.ts`.
+- `src/lib/composer.ts` and `src/lib/placeholders.ts` compose ordered steps. `src/lib/types.ts` holds the types.
+- Scripts and exports: `src/lib/scripts.ts`, `src/lib/download.ts` and `scripts/export-template.ts`.
+- `src/lib/share.ts` holds share links (`#s=` base64url in the URL hash). `src/lib/sanitize.ts` is the sanitizer for all untrusted steps.
+- The AI planner is `src/app/api/plan/route.ts` plus `src/lib/ai/*` (OpenAI Responses API, Structured Outputs, rule-based fallback).
+- Server hardening lives in `src/lib/server/{env,http,rate-limit}.ts`, `src/lib/security-headers.ts`, `next.config.ts` and `public/_headers`.
+- The UI is built from:
+  - `src/app/tokens.css` and `src/app/globals.css` (design tokens)
+  - `src/components/ui/*` (NVX UI)
+  - `src/components/brand/*` (tool logos)
+  - `/design`, rendered by `src/components/design-system.tsx`
+- Runtime: `wrangler.jsonc`, `open-next.config.ts` and `scripts/patch-opennext.mjs`.
+- Tests are in `tests/*`. Docs are in `docs/**` and are checked by `npm run docs:check` (`scripts/docs-check.mjs`).
+
+## Invariants and boundaries (never break these)
+
+1. **Commands are text only.** The server never executes user, AI or template commands. Don't add `child_process`, eval sandboxes or remote execution. All untrusted steps go through `sanitizeStep`.
+2. **Never commit or print secrets.**
+   - Never print or commit `OPENAI_API_KEY`, Cloudflare tokens, `.dev.vars` or `.env.local`.
+   - Set secrets via stdin: `printenv OPENAI_API_KEY | npx wrangler secret put OPENAI_API_KEY`.
+3. **Human confirmation is required before any of these:** deploy, `git push`, merge to `main`, tagging a release, binding domains or routes, changing DNS, or deleting or modifying any Cloudflare resource. Approval for one of these does not cover the others.
+   - Only the Worker `nvx-stack-builder` on workers.dev is ours.
+   - Never touch other Workers in the account (e.g. `agents-sdk-space`, `agent-starter`, `mcp-worker`) or the zone `agents-sdk.space`.
+4. **Keep the design and page structure.** Restyling through tokens and classes is fine. Adding, removing or reordering sections or layout needs the owner's permission.
+5. **Accessibility stays green.**
+   - WCAG AA contrast for both themes (`tests/tokens.test.ts`).
+   - No emoji in `src/` (`tests/tool-icons.test.tsx`).
+   - Bilingual text everywhere (`L10n` needs both `en` and `th`).
+6. **Docs stay true.** Update the docs in the same change, then run `npm run docs:check`. Code is the source of truth. History claims must cite commit hashes.
+7. Nothing that costs money without approval (paid APIs, new Cloudflare resources).
+
+## Commands (Node 22+)
+
+```bash
+npm install                 # runs scripts/patch-opennext.mjs
+npm run dev                 # :3000
+npm run preview             # Workers runtime :8787 (use for visual checks)
+npm run lint && npm run typecheck && npm test && npm run docs:check && npm run cf:build
+npm run export -- <templateId> --out /tmp/x   # write setup.sh/ps1 for a template
+```
+
+## Standard recipes (details in the playbook)
+
+- **Add a template.** Create `src/data/templates/<id>.ts`, register it in `index.ts`, add the id to `template-ids.ts`, and optionally add it to `TEMPLATE_TOOLS` in `tool-icon.tsx`. Then update `docs/user-guide/templates.md`, `docs/reference/template-schema.md` and `platform-manifest.json`. Verify with `npm run export` plus `bash -n`.
+- **Change a theme token.** Edit `tokens.css` (`:root` and `.dark`), then update `design-tokens.ts` and add contrast pairs to `tests/tokens.test.ts`. Check `/design` in both themes.
+- **Change the AI model or prompt.**
+  - Model: `vars.OPENAI_MODEL` in `wrangler.jsonc` (default in `src/lib/server/env.ts`).
+  - Prompt: `instructions()` in `src/lib/ai/openai.ts`.
+  - Output shape: change `src/lib/ai/schema.ts` and `rawPlanSchema` in `src/lib/ai/plan.ts` together.
+- **Deploy a test build (approval required).** Follow `docs/operations/deploy-cloudflare.md`, record the version id, then run the smoke tests.
+- **Roll back (approval required).** `npx wrangler rollback <version-id> --name nvx-stack-builder -m "<reason>"`. The current id is `0fb9ecd4-d788-468c-8843-559545c357e3`; the previous one is `9b9b678a-f0b4-4727-96d7-e5f81fc00391`.
+
+## Verification checklist before you report done
+
+- [ ] lint, typecheck, tests, docs:check and cf:build all pass
+- [ ] For UI changes, test on `npm run preview`:
+  - [ ] Every page returns 200, and `/templates/unknown` returns 404
+  - [ ] No horizontal scroll at 1440px or 390px, in Thai or English
+  - [ ] No console errors
+  - [ ] Screenshots saved in `screenshots/v<x>/`
+- [ ] CHANGELOG `[Unreleased]` updated
+- [ ] No secrets in the diff (`git diff --cached | grep -iE "sk-|api[_-]?key=."` returns nothing)
+- [ ] Nothing deployed, pushed or merged without explicit approval

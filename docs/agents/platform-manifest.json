@@ -1,0 +1,298 @@
+{
+  "$comment": "Machine-readable map of NVX Stack Builder for AI agents. Verified by `npm run docs:check` (templateIds must equal src/data/template-ids.ts; every keyFiles path must exist). Human docs: docs/agents/AGENT-PLAYBOOK.md",
+  "name": "nvx-stack-builder",
+  "version": "0.3.0",
+  "branchState": "feat/terminal-theme (v0.4 terminal + v0.5 Apple-inspired themes, unmerged, undeployed)",
+  "stack": {
+    "framework": "Next.js 16.4 App Router",
+    "language": "TypeScript",
+    "ui": "React 19 + Tailwind CSS v4",
+    "runtime": "Cloudflare Workers via @opennextjs/cloudflare",
+    "node": ">=22",
+    "tests": "Vitest + Testing Library"
+  },
+  "subsystems": [
+    {
+      "id": "templates",
+      "summary": "Stack Template data (10 templates), common/runtime/add-on steps",
+      "keyFiles": [
+        "src/data/templates/index.ts",
+        "src/data/template-ids.ts",
+        "src/data/common-steps.ts",
+        "src/data/runtime-steps.ts",
+        "src/data/addon-steps.ts",
+        "src/lib/types.ts"
+      ],
+      "docs": "docs/architecture/templates-and-composer.md"
+    },
+    {
+      "id": "composer",
+      "summary": "Normalize config, filter by `when`, insert add-ons, resolve placeholders, dedupe, apply user edits",
+      "keyFiles": [
+        "src/lib/composer.ts",
+        "src/lib/placeholders.ts"
+      ],
+      "docs": "docs/concepts/composition.md"
+    },
+    {
+      "id": "scripts-export",
+      "summary": "Generate setup.sh / setup.ps1 / README / zip and CLI export",
+      "keyFiles": [
+        "src/lib/scripts.ts",
+        "src/lib/download.ts",
+        "scripts/export-template.ts"
+      ],
+      "docs": "docs/architecture/scripts-and-share.md"
+    },
+    {
+      "id": "share",
+      "summary": "Share links in URL hash (#s= / #t=), base64url JSON v1",
+      "keyFiles": [
+        "src/lib/share.ts"
+      ],
+      "docs": "docs/user-guide/sharing.md"
+    },
+    {
+      "id": "sanitizer",
+      "summary": "Block/risky lists and size limits for all untrusted steps",
+      "keyFiles": [
+        "src/lib/sanitize.ts"
+      ],
+      "docs": "docs/concepts/safety-model.md"
+    },
+    {
+      "id": "ai-planner",
+      "summary": "POST /api/plan: OpenAI Responses API with Structured Outputs, rule-based fallback",
+      "keyFiles": [
+        "src/app/api/plan/route.ts",
+        "src/lib/ai/openai.ts",
+        "src/lib/ai/schema.ts",
+        "src/lib/ai/plan.ts",
+        "src/lib/ai/fallback.ts",
+        "src/lib/ai/types.ts",
+        "src/components/agent-panel.tsx"
+      ],
+      "docs": "docs/architecture/ai-planner.md"
+    },
+    {
+      "id": "api-hardening",
+      "summary": "Env validation, JSON body limits, rate limits, security headers",
+      "keyFiles": [
+        "src/lib/server/env.ts",
+        "src/lib/server/http.ts",
+        "src/lib/server/rate-limit.ts",
+        "src/lib/rate-limit.ts",
+        "src/lib/security-headers.ts",
+        "next.config.ts",
+        "public/_headers"
+      ],
+      "docs": "docs/architecture/api-hardening.md"
+    },
+    {
+      "id": "ui-framework",
+      "summary": "Design tokens, NVX UI components, tool logos, /design style guide",
+      "keyFiles": [
+        "src/app/tokens.css",
+        "src/app/globals.css",
+        "src/lib/design-tokens.ts",
+        "src/components/ui/index.ts",
+        "src/components/brand/tool-icon.tsx",
+        "src/components/design-system.tsx"
+      ],
+      "docs": "docs/architecture/ui-framework.md"
+    },
+    {
+      "id": "builder-ui",
+      "summary": "4-step builder, catalog, template detail, command palette, i18n and theme",
+      "keyFiles": [
+        "src/components/builder.tsx",
+        "src/components/sortable-steps.tsx",
+        "src/components/catalog.tsx",
+        "src/components/template-detail.tsx",
+        "src/components/command-palette.tsx",
+        "src/components/prefs.tsx",
+        "src/lib/i18n.ts"
+      ],
+      "docs": "docs/user-guide/builder.md"
+    },
+    {
+      "id": "cloudflare-runtime",
+      "summary": "Worker config, OpenNext adapter and patch",
+      "keyFiles": [
+        "wrangler.jsonc",
+        "open-next.config.ts",
+        "cloudflare-env.d.ts",
+        "scripts/patch-opennext.mjs"
+      ],
+      "docs": "docs/architecture/cloudflare-runtime.md"
+    },
+    {
+      "id": "docs",
+      "summary": "Documentation site and checker",
+      "keyFiles": [
+        "docs/README.md",
+        "scripts/docs-check.mjs",
+        "tests/docs-check.test.ts",
+        "AGENTS.md"
+      ],
+      "docs": "docs/contributing/docs-maintenance.md"
+    }
+  ],
+  "templateIds": [
+    "nextjs-dashboard",
+    "vite-react-game",
+    "express-api",
+    "fastapi-ai",
+    "streamlit-dashboard",
+    "node-cli-npx",
+    "pypi-package",
+    "collab-workspace",
+    "react-admin-tool",
+    "nextjs-ai-chat"
+  ],
+  "routes": [
+    {
+      "path": "/",
+      "file": "src/app/page.tsx"
+    },
+    {
+      "path": "/templates",
+      "file": "src/app/templates/page.tsx"
+    },
+    {
+      "path": "/templates/[id]",
+      "file": "src/app/templates/[id]/page.tsx",
+      "notes": "unknown ids return real 404 via next.config.ts rewrite"
+    },
+    {
+      "path": "/builder",
+      "file": "src/app/builder/page.tsx",
+      "notes": "hash #s=<token> opens Review, #t=<id> opens Configure, #pick opens picker"
+    },
+    {
+      "path": "/design",
+      "file": "src/app/design/page.tsx"
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/plan",
+      "purpose": "capabilities: whether server AI is available",
+      "docs": "docs/reference/api-plan.md"
+    },
+    {
+      "method": "POST",
+      "path": "/api/plan",
+      "purpose": "prompt -> sanitized plan (ai or fallback)",
+      "bodyLimitBytes": 16384,
+      "statusCodes": [
+        200,
+        400,
+        413,
+        415,
+        429
+      ],
+      "docs": "docs/reference/api-plan.md"
+    }
+  ],
+  "commands": {
+    "install": "npm install",
+    "dev": "npm run dev",
+    "preview": "npm run preview",
+    "lint": "npm run lint",
+    "typecheck": "npm run typecheck",
+    "test": "npm test",
+    "docsCheck": "npm run docs:check",
+    "build": "npm run build",
+    "cfBuild": "npm run cf:build",
+    "export": "npm run export -- <templateId> --out <dir>",
+    "deploy": "npm run deploy  # REQUIRES HUMAN APPROVAL"
+  },
+  "env": [
+    {
+      "name": "OPENAI_API_KEY",
+      "secret": true,
+      "default": null,
+      "set": "wrangler secret put (stdin) / .dev.vars"
+    },
+    {
+      "name": "OPENAI_MODEL",
+      "secret": false,
+      "default": "gpt-6.1-sol"
+    },
+    {
+      "name": "OPENAI_MAX_OUTPUT_TOKENS",
+      "secret": false,
+      "default": "6000",
+      "range": "512-16000"
+    },
+    {
+      "name": "OPENAI_TIMEOUT_MS",
+      "secret": false,
+      "default": "60000",
+      "range": "5000-120000",
+      "wrangler": "75000"
+    },
+    {
+      "name": "PLAN_AI_LIMIT_PER_MIN",
+      "secret": false,
+      "default": "5",
+      "notes": "in-memory fallback limiter"
+    },
+    {
+      "name": "PLAN_LIMIT_PER_MIN",
+      "secret": false,
+      "default": "20",
+      "notes": "in-memory fallback limiter"
+    }
+  ],
+  "bindings": [
+    {
+      "name": "NVX_PLAN_AI_LIMITER",
+      "type": "ratelimit",
+      "namespaceId": "4711",
+      "limit": "5/60s per IP"
+    },
+    {
+      "name": "NVX_PLAN_LIMITER",
+      "type": "ratelimit",
+      "namespaceId": "4712",
+      "limit": "20/60s per IP"
+    },
+    {
+      "name": "ASSETS",
+      "type": "assets"
+    },
+    {
+      "name": "WORKER_SELF_REFERENCE",
+      "type": "service",
+      "service": "nvx-stack-builder"
+    }
+  ],
+  "deployTarget": {
+    "environment": "test",
+    "worker": "nvx-stack-builder",
+    "url": "https://nvx-stack-builder.agen-sdk-work.workers.dev",
+    "accountId": "f70d35188a3c56b9781538c73a86e04e",
+    "deployedVersion": "v0.3.0",
+    "currentVersionId": "0fb9ecd4-d788-468c-8843-559545c357e3",
+    "previousVersionId": "9b9b678a-f0b4-4727-96d7-e5f81fc00391",
+    "routes": "none (workers.dev only)"
+  },
+  "invariants": [
+    "Commands are text only; the server never executes them",
+    "Never print or commit secrets (.dev.vars, .env.local, API keys, Cloudflare tokens)",
+    "Deploy, push, merge to main, tags, domains/routes/DNS, and deleting or modifying Cloudflare resources require explicit human approval",
+    "Never touch other Workers in the account or the zone agents-sdk.space",
+    "Keep the existing page structure/layout; restyle only via tokens and classes unless approved",
+    "Both themes pass WCAG AA contrast tests; no emoji in src/; all UI text bilingual",
+    "Docs updated with code; npm run docs:check passes"
+  ],
+  "docs": {
+    "index": "docs/README.md",
+    "playbook": "docs/agents/AGENT-PLAYBOOK.md",
+    "history": "docs/history/SUBSYSTEM-HISTORY.md",
+    "deploy": "docs/DEPLOY.md"
+  }
+}
