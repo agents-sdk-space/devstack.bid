@@ -6,7 +6,7 @@
 
 Built by **NVX DEVELOPER BOTH** · Open source under the [MIT License](./LICENSE).
 
-[English](#english) · [ภาษาไทย](#ภาษาไทย)
+[English](#english) · [ภาษาไทย](#ภาษาไทย) · **Documentation / เอกสาร: [docs/README.md](./docs/README.md)** · AI agents: [AGENTS.md](./AGENTS.md)
 
 ![Home](./screenshots/v0.2/home-light.png)
 
@@ -96,6 +96,7 @@ src/
     share.ts              URL-hash share encoding (validated)
     sanitize.ts           untrusted-content sanitiser
     ai/                   OpenAI client, JSON schema, plan validation, fallback planner
+docs/                     full documentation site (start at docs/README.md); docs/agents/ for AI agents
 docs/UI-FRAMEWORK.md      design system guide (TH + EN)
 tests/                    Vitest unit + component tests (Testing Library, jsdom)
 scripts/export-template.ts  CLI exporter for contributors

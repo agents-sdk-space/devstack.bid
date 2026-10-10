@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (documentation)
+
+- Documentation site in `docs/` (Thai with English technical terms): user guide, concepts, architecture with mermaid diagrams, operations (linking `docs/DEPLOY.md`), contributing, reference (API `/api/plan`, template schema, config/env, npm scripts, file map) and an accurate subsystem history with commit references (`docs/history/SUBSYSTEM-HISTORY.md`).
+- AI-agent operating docs: `AGENTS.md` section (English), `docs/agents/AGENT-PLAYBOOK.md` (TH/EN) and machine-readable `docs/agents/platform-manifest.json`.
+- `npm run docs:check` (`scripts/docs-check.mjs`, tested in `tests/docs-check.test.ts`): minimum page length, relative links, source paths, template ids, env vars, npm scripts and manifest consistency. New GitHub Actions workflow `.github/workflows/ci.yml` runs lint, typecheck, tests and docs:check.
+- `npm run docs:pdf` renders the user guide to `docs/dist/NVX-User-Guide.pdf` (Thai fonts embedded; needs Playwright via `PLAYWRIGHT_DIR`).
+
 ### Changed (v0.5 Apple-inspired developer theme, restyle only, no layout changes)
 
 - Design reference is now [developer.apple.com](https://developer.apple.com/). Black-first: pure-black canvas, grey surfaces (`#161617`/`#1d1d1f`/`#2a2a2d`) separated by tone and hairline borders, `#f5f5f7` text, Apple system status colours. The light theme uses Apple's `#f5f5f7` canvas. Black stays the default for everyone.

@@ -1,0 +1,41 @@
+# Subsystem: Cloudflare Workers / OpenNext runtime
+
+ตั้งแต่ v0.3.0 (commit `f9ef054`) แอปถูก build เป็น Cloudflare Worker ด้วย [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) 1.20.x และ Wrangler 4 คู่มือ deploy ทีละขั้นอยู่ที่ [DEPLOY.md](../DEPLOY.md) และ [operations/deploy-cloudflare.md](../operations/deploy-cloudflare.md) หน้านี้อธิบายว่า runtime ประกอบกันอย่างไรและทำไม
+
+## ทำไม Cloudflare Workers + OpenNext
+
+- แอปเกือบทั้งหมดเป็นหน้า prerendered + API เล็ก ๆ หนึ่งตัว เหมาะกับ edge runtime ที่เสิร์ฟ static ได้เร็วและคิดเงินตามคำขอ
+- Workers มี **Rate Limiting API** ในตัว (ไม่ต้องสร้าง KV/Redis) ใช้ปกป้อง `/api/plan`
+- OpenNext แปลงผล build ของ Next.js เป็น Worker ที่รองรับ App Router ได้โดยไม่ต้องเขียน adapter เอง
+- ไม่ผูกกับ Cloudflare: `npm run build && npm start` ยังรันบน Node ได้ (rate limit ใช้ in-memory)
+
+## ไฟล์ config
+
+| ไฟล์ | สาระสำคัญ |
+|---|---|
+| [`wrangler.jsonc`](../../wrangler.jsonc) | `name: nvx-stack-builder`, `main: .open-next/worker.js`, `compatibility_flags: [nodejs_compat, global_fetch_strictly_public]`, `workers_dev: true`, `preview_urls: false`, **ไม่มี `routes`**, `assets` (binding `ASSETS`), service self-reference `WORKER_SELF_REFERENCE`, `vars` (OPENAI_MODEL, OPENAI_MAX_OUTPUT_TOKENS, OPENAI_TIMEOUT_MS), `ratelimits` (สอง limiter), `observability.enabled`, `upload_source_maps` |
+| [`open-next.config.ts`](../../open-next.config.ts) | `incrementalCache: staticAssetsIncrementalCache` เพราะทุกหน้า prerender และไม่มี revalidate ตอน runtime จึงไม่ต้องใช้ R2/KV |
+| [`cloudflare-env.d.ts`](../../cloudflare-env.d.ts) | ชนิดของ binding (สร้างด้วย `npm run cf:typegen`) |
+| [`.dev.vars.example`](../../.dev.vars.example) | ต้นแบบ `.dev.vars` สำหรับ `npm run preview` (ห้าม commit `.dev.vars`) |
+| [`public/_headers`](../../public/_headers) | headers ของ static assets ที่เสิร์ฟตรงจาก `.open-next/assets` |
+| [`scripts/patch-opennext.mjs`](../../scripts/patch-opennext.mjs) | patch ตอน `postinstall` ให้ adapter inline `preview-props.json` ของ Next 16.4 (ไม่งั้นทุกคำขอ error `Unexpected loadManifest(...preview-props.json)`) idempotent และเตือนถ้า pattern เปลี่ยน ลบได้เมื่อ adapter แก้เอง |
+| [`next.config.ts`](../../next.config.ts) | headers, 404 rewrite, และ `initOpenNextCloudflareForDev()` ใน dev เพื่อให้ `next dev` เห็น binding |
+
+## การทำงานตอนรัน
+
+1. คำขอเข้าที่ Worker → ถ้าเป็นไฟล์ใน `.open-next/assets` (เช่น `/_next/static/*`, HTML ที่ prerender) เสิร์ฟผ่าน `ASSETS`
+2. ไม่ใช่ → handler ของ Next (OpenNext) ซึ่งรวมถึง `/api/plan`
+3. `/api/plan` เรียก `getCloudflareContext().env` เพื่อหา rate-limit binding (dynamic import จึงไม่พังนอก Workers)
+4. secret `OPENAI_API_KEY` และ `vars` เข้าถึงผ่าน `process.env` (ด้วย `nodejs_compat`) แล้วตรวจด้วย `serverEnv()`
+
+## ข้อจำกัดและข้อควรรู้
+
+- Wrangler 4 ต้องใช้ **Node 22+**
+- build ใช้เวลาประมาณ 1 นาที (`npx opennextjs-cloudflare build`) ผลลัพธ์อยู่ใน `.open-next/` (gitignored)
+- `npm run preview` รันใน workerd จริงที่ `http://localhost:8787` ใช้ตรวจภาพและพฤติกรรมให้ตรงกับ production มากกว่า `next dev`
+- rate-limit counters เป็นต่อ Cloudflare location
+- **ห้าม** เพิ่ม `routes` หรือ custom domain จนกว่าจะได้รับอนุมัติตาม [custom-domain.md](../operations/custom-domain.md)
+
+## สถานะ deploy ล่าสุด
+
+TEST deploy (v0.3.0) ที่ `https://nvx-stack-builder.agen-sdk-work.workers.dev` บัญชี `f70d35188a3c56b9781538c73a86e04e` เวอร์ชันปัจจุบัน `0fb9ecd4-d788-468c-8843-559545c357e3` (ก่อนหน้า `9b9b678a-f0b4-4727-96d7-e5f81fc00391`) v0.4/v0.5 ยังไม่ถูก deploy
