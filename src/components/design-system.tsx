@@ -104,12 +104,12 @@ export function DesignSystem() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
       <header className="max-w-3xl">
-        <Badge variant="primary">NVX UI · v0.2</Badge>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight text-fg">{L({ en: "Design system", th: "ระบบดีไซน์" })}</h1>
+        <Badge variant="primary">NVX UI · v0.4 terminal</Badge>
+        <h1 className="term-prompt mt-3 text-4xl font-bold tracking-tight text-fg">{L({ en: "Design system", th: "ระบบดีไซน์" })}</h1>
         <p className="mt-3 text-lg text-muted">
           {L({
-            en: "Living style guide for NVX Stack Builder: semantic design tokens (light + dark) and accessible, headless-based components. Everything below is rendered with the real components — switch theme or language in the header to see them adapt.",
-            th: "คู่มือสไตล์แบบมีชีวิตของ NVX Stack Builder: design token เชิงความหมาย (โหมดสว่าง + มืด) และคอมโพเนนต์ที่เข้าถึงได้ สร้างบน headless primitives ทุกอย่างด้านล่างเรนเดอร์ด้วยคอมโพเนนต์จริง ลองสลับธีมหรือภาษาที่ส่วนหัวเพื่อดูการปรับตัว",
+            en: "Living style guide for NVX Stack Builder: semantic design tokens (black terminal theme by default, light \"paper\" theme on the toggle) and accessible, headless-based components. Everything below is rendered with the real components — switch theme or language in the header to see them adapt.",
+            th: "คู่มือสไตล์แบบมีชีวิตของ NVX Stack Builder: design token เชิงความหมาย (ธีมเทอร์มินัลสีดำเป็นค่าเริ่มต้น และธีมสว่างแบบกระดาษจากปุ่มสลับ) และคอมโพเนนต์ที่เข้าถึงได้ สร้างบน headless primitives ทุกอย่างด้านล่างเรนเดอร์ด้วยคอมโพเนนต์จริง ลองสลับธีมหรือภาษาที่ส่วนหัวเพื่อดูการปรับตัว",
           })}
         </p>
         <p className="mt-3 text-sm text-subtle">
@@ -175,10 +175,10 @@ export function DesignSystem() {
             id="typography"
             title={SECTIONS[1].title}
             description={{
-              en: "Geist for Latin, IBM Plex Sans Thai for Thai (automatic per-glyph fallback in one font stack), Geist Mono for code. Thai needs generous line-height — body text uses Tailwind's default 1.5.",
-              th: "Geist สำหรับอักษรละติน IBM Plex Sans Thai สำหรับภาษาไทย (สลับฟอนต์ตามตัวอักษรอัตโนมัติในฟอนต์สแต็กเดียว) และ Geist Mono สำหรับโค้ด ภาษาไทยต้องการระยะบรรทัดที่กว้าง ข้อความเนื้อหาใช้ค่าเริ่มต้น 1.5",
+              en: "Monospace-forward: IBM Plex Mono for headings, nav, buttons, labels, badges and code; IBM Plex Sans for Latin body text; IBM Plex Sans Thai for Thai glyphs in both stacks (per-glyph fallback), so Thai stays readable. Terminal details are decoration only: prompt glyphs, a blinking cursor (static under reduced motion), [ bracketed ] buttons. Screen readers skip them.",
+              th: "เน้นฟอนต์ monospace: IBM Plex Mono สำหรับหัวข้อ เมนู ปุ่ม ป้าย และโค้ด, IBM Plex Sans สำหรับเนื้อหาภาษาอังกฤษ และ IBM Plex Sans Thai สำหรับอักษรไทยในทั้งสองสแต็ก (สลับตามตัวอักษร) ภาษาไทยจึงยังอ่านง่าย รายละเอียดแบบเทอร์มินัลเป็นของตกแต่งเท่านั้น ได้แก่ สัญลักษณ์ prompt, เคอร์เซอร์กะพริบ (หยุดนิ่งเมื่อผู้ใช้ลดการเคลื่อนไหว) และปุ่ม [ ในวงเล็บ ] ซึ่งโปรแกรมอ่านหน้าจอจะข้ามไป",
             }}
-            usage={`<h1 className="text-4xl font-bold tracking-tight">…</h1>\n<p className="text-sm text-muted">…</p>\n<code className="font-mono">npm install</code>`}
+            usage={`<h1 className="term-prompt text-4xl font-bold">…</h1>   // "$ " prefix\n<h2 className="term-section text-2xl font-bold">…</h2> // "> " prefix\n<span aria-hidden className="term-cursor" />          // blinking block\n<p className="term-dos text-xs">…</p>                  // "C:\\NVX> " prefix\n<p className="text-sm text-muted">…</p>\n<code className="font-mono">npm install</code>`}
           >
             <Card>
               <ul className="divide-y divide-border">
@@ -194,7 +194,14 @@ export function DesignSystem() {
               </ul>
               <CardFooter className="flex-col items-start gap-1 py-4">
                 <p className="font-sans text-fg">Sans · The quick brown fox · ภาษาไทยอ่านง่าย สบายตา ๑๒๓</p>
-                <p className="font-mono text-sm text-fg">Mono · npx create-next-app@latest --ts</p>
+                <p className="font-mono text-sm text-fg">Mono · npx create-next-app@latest --ts · ภาษาไทย</p>
+                <p className="term-prompt font-mono text-sm text-fg">term-prompt</p>
+                <p className="term-section font-mono text-sm text-fg">term-section</p>
+                <p className="term-dos font-mono text-sm text-fg">term-dos</p>
+                <p className="font-mono text-sm text-fg">
+                  term-cursor
+                  <span aria-hidden className="term-cursor" />
+                </p>
               </CardFooter>
             </Card>
           </Section>
@@ -203,8 +210,8 @@ export function DesignSystem() {
             id="spacing"
             title={SECTIONS[2].title}
             description={{
-              en: "A 4px spacing unit (p-1 = 4px). Prefer 2, 3, 4, 6, 8 for UI gaps. Radius scales with the size of the element: md for controls, xl for cards, full for pills.",
-              th: "หน่วยระยะห่าง 4px (p-1 = 4px) ใช้ 2, 3, 4, 6, 8 เป็นหลัก มุมโค้งเพิ่มตามขนาด: md สำหรับปุ่ม/ช่องกรอก, xl สำหรับการ์ด, full สำหรับป้าย",
+              en: "A 4px spacing unit (p-1 = 4px). Prefer 2, 3, 4, 6, 8 for UI gaps. Terminal corners: 1–4px only (sm/md for controls and badges, xl for cards). Avoid rounded-full.",
+              th: "หน่วยระยะห่าง 4px (p-1 = 4px) ใช้ 2, 3, 4, 6, 8 เป็นหลัก มุมแบบเทอร์มินัลโค้งเพียง 1–4px (sm/md สำหรับปุ่มและป้าย, xl สำหรับการ์ด) หลีกเลี่ยง rounded-full",
             }}
           >
             <div className="grid gap-4 md:grid-cols-2">
@@ -233,8 +240,8 @@ export function DesignSystem() {
             id="elevation"
             title={SECTIONS[3].title}
             description={{
-              en: "Three shadow levels: sm (resting cards), md (hover), lg (dialogs, toasts). Motion uses three durations and two easings; all animation is disabled under prefers-reduced-motion.",
-              th: "เงาสามระดับ: sm (การ์ดปกติ) md (hover) lg (หน้าต่าง toast) การเคลื่อนไหวมีสามระยะเวลาและสอง easing และถูกปิดทั้งหมดเมื่อผู้ใช้ตั้ง prefers-reduced-motion",
+              en: "Flat surfaces: sm is none, md is a 1px phosphor outline (hover), lg adds a faint glow (dialogs, toasts). On light theme they become hard offset shadows. Motion uses three durations and two easings; all animation is disabled under prefers-reduced-motion.",
+              th: "พื้นผิวแบน: sm ไม่มีเงา, md เป็นเส้นเรืองแสง 1px (hover), lg เพิ่มแสงเรืองจาง ๆ (หน้าต่าง toast) ในธีมสว่างจะเป็นเงาทึบแบบเยื้อง การเคลื่อนไหวมีสามระยะเวลาและสอง easing และถูกปิดทั้งหมดเมื่อผู้ใช้ตั้ง prefers-reduced-motion",
             }}
           >
             <div className="grid gap-4 md:grid-cols-2">
@@ -627,8 +634,8 @@ export function DesignSystem() {
               <div role="status" className="space-y-3">
                 <span className="sr-only">{L({ en: "Loading…", th: "กำลังโหลด…" })}</span>
                 <div className="flex gap-2">
-                  <Skeleton className="h-6 w-28 rounded-full" />
-                  <Skeleton className="h-6 w-36 rounded-full" />
+                  <Skeleton className="h-6 w-28 rounded-sm" />
+                  <Skeleton className="h-6 w-36 rounded-sm" />
                 </div>
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-4/6" />

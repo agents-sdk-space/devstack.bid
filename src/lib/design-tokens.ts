@@ -52,17 +52,18 @@ export const COLOR_GROUPS: { id: string; en: string; th: string; tokens: TokenIn
       { name: "danger-soft", utility: "bg-danger-soft", en: "Error background", th: "พื้นผิดพลาด" },
       { name: "info", utility: "text-info", en: "Info", th: "ข้อมูล" },
       { name: "info-soft", utility: "bg-info-soft", en: "Info background", th: "พื้นข้อมูล" },
-      { name: "code-bg", utility: "bg-code-bg", en: "Code blocks (always dark)", th: "บล็อกโค้ด (มืดเสมอ)" },
+      { name: "code-bg", utility: "bg-code-bg", en: "Code blocks (always black)", th: "บล็อกโค้ด (ดำเสมอ)" },
+      { name: "code-prompt", utility: "text-code-prompt", en: "Shell prompt in code", th: "prompt ในบล็อกโค้ด" },
     ],
   },
 ];
 
 export const RADII = [
-  { name: "sm", value: "0.375rem", utility: "rounded-sm" },
-  { name: "md", value: "0.625rem", utility: "rounded-md" },
-  { name: "lg", value: "0.875rem", utility: "rounded-lg" },
-  { name: "xl", value: "1.25rem", utility: "rounded-xl" },
-  { name: "full", value: "9999px", utility: "rounded-full" },
+  { name: "xs", value: "1px", utility: "rounded-xs" },
+  { name: "sm", value: "2px", utility: "rounded-sm" },
+  { name: "md", value: "2px", utility: "rounded-md" },
+  { name: "lg", value: "3px", utility: "rounded-lg" },
+  { name: "xl", value: "4px", utility: "rounded-xl" },
 ] as const;
 
 export const SPACING = [1, 2, 3, 4, 6, 8, 12, 16] as const; // × 4px
@@ -70,7 +71,7 @@ export const SPACING = [1, 2, 3, 4, 6, 8, 12, 16] as const; // × 4px
 export const SHADOWS = ["sm", "md", "lg"] as const;
 
 export const TYPE_SCALE = [
-  { utility: "text-display", px: 52, en: "Display — hero headline", th: "Display — หัวข้อหลักหน้าแรก" },
+  { utility: "text-display", px: 48, en: "Display — hero headline", th: "Display — หัวข้อหลักหน้าแรก" },
   { utility: "text-4xl", px: 36, en: "Page title (h1)", th: "หัวข้อหน้า (h1)" },
   { utility: "text-2xl", px: 24, en: "Section title (h2)", th: "หัวข้อส่วน (h2)" },
   { utility: "text-xl", px: 20, en: "Stage / card group title", th: "หัวข้อขั้นตอน / กลุ่มการ์ด" },

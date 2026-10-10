@@ -2,10 +2,12 @@
 
 > 🇹🇭 ภาษาไทยอยู่ด้านล่าง · Thai version below — [ไปที่ภาษาไทย](#ภาษาไทย)
 
-NVX UI is the design system behind NVX Stack Builder: **design tokens** (CSS variables → Tailwind theme), a small **component library** in `src/components/ui`, and a **living style guide** at [`/design`](http://localhost:3000/design) that renders every token and component variant in Thai and English, light and dark.
+NVX UI is the design system behind NVX Stack Builder: **design tokens** (CSS variables → Tailwind theme), a small **component library** in `src/components/ui`, and a **living style guide** at [`/design`](http://localhost:3000/design) that renders every token and component variant in Thai and English, in both themes.
+
+**v0.4 "terminal" theme.** The default look is a black developer-tools / DOS terminal: near-black surfaces, phosphor-green primary (`#33ff66`), amber accent, cyan info, 1px borders, 1–4px corners, monospace UI chrome. It's the default for everyone, whatever the OS colour preference. A light "paper printout" variant stays available from the theme toggle.
 
 ```
-src/app/tokens.css          ← token values (light :root + .dark overrides)
+src/app/tokens.css          ← token values (.dark = default terminal theme, :root = light "paper" variant)
 src/app/globals.css         ← maps tokens into Tailwind (@theme inline), motion utilities, keyframes
 src/lib/design-tokens.ts    ← token manifest (names, descriptions) used by /design and tests
 src/components/ui/          ← components (import from "@/components/ui")
@@ -23,19 +25,38 @@ All values live in `src/app/tokens.css` as `--nvx-*` variables. `.dark` override
 | Text | `fg`, `muted`, `subtle` | `text-fg`, `text-muted`, `text-subtle` |
 | Brand | `primary`, `primary-hover`, `primary-fg`, `primary-soft`, `primary-soft-fg`, `accent`, `ring` | `bg-primary`, `hover:bg-primary-hover`, `text-primary-fg`, `bg-primary-soft`, `ring-ring` |
 | Status | `success`/`warning`/`danger`/`info` + `-soft` + `-fg` (`danger-hover`) | `bg-success-soft text-success-fg`, `bg-danger` … |
-| Code | `code-bg`, `code-fg` (always dark) | `bg-code-bg text-code-fg` |
+| Code | `code-bg`, `code-fg`, `code-prompt`, `code-muted`, `code-border` (always a black terminal) | `bg-code-bg text-code-fg text-code-prompt` |
+| Decoration | `grid`, `scanline`, `glow` | used by `.hero-glow` (grid), CRT scanlines, `.term-glow` |
 | Overlay | `overlay` | `bg-overlay` |
-| Radius | sm .375rem · md .625rem · lg .875rem · xl 1.25rem | `rounded-md` (controls), `rounded-xl` (cards), `rounded-full` (pills) |
+| Radius | xs 1px · sm 2px · md 2px · lg 3px · xl 4px | `rounded-md` (controls, badges), `rounded-xl` (cards). Don't use `rounded-full`. |
 | Spacing | 4px base unit (`--spacing: 0.25rem`) | `p-1` = 4px, `gap-4` = 16px — prefer 2/3/4/6/8 |
-| Shadow | `shadow-sm` (resting), `shadow-md` (hover), `shadow-lg` (dialogs/toasts) | `shadow-sm` … |
+| Shadow | `shadow-sm` none · `shadow-md` 1px phosphor outline (hover) · `shadow-lg` outline + faint glow (dialogs/toasts); hard offset shadows on light | `shadow-sm` … |
 | Motion | `duration-fast` 120ms, `duration-base` 200ms, `duration-slow` 320ms, `ease-standard`, `ease-emphasized` | `motion-fast`, `motion-base`, `animate-fade-in`, `animate-pop-in`, `animate-slide-in`, `animate-sheet-in` |
 | Focus | — | `focus-ring` utility (2px `ring` outline on `:focus-visible`) |
 
-**Typography.** One stack: `Geist` (Latin) → `IBM Plex Sans Thai` (Thai glyphs) → system; `Geist Mono` for code. Scale: `text-display` 52px (hero), `text-4xl` (h1), `text-2xl` (h2), `text-xl` (stage titles), `text-base` (body/card titles), `text-sm` (UI), `text-xs` (captions/badges). Thai needs line-height ≥ 1.5 — don't use `leading-none`/`leading-tight` on Thai body text.
+**Typography.** Monospace-forward. `font-mono` = **IBM Plex Mono** → IBM Plex Sans Thai (Thai glyphs). It's applied globally to `h1–h6`, `nav`, `button`, `label`, `summary`, tabs/radios and `kbd`, and explicitly to badges and chips. `font-sans` = **IBM Plex Sans** → IBM Plex Sans Thai, for body copy, so long Latin and Thai text stays readable. Primary buttons are UPPERCASE with wide tracking; Thai has no case and is unaffected. Scale: `text-display` 48px (hero), `text-4xl` (h1), `text-2xl` (h2), `text-xl` (stage titles), `text-base` (body/card titles), `text-sm` (UI), `text-xs` (captions/badges). Thai needs line-height ≥ 1.5 — don't use `leading-none`/`leading-tight` on Thai body text.
 
-**Dark mode** is the `.dark` class on `<html>` (set before paint by an inline script, persisted in `localStorage["nvx-theme"]`). Because components only use semantic tokens, nothing in a component should ever need a `dark:` variant — if you reach for one, add/adjust a token instead.
+**Theme.** The terminal theme is the `.dark` class on `<html>`. It's rendered by the server and is the **default**. The inline pre-paint script only removes it when `localStorage["nvx-theme"] === "light"` (the toggle), and the OS `prefers-color-scheme` is deliberately ignored. Because components only use semantic tokens, nothing in a component should ever need a `dark:` variant — if you reach for one, add/adjust a token instead.
 
-**Reduced motion.** Under `prefers-reduced-motion: reduce` all durations become 0.01ms and animations are disabled.
+**Reduced motion.** Under `prefers-reduced-motion: reduce` all durations become 0.01ms and animations are disabled. The hero cursor stays visible but stops blinking.
+
+**Terminal details (decoration only, CSS in `globals.css`).** Pseudo-element glyphs use the `content: "…" / ""` alt-text form, so screen readers skip them.
+
+| Class | Effect | Used on |
+|---|---|---|
+| `term-prompt` | `$ ` prefix in primary | page titles (h1) |
+| `term-section` | `> ` prefix | home section headings |
+| `term-eyebrow` | `// ` prefix | eyebrows, hero badge |
+| `term-dos` | `C:\NVX> ` prefix | footer status line |
+| `term-cursor` | blinking block cursor (`aria-hidden` span) | hero headline |
+| `term-bracket` | `[ … ]` around the label | added automatically by `buttonClasses()` for primary/secondary/outline md/lg |
+| `term-statusbar` | mono status-bar typography | header, footer |
+| `term-rule` | dashed section rule | home section borders |
+| `term-glow` | faint phosphor text-shadow (dark only) | logo |
+| `hero-glow` | faint 24px phosphor grid (replaces gradient blobs) | hero, AI agent panel |
+| CRT scanlines | `.dark body::after`, static, very light, hidden in print | whole page |
+
+Active nav links get a `>` caret automatically (`nav a[aria-current="page"]`).
 
 ## 2. Components
 
@@ -97,14 +118,16 @@ NVX UI คือระบบดีไซน์ของ NVX Stack Builder ปร
 - **พื้นผิว/ข้อความ:** `bg-bg`, `bg-surface`, `bg-surface-2/3`, `border-border(-strong)`, `text-fg`, `text-muted`, `text-subtle`
 - **แบรนด์:** `bg-primary`, `hover:bg-primary-hover`, `text-primary-fg`, `bg-primary-soft text-primary-soft-fg`, `accent`, `ring`
 - **สถานะ:** `success` / `warning` / `danger` / `info` พร้อม `-soft` (พื้น) และ `-fg` (ข้อความบนพื้น)
-- **โค้ด:** `bg-code-bg text-code-fg` (มืดเสมอ)
-- **มุมโค้ง:** sm .375rem · md .625rem (ปุ่ม/ช่องกรอก) · lg · xl 1.25rem (การ์ด) · full (ป้าย)
+- **ธีมเทอร์มินัล (v0.4):** ค่าเริ่มต้นคือธีมสีดำแบบเทอร์มินัล/DOS สำหรับทุกคน (ไม่สนใจค่าสว่าง/มืดของระบบ) สีหลักเขียวฟอสฟอร์ `#33ff66` สีรองอำพัน สีข้อมูลฟ้าอมเขียว เส้นขอบ 1px และมุมโค้ง 1–4px ธีมสว่างแบบกระดาษยังเลือกได้จากปุ่มสลับ
+- **โค้ด:** `bg-code-bg text-code-fg text-code-prompt` (เทอร์มินัลสีดำเสมอ)
+- **มุมโค้ง:** xs 1px · sm/md 2px (ปุ่ม ช่องกรอก ป้าย) · lg 3px · xl 4px (การ์ด) — ไม่ใช้ `rounded-full`
 - **ระยะห่าง:** หน่วยฐาน 4px (`p-1` = 4px) ใช้ 2/3/4/6/8 เป็นหลัก
-- **เงา:** `shadow-sm` (ปกติ) · `shadow-md` (hover) · `shadow-lg` (หน้าต่าง/toast)
+- **เงา:** พื้นผิวแบน `shadow-sm` ไม่มีเงา · `shadow-md` เส้นเรืองแสง 1px (hover) · `shadow-lg` เพิ่มแสงเรืองจาง ๆ (หน้าต่าง/toast)
 - **การเคลื่อนไหว:** 120 / 200 / 320ms, `ease-standard`, `ease-emphasized` และ utility `motion-fast`, `motion-base`, `animate-*`
-- **ตัวอักษร:** Geist (ละติน) → IBM Plex Sans Thai (ไทย) → ฟอนต์ระบบ และ Geist Mono สำหรับโค้ด สเกล: `text-display` 52px, `text-4xl` (h1), `text-2xl` (h2), `text-xl`, `text-base`, `text-sm`, `text-xs` — ภาษาไทยต้องใช้ระยะบรรทัด ≥ 1.5
-- **โหมดมืด:** คลาส `.dark` บน `<html>` (ตั้งก่อนเรนเดอร์ เก็บใน localStorage) คอมโพเนนต์ไม่ควรต้องใช้ `dark:` เลย — ถ้าจำเป็น ให้เพิ่ม/ปรับโทเคนแทน
-- **ลดการเคลื่อนไหว:** เมื่อผู้ใช้ตั้ง `prefers-reduced-motion` ระยะเวลาทั้งหมดเป็น 0.01ms
+- **ตัวอักษร:** เน้น monospace — IBM Plex Mono สำหรับหัวข้อ เมนู ปุ่ม ป้าย label และโค้ด, IBM Plex Sans สำหรับเนื้อหา และอักษรไทยใช้ IBM Plex Sans Thai ในทั้งสองสแต็กเพื่อให้อ่านง่าย สเกล: `text-display` 48px, `text-4xl` (h1), `text-2xl` (h2), `text-xl`, `text-base`, `text-sm`, `text-xs` — ภาษาไทยต้องใช้ระยะบรรทัด ≥ 1.5
+- **ธีม:** คลาส `.dark` บน `<html>` ถูกเรนเดอร์จากเซิร์ฟเวอร์เป็นค่าเริ่มต้น และจะถูกถอดออกเฉพาะเมื่อผู้ใช้เลือกธีมสว่าง (`localStorage["nvx-theme"] = "light"`) คอมโพเนนต์ไม่ควรต้องใช้ `dark:` เลย — ถ้าจำเป็น ให้เพิ่ม/ปรับโทเคนแทน
+- **ลดการเคลื่อนไหว:** เมื่อผู้ใช้ตั้ง `prefers-reduced-motion` ระยะเวลาทั้งหมดเป็น 0.01ms และเคอร์เซอร์จะหยุดกะพริบ
+- **รายละเอียดเทอร์มินัล (ตกแต่งเท่านั้น):** `term-prompt` (`$ `), `term-section` (`> `), `term-eyebrow` (`// `), `term-dos` (`C:\NVX> `), `term-cursor` (เคอร์เซอร์กะพริบ), `term-bracket` (`[ ปุ่ม ]` ใส่ให้อัตโนมัติ), `term-statusbar`, `term-rule`, `term-glow`, `hero-glow` (ตารางจาง ๆ) และเส้น scanline แบบ CRT จาง ๆ โปรแกรมอ่านหน้าจอจะข้ามสัญลักษณ์เหล่านี้
 
 ### 2. คอมโพเนนต์
 

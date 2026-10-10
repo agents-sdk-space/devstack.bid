@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (terminal theme, restyle only, no layout changes)
+
+- **Black terminal theme is the default** for everyone: `<html class="dark">` is server-rendered and the OS colour preference is ignored. Light ("paper printout") stays available from the toggle and is remembered.
+- New tokens: near-black surfaces (#030303 / #0a0a0a), phosphor-green primary `#33ff66`, amber accent, cyan info, green-tinted 1px borders, flat shadows (1px phosphor outline / faint glow), 1–4px radii; new `code-prompt`, `code-muted`, `code-border`, `grid`, `scanline`, `glow` tokens. All WCAG AA pairs pass in both themes (contrast test extended from 15 to 26 pairs).
+- Typography: IBM Plex Mono for headings, nav, buttons, labels, badges and code; IBM Plex Sans for body; IBM Plex Sans Thai for Thai glyphs in both stacks. Replaces Geist.
+- Dev-tools flavour via CSS only: `$` / `>` / `//` / `C:\NVX>` prompt glyphs (silent for screen readers), blinking block cursor in the hero (static under reduced motion), `[ BRACKETED ]` primary/secondary buttons, status-bar header/footer, dashed section rules, square terminal window chrome on code blocks, faint phosphor grid instead of gradient blobs, very light CRT scanlines (dark only).
+- Removed glassy blur on the header, sticky builder bar and dialog overlay; replaced the gradient logo with an outlined NVX block.
+- `/design` style guide and `docs/UI-FRAMEWORK.md` updated for the terminal theme.
+
+### Fixed
+
+- Template detail page could overflow horizontally with wide monospace content (grid columns now `minmax(0,1fr)`).
+
 ## [0.3.0] - 2026-10-11
 
 Test deployment: https://nvx-stack-builder.agen-sdk-work.workers.dev (workers.dev only).
