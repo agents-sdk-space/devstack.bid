@@ -63,8 +63,11 @@ Other scripts:
 | --- | --- | --- |
 | `OPENAI_API_KEY` | no | Server-side key for `/api/plan`. Needs Responses API permission (`api.responses.write`). Without it the rule-based planner is used. |
 | `OPENAI_MODEL` | no | Model for the agent. Default `gpt-6.1-sol`. |
+| `OPENAI_MAX_OUTPUT_TOKENS` | no | Cost guard: cap on output tokens per AI call (512–16000, default 6000). |
+| `OPENAI_TIMEOUT_MS` | no | Upstream timeout (5000–120000, default 60000). |
+| `PLAN_AI_LIMIT_PER_MIN` / `PLAN_LIMIT_PER_MIN` | no | In-memory fallback limits (default 5 / 20 per minute per IP) when the Cloudflare rate-limit bindings are not available. |
 
-Users can also paste **their own key** in the agent panel. It is sent only in the `x-openai-key` header of that single request and is never stored or logged by the server. Requests using the shared server key are rate-limited (10 per 10 minutes per IP, in-memory).
+Users can also paste **their own key** in the agent panel. It is sent only in the `x-openai-key` header of that single request and is never stored or logged by the server. Requests using the shared server key are rate-limited per IP (5/min); all `/api/plan` POSTs are limited to 20/min. On Cloudflare this uses the Workers Rate Limiting bindings, elsewhere an in-memory fallback.
 
 ### API
 
@@ -112,7 +115,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full checklist.
 ### Deploy
 
 - **Vercel**: import the GitHub repo → framework "Next.js" → add `OPENAI_API_KEY` (optional) and `OPENAI_MODEL` → Deploy.
-- **Cloudflare Workers**: use the OpenNext adapter (`@opennextjs/cloudflare`), set the env vars as secrets, `npx opennextjs-cloudflare build && npx opennextjs-cloudflare deploy`.
+- **Cloudflare Workers** (configured): `npm run preview` / `npm run deploy` via `@opennextjs/cloudflare`. Full guide: [docs/DEPLOY.md](docs/DEPLOY.md).
 - **Any Node host / Docker**: `npm ci && npm run build && npm start`.
 
 ---
@@ -154,6 +157,8 @@ Production: `npm run build` แล้ว `npm start`
 
 - `OPENAI_API_KEY` (ไม่บังคับ) — key ฝั่งเซิร์ฟเวอร์สำหรับ `/api/plan` ต้องมีสิทธิ์เรียก Responses API (`api.responses.write`) ถ้าไม่มีจะใช้ตัววางแผนแบบกฎ
 - `OPENAI_MODEL` (ไม่บังคับ) — ค่าเริ่มต้น `gpt-6.1-sol`
+- `OPENAI_MAX_OUTPUT_TOKENS` (ไม่บังคับ) — จำกัด output token ต่อครั้ง (512–16000, ค่าเริ่มต้น 6000)
+- `OPENAI_TIMEOUT_MS` (ไม่บังคับ) — timeout ฝั่ง OpenAI (ค่าเริ่มต้น 60000)
 
 ผู้ใช้สามารถใส่ **key ของตัวเอง** ในหน้า AI agent ได้ key จะถูกส่งไปกับคำขอนั้นครั้งเดียวผ่าน header `x-openai-key` และเซิร์ฟเวอร์ไม่เก็บหรือบันทึก log
 
@@ -178,7 +183,7 @@ Production: `npm run build` แล้ว `npm start`
 ### Deploy
 
 - **Vercel**: import repo จาก GitHub → ตั้ง `OPENAI_API_KEY` / `OPENAI_MODEL` → Deploy
-- **Cloudflare**: ใช้ `@opennextjs/cloudflare` แล้ว deploy ด้วย Wrangler
+- **Cloudflare Workers** (ตั้งค่าแล้ว): `npm run preview` / `npm run deploy` ดูคู่มือเต็มที่ [docs/DEPLOY.md](docs/DEPLOY.md)
 - **เซิร์ฟเวอร์ Node / Docker**: `npm ci && npm run build && npm start`
 
 ---
