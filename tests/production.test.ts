@@ -149,3 +149,17 @@ describe("POST /api/plan hardening", () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe("clientIp", () => {
+  it("groups IPv6 clients by /64 and keeps IPv4 as-is", async () => {
+    const { clientIp, ipv6Prefix64 } = await import("@/lib/server/http");
+    const r = (ip: string) => new Request("http://x/", { headers: { "cf-connecting-ip": ip } });
+    expect(clientIp(r("203.0.113.7"))).toBe("203.0.113.7");
+    expect(clientIp(r("2a09:bac5:56bb:4aa::77:94"))).toBe("2a09:bac5:56bb:4aa::/64");
+    expect(clientIp(r("2a09:bac5:56bb:04aa:0:0:77:a8"))).toBe("2a09:bac5:56bb:4aa::/64");
+    expect(ipv6Prefix64("2001:db8::1")).toBe("2001:db8:0:0::/64");
+    expect(ipv6Prefix64("::ffff:1.2.3.4")).toBeNull();
+    expect(ipv6Prefix64("not-an-ip")).toBeNull();
+    expect(clientIp(new Request("http://x/"))).toBe("local");
+  });
+});

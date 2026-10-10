@@ -12,13 +12,30 @@ export class HttpError extends Error {
 }
 
 /** Client IP: Cloudflare's header first, then common proxy headers. Never trusted for auth. */
+/**
+ * Rate-limit key for a client. IPv6 addresses are reduced to their /64 prefix, because a single
+ * subscriber usually controls a whole /64 and could otherwise rotate addresses to dodge limits.
+ */
 export function clientIp(req: Request): string {
-  return (
+  const raw = (
     req.headers.get("cf-connecting-ip") ||
     (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() ||
     req.headers.get("x-real-ip") ||
     "local"
   );
+  return ipv6Prefix64(raw) ?? raw;
+}
+
+/** "2001:db8:a:b:1:2:3:4" -> "2001:db8:a:b::/64"; returns null for IPv4 / non-IPv6 input. */
+export function ipv6Prefix64(ip: string): string | null {
+  if (!ip.includes(":") || /^::ffff:\d+\.\d+\.\d+\.\d+$/i.test(ip)) return null;
+  const [head, tail = ""] = ip.toLowerCase().split("%")[0].split("::");
+  const h = head ? head.split(":") : [];
+  const t = ip.includes("::") ? (tail ? tail.split(":") : []) : [];
+  if (!ip.includes("::") && h.length !== 8) return null;
+  const groups = [...h, ...Array(Math.max(0, 8 - h.length - t.length)).fill("0"), ...t];
+  if (groups.length !== 8 || !groups.every((g) => /^[0-9a-f]{1,4}$/.test(g))) return null;
+  return `${groups.slice(0, 4).map((g) => g.replace(/^0+(?=.)/, "")).join(":")}::/64`;
 }
 
 /**
