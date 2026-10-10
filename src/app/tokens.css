@@ -1,0 +1,104 @@
+/*
+ * NVX design tokens — the single source of truth for colour, radius, shadow,
+ * typography and motion. Components only use semantic tokens (bg-surface,
+ * text-muted, bg-primary …), never raw palette colours, so light/dark and
+ * future themes are a matter of changing the variables below.
+ */
+
+:root {
+  /* Surfaces */
+  --nvx-bg: #f8fafc;
+  --nvx-surface: #ffffff;
+  --nvx-surface-2: #f1f5f9;
+  --nvx-surface-3: #e2e8f0;
+  --nvx-border: #e2e8f0;
+  --nvx-border-strong: #cbd5e1;
+  /* Text */
+  --nvx-fg: #0f172a;
+  --nvx-muted: #475569;
+  --nvx-subtle: #64748b;
+  /* Brand */
+  --nvx-primary: #4f46e5;
+  --nvx-primary-hover: #4338ca;
+  --nvx-primary-fg: #ffffff;
+  --nvx-primary-soft: #eef2ff;
+  --nvx-primary-soft-fg: #3730a3;
+  --nvx-accent: #059669;
+  /* Status */
+  --nvx-success: #059669;
+  --nvx-success-soft: #ecfdf5;
+  --nvx-success-fg: #065f46;
+  --nvx-warning: #b45309;
+  --nvx-warning-soft: #fffbeb;
+  --nvx-warning-fg: #92400e;
+  --nvx-danger: #dc2626;
+  --nvx-danger-hover: #b91c1c;
+  --nvx-danger-soft: #fef2f2;
+  --nvx-danger-fg: #991b1b;
+  --nvx-info: #0284c7;
+  --nvx-info-soft: #f0f9ff;
+  --nvx-info-fg: #075985;
+  /* Focus + code */
+  --nvx-ring: #6366f1;
+  --nvx-code-bg: #0b1220;
+  --nvx-code-fg: #e2e8f0;
+  --nvx-overlay: rgb(15 23 42 / 0.45);
+  /* Shadows */
+  --nvx-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
+  --nvx-shadow-md: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.05);
+  --nvx-shadow-lg: 0 16px 40px -12px rgb(15 23 42 / 0.18);
+  /* Motion */
+  --nvx-duration-fast: 120ms;
+  --nvx-duration-base: 200ms;
+  --nvx-duration-slow: 320ms;
+  --nvx-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --nvx-ease-emphasized: cubic-bezier(0.3, 0, 0, 1.2);
+  color-scheme: light;
+}
+
+.dark {
+  --nvx-bg: #020617;
+  --nvx-surface: #0b1222;
+  --nvx-surface-2: #111b31;
+  --nvx-surface-3: #1e293b;
+  --nvx-border: #1e293b;
+  --nvx-border-strong: #334155;
+  --nvx-fg: #f1f5f9;
+  --nvx-muted: #cbd5e1;
+  --nvx-subtle: #94a3b8;
+  --nvx-primary: #818cf8;
+  --nvx-primary-hover: #a5b4fc;
+  --nvx-primary-fg: #0b1020;
+  --nvx-primary-soft: rgb(99 102 241 / 0.16);
+  --nvx-primary-soft-fg: #c7d2fe;
+  --nvx-accent: #34d399;
+  --nvx-success: #34d399;
+  --nvx-success-soft: rgb(16 185 129 / 0.14);
+  --nvx-success-fg: #6ee7b7;
+  --nvx-warning: #fbbf24;
+  --nvx-warning-soft: rgb(245 158 11 / 0.14);
+  --nvx-warning-fg: #fcd34d;
+  --nvx-danger: #f87171;
+  --nvx-danger-hover: #fca5a5;
+  --nvx-danger-soft: rgb(239 68 68 / 0.14);
+  --nvx-danger-fg: #fca5a5;
+  --nvx-info: #38bdf8;
+  --nvx-info-soft: rgb(14 165 233 / 0.14);
+  --nvx-info-fg: #7dd3fc;
+  --nvx-ring: #a5b4fc;
+  --nvx-code-bg: #050a16;
+  --nvx-overlay: rgb(2 6 23 / 0.7);
+  --nvx-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --nvx-shadow-md: 0 6px 16px -4px rgb(0 0 0 / 0.5);
+  --nvx-shadow-lg: 0 20px 48px -12px rgb(0 0 0 / 0.65);
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root,
+  .dark {
+    --nvx-duration-fast: 0.01ms;
+    --nvx-duration-base: 0.01ms;
+    --nvx-duration-slow: 0.01ms;
+  }
+}
