@@ -1,52 +1,62 @@
 /*
- * NVX design tokens — the single source of truth for colour, radius, shadow,
+ * NVX design tokens: the single source of truth for colour, radius, shadow,
  * typography and motion. Components only use semantic tokens (bg-surface,
- * text-muted, bg-primary …), never raw palette colours, so light/dark and
- * future themes are a matter of changing the variables below.
+ * text-muted, bg-primary …), never raw palette colours.
+ *
+ * v0.4 "terminal" theme: the DARK block (.dark) is the default for everyone.
+ * <html class="dark"> is rendered on the server and kept unless the user picks light.
+ * :root holds the light "paper printout" variant available from the theme toggle.
  */
 
 :root {
-  /* Surfaces */
-  --nvx-bg: #f8fafc;
-  --nvx-surface: #ffffff;
-  --nvx-surface-2: #f1f5f9;
-  --nvx-surface-3: #e2e8f0;
-  --nvx-border: #e2e8f0;
-  --nvx-border-strong: #cbd5e1;
+  /* Surfaces: paper printout */
+  --nvx-bg: #f3f3ee;
+  --nvx-surface: #fbfbf8;
+  --nvx-surface-2: #ecece5;
+  --nvx-surface-3: #deded5;
+  --nvx-border: #d3d3c8;
+  --nvx-border-strong: #a3a396;
   /* Text */
-  --nvx-fg: #0f172a;
-  --nvx-muted: #475569;
-  --nvx-subtle: #64748b;
-  /* Brand */
-  --nvx-primary: #4f46e5;
-  --nvx-primary-hover: #4338ca;
+  --nvx-fg: #0a0a0a;
+  --nvx-muted: #3d3d38;
+  --nvx-subtle: #5c5c55;
+  /* Brand: terminal green on paper */
+  --nvx-primary: #0b6b2b;
+  --nvx-primary-hover: #08561f;
   --nvx-primary-fg: #ffffff;
-  --nvx-primary-soft: #eef2ff;
-  --nvx-primary-soft-fg: #3730a3;
-  --nvx-accent: #059669;
+  --nvx-primary-soft: #dcf2e1;
+  --nvx-primary-soft-fg: #0a4d20;
+  --nvx-accent: #8a5a00;
   /* Status */
-  --nvx-success: #059669;
-  --nvx-success-soft: #ecfdf5;
-  --nvx-success-fg: #065f46;
-  --nvx-warning: #b45309;
-  --nvx-warning-soft: #fffbeb;
-  --nvx-warning-fg: #92400e;
-  --nvx-danger: #dc2626;
-  --nvx-danger-hover: #b91c1c;
-  --nvx-danger-soft: #fef2f2;
-  --nvx-danger-fg: #991b1b;
-  --nvx-info: #0284c7;
-  --nvx-info-soft: #f0f9ff;
-  --nvx-info-fg: #075985;
-  /* Focus + code */
-  --nvx-ring: #6366f1;
-  --nvx-code-bg: #0b1220;
-  --nvx-code-fg: #e2e8f0;
-  --nvx-overlay: rgb(15 23 42 / 0.45);
-  /* Shadows */
-  --nvx-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
-  --nvx-shadow-md: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.05);
-  --nvx-shadow-lg: 0 16px 40px -12px rgb(15 23 42 / 0.18);
+  --nvx-success: #0b6b2b;
+  --nvx-success-soft: #dcf2e1;
+  --nvx-success-fg: #0a4d20;
+  --nvx-warning: #8a5a00;
+  --nvx-warning-soft: #fbefcf;
+  --nvx-warning-fg: #6b4500;
+  --nvx-danger: #b3261e;
+  --nvx-danger-hover: #8f1d17;
+  --nvx-danger-soft: #fbe3e1;
+  --nvx-danger-fg: #8c1d17;
+  --nvx-info: #006b80;
+  --nvx-info-soft: #d9f1f5;
+  --nvx-info-fg: #00505f;
+  /* Focus + code (code blocks are always a black terminal) */
+  --nvx-ring: #0b6b2b;
+  --nvx-code-bg: #050505;
+  --nvx-code-fg: #d8f5dd;
+  --nvx-code-prompt: #33ff66;
+  --nvx-code-muted: #8a9a8d;
+  --nvx-code-border: #1f2b22;
+  --nvx-overlay: rgb(10 10 10 / 0.5);
+  /* Decoration */
+  --nvx-grid: rgb(10 10 10 / 0.05);
+  --nvx-scanline: transparent;
+  --nvx-glow: transparent;
+  /* Shadows: flat, terminals don't float */
+  --nvx-shadow-sm: 0 0 0 0 transparent;
+  --nvx-shadow-md: 3px 3px 0 0 rgb(10 10 10 / 0.12);
+  --nvx-shadow-lg: 4px 4px 0 0 rgb(10 10 10 / 0.16);
   /* Motion */
   --nvx-duration-fast: 120ms;
   --nvx-duration-base: 200ms;
@@ -57,40 +67,47 @@
 }
 
 .dark {
-  --nvx-bg: #020617;
-  --nvx-surface: #0b1222;
-  --nvx-surface-2: #111b31;
-  --nvx-surface-3: #1e293b;
-  --nvx-border: #1e293b;
-  --nvx-border-strong: #334155;
-  --nvx-fg: #f1f5f9;
-  --nvx-muted: #cbd5e1;
-  --nvx-subtle: #94a3b8;
-  --nvx-primary: #818cf8;
-  --nvx-primary-hover: #a5b4fc;
-  --nvx-primary-fg: #0b1020;
-  --nvx-primary-soft: rgb(99 102 241 / 0.16);
-  --nvx-primary-soft-fg: #c7d2fe;
-  --nvx-accent: #34d399;
-  --nvx-success: #34d399;
-  --nvx-success-soft: rgb(16 185 129 / 0.14);
-  --nvx-success-fg: #6ee7b7;
-  --nvx-warning: #fbbf24;
-  --nvx-warning-soft: rgb(245 158 11 / 0.14);
-  --nvx-warning-fg: #fcd34d;
-  --nvx-danger: #f87171;
-  --nvx-danger-hover: #fca5a5;
-  --nvx-danger-soft: rgb(239 68 68 / 0.14);
-  --nvx-danger-fg: #fca5a5;
-  --nvx-info: #38bdf8;
-  --nvx-info-soft: rgb(14 165 233 / 0.14);
-  --nvx-info-fg: #7dd3fc;
-  --nvx-ring: #a5b4fc;
-  --nvx-code-bg: #050a16;
-  --nvx-overlay: rgb(2 6 23 / 0.7);
-  --nvx-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
-  --nvx-shadow-md: 0 6px 16px -4px rgb(0 0 0 / 0.5);
-  --nvx-shadow-lg: 0 20px 48px -12px rgb(0 0 0 / 0.65);
+  /* Surfaces: near-black CRT */
+  --nvx-bg: #030303;
+  --nvx-surface: #0a0a0a;
+  --nvx-surface-2: #121412;
+  --nvx-surface-3: #1b1f1c;
+  --nvx-border: #1e2620;
+  --nvx-border-strong: #355c3f;
+  /* Text: soft phosphor white */
+  --nvx-fg: #e3f5e6;
+  --nvx-muted: #a9bfad;
+  --nvx-subtle: #82998a;
+  /* Brand: phosphor green, amber accent */
+  --nvx-primary: #33ff66;
+  --nvx-primary-hover: #7dff9c;
+  --nvx-primary-fg: #001a07;
+  --nvx-primary-soft: rgb(51 255 102 / 0.1);
+  --nvx-primary-soft-fg: #8dffaa;
+  --nvx-accent: #ffb000;
+  /* Status */
+  --nvx-success: #33ff66;
+  --nvx-success-soft: rgb(51 255 102 / 0.1);
+  --nvx-success-fg: #8dffaa;
+  --nvx-warning: #ffb000;
+  --nvx-warning-soft: rgb(255 176 0 / 0.12);
+  --nvx-warning-fg: #ffcc5c;
+  --nvx-danger: #ff5f56;
+  --nvx-danger-hover: #ff8a83;
+  --nvx-danger-soft: rgb(255 95 86 / 0.12);
+  --nvx-danger-fg: #ff9a94;
+  --nvx-info: #2fd8f0;
+  --nvx-info-soft: rgb(47 216 240 / 0.1);
+  --nvx-info-fg: #8beaf7;
+  --nvx-ring: #33ff66;
+  --nvx-code-bg: #000000;
+  --nvx-overlay: rgb(0 0 0 / 0.75);
+  --nvx-grid: rgb(51 255 102 / 0.035);
+  --nvx-scanline: rgb(0 0 0 / 0.18);
+  --nvx-glow: rgb(51 255 102 / 0.35);
+  --nvx-shadow-sm: 0 0 0 0 transparent;
+  --nvx-shadow-md: 0 0 0 1px rgb(51 255 102 / 0.18);
+  --nvx-shadow-lg: 0 0 0 1px rgb(51 255 102 / 0.14), 0 0 32px -12px rgb(51 255 102 / 0.25);
   color-scheme: dark;
 }
 

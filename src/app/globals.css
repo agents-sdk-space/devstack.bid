@@ -5,8 +5,10 @@
 
 /* Map design tokens into the Tailwind theme → bg-surface, text-muted, border-border, shadow-md … */
 @theme inline {
-  --font-sans: var(--font-geist-sans), var(--font-thai), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Body: IBM Plex Sans (Latin) + IBM Plex Sans Thai. UI chrome, headings and code: IBM Plex Mono,
+     with Thai glyphs falling back to IBM Plex Sans Thai so Thai stays readable. */
+  --font-sans: var(--font-plex-sans), var(--font-thai), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), var(--font-thai), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-bg: var(--nvx-bg);
   --color-surface: var(--nvx-surface);
@@ -39,15 +41,24 @@
   --color-ring: var(--nvx-ring);
   --color-code-bg: var(--nvx-code-bg);
   --color-code-fg: var(--nvx-code-fg);
+  --color-code-prompt: var(--nvx-code-prompt);
+  --color-code-muted: var(--nvx-code-muted);
+  --color-code-border: var(--nvx-code-border);
   --color-overlay: var(--nvx-overlay);
 
   /* Spacing: one 4px base unit → p-1 = 4px, p-4 = 16px, gap-6 = 24px (Tailwind default, pinned here). */
   --spacing: 0.25rem;
 
-  --radius-sm: 0.375rem;
-  --radius-md: 0.625rem;
-  --radius-lg: 0.875rem;
-  --radius-xl: 1.25rem;
+  /* Terminal: square-ish corners. */
+  --radius-xs: 1px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 3px;
+  --radius-xl: 4px;
+
+  /* Monospace headings look wrong with negative tracking; soften Tailwind's presets. */
+  --tracking-tight: -0.01em;
+  --tracking-tighter: -0.015em;
 
   --shadow-sm: var(--nvx-shadow-sm);
   --shadow-md: var(--nvx-shadow-md);
@@ -56,9 +67,9 @@
   --ease-standard: var(--nvx-ease-standard);
   --ease-emphasized: var(--nvx-ease-emphasized);
 
-  --text-display: 3.25rem;
-  --text-display--line-height: 1.08;
-  --text-display--letter-spacing: -0.025em;
+  --text-display: 3rem;
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.02em;
 
   --animate-fade-in: nvx-fade-in var(--nvx-duration-base) var(--nvx-ease-standard);
   --animate-pop-in: nvx-pop-in var(--nvx-duration-base) var(--nvx-ease-emphasized);
@@ -78,6 +89,10 @@
 @keyframes nvx-sheet-in {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
+}
+@keyframes nvx-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
 }
 @keyframes nvx-slide-in {
   from { opacity: 0; transform: translateY(8px); }
@@ -118,10 +133,99 @@ body {
   outline-offset: 2px;
 }
 
+::selection {
+  background: var(--nvx-primary);
+  color: var(--nvx-primary-fg);
+}
+
+/* ── Terminal typography: headings, nav, buttons, labels and badges are monospace. ── */
+h1, h2, h3, h4, h5, h6,
+nav, button, label, legend, kbd, summary,
+[role="tab"], [role="radio"], [data-term="mono"] {
+  font-family: var(--font-mono);
+}
+html[data-lang="th"] :is(h1, h2, h3) {
+  line-height: 1.35;
+}
+
+/* Faint phosphor grid instead of soft gradient blobs (hero, agent panel). */
 .hero-glow {
-  background:
-    radial-gradient(60% 50% at 20% 0%, rgb(99 102 241 / 0.22), transparent 70%),
-    radial-gradient(50% 40% at 90% 10%, rgb(16 185 129 / 0.16), transparent 70%);
+  background-image:
+    linear-gradient(var(--nvx-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--nvx-grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
+}
+
+/* Very light CRT scanlines over the whole page (dark theme only, static). */
+.dark body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, transparent 0, transparent 2px, var(--nvx-scanline) 3px, transparent 4px);
+  opacity: 0.35;
+}
+@media print {
+  .dark body::after { display: none; }
+}
+
+/* Prompt glyphs. The alt text after "/" keeps them silent for screen readers. */
+.term-prompt::before {
+  content: "$ " / "";
+  color: var(--nvx-primary);
+  font-weight: 500;
+}
+.term-section::before {
+  content: "> " / "";
+  color: var(--nvx-primary);
+}
+.term-eyebrow::before {
+  content: "// " / "";
+  opacity: 0.7;
+}
+.term-dos::before {
+  content: "C:\\NVX> " / "";
+  color: var(--nvx-primary);
+}
+
+/* Blinking block cursor (static when reduced motion is preferred). */
+.term-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.9em;
+  margin-left: 0.12em;
+  vertical-align: -0.08em;
+  background: var(--nvx-primary);
+  box-shadow: 0 0 12px var(--nvx-glow);
+  animation: nvx-blink 1.1s steps(1, end) infinite;
+}
+
+/* Bracketed buttons: [ RUN ] */
+.term-bracket::before { content: "[" / ""; opacity: 0.55; margin-right: 0.15em; }
+.term-bracket::after { content: "]" / ""; opacity: 0.55; margin-left: 0.15em; }
+
+/* Active nav item gets a caret. */
+nav a[aria-current="page"]::before {
+  content: ">" / "";
+  margin-right: 0.4em;
+}
+
+/* ASCII-ish divider: dashed rule used between home sections. */
+.term-rule {
+  border-style: dashed;
+}
+
+/* Status-bar header/footer. */
+.term-statusbar {
+  font-family: var(--font-mono);
+  letter-spacing: 0.01em;
+}
+
+/* Phosphor glow on primary text in the dark theme only. */
+.dark .term-glow {
+  text-shadow: 0 0 10px var(--nvx-glow);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -132,5 +236,9 @@ body {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+  .term-cursor {
+    animation: none !important;
+    opacity: 1 !important;
   }
 }

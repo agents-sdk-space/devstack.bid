@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, IBM_Plex_Sans_Thai } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans, IBM_Plex_Sans_Thai } from "next/font/google";
 import { Footer, Header } from "@/components/header";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-// Thai glyphs come from IBM Plex Sans Thai; Latin from Geist (see --font-sans in globals.css).
+// Terminal theme: IBM Plex Mono for UI chrome/headings/code, IBM Plex Sans for Latin body text,
+// IBM Plex Sans Thai for Thai glyphs in both stacks (see --font-sans / --font-mono in globals.css).
+const plexMono = IBM_Plex_Mono({ variable: "--font-plex-mono", subsets: ["latin"], weight: ["400", "500", "600", "700"], display: "swap" });
+const plexSans = IBM_Plex_Sans({ variable: "--font-plex-sans", subsets: ["latin"], weight: ["400", "500", "600", "700"], display: "swap" });
 const plexThai = IBM_Plex_Sans_Thai({ variable: "--font-thai", subsets: ["thai"], weight: ["400", "500", "600", "700"], display: "swap" });
 
 export const metadata: Metadata = {
@@ -21,18 +22,17 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
-    { media: "(prefers-color-scheme: dark)", color: "#020617" },
-  ],
+  // The black terminal theme is the default for everyone, regardless of the OS preference.
+  themeColor: "#030303",
 };
 
 // Runs before first paint: apply saved theme + language without a flash.
-const PREFS_SCRIPT = `(function(){try{var d=document.documentElement;var t=localStorage.getItem('nvx-theme');var dark=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;d.classList.toggle('dark',dark);var l=localStorage.getItem('nvx-lang')||((navigator.language||'').toLowerCase().indexOf('th')===0?'th':'en');d.dataset.lang=l;d.lang=l;}catch(e){}})();`;
+// Dark (terminal) is the default; only an explicit saved "light" choice switches it off.
+const PREFS_SCRIPT = `(function(){try{var d=document.documentElement;var t=localStorage.getItem('nvx-theme');var dark=t!=='light';d.classList.toggle('dark',dark);var l=localStorage.getItem('nvx-lang')||((navigator.language||'').toLowerCase().indexOf('th')===0?'th':'en');d.dataset.lang=l;d.lang=l;}catch(e){}})();`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" data-lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} ${plexThai.variable} h-full`}>
+    <html lang="en" data-lang="en" suppressHydrationWarning className={`dark ${plexMono.variable} ${plexSans.variable} ${plexThai.variable} h-full`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: PREFS_SCRIPT }} />
       </head>

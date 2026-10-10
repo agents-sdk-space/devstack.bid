@@ -74,9 +74,20 @@ describe("design tokens", () => {
     ["danger-fg", "danger-soft", 4.5],
     ["info-fg", "info-soft", 4.5],
     ["code-fg", "code-bg", 4.5],
+    ["code-prompt", "code-bg", 4.5],
+    ["code-muted", "code-bg", 4.5],
+    ["accent", "surface", 4.5],
+    ["warning", "surface", 4.5],
+    ["info", "surface", 4.5],
+    ["danger", "surface", 4.5],
+    ["success", "surface", 4.5],
+    ["primary", "bg", 4.5],
+    ["subtle", "bg", 4.5],
+    ["primary-soft-fg", "surface", 4.5],
     ["primary", "surface", 4.5],
     ["ring", "surface", 3],
     ["border-strong", "surface", 1.4],
+    ["border-strong", "bg", 1.4],
   ];
 
   for (const [theme, vars] of Object.entries(themes)) {
@@ -86,4 +97,15 @@ describe("design tokens", () => {
       });
     }
   }
+});
+
+describe("default theme", () => {
+  const layout = readFileSync(new URL("../src/app/layout.tsx", import.meta.url), "utf8");
+  it("server-renders the terminal (dark) theme on <html>", () => {
+    expect(layout).toMatch(/className=\{`dark /);
+  });
+  it("pre-paint script only switches to light on an explicit saved choice (ignores OS preference)", () => {
+    expect(layout).toContain("var dark=t!=='light'");
+    expect(layout).not.toContain("prefers-color-scheme: dark)').matches");
+  });
 });
