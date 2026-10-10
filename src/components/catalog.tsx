@@ -6,6 +6,7 @@ import { CATEGORY_LABELS } from "@/lib/i18n";
 import { Button, cn, EmptyState, Input, SearchIcon } from "@/components/ui";
 import { useLang } from "./prefs";
 import { TemplateCard } from "./template-card";
+import { SearchX } from "lucide-react";
 
 export function Catalog() {
   const { lang, t } = useLang();
@@ -39,8 +40,8 @@ export function Catalog() {
               aria-pressed={category === c}
               onClick={() => setCategory(c)}
               className={cn(
-                "focus-ring motion-fast rounded-sm border px-3 py-1 font-mono text-sm",
-                category === c ? "border-primary bg-primary text-primary-fg" : "border-border text-muted hover:border-border-strong hover:text-fg"
+                "focus-ring motion-fast rounded-full border px-3.5 py-1 text-sm",
+                category === c ? "border-transparent bg-fg text-bg" : "border-border text-muted hover:border-border-strong hover:text-fg"
               )}
             >
               {c === "all" ? t("catalog.all") : CATEGORY_LABELS[c][lang]}
@@ -54,7 +55,7 @@ export function Catalog() {
       {filtered.length === 0 ? (
         <EmptyState
           className="mt-6"
-          icon="🔍"
+          icon={<SearchX className="h-6 w-6" strokeWidth={1.75} />}
           title={t("catalog.none")}
           action={
             <Button

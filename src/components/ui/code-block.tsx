@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Copy } from "lucide-react";
 import { cn } from "./cn";
 import { copyText } from "./copy";
 import { useToastOptional } from "./toast";
@@ -44,34 +45,23 @@ export function CodeBlock({
   }
 
   return (
-    <div className={cn("overflow-hidden rounded-lg border border-code-border bg-code-bg text-code-fg", className)}>
-      <div className="flex items-center justify-between gap-2 border-b border-code-border bg-white/[0.03] px-3 py-1.5">
+    <div className={cn("overflow-hidden rounded-xl border border-code-border bg-code-bg text-code-fg", className)}>
+      <div className="flex items-center justify-between gap-2 border-b border-code-border bg-white/[0.04] px-3 py-2">
         <span className="flex min-w-0 items-center gap-2 font-mono text-[11px] text-code-muted">
-          <span aria-hidden className="flex gap-1">
-            <span className="h-2 w-2 bg-code-muted/50" />
-            <span className="h-2 w-2 bg-code-muted/50" />
-            <span className="h-2 w-2 bg-code-prompt/80" />
+          <span aria-hidden className="flex gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-[var(--nvx-chrome-close)]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[var(--nvx-chrome-min)]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[var(--nvx-chrome-zoom)]" />
           </span>
           <span className="truncate">{title ?? (prompt ? "shell" : "")}</span>
         </span>
         <button
           type="button"
           onClick={onCopy}
-          className="focus-ring motion-fast inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium text-code-muted hover:bg-white/10 hover:text-code-prompt"
+          className="focus-ring motion-fast inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium text-code-muted hover:bg-white/10 hover:text-code-fg"
           aria-label={title ? `${copyLabel}: ${title}` : copyLabel}
         >
-          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" aria-hidden>
-            {copied ? (
-              <path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="m3.5 8.5 3 3 6-7" />
-            ) : (
-              <path
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                d="M5.5 5.5V3.75c0-.69.56-1.25 1.25-1.25h5.5c.69 0 1.25.56 1.25 1.25v5.5c0 .69-.56 1.25-1.25 1.25H10.5M3.75 5.5h5.5c.69 0 1.25.56 1.25 1.25v5.5c0 .69-.56 1.25-1.25 1.25h-5.5c-.69 0-1.25-.56-1.25-1.25v-5.5c0-.69.56-1.25 1.25-1.25Z"
-              />
-            )}
-          </svg>
+          {copied ? <Check className="h-3.5 w-3.5" aria-hidden /> : <Copy className="h-3.5 w-3.5" aria-hidden />}
           <span aria-live="polite">{copied ? copiedLabel : copyLabel}</span>
         </button>
       </div>

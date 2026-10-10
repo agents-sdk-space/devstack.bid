@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Templates" };
 export default function TemplatesPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="term-prompt text-3xl font-bold tracking-tight text-fg sm:text-4xl">
+      <h1 className="text-4xl font-bold tracking-tighter text-fg sm:text-5xl">
         <T k="catalog.title" />
       </h1>
       <p className="mt-2 max-w-2xl text-muted">

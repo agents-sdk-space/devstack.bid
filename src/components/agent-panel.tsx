@@ -7,6 +7,8 @@ import { applyEdits, composeSteps, configForTemplate, flattenCommands } from "@/
 import { Badge, Button, Card, Checkbox, EmptyState, Input, Skeleton, Textarea } from "@/components/ui";
 import { CodeBlock } from "./copy-button";
 import { useLang } from "./prefs";
+import { MessageSquareText, RotateCw, Sparkles, TriangleAlert } from "lucide-react";
+import { ToolTile } from "./brand/tool-icon";
 
 const EXAMPLES = {
   en: [
@@ -83,8 +85,9 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
     <section id="agent" aria-labelledby="agent-h" className="scroll-mt-32 space-y-4">
       <Card className="hero-glow overflow-hidden p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 id="agent-h" className="text-xl font-bold text-fg">
-            🤖 {t("agent.title")}
+          <h3 id="agent-h" className="flex items-center gap-3 text-xl font-semibold tracking-tight text-fg">
+            <ToolTile id="ai" size="md" />
+            {t("agent.title")}
           </h3>
           {server ? (
             <Badge variant={server.serverKeyConfigured ? "success" : "neutral"}>
@@ -124,7 +127,7 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
               <button
                 key={ex}
                 type="button"
-                className="focus-ring motion-fast rounded-sm border border-border bg-surface px-2.5 py-1 font-mono text-xs text-muted hover:border-primary hover:text-primary"
+                className="focus-ring motion-fast rounded-full border border-border bg-surface-2 px-3 py-1 text-xs text-muted hover:border-border-strong hover:text-fg"
                 onClick={() => setPrompt(ex)}
               >
                 {ex}
@@ -151,7 +154,13 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
           )}
           <div className="flex flex-wrap gap-2">
             <Button type="submit" loading={busy && lastMode === "auto"} disabled={!canSubmit}>
-              {busy && lastMode === "auto" ? t("agent.thinking") : `✨ ${t("agent.submit")}`}
+              {busy && lastMode === "auto" ? (
+                t("agent.thinking")
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" aria-hidden /> {t("agent.submit")}
+                </>
+              )}
             </Button>
             <Button variant="secondary" loading={busy && lastMode === "fallback"} disabled={!canSubmit} onClick={() => submit("fallback")}>
               {t("agent.offline")}
@@ -179,13 +188,13 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
         ) : error ? (
           <EmptyState
             tone="danger"
-            icon="⚠️"
+            icon={<TriangleAlert className="h-6 w-6" strokeWidth={1.75} />}
             title={t("agent.errorTitle")}
             description={error}
             action={
               <>
                 <Button onClick={() => submit(lastMode)} disabled={!canSubmit}>
-                  ↻ {t("agent.retry")}
+                  <RotateCw className="h-4 w-4" aria-hidden /> {t("agent.retry")}
                 </Button>
                 {lastMode === "auto" && (
                   <Button variant="secondary" onClick={() => submit("fallback")} disabled={!canSubmit}>
@@ -196,7 +205,7 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
             }
           />
         ) : !plan ? (
-          <EmptyState icon="💬" title={t("agent.emptyTitle")} description={t("agent.emptyBody")} />
+          <EmptyState icon={<MessageSquareText className="h-6 w-6" strokeWidth={1.75} />} title={t("agent.emptyTitle")} description={t("agent.emptyBody")} />
         ) : (
           <Card id="agent-result" tabIndex={-1} aria-label={t("agent.planReady")} className="space-y-5 p-5 outline-none sm:p-6 animate-fade-in">
             <div className="flex flex-wrap items-center gap-1.5">

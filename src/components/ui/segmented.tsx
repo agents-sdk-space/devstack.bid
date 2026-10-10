@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 import { cn } from "./cn";
 
 /** Single-choice segmented control built on native radio inputs (arrow keys work out of the box). */
@@ -16,7 +16,7 @@ export function Segmented<T extends string>({
 }: {
   legend: string;
   value: T;
-  options: readonly { value: T; label: string }[];
+  options: readonly { value: T; label: ReactNode }[];
   onChange: (value: T) => void;
   disabled?: boolean;
   hint?: string;
@@ -35,9 +35,9 @@ export function Segmented<T extends string>({
           <label
             key={o.value}
             className={cn(
-              "motion-fast cursor-pointer rounded-md font-medium has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
+              "motion-fast inline-flex cursor-pointer items-center gap-1.5 rounded-md font-medium has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
               size === "sm" ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm",
-              value === o.value ? "bg-surface text-fg shadow-sm" : "text-muted hover:text-fg"
+              value === o.value ? "bg-raised text-fg shadow-sm" : "text-muted hover:text-fg"
             )}
           >
             <input type="radio" className="sr-only" name={name} value={o.value} checked={value === o.value} onChange={() => onChange(o.value)} />

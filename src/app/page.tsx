@@ -1,3 +1,4 @@
+import { Blocks, LibraryBig, ShieldCheck, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { T } from "@/components/prefs";
 import { TemplateCard } from "@/components/template-card";
@@ -5,10 +6,10 @@ import { Badge, buttonClasses, Card } from "@/components/ui";
 import { TEMPLATES } from "@/data/templates";
 
 const FEATURES = [
-  { icon: "📚", title: "feature.catalog.title", body: "feature.catalog.body" },
-  { icon: "🧩", title: "feature.builder.title", body: "feature.builder.body" },
-  { icon: "🤖", title: "feature.agent.title", body: "feature.agent.body" },
-  { icon: "🛡️", title: "feature.safe.title", body: "feature.safe.body" },
+  { Icon: LibraryBig, title: "feature.catalog.title", body: "feature.catalog.body" },
+  { Icon: Blocks, title: "feature.builder.title", body: "feature.builder.body" },
+  { Icon: Sparkles, title: "feature.agent.title", body: "feature.agent.body" },
+  { Icon: ShieldCheck, title: "feature.safe.title", body: "feature.safe.body" },
 ] as const;
 
 const SAMPLE = `nvm install --lts
@@ -22,8 +23,8 @@ function SectionHeading({ id, k, eyebrow, children }: { id: string; k: Parameter
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>
-        {eyebrow && <p className="term-eyebrow font-mono text-xs font-semibold uppercase tracking-widest text-primary">{eyebrow}</p>}
-        <h2 id={id} className="term-section mt-1 text-2xl font-bold tracking-tight text-fg sm:text-3xl">
+        {eyebrow && <p className="text-sm font-semibold text-link">{eyebrow}</p>}
+        <h2 id={id} className="mt-1 text-3xl font-semibold tracking-tight text-fg sm:text-[40px] sm:leading-[1.1]">
           <T k={k} />
         </h2>
       </div>
@@ -35,34 +36,33 @@ function SectionHeading({ id, k, eyebrow, children }: { id: string; k: Parameter
 export default function Home() {
   return (
     <>
-      <section className="hero-glow term-rule border-b border-border">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 lg:grid-cols-[1.1fr_1fr] lg:py-24">
+      <section className="hero-glow border-b border-border">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 lg:grid-cols-[1.1fr_1fr] lg:py-32">
           <div>
-            <Badge variant="primary" className="term-eyebrow px-3 py-1">
+            <Badge variant="primary" className="rounded-full px-3 py-1">
               <T k="hero.badge" />
             </Badge>
-            <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight text-fg sm:text-display sm:leading-[1.1]">
+            <h1 className="mt-6 text-[44px] font-bold leading-[1.08] tracking-tighter text-fg sm:text-display">
               <T k="hero.title" />
-              <span aria-hidden className="term-cursor" />
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-muted">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted sm:text-xl">
               <T k="hero.subtitle" />
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-10 flex flex-wrap gap-3">
               <Link href="/builder#agent" className={buttonClasses("primary", "lg")}>
-                <span aria-hidden>🤖</span> <T k="hero.ctaAgent" />
+                <Sparkles className="h-[18px] w-[18px]" aria-hidden /> <T k="hero.ctaAgent" />
               </Link>
               <Link href="/templates" className={buttonClasses("secondary", "lg")}>
                 <T k="hero.ctaTemplates" />
               </Link>
             </div>
           </div>
-          <Card className="overflow-hidden p-0 shadow-lg" aria-label="Example command sequence">
-            <div className="flex items-center gap-1.5 border-b border-border px-4 py-2.5">
-              <span className="h-2.5 w-2.5 bg-danger" aria-hidden />
-              <span className="h-2.5 w-2.5 bg-warning" aria-hidden />
-              <span className="h-2.5 w-2.5 bg-success" aria-hidden />
-              <span className="ml-2 font-mono text-xs text-subtle">setup.sh — bash</span>
+          <Card className="overflow-hidden border-code-border bg-code-bg p-0 shadow-lg" aria-label="Example command sequence">
+            <div className="relative flex items-center gap-2 border-b border-code-border bg-white/[0.04] px-4 py-3">
+              <span className="h-3 w-3 rounded-full bg-[var(--nvx-chrome-close)]" aria-hidden />
+              <span className="h-3 w-3 rounded-full bg-[var(--nvx-chrome-min)]" aria-hidden />
+              <span className="h-3 w-3 rounded-full bg-[var(--nvx-chrome-zoom)]" aria-hidden />
+              <span className="absolute left-1/2 -translate-x-1/2 font-mono text-xs text-code-muted">setup.sh — zsh</span>
             </div>
             <pre className="overflow-x-auto bg-code-bg p-5 font-mono text-[13px] leading-7 text-code-fg">
               {SAMPLE.split("\n").map((line, i) => (
@@ -71,18 +71,23 @@ export default function Home() {
                   <span className="text-code-prompt">$</span> {line}
                 </div>
               ))}
+              <div aria-hidden>
+                <span className="select-none text-code-muted">{String(SAMPLE.split("\n").length + 1).padStart(2, " ")} </span>
+                <span className="text-code-prompt">$</span>
+                <span className="term-cursor" />
+              </div>
             </pre>
           </Card>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16" aria-labelledby="how">
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:py-24" aria-labelledby="how">
         <SectionHeading id="how" k="home.how" />
-        <ol className="mt-8 grid gap-4 sm:grid-cols-3">
+        <ol className="mt-10 grid gap-4 sm:grid-cols-3">
           {(["home.how1", "home.how2", "home.how3"] as const).map((k, i) => (
             <li key={k}>
-              <Card className="flex h-full items-center gap-4 p-5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-sm border border-primary/40 bg-primary-soft font-mono font-bold text-primary-soft-fg" aria-hidden>
+              <Card className="flex h-full items-center gap-4 p-6">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-surface-3 font-semibold text-fg" aria-hidden>
                   {i + 1}
                 </span>
                 <span className="font-medium text-fg">
@@ -94,32 +99,32 @@ export default function Home() {
         </ol>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-16" aria-labelledby="popular">
+      <section className="mx-auto max-w-7xl px-4 pb-20 sm:pb-24" aria-labelledby="popular">
         <SectionHeading id="popular" k="home.popular">
           <Link href="/templates" className={buttonClasses("ghost", "sm")}>
             <T k="home.viewAll" />
           </Link>
         </SectionHeading>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {TEMPLATES.slice(0, 6).map((t) => (
             <TemplateCard key={t.id} template={t} />
           ))}
         </div>
       </section>
 
-      <section className="term-rule border-t border-border bg-surface/60" aria-labelledby="features">
-        <div className="mx-auto max-w-7xl px-4 py-16">
+      <section className="border-t border-border bg-surface/60" aria-labelledby="features">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:py-24">
           <SectionHeading id="features" k="features.title" />
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {FEATURES.map((f) => (
               <div key={f.title} className="p-1">
-                <div className="grid h-11 w-11 place-items-center rounded-sm border border-primary/30 bg-primary-soft text-xl" aria-hidden>
-                  {f.icon}
+                <div className="tool-tile grid h-12 w-12 place-items-center rounded-[13px] text-accent" aria-hidden>
+                  <f.Icon className="h-6 w-6" strokeWidth={1.75} />
                 </div>
-                <h3 className="mt-4 font-semibold text-fg">
+                <h3 className="mt-5 text-lg font-semibold text-fg">
                   <T k={f.title} />
                 </h3>
-                <p className="mt-1.5 text-sm text-muted">
+                <p className="mt-2 text-sm leading-relaxed text-muted">
                   <T k={f.body} />
                 </p>
               </div>

@@ -3,15 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { Blocks, House, Languages, LayoutGrid, Menu, Moon, Palette, Sun } from "lucide-react";
 import { Button, cn, Dialog, DialogContent, DialogTrigger, SearchIcon, Tooltip } from "@/components/ui";
 import { CommandPalette, PaletteTrigger } from "./command-palette";
 import { useDarkMode, useLang } from "./prefs";
 
 const NAV = [
-  { href: "/", key: "nav.home", icon: "🏠" },
-  { href: "/templates", key: "nav.templates", icon: "📚" },
-  { href: "/builder", key: "nav.builder", icon: "🧩" },
-  { href: "/design", key: "nav.design", icon: "🎨" },
+  { href: "/", key: "nav.home", Icon: House },
+  { href: "/templates", key: "nav.templates", Icon: LayoutGrid },
+  { href: "/builder", key: "nav.builder", Icon: Blocks },
+  { href: "/design", key: "nav.design", Icon: Palette },
 ] as const;
 
 function isActive(pathname: string, href: string) {
@@ -26,7 +27,7 @@ export function Header() {
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   return (
-    <header className="term-statusbar sticky top-0 z-30 border-b border-border bg-bg">
+    <header className="nav-glass sticky top-0 z-30 border-b border-border">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-fg"
@@ -34,13 +35,14 @@ export function Header() {
         {t("skip")}
       </a>
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4">
-        <Link href="/" className="focus-ring flex items-center gap-2 rounded-md font-mono font-semibold" aria-label="NVX Stack Builder home">
-          <span aria-hidden className="term-glow grid h-8 w-8 place-items-center rounded-sm border border-primary text-[11px] font-bold text-primary">
+        <Link href="/" className="focus-ring flex items-center gap-2 rounded-md font-semibold tracking-tight" aria-label="NVX Stack Builder home">
+          <span
+            aria-hidden
+            className="grid h-7 w-7 place-items-center rounded-[8px] bg-gradient-to-b from-[var(--nvx-brand-from)] to-[var(--nvx-brand-to)] text-[10px] font-bold tracking-normal text-white shadow-sm"
+          >
             NVX
           </span>
-          <span className="hidden sm:inline">
-            Stack Builder<span aria-hidden className="text-primary">_</span>
-          </span>
+          <span className="hidden text-[15px] sm:inline">Stack Builder</span>
         </Link>
 
         <nav aria-label="Main" className="ml-4 hidden items-center gap-1 lg:flex">
@@ -52,8 +54,8 @@ export function Header() {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "focus-ring motion-fast whitespace-nowrap rounded-md px-3 py-1.5 text-sm",
-                  active ? "bg-primary-soft font-semibold text-primary-soft-fg" : "text-muted hover:bg-surface-2 hover:text-fg"
+                  "focus-ring motion-fast whitespace-nowrap rounded-md px-3 py-1.5 text-[13px]",
+                  active ? "font-medium text-fg" : "text-subtle hover:text-fg"
                 )}
               >
                 {t(item.key)}
@@ -70,20 +72,18 @@ export function Header() {
             </Button>
           </Tooltip>
           <Button variant="ghost" size="sm" onClick={() => setLang(lang === "en" ? "th" : "en")} aria-label={t("toggle.langLabel")}>
-            <span aria-hidden>🌐</span>
+            <Languages className="h-4 w-4" aria-hidden />
             <span className="hidden sm:inline">{t("toggle.lang")}</span>
           </Button>
           <Tooltip content={t("toggle.theme")}>
             <Button variant="ghost" size="icon" onClick={toggle} aria-label={t("toggle.theme")} aria-pressed={dark}>
-              <span aria-hidden>{dark ? "☀️" : "🌙"}</span>
+              {dark ? <Sun className="h-4 w-4" aria-hidden /> : <Moon className="h-4 w-4" aria-hidden />}
             </Button>
           </Tooltip>
           <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
             <DialogTrigger asChild>
               <Button variant="ghost" size="icon" className="lg:hidden" aria-label={t("nav.menu")}>
-                <svg viewBox="0 0 20 20" className="h-5 w-5" aria-hidden>
-                  <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M3 5h14M3 10h14M3 15h14" />
-                </svg>
+                <Menu className="h-5 w-5" aria-hidden />
               </Button>
             </DialogTrigger>
             <DialogContent side="right" title={t("nav.mainMenu")} closeLabel={t("nav.close")}>
@@ -99,10 +99,10 @@ export function Header() {
                           aria-current={active ? "page" : undefined}
                           className={cn(
                             "focus-ring motion-fast flex items-center gap-3 rounded-md px-3 py-3 text-base",
-                            active ? "bg-primary-soft font-semibold text-primary-soft-fg" : "text-fg hover:bg-surface-2"
+                            active ? "bg-surface-2 font-semibold text-fg" : "text-fg hover:bg-surface-2"
                           )}
                         >
-                          <span aria-hidden>{item.icon}</span>
+                          <item.Icon className="h-5 w-5 text-subtle" aria-hidden />
                           {t(item.key)}
                         </Link>
                       </li>
@@ -134,8 +134,8 @@ export function Header() {
 export function Footer() {
   const { t } = useLang();
   return (
-    <footer className="term-statusbar mt-16 border-t border-border py-8 text-center text-xs text-subtle">
-      <p className="term-dos mx-auto max-w-3xl px-4">{t("footer.text")}</p>
+    <footer className="mt-20 border-t border-border bg-surface py-10 text-center text-xs leading-relaxed text-subtle">
+      <p className="mx-auto max-w-3xl px-4">{t("footer.text")}</p>
     </footer>
   );
 }

@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { cn } from "./cn";
+import { Check } from "lucide-react";
 
 export interface StepperItem {
   id: string;
@@ -36,13 +37,13 @@ export function Stepper({
               <span
                 aria-hidden
                 className={cn(
-                  "motion-base grid h-8 w-8 shrink-0 place-items-center rounded-sm border-2 font-mono text-sm font-semibold",
+                  "motion-base grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-sm font-semibold",
                   state === "complete" && "border-primary bg-primary text-primary-fg",
                   state === "current" && "border-primary bg-primary-soft text-primary-soft-fg",
                   state === "upcoming" && "border-border-strong text-subtle"
                 )}
               >
-                {state === "complete" ? "✓" : i + 1}
+                {state === "complete" ? <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden /> : i + 1}
               </span>
               <span className={cn("min-w-0 text-left", state === "current" ? "block" : "sr-only md:not-sr-only md:block")}>
                 <span className={cn("block whitespace-nowrap text-sm font-semibold", state === "upcoming" ? "text-muted" : "text-fg")}>{item.label}</span>
