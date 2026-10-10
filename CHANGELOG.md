@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Template detail page could overflow horizontally with wide monospace content (grid columns now `minmax(0,1fr)`).
+- Builder keyboard reorder could skip a slot when a step card was partly off-screen (the card is now scrolled into view before lifting; `closestCorners` collision, instant keyboard scroll).
 
 ## [0.3.0] - 2026-10-11
 
