@@ -3,60 +3,77 @@
  * typography and motion. Components only use semantic tokens (bg-surface,
  * text-muted, bg-primary …), never raw palette colours.
  *
- * v0.4 "terminal" theme: the DARK block (.dark) is the default for everyone.
- * <html class="dark"> is rendered on the server and kept unless the user picks light.
- * :root holds the light "paper printout" variant available from the theme toggle.
+ * v0.5 "developer" theme, referencing developer.apple.com: black-first. The DARK block (.dark)
+ * is the default for everyone (<html class="dark"> is server-rendered). :root holds the light
+ * variant that the theme toggle switches to.
+ *
+ * Roles: `primary` = filled call-to-action (blue pill, white text); `link` = blue text links and
+ * selected/active text; `accent` = the same family, for icons and highlights. Everything else is
+ * neutral greys so colour stays restrained. Terminal green appears only in code (`code-prompt`).
  */
 
 :root {
-  /* Surfaces: paper printout */
-  --nvx-bg: #f3f3ee;
-  --nvx-surface: #fbfbf8;
-  --nvx-surface-2: #ecece5;
-  --nvx-surface-3: #deded5;
-  --nvx-border: #d3d3c8;
-  --nvx-border-strong: #a3a396;
+  /* Surfaces */
+  --nvx-bg: #f5f5f7;
+  --nvx-surface: #ffffff;
+  --nvx-surface-2: #f0f0f2;
+  --nvx-surface-3: #e6e6ea;
+  --nvx-raised: #ffffff;
+  --nvx-border: #e3e3e8;
+  --nvx-border-strong: #c7c7cc;
   /* Text */
-  --nvx-fg: #0a0a0a;
-  --nvx-muted: #3d3d38;
-  --nvx-subtle: #5c5c55;
-  /* Brand: terminal green on paper */
-  --nvx-primary: #0b6b2b;
-  --nvx-primary-hover: #08561f;
+  --nvx-fg: #1d1d1f;
+  --nvx-muted: #515154;
+  --nvx-subtle: #636366;
+  /* Brand */
+  --nvx-primary: #0071e3;
+  --nvx-primary-hover: #0062c4;
   --nvx-primary-fg: #ffffff;
-  --nvx-primary-soft: #dcf2e1;
-  --nvx-primary-soft-fg: #0a4d20;
-  --nvx-accent: #8a5a00;
+  --nvx-primary-soft: #e8f1fc;
+  --nvx-primary-soft-fg: #0058b0;
+  --nvx-link: #0066cc;
+  --nvx-accent: #0066cc;
   /* Status */
-  --nvx-success: #0b6b2b;
-  --nvx-success-soft: #dcf2e1;
-  --nvx-success-fg: #0a4d20;
-  --nvx-warning: #8a5a00;
-  --nvx-warning-soft: #fbefcf;
-  --nvx-warning-fg: #6b4500;
-  --nvx-danger: #b3261e;
-  --nvx-danger-hover: #8f1d17;
-  --nvx-danger-soft: #fbe3e1;
-  --nvx-danger-fg: #8c1d17;
-  --nvx-info: #006b80;
-  --nvx-info-soft: #d9f1f5;
-  --nvx-info-fg: #00505f;
-  /* Focus + code (code blocks are always a black terminal) */
-  --nvx-ring: #0b6b2b;
-  --nvx-code-bg: #050505;
-  --nvx-code-fg: #d8f5dd;
-  --nvx-code-prompt: #33ff66;
-  --nvx-code-muted: #8a9a8d;
-  --nvx-code-border: #1f2b22;
-  --nvx-overlay: rgb(10 10 10 / 0.5);
-  /* Decoration */
-  --nvx-grid: rgb(10 10 10 / 0.05);
-  --nvx-scanline: transparent;
-  --nvx-glow: transparent;
-  /* Shadows: flat, terminals don't float */
-  --nvx-shadow-sm: 0 0 0 0 transparent;
-  --nvx-shadow-md: 3px 3px 0 0 rgb(10 10 10 / 0.12);
-  --nvx-shadow-lg: 4px 4px 0 0 rgb(10 10 10 / 0.16);
+  --nvx-success: #157a32;
+  --nvx-success-soft: #e5f5e9;
+  --nvx-success-fg: #0f5f26;
+  --nvx-warning: #9a5b00;
+  --nvx-warning-soft: #fdf1dc;
+  --nvx-warning-fg: #7a4800;
+  --nvx-danger: #d70015;
+  --nvx-danger-hover: #b00011;
+  --nvx-danger-soft: #fde8ea;
+  --nvx-danger-fg: #a30010;
+  --nvx-info: #0066cc;
+  --nvx-info-soft: #e8f1fc;
+  --nvx-info-fg: #0058b0;
+  /* Focus + code (code windows are always dark) */
+  --nvx-ring: #0071e3;
+  --nvx-code-bg: #1d1d1f;
+  --nvx-code-fg: #f5f5f7;
+  --nvx-code-prompt: #32d74b;
+  --nvx-code-muted: #98989d;
+  --nvx-code-border: #2c2c2e;
+  --nvx-overlay: rgb(0 0 0 / 0.4);
+  /* macOS window chrome on code windows */
+  --nvx-chrome-close: #ff5f57;
+  --nvx-chrome-min: #febc2e;
+  --nvx-chrome-zoom: #28c840;
+  /* Brand mark gradient */
+  --nvx-brand-from: #2997ff;
+  --nvx-brand-to: #5e5ce6;
+  /* App-icon tiles */
+  --nvx-tile-top: #ffffff;
+  --nvx-tile-bottom: #f2f2f5;
+  --nvx-tile-edge: rgb(0 0 0 / 0.08);
+  --nvx-tile-sheen: rgb(255 255 255 / 0.9);
+  /* Hero glow */
+  --nvx-glow-1: rgb(0 113 227 / 0.1);
+  --nvx-glow-2: rgb(175 82 222 / 0.07);
+  /* Shadows */
+  --nvx-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
+  --nvx-shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.1);
+  --nvx-shadow-lg: 0 20px 48px -16px rgb(0 0 0 / 0.22);
   /* Motion */
   --nvx-duration-fast: 120ms;
   --nvx-duration-base: 200ms;
@@ -67,47 +84,53 @@
 }
 
 .dark {
-  /* Surfaces: near-black CRT */
-  --nvx-bg: #030303;
-  --nvx-surface: #0a0a0a;
-  --nvx-surface-2: #121412;
-  --nvx-surface-3: #1b1f1c;
-  --nvx-border: #1e2620;
-  --nvx-border-strong: #355c3f;
-  /* Text: soft phosphor white */
-  --nvx-fg: #e3f5e6;
-  --nvx-muted: #a9bfad;
-  --nvx-subtle: #82998a;
-  /* Brand: phosphor green, amber accent */
-  --nvx-primary: #33ff66;
-  --nvx-primary-hover: #7dff9c;
-  --nvx-primary-fg: #001a07;
-  --nvx-primary-soft: rgb(51 255 102 / 0.1);
-  --nvx-primary-soft-fg: #8dffaa;
-  --nvx-accent: #ffb000;
-  /* Status */
-  --nvx-success: #33ff66;
-  --nvx-success-soft: rgb(51 255 102 / 0.1);
-  --nvx-success-fg: #8dffaa;
-  --nvx-warning: #ffb000;
-  --nvx-warning-soft: rgb(255 176 0 / 0.12);
-  --nvx-warning-fg: #ffcc5c;
-  --nvx-danger: #ff5f56;
-  --nvx-danger-hover: #ff8a83;
-  --nvx-danger-soft: rgb(255 95 86 / 0.12);
-  --nvx-danger-fg: #ff9a94;
-  --nvx-info: #2fd8f0;
-  --nvx-info-soft: rgb(47 216 240 / 0.1);
-  --nvx-info-fg: #8beaf7;
-  --nvx-ring: #33ff66;
-  --nvx-code-bg: #000000;
-  --nvx-overlay: rgb(0 0 0 / 0.75);
-  --nvx-grid: rgb(51 255 102 / 0.035);
-  --nvx-scanline: rgb(0 0 0 / 0.18);
-  --nvx-glow: rgb(51 255 102 / 0.35);
+  /* Surfaces: black page, graphite cards */
+  --nvx-bg: #000000;
+  --nvx-surface: #161617;
+  --nvx-surface-2: #1d1d1f;
+  --nvx-surface-3: #2a2a2d;
+  --nvx-raised: #3a3a3c;
+  --nvx-border: #2a2a2d;
+  --nvx-border-strong: #48484c;
+  /* Text */
+  --nvx-fg: #f5f5f7;
+  --nvx-muted: #c7c7cc;
+  --nvx-subtle: #98989d;
+  /* Brand */
+  --nvx-primary: #0071e3;
+  --nvx-primary-hover: #0068d1;
+  --nvx-primary-fg: #ffffff;
+  --nvx-primary-soft: rgb(41 151 255 / 0.16);
+  --nvx-primary-soft-fg: #8ec5ff;
+  --nvx-link: #2997ff;
+  --nvx-accent: #2997ff;
+  /* Status (Apple system colours, dark) */
+  --nvx-success: #32d74b;
+  --nvx-success-soft: rgb(50 215 75 / 0.14);
+  --nvx-success-fg: #7ee38f;
+  --nvx-warning: #ffd60a;
+  --nvx-warning-soft: rgb(255 214 10 / 0.13);
+  --nvx-warning-fg: #ffe36b;
+  --nvx-danger: #ff453a;
+  --nvx-danger-hover: #ff6961;
+  --nvx-danger-soft: rgb(255 69 58 / 0.15);
+  --nvx-danger-fg: #ff8f88;
+  --nvx-info: #64d2ff;
+  --nvx-info-soft: rgb(100 210 255 / 0.13);
+  --nvx-info-fg: #9fe3ff;
+  --nvx-ring: #2997ff;
+  --nvx-code-bg: #0c0c0d;
+  --nvx-code-border: #2a2a2d;
+  --nvx-overlay: rgb(0 0 0 / 0.7);
+  --nvx-tile-top: #2c2c2e;
+  --nvx-tile-bottom: #1c1c1e;
+  --nvx-tile-edge: rgb(255 255 255 / 0.1);
+  --nvx-tile-sheen: rgb(255 255 255 / 0.12);
+  --nvx-glow-1: rgb(41 151 255 / 0.16);
+  --nvx-glow-2: rgb(191 90 242 / 0.1);
   --nvx-shadow-sm: 0 0 0 0 transparent;
-  --nvx-shadow-md: 0 0 0 1px rgb(51 255 102 / 0.18);
-  --nvx-shadow-lg: 0 0 0 1px rgb(51 255 102 / 0.14), 0 0 32px -12px rgb(51 255 102 / 0.25);
+  --nvx-shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  --nvx-shadow-lg: 0 24px 64px -16px rgb(0 0 0 / 0.8);
   color-scheme: dark;
 }
 
