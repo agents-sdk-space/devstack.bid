@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { TEMPLATES } from "@/data/templates";
 import { CATEGORY_LABELS } from "@/lib/i18n";
+import { Button, cn, EmptyState, Input, SearchIcon } from "@/components/ui";
 import { useLang } from "./prefs";
 import { TemplateCard } from "./template-card";
 
@@ -22,18 +23,14 @@ export function Catalog() {
 
   return (
     <div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <label htmlFor="search" className="sr-only">
           {t("catalog.search")}
         </label>
-        <input
-          id="search"
-          type="search"
-          className="input sm:max-w-md"
-          placeholder={t("catalog.search")}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+        <div className="relative lg:w-96">
+          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
+          <Input id="search" type="search" className="pl-9" placeholder={t("catalog.search")} value={query} onChange={(e) => setQuery(e.target.value)} />
+        </div>
         <div role="group" aria-label="Category" className="flex flex-wrap gap-1.5">
           {categories.map((c) => (
             <button
@@ -41,24 +38,38 @@ export function Catalog() {
               type="button"
               aria-pressed={category === c}
               onClick={() => setCategory(c)}
-              className={`rounded-full border px-3 py-1 text-sm transition ${
-                category === c
-                  ? "border-indigo-600 bg-indigo-600 text-white"
-                  : "border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
-              }`}
+              className={cn(
+                "focus-ring motion-fast rounded-full border px-3 py-1 text-sm",
+                category === c ? "border-primary bg-primary text-primary-fg" : "border-border text-muted hover:border-border-strong hover:text-fg"
+              )}
             >
               {c === "all" ? t("catalog.all") : CATEGORY_LABELS[c][lang]}
             </button>
           ))}
         </div>
       </div>
-      <p className="sr-only" aria-live="polite">
-        {filtered.length} templates
+      <p className="mt-3 text-sm text-subtle" aria-live="polite">
+        {filtered.length} {t("catalog.count")}
       </p>
       {filtered.length === 0 ? (
-        <p className="mt-10 text-center text-slate-500">{t("catalog.none")}</p>
+        <EmptyState
+          className="mt-6"
+          icon="🔍"
+          title={t("catalog.none")}
+          action={
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setQuery("");
+                setCategory("all");
+              }}
+            >
+              {t("catalog.clear")}
+            </Button>
+          }
+        />
       ) : (
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((tpl) => (
             <TemplateCard key={tpl.id} template={tpl} />
           ))}
