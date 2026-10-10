@@ -1,6 +1,8 @@
 # Deploying NVX Stack Builder to Cloudflare Workers
 
-> **Status (2026-10-10):** the app is fully adapted and verified in the local Workers runtime (`opennextjs-cloudflare preview`, workerd). The **live test deploy has not been done yet**: the Cloudflare API token available only grants access to a different account (see "Token permissions" below). No Cloudflare resources were created or modified.
+> **Status (2026-10-11, v0.3.0):** a TEST deployment is live at **https://nvx-stack-builder.agen-sdk-work.workers.dev** (Worker `nvx-stack-builder`, account `f70d35188a3c56b9781538c73a86e04e`, workers.dev only, no routes or custom domains). Verified live: all pages 200, real 404s, security headers, `/api/plan` Thai prompt → `source: "openai"` (gpt-6.1-sol), 429 + `Retry-After: 60` after 20 POSTs/min. Rollback target: version `0fb9ecd4-d788-468c-8843-559545c357e3` (current); earlier `9b9b678a-f0b4-4727-96d7-e5f81fc00391`.
+>
+> The test Worker lives in account `f70d…e04e`, the one the current token can reach, with the user's approval. Account `9d56815c97f330febf9d6a0bb7f234d1` would need a token that includes it (see section 7).
 
 - [English](#english)
 - [ภาษาไทย](#ภาษาไทย)
@@ -40,7 +42,7 @@ Checks: `npm run lint && npm run typecheck && npm test && npm run cf:build`.
 | `NVX_PLAN_AI_LIMITER` | rate-limit binding | `wrangler.jsonc` `ratelimits` (namespace `4711`) | 5 req / 60 s per IP, shared server key only |
 | `PLAN_LIMIT_PER_MIN`, `PLAN_AI_LIMIT_PER_MIN` | var | only used by the in-memory fallback (non-Workers hosts) | 20 / 5 |
 
-Rate-limit bindings are declared in config only. They are not a separate dashboard resource, and they are created when the Worker is deployed. Counters are per Cloudflare location, which is fine for abuse control.
+Rate-limit bindings are declared in config only. They are not a separate dashboard resource, and they are created when the Worker is deployed. Counters are per Cloudflare location and eventually consistent, so very fast bursts may let a few extra requests through, which is fine for abuse control. Clients are keyed by IP, and IPv6 clients by their /64 prefix.
 
 Set the secret **via stdin** so it never appears in shell history or logs:
 
@@ -54,7 +56,7 @@ Users can still paste their own OpenAI key in the UI. It travels only in the `x-
 
 ```bash
 export CLOUDFLARE_API_TOKEN=...          # only the token string, nothing else
-export CLOUDFLARE_ACCOUNT_ID=9d56815c97f330febf9d6a0bb7f234d1
+export CLOUDFLARE_ACCOUNT_ID=f70d35188a3c56b9781538c73a86e04e   # test account (agen-sdk-work.workers.dev)
 
 # 1) make sure the worker name is free (should say it does not exist)
 npx wrangler deployments list --name nvx-stack-builder
@@ -104,6 +106,8 @@ Steps, when the owner approves:
 
 ### 7. Token permissions
 
+The current token (`restless-heart-ac34`) is scoped to account `f70d…e04e` only, which is enough for this test deploy. To deploy to another account:
+
 Minimum for the test deploy (account-scoped token, resources must include account `9d56815c97f330febf9d6a0bb7f234d1`):
 
 - Account › **Workers Scripts: Edit** (upload, secrets, versions, rollback, rate-limit bindings)
@@ -118,7 +122,7 @@ Minimum for the test deploy (account-scoped token, resources must include accoun
 
 ## ภาษาไทย
 
-> **สถานะ (10 ต.ค. 2026):** ปรับแอปให้รันบน Cloudflare Workers ครบแล้ว และทดสอบใน runtime ของ Workers บนเครื่อง (workerd) ผ่านทุกข้อ **แต่ยังไม่ได้ deploy จริง** เพราะ API token ที่มีเข้าถึงได้เฉพาะบัญชี Cloudflare อีกบัญชีหนึ่ง ไม่ได้สร้างหรือแก้ไข resource ใดบน Cloudflare
+> **สถานะ (11 ต.ค. 2026, v0.3.0):** deploy ทดสอบแล้วที่ **https://nvx-stack-builder.agen-sdk-work.workers.dev** (Worker `nvx-stack-builder` บัญชี `f70d35188a3c56b9781538c73a86e04e` ใช้ workers.dev เท่านั้น ไม่มี route หรือ custom domain) ตรวจบนเว็บจริงผ่านทุกข้อ: ทุกหน้าได้ 200, 404 จริง, security headers ครบ, prompt ภาษาไทยได้ `source: "openai"`, rate limit ตอบ 429 หลังครบ 20 ครั้งต่อนาที เวอร์ชันปัจจุบันสำหรับ rollback คือ `0fb9ecd4-d788-468c-8843-559545c357e3` (ก่อนหน้า `9b9b678a-f0b4-4727-96d7-e5f81fc00391`)
 
 ### 1. สิ่งที่ต้องมี
 - Node.js **22 ขึ้นไป** สำหรับ Wrangler 4
@@ -142,7 +146,7 @@ npm run preview    # รันใน Workers runtime ที่ http://localhost:
 ### 4. Deploy (workers.dev เท่านั้น)
 ```bash
 export CLOUDFLARE_API_TOKEN=...      # ใส่เฉพาะตัว token
-export CLOUDFLARE_ACCOUNT_ID=9d56815c97f330febf9d6a0bb7f234d1
+export CLOUDFLARE_ACCOUNT_ID=f70d35188a3c56b9781538c73a86e04e   # บัญชีทดสอบ
 npx wrangler deployments list --name nvx-stack-builder   # ตรวจว่าชื่อยังว่าง ถ้าไม่ว่างให้ใช้ nvx-stack-builder-staging
 npm run deploy
 printenv OPENAI_API_KEY | npx wrangler secret put OPENAI_API_KEY

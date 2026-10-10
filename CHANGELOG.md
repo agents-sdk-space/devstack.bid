@@ -7,10 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-11
+
+Test deployment: https://nvx-stack-builder.agen-sdk-work.workers.dev (workers.dev only).
+
 ### Added
 
 - **Cloudflare Workers target** via `@opennextjs/cloudflare` 1.20 + Wrangler 4: `wrangler.jsonc` (worker `nvx-stack-builder`, `nodejs_compat`, `ASSETS` binding, workers.dev only, no routes/custom domains), `open-next.config.ts` (static-assets incremental cache, no R2), scripts `cf:build`, `preview`, `deploy`, `cf:typegen`, generated `cloudflare-env.d.ts`, `.dev.vars.example`.
-- **Distributed rate limiting** for `/api/plan` with Workers Rate Limiting bindings `NVX_PLAN_LIMITER` (20/min/IP, all POSTs) and `NVX_PLAN_AI_LIMITER` (5/min/IP, shared server key only); in-memory fallback outside Workers. 429 responses carry `Retry-After`.
+- **Distributed rate limiting** for `/api/plan` with Workers Rate Limiting bindings `NVX_PLAN_LIMITER` (20/min/IP, all POSTs) and `NVX_PLAN_AI_LIMITER` (5/min/IP, shared server key only); in-memory fallback outside Workers. 429 responses carry `Retry-After`. IPv6 clients are keyed by their /64 prefix so address rotation can't bypass the limits.
 - **Security headers** on every response: CSP (`frame-ancestors 'none'`, `object-src 'none'`), HSTS (production), `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, COOP/CORP; `public/_headers` for static assets (+ immutable caching for `/_next/static`).
 - **Env validation** (`src/lib/server/env.ts`, zod) — invalid values fall back to safe defaults and only variable *names* are logged.
 - `docs/DEPLOY.md` (TH + EN): install, local dev, secrets, deploy, rollback, custom-domain plan.
