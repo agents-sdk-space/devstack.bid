@@ -1,0 +1,5 @@
+# Copy to .dev.vars for `npm run preview` (wrangler). Never commit .dev.vars.
+OPENAI_API_KEY=
+# OPENAI_MODEL=gpt-6.1-sol
+# OPENAI_MAX_OUTPUT_TOKENS=6000
+# OPENAI_TIMEOUT_MS=75000
