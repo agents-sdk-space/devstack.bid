@@ -1,0 +1,49 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // NEW worker — workers.dev only. Do not add "routes" or custom domains here until the
+  // domain step in docs/DEPLOY.md is explicitly approved.
+  "name": "nvx-stack-builder",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-06",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // Self-reference used by OpenNext for cache revalidation; must match "name".
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "nvx-stack-builder"
+    }
+  ],
+  "vars": {
+    "OPENAI_MODEL": "gpt-6.1-sol",
+    "OPENAI_MAX_OUTPUT_TOKENS": "6000",
+    "OPENAI_TIMEOUT_MS": "75000"
+  },
+  // Workers Rate Limiting API (no separate resource to create; counters are per Cloudflare location).
+  // namespace_id is an arbitrary account-unique integer string chosen for this app.
+  "ratelimits": [
+    {
+      // Requests that spend the operator's OpenAI key: 5 per IP per minute.
+      "name": "NVX_PLAN_AI_LIMITER",
+      "namespace_id": "4711",
+      "simple": { "limit": 5, "period": 60 }
+    },
+    {
+      // Every POST /api/plan (incl. offline planner / user keys): 20 per IP per minute.
+      "name": "NVX_PLAN_LIMITER",
+      "namespace_id": "4712",
+      "simple": { "limit": 20, "period": 60 }
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "upload_source_maps": true
+  // Secret (set with `wrangler secret put`, never committed): OPENAI_API_KEY
+}

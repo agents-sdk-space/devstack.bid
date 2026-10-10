@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-11
+
+Test deployment: https://nvx-stack-builder.agen-sdk-work.workers.dev (workers.dev only).
+
+### Added
+
+- **Cloudflare Workers target** via `@opennextjs/cloudflare` 1.20 + Wrangler 4: `wrangler.jsonc` (worker `nvx-stack-builder`, `nodejs_compat`, `ASSETS` binding, workers.dev only, no routes/custom domains), `open-next.config.ts` (static-assets incremental cache, no R2), scripts `cf:build`, `preview`, `deploy`, `cf:typegen`, generated `cloudflare-env.d.ts`, `.dev.vars.example`.
+- **Distributed rate limiting** for `/api/plan` with Workers Rate Limiting bindings `NVX_PLAN_LIMITER` (20/min/IP, all POSTs) and `NVX_PLAN_AI_LIMITER` (5/min/IP, shared server key only); in-memory fallback outside Workers. 429 responses carry `Retry-After`. IPv6 clients are keyed by their /64 prefix so address rotation can't bypass the limits.
+- **Security headers** on every response: CSP (`frame-ancestors 'none'`, `object-src 'none'`), HSTS (production), `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, COOP/CORP; `public/_headers` for static assets (+ immutable caching for `/_next/static`).
+- **Env validation** (`src/lib/server/env.ts`, zod) — invalid values fall back to safe defaults and only variable *names* are logged.
+- `docs/DEPLOY.md` (TH + EN): install, local dev, secrets, deploy, rollback, custom-domain plan.
+- `tests/production.test.ts` (14 tests) for hardening.
+
+### Changed
+
+- `/api/plan`: 16 KB body limit (413), JSON-only (415), request timeout (504 → fallback plan), structured JSON logs with `cf-ray` and secret redaction (prompts and keys are never logged), configurable `OPENAI_MODEL`, cost guard `OPENAI_MAX_OUTPUT_TOKENS` (default 6000, hard cap 16000). User-supplied keys are still used per request only, never stored or logged.
+- Unknown `/templates/:id` now returns a real **HTTP 404** (was a soft 404 with status 200 because of streaming) via a `beforeFiles` rewrite; page design/structure unchanged.
+- `poweredByHeader` disabled.
+
+### Fixed
+
+- Workers preview crash `Unexpected loadManifest(.next/server/preview-props.json)` with Next 16.4 — `scripts/patch-opennext.mjs` (postinstall) adds `preview-props.json` to the adapter's manifest glob.
+
 ## [0.2.0] - 2026-10-10
 
 ### Added

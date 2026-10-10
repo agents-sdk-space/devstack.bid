@@ -1,6 +1,6 @@
 {
   "name": "nvx-stack-builder",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,7 +10,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "export": "tsx scripts/export-template.ts"
+    "export": "tsx scripts/export-template.ts",
+    "cf:build": "opennextjs-cloudflare build",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf:typegen": "wrangler types --env-interface CloudflareEnv --include-runtime=false cloudflare-env.d.ts",
+    "postinstall": "node scripts/patch-opennext.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -32,6 +37,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.10",
     "@tailwindcss/turbopack": "^4",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
@@ -45,6 +51,8 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",
-    "vitest": "^4.1.11"
-  }
+    "vitest": "^4.1.11",
+    "wrangler": "^4.149.0"
+  },
+  "engines": {}
 }

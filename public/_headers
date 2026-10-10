@@ -1,0 +1,12 @@
+# Cloudflare Workers static assets: headers for files served directly from .open-next/assets
+# (e.g. /_next/static/*). Page and API responses get the same headers from next.config.ts.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Cross-Origin-Resource-Policy: same-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=(), browsing-topics=(), interest-cohort=()
+
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
