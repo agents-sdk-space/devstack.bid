@@ -44,7 +44,7 @@ export function TemplateDetail({ id }: { id: string }) {
               </Badge>
             ))}
           </div>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-fg sm:text-4xl">{template.name[lang]}</h1>
+          <h1 className="term-prompt mt-3 text-3xl font-bold tracking-tight text-fg sm:text-4xl">{template.name[lang]}</h1>
           <p className="mt-2 max-w-2xl text-muted">{template.summary[lang]}</p>
         </div>
         <Link href={`/builder#t=${template.id}`} className={buttonClasses("primary", "lg")}>
@@ -52,7 +52,7 @@ export function TemplateDetail({ id }: { id: string }) {
         </Link>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_300px]">
+      <div className="mt-8 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <section aria-labelledby="steps-h">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <h2 id="steps-h" className="text-xl font-semibold text-fg">

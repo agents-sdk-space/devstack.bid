@@ -45,7 +45,7 @@ export function StepCard({
       <Card className={cn("p-4 sm:p-5", dragging && "shadow-lg ring-2 ring-primary")}>
         <div className="flex flex-wrap items-start gap-3">
           {handle}
-          <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-primary-fg">
+          <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-sm bg-primary font-mono text-sm font-bold text-primary-fg">
             {index + 1}
           </span>
           <div className="min-w-0 flex-1">

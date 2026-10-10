@@ -26,7 +26,7 @@ export function Header() {
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-bg/80 backdrop-blur-md">
+    <header className="term-statusbar sticky top-0 z-30 border-b border-border bg-bg">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-fg"
@@ -34,11 +34,13 @@ export function Header() {
         {t("skip")}
       </a>
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4">
-        <Link href="/" className="focus-ring flex items-center gap-2 rounded-md font-semibold tracking-tight" aria-label="NVX Stack Builder home">
-          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-md bg-gradient-to-br from-indigo-500 to-emerald-500 text-[11px] font-black text-white shadow-sm">
+        <Link href="/" className="focus-ring flex items-center gap-2 rounded-md font-mono font-semibold" aria-label="NVX Stack Builder home">
+          <span aria-hidden className="term-glow grid h-8 w-8 place-items-center rounded-sm border border-primary text-[11px] font-bold text-primary">
             NVX
           </span>
-          <span className="hidden sm:inline">Stack Builder</span>
+          <span className="hidden sm:inline">
+            Stack Builder<span aria-hidden className="text-primary">_</span>
+          </span>
         </Link>
 
         <nav aria-label="Main" className="ml-4 hidden items-center gap-1 lg:flex">
@@ -132,8 +134,8 @@ export function Header() {
 export function Footer() {
   const { t } = useLang();
   return (
-    <footer className="mt-16 border-t border-border py-8 text-center text-sm text-subtle">
-      <p className="mx-auto max-w-3xl px-4">{t("footer.text")}</p>
+    <footer className="term-statusbar mt-16 border-t border-border py-8 text-center text-xs text-subtle">
+      <p className="term-dos mx-auto max-w-3xl px-4">{t("footer.text")}</p>
     </footer>
   );
 }

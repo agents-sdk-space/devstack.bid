@@ -5,8 +5,8 @@ export type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "dan
 export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: "bg-primary text-primary-fg shadow-sm hover:bg-primary-hover",
-  secondary: "bg-surface text-fg border border-border-strong shadow-sm hover:bg-surface-2",
+  primary: "bg-primary text-primary-fg border border-primary font-semibold uppercase tracking-wider hover:bg-primary-hover hover:border-primary-hover",
+  secondary: "bg-transparent text-fg border border-border-strong hover:border-primary hover:text-primary",
   outline: "border border-primary text-primary hover:bg-primary-soft",
   ghost: "text-muted hover:bg-surface-2 hover:text-fg",
   danger: "bg-danger text-white hover:bg-danger-hover dark:text-bg",
@@ -22,10 +22,12 @@ const SIZES: Record<ButtonSize, string> = {
 
 export function buttonClasses(variant: ButtonVariant = "primary", size: ButtonSize = "md", className?: string) {
   return cn(
-    "focus-ring motion-fast inline-flex select-none items-center justify-center whitespace-nowrap font-medium",
+    "focus-ring motion-fast inline-flex select-none items-center justify-center whitespace-nowrap font-mono font-medium",
     "active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50",
     VARIANTS[variant],
     SIZES[size],
+    // Terminal flavour: [ BRACKETED ] labels on text buttons (decorative, silent for screen readers).
+    size !== "icon" && size !== "sm" && (variant === "primary" || variant === "secondary" || variant === "outline") && "term-bracket",
     className
   );
 }

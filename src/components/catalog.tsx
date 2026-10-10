@@ -39,7 +39,7 @@ export function Catalog() {
               aria-pressed={category === c}
               onClick={() => setCategory(c)}
               className={cn(
-                "focus-ring motion-fast rounded-full border px-3 py-1 text-sm",
+                "focus-ring motion-fast rounded-sm border px-3 py-1 font-mono text-sm",
                 category === c ? "border-primary bg-primary text-primary-fg" : "border-border text-muted hover:border-border-strong hover:text-fg"
               )}
             >

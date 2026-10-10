@@ -44,13 +44,20 @@ export function CodeBlock({
   }
 
   return (
-    <div className={cn("overflow-hidden rounded-lg bg-code-bg text-code-fg ring-1 ring-white/10", className)}>
-      <div className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-1.5">
-        <span className="truncate font-mono text-[11px] text-slate-400">{title ?? (prompt ? "shell" : "")}</span>
+    <div className={cn("overflow-hidden rounded-lg border border-code-border bg-code-bg text-code-fg", className)}>
+      <div className="flex items-center justify-between gap-2 border-b border-code-border bg-white/[0.03] px-3 py-1.5">
+        <span className="flex min-w-0 items-center gap-2 font-mono text-[11px] text-code-muted">
+          <span aria-hidden className="flex gap-1">
+            <span className="h-2 w-2 bg-code-muted/50" />
+            <span className="h-2 w-2 bg-code-muted/50" />
+            <span className="h-2 w-2 bg-code-prompt/80" />
+          </span>
+          <span className="truncate">{title ?? (prompt ? "shell" : "")}</span>
+        </span>
         <button
           type="button"
           onClick={onCopy}
-          className="focus-ring motion-fast inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium text-slate-300 hover:bg-white/10 hover:text-white"
+          className="focus-ring motion-fast inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium text-code-muted hover:bg-white/10 hover:text-code-prompt"
           aria-label={title ? `${copyLabel}: ${title}` : copyLabel}
         >
           <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" aria-hidden>
@@ -73,7 +80,7 @@ export function CodeBlock({
           {prompt
             ? code.split("\n").map((line, i) => (
                 <span key={i} className="block">
-                  <span aria-hidden className="select-none text-emerald-400">
+                  <span aria-hidden className="select-none text-code-prompt">
                     ${" "}
                   </span>
                   {line}

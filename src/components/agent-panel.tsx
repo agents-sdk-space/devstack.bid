@@ -91,7 +91,7 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
               {t("agent.serverAi")}: {server.serverKeyConfigured ? `${t("agent.available")} · ${server.model}` : t("agent.notConfigured")}
             </Badge>
           ) : (
-            <Skeleton className="h-5 w-48 rounded-full" />
+            <Skeleton className="h-5 w-48 rounded-sm" />
           )}
         </div>
         <p className="mt-1 text-sm text-muted">{t("agent.subtitle")}</p>
@@ -124,7 +124,7 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
               <button
                 key={ex}
                 type="button"
-                className="focus-ring motion-fast rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-muted hover:border-primary hover:text-primary"
+                className="focus-ring motion-fast rounded-sm border border-border bg-surface px-2.5 py-1 font-mono text-xs text-muted hover:border-primary hover:text-primary"
                 onClick={() => setPrompt(ex)}
               >
                 {ex}
@@ -165,9 +165,9 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
           <Card className="space-y-4 p-5 sm:p-6" role="status">
             <span className="sr-only">{t("agent.thinking")}</span>
             <div className="flex gap-2">
-              <Skeleton className="h-6 w-32 rounded-full" />
-              <Skeleton className="h-6 w-40 rounded-full" />
-              <Skeleton className="h-6 w-24 rounded-full" />
+              <Skeleton className="h-6 w-32 rounded-sm" />
+              <Skeleton className="h-6 w-40 rounded-sm" />
+              <Skeleton className="h-6 w-24 rounded-sm" />
             </div>
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-5/6" />

@@ -36,7 +36,7 @@ export function Stepper({
               <span
                 aria-hidden
                 className={cn(
-                  "motion-base grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-sm font-semibold",
+                  "motion-base grid h-8 w-8 shrink-0 place-items-center rounded-sm border-2 font-mono text-sm font-semibold",
                   state === "complete" && "border-primary bg-primary text-primary-fg",
                   state === "current" && "border-primary bg-primary-soft text-primary-soft-fg",
                   state === "upcoming" && "border-border-strong text-subtle"

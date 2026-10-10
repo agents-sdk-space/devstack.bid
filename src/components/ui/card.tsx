@@ -11,7 +11,7 @@ export function Card({
     <Tag
       className={cn(
         "rounded-xl border border-border bg-surface shadow-sm",
-        interactive && "motion-base hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md",
+        interactive && "motion-base hover:border-border-strong hover:shadow-md",
         className
       )}
       {...props}

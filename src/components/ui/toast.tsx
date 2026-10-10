@@ -48,7 +48,7 @@ export function ToastProvider({ children, closeLabel = "Dismiss" }: { children: 
               onOpenChange={(open) => !open && remove(t.id)}
               className="flex items-start gap-3 rounded-lg border border-border bg-surface p-3.5 pr-10 text-fg shadow-lg data-[state=open]:animate-slide-in data-[swipe=end]:opacity-0"
             >
-              <span aria-hidden className={cn("grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold", TONE[variant])}>
+              <span aria-hidden className={cn("grid h-6 w-6 shrink-0 place-items-center rounded-sm text-xs font-bold", TONE[variant])}>
                 {ICON[variant]}
               </span>
               <div className="min-w-0">

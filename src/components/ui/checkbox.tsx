@@ -71,9 +71,9 @@ export function Switch({
         checked={checked}
         disabled={disabled}
         onCheckedChange={onCheckedChange}
-        className="focus-ring motion-base relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-surface-3 data-[state=checked]:bg-primary"
+        className="focus-ring motion-base relative inline-flex h-6 w-11 shrink-0 items-center rounded-sm border border-border-strong bg-surface-3 data-[state=checked]:bg-primary"
       >
-        <SwitchPrimitive.Thumb className="motion-base block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow-sm data-[state=checked]:translate-x-[22px]" />
+        <SwitchPrimitive.Thumb className="motion-base block h-4 w-4 translate-x-[3px] rounded-xs bg-fg data-[state=checked]:bg-primary-fg data-[state=checked]:translate-x-[23px]" />
       </SwitchPrimitive.Root>
       <label htmlFor={id} className="cursor-pointer text-sm font-medium">
         {label}

@@ -28,7 +28,7 @@ export function EmptyState({
         className
       )}
     >
-      <div aria-hidden className={cn("grid h-12 w-12 place-items-center rounded-full text-2xl", tone === "danger" ? "bg-surface" : "bg-surface-2")}>
+      <div aria-hidden className={cn("grid h-12 w-12 place-items-center rounded-sm border border-border text-2xl", tone === "danger" ? "bg-surface" : "bg-surface-2")}>
         {icon}
       </div>
       <Heading className={cn("mt-4 text-base font-semibold text-fg", Heading === "h1" && "text-2xl", tone === "danger" && "text-danger-fg")}>{title}</Heading>

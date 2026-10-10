@@ -255,7 +255,7 @@ export function Builder() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-fg">{t("builder.title")}</h1>
+          <h1 className="term-prompt text-3xl font-bold tracking-tight text-fg">{t("builder.title")}</h1>
           <p className="mt-1 max-w-2xl text-muted">{t("builder.subtitle")}</p>
         </div>
       </div>
@@ -267,7 +267,7 @@ export function Builder() {
       {/* Summary bar: always visible so users know what they're building. */}
       <section
         aria-label={t("summary.label")}
-        className="z-20 -mx-4 md:sticky md:top-14 flex flex-wrap items-center gap-2 border-y border-border bg-bg/90 px-4 py-2.5 backdrop-blur-md sm:mx-0 sm:rounded-lg sm:border"
+        className="z-20 -mx-4 md:sticky md:top-14 flex flex-wrap items-center gap-2 border-y border-border bg-bg px-4 py-2.5 sm:mx-0 sm:rounded-lg sm:border"
       >
         <span className="text-xs font-semibold uppercase tracking-wide text-subtle">{t("summary.label")}</span>
         <Badge variant="primary">{template.name[lang]}</Badge>
