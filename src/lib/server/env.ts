@@ -1,0 +1,58 @@
+import "server-only";
+import { z } from "zod";
+
+/**
+ * Server configuration, validated once per isolate. Invalid optional values fall back to safe
+ * defaults (and are reported once in the logs, without values) instead of crashing the app.
+ * Secrets are read here and nowhere else; they are never logged or returned to clients.
+ */
+
+export const DEFAULT_MODEL = "gpt-6.1-sol";
+
+const intIn = (min: number, max: number, fallback: number) =>
+  z
+    .string()
+    .trim()
+    .regex(/^\d+$/)
+    .transform(Number)
+    .pipe(z.number().int().min(min).max(max))
+    .catch(fallback)
+    .default(fallback);
+
+const schema = z.object({
+  OPENAI_API_KEY: z
+    .string()
+    .trim()
+    .regex(/^[\w-]{20,400}$/)
+    .optional()
+    .catch(undefined),
+  OPENAI_MODEL: z
+    .string()
+    .trim()
+    .regex(/^[\w.:-]{1,80}$/)
+    .catch(DEFAULT_MODEL)
+    .default(DEFAULT_MODEL),
+  /** Cost guard: hard cap on generated tokens per plan. */
+  OPENAI_MAX_OUTPUT_TOKENS: intIn(512, 16_000, 6_000),
+  /** Upstream timeout for one OpenAI call. */
+  OPENAI_TIMEOUT_MS: intIn(5_000, 120_000, 60_000),
+  /** Fallback in-memory limits (used when the Workers rate-limit bindings are unavailable). */
+  PLAN_AI_LIMIT_PER_MIN: intIn(1, 600, 5),
+  PLAN_LIMIT_PER_MIN: intIn(1, 6_000, 20),
+});
+
+export type ServerEnv = z.infer<typeof schema>;
+
+let cached: { env: ServerEnv; source: Record<string, string | undefined> } | null = null;
+const KEYS = Object.keys(schema.shape) as (keyof ServerEnv)[];
+
+export function serverEnv(source: Record<string, string | undefined> = process.env): ServerEnv {
+  if (cached && KEYS.every((k) => cached!.source[k] === source[k])) return cached.env;
+  const raw = Object.fromEntries(KEYS.map((k) => [k, source[k] === "" ? undefined : source[k]]));
+  const env = schema.parse(raw);
+  const invalid = KEYS.filter((k) => raw[k] !== undefined && k !== "OPENAI_API_KEY" && String(env[k]) !== String(raw[k]).trim());
+  if (raw.OPENAI_API_KEY !== undefined && !env.OPENAI_API_KEY) invalid.push("OPENAI_API_KEY");
+  if (invalid.length) console.warn(`[env] ignoring invalid values for: ${invalid.join(", ")} (using defaults)`);
+  cached = { env, source: Object.fromEntries(KEYS.map((k) => [k, source[k]])) };
+  return env;
+}

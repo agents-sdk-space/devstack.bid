@@ -1,13 +1,14 @@
 import "server-only";
 import { TEMPLATES } from "@/data/templates";
 import type { Lang } from "../types";
+import { DEFAULT_MODEL, serverEnv } from "../server/env";
 import { planJsonSchema } from "./schema";
 
-export const DEFAULT_MODEL = "gpt-6.1-sol";
+export { DEFAULT_MODEL };
 
+/** Model from OPENAI_MODEL (validated), default gpt-6.1-sol. */
 export function configuredModel(): string {
-  const model = (process.env.OPENAI_MODEL ?? "").trim();
-  return /^[\w.:-]{1,80}$/.test(model) ? model : DEFAULT_MODEL;
+  return serverEnv().OPENAI_MODEL;
 }
 
 export class OpenAIError extends Error {
@@ -20,8 +21,13 @@ export class OpenAIError extends Error {
 }
 
 /** Remove anything that looks like an API key from error text before it leaves the server. */
-export function redactSecrets(text: string): string {
-  return text.replace(/sk-[A-Za-z0-9_\-*]{4,}/g, "sk-***").replace(/Bearer\s+\S+/gi, "Bearer ***");
+export function redactSecrets(text: string, ...secrets: (string | undefined)[]): string {
+  let out = text;
+  for (const secret of secrets) if (secret && secret.length >= 8) out = out.split(secret).join("***");
+  return out
+    .replace(/sk-[A-Za-z0-9_\-*]{4,}/g, "sk-***")
+    .replace(/Bearer\s+\S+/gi, "Bearer ***")
+    .replace(/\b(cfat|cfut)_[A-Za-z0-9]{8,}/g, "$1_***");
 }
 
 function instructions(lang: Lang): string {
@@ -59,10 +65,16 @@ export async function callOpenAIPlanner(opts: {
   apiKey: string;
   model?: string;
   timeoutMs?: number;
+  maxOutputTokens?: number;
+  /** Abort from the caller (e.g. the client disconnected). */
+  signal?: AbortSignal;
 }): Promise<{ data: unknown; model: string }> {
-  const model = opts.model ?? configuredModel();
+  const env = serverEnv();
+  const model = opts.model ?? env.OPENAI_MODEL;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 60_000);
+  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? env.OPENAI_TIMEOUT_MS);
+  const onAbort = () => controller.abort();
+  opts.signal?.addEventListener("abort", onAbort, { once: true });
   try {
     const res = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -76,7 +88,8 @@ export async function callOpenAIPlanner(opts: {
         instructions: instructions(opts.lang),
         input: [{ role: "user", content: opts.prompt }],
         text: { format: { type: "json_schema", name: "nvx_stack_plan", strict: true, schema: planJsonSchema() } },
-        max_output_tokens: 8000,
+        // Cost guard: hard cap from OPENAI_MAX_OUTPUT_TOKENS (default 6000, max 16000).
+        max_output_tokens: Math.min(opts.maxOutputTokens ?? env.OPENAI_MAX_OUTPUT_TOKENS, 16_000),
         store: false,
       }),
     });
@@ -89,9 +102,12 @@ export async function callOpenAIPlanner(opts: {
     };
     if (!res.ok) {
       const msg = body.error?.message ?? res.statusText;
-      throw new OpenAIError(redactSecrets(`OpenAI ${res.status}${body.error?.code ? ` (${body.error.code})` : ""}: ${msg}`).slice(0, 300), res.status);
+      throw new OpenAIError(redactSecrets(`OpenAI ${res.status}${body.error?.code ? ` (${body.error.code})` : ""}: ${msg}`, opts.apiKey).slice(0, 300), res.status);
     }
-    if (body.status && body.status !== "completed") throw new OpenAIError(`OpenAI response status: ${body.status}`);
+    if (body.status && body.status !== "completed") {
+      const why = (body as { incomplete_details?: { reason?: string } }).incomplete_details?.reason;
+      throw new OpenAIError(`OpenAI response status: ${body.status}${why ? ` (${why})` : ""}`);
+    }
     const parts = (body.output ?? []).flatMap((o) => o.content ?? []);
     const refusal = parts.find((p) => p.type === "refusal");
     if (refusal) throw new OpenAIError(`Model refused: ${(refusal.refusal ?? "").slice(0, 200)}`);
@@ -105,8 +121,9 @@ export async function callOpenAIPlanner(opts: {
   } catch (err) {
     if (err instanceof OpenAIError) throw err;
     if ((err as Error)?.name === "AbortError") throw new OpenAIError("OpenAI request timed out");
-    throw new OpenAIError(redactSecrets(`Network error: ${(err as Error)?.message ?? "unknown"}`).slice(0, 300));
+    throw new OpenAIError(redactSecrets(`Network error: ${(err as Error)?.message ?? "unknown"}`, opts.apiKey).slice(0, 300));
   } finally {
     clearTimeout(timer);
+    opts.signal?.removeEventListener("abort", onAbort);
   }
 }
