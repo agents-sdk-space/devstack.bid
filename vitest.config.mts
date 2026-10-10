@@ -5,8 +5,11 @@ export default defineConfig({
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
+  // Component tests use the automatic JSX runtime (same as Next.js).
+  oxc: { jsx: { runtime: "automatic" } },
   test: {
-    include: ["tests/**/*.test.ts"],
-    environment: "node",
+    include: ["tests/**/*.test.{ts,tsx}"],
+    environment: "node", // component tests opt into jsdom with `// @vitest-environment jsdom`
+    setupFiles: ["tests/setup.ts"],
   },
 });

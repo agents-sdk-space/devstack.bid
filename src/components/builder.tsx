@@ -11,11 +11,35 @@ import { sanitizeStep } from "@/lib/sanitize";
 import { toBash, toPowerShell, toReadme } from "@/lib/scripts";
 import { decodeShare, encodeShare } from "@/lib/share";
 import { ADDON_IDS, type BuilderConfig, type BuilderEdits, type ResolvedStep } from "@/lib/types";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardTitle,
+  Checkbox,
+  cn,
+  copyText,
+  EmptyState,
+  Field,
+  Input,
+  Segmented,
+  Select,
+  Stepper,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Textarea,
+  Tooltip,
+  useToast,
+} from "@/components/ui";
 import { AgentPanel } from "./agent-panel";
-import { copyText } from "./copy-button";
+import { CodeBlock } from "./copy-button";
 import { OsToggle } from "./os-toggle";
 import { useLang } from "./prefs";
-import { StepCard } from "./step-card";
+import { SortableSteps } from "./sortable-steps";
 
 const EMPTY_EDITS: BuilderEdits = { order: [], removed: [], custom: [] };
 const STORAGE_KEY = "nvx-builder-state";
@@ -24,7 +48,12 @@ interface State {
   config: BuilderConfig;
   edits: BuilderEdits;
   fromShare: boolean;
+  stage: Stage;
+  startTab: "ai" | "pick";
 }
+
+/** Wizard stages: 0 Start · 1 Configure · 2 Review & reorder · 3 Export. */
+type Stage = 0 | 1 | 2 | 3;
 
 /** Initial state from the URL hash (#s=share, #t=template) or the last session. */
 function readInitialState(): State {
@@ -32,71 +61,34 @@ function readInitialState(): State {
   const s = hash.get("s");
   if (s) {
     const decoded = decodeShare(s);
-    if (decoded) return { ...decoded, fromShare: true };
+    if (decoded) return { ...decoded, fromShare: true, stage: 2, startTab: "ai" };
   }
   const t = hash.get("t");
-  if (t && getTemplate(t)) return { config: configForTemplate(t), edits: EMPTY_EDITS, fromShare: false };
+  if (t && getTemplate(t)) return { config: configForTemplate(t), edits: EMPTY_EDITS, fromShare: false, stage: 1, startTab: "pick" };
+  const startTab = hash.has("pick") ? "pick" : "ai";
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     const decoded = saved ? decodeShare(saved) : null;
-    if (decoded) return { ...decoded, fromShare: false };
+    if (decoded) return { ...decoded, fromShare: false, stage: 0, startTab };
   } catch {}
-  return { config: DEFAULT_CONFIG, edits: EMPTY_EDITS, fromShare: false };
-}
-
-function Segmented<T extends string>({
-  name,
-  legend,
-  value,
-  options,
-  onChange,
-  disabled,
-  hint,
-}: {
-  name: string;
-  legend: string;
-  value: T;
-  options: readonly { value: T; label: string }[];
-  onChange: (v: T) => void;
-  disabled?: boolean;
-  hint?: string;
-}) {
-  return (
-    <fieldset className={disabled ? "opacity-50" : ""}>
-      <legend className="label">
-        {legend} {hint && <span className="text-xs font-normal text-slate-500">{hint}</span>}
-      </legend>
-      <div className="flex flex-wrap gap-1.5">
-        {options.map((o) => (
-          <label
-            key={o.value}
-            className={`cursor-pointer rounded-lg border px-3 py-1.5 text-sm transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-indigo-500 ${
-              value === o.value
-                ? "border-indigo-600 bg-indigo-600 text-white"
-                : "border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
-            }`}
-          >
-            <input type="radio" className="sr-only" name={name} value={o.value} checked={value === o.value} onChange={() => onChange(o.value)} />
-            {o.label}
-          </label>
-        ))}
-      </div>
-    </fieldset>
-  );
+  return { config: DEFAULT_CONFIG, edits: EMPTY_EDITS, fromShare: false, stage: 0, startTab };
 }
 
 export function Builder() {
   const { lang, t } = useLang();
+  const toast = useToast();
   const [initial] = useState(readInitialState);
   const [config, setConfig] = useState<BuilderConfig>(initial.config);
   const [edits, setEdits] = useState<BuilderEdits>(initial.edits);
+  const [stage, setStage] = useState<Stage>(initial.stage);
+  const [startTab, setStartTab] = useState<"ai" | "pick">(initial.startTab);
   const [os, setOs] = useState<"posix" | "windows">("posix");
-  const [status, setStatus] = useState(initial.fromShare ? t("builder.loadedShare") : "");
   const [customTitle, setCustomTitle] = useState("");
   const [customCmd, setCustomCmd] = useState("");
   const [customError, setCustomError] = useState("");
   const [nameDraft, setNameDraft] = useState(initial.config.projectName);
-  const builderHeading = useRef<HTMLHeadingElement>(null);
+  const stageHeading = useRef<HTMLHeadingElement>(null);
+  const firstRender = useRef(true);
 
   const template = getTemplate(config.templateId)!;
   const composed = useMemo(() => composeSteps(config), [config]);
@@ -105,6 +97,23 @@ export function Builder() {
     const all = applyEdits(composed, { custom: edits.custom });
     return all.filter((s) => edits.removed.includes(s.id));
   }, [composed, edits]);
+  const hasEdits = edits.order.length > 0 || edits.removed.length > 0 || edits.custom.length > 0;
+
+  // Announce a shared stack once on load.
+  useEffect(() => {
+    if (initial.fromShare) toast({ title: t("builder.loadedShare"), variant: "info" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once
+  }, []);
+
+  // Move focus to the stage heading when the stage changes (not on first render).
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    stageHeading.current?.focus({ preventScroll: true });
+    document.getElementById("builder")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [stage]);
 
   // Keep the URL hash + localStorage in sync so reloads and share links restore this exact stack.
   useEffect(() => {
@@ -115,7 +124,7 @@ export function Builder() {
     } catch {}
   }, [config, edits]);
 
-  // Pasting a different share link into the address bar loads it.
+  // Pasting a different share link (or a #t= template link) into the address bar loads it.
   useEffect(() => {
     const onHash = () => {
       const params = new URLSearchParams(window.location.hash.slice(1));
@@ -127,17 +136,20 @@ export function Builder() {
           setConfig(decoded.config);
           setEdits(decoded.edits);
           setNameDraft(decoded.config.projectName);
+          setStage(2);
+          toast({ title: t("builder.loadedShare"), variant: "info" });
         }
       } else if (tpl && getTemplate(tpl)) {
         const next = configForTemplate(tpl, config);
         setConfig({ ...next, projectName: getTemplate(tpl)!.defaultName, addons: [...getTemplate(tpl)!.defaultAddons] });
         setNameDraft(getTemplate(tpl)!.defaultName);
         setEdits(EMPTY_EDITS);
+        setStage(1);
       }
     };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
-  }, [config, edits]);
+  }, [config, edits, t, toast]);
 
   const update = useCallback((patch: Partial<BuilderConfig>) => setConfig((c) => normalizeConfig({ ...c, ...patch })), []);
 
@@ -178,11 +190,8 @@ export function Builder() {
     setConfig(next);
     setNameDraft(next.projectName);
     setEdits({ order: [], removed: [], custom });
-    setStatus(t("agent.loaded"));
-    requestAnimationFrame(() => {
-      document.getElementById("builder")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      builderHeading.current?.focus();
-    });
+    setStage(1);
+    toast({ title: t("agent.loaded"), description: getTemplate(plan.templateId)?.name[lang], variant: "success" });
   }
 
   function addCustom() {
@@ -199,310 +208,454 @@ export function Builder() {
     setCustomTitle("");
     setCustomCmd("");
     setCustomError("");
+    toast({ title: t("toast.added"), description: step.title[lang], variant: "success" });
   }
 
-  async function copyAll() {
-    const text = flattenCommands(steps, os).join("\n");
-    if (await copyText(text)) setStatus(`${t("step.copied")} (${flattenCommands(steps, os).length})`);
+  async function copy(text: string, title: string, description?: string) {
+    if (await copyText(text)) toast({ title, description, variant: "success" });
+    else toast({ title: t("toast.copyFailed"), variant: "error" });
   }
 
-  async function share() {
-    if (await copyText(shareUrlFor(config, edits))) setStatus(t("builder.shareCopied"));
+  function download(filename: string, run: () => void | Promise<void>) {
+    Promise.resolve(run())
+      .then(() => toast({ title: t("toast.downloaded"), description: filename, variant: "success" }))
+      .catch(() => toast({ title: t("agent.error"), variant: "error" }));
+  }
+
+  function removeStep(step: ResolvedStep) {
+    setEdits((e) => ({ ...e, removed: [...e.removed, step.id] }));
+    toast({ title: t("toast.removed"), description: `${step.title[lang]} · ${t("toast.undo")}` });
+  }
+
+  function resetEdits() {
+    setEdits(EMPTY_EDITS);
+    toast({ title: t("toast.reset") });
   }
 
   const usesNode = template.runtimes.includes("node");
   const usesPython = template.runtimes.includes("python");
   const groups = [...new Set(TEMPLATES.map((tpl) => tpl.category))];
+  const allCommands = flattenCommands(steps, os);
+
+  const stages = [
+    { id: "start", label: t("stage.start"), description: t("stage.startDesc") },
+    { id: "configure", label: t("stage.configure"), description: t("stage.configureDesc") },
+    { id: "review", label: t("stage.review"), description: t("stage.reviewDesc") },
+    { id: "export", label: t("stage.export"), description: t("stage.exportDesc") },
+  ];
+
+  const stageTitle = (
+    <h2 id="stage-h" ref={stageHeading} tabIndex={-1} className="text-xl font-semibold text-fg outline-none">
+      <span className="text-subtle">{stage + 1}/4 · </span>
+      {stages[stage].label}
+    </h2>
+  );
 
   return (
-    <div className="space-y-8">
-      <AgentPanel onLoad={loadPlan} />
-
-      <section id="builder" aria-labelledby="builder-h" className="scroll-mt-24">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 id="builder-h" ref={builderHeading} tabIndex={-1} className="text-3xl font-bold outline-none">
-              🧩 {t("builder.title")}
-            </h1>
-            <p className="mt-1 text-slate-600 dark:text-slate-300">{t("builder.subtitle")}</p>
-          </div>
-          <p role="status" aria-live="polite" className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-            {status}
-          </p>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-fg">{t("builder.title")}</h1>
+          <p className="mt-1 max-w-2xl text-muted">{t("builder.subtitle")}</p>
         </div>
+      </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[340px_1fr]">
-          <aside aria-labelledby="config-h" className="card h-fit space-y-5 p-5 lg:sticky lg:top-20">
-            <h2 id="config-h" className="text-lg font-semibold">
-              {t("builder.config")}
-            </h2>
-            <div>
-              <label htmlFor="tpl" className="label">
-                {t("builder.template")}
-              </label>
-              <select id="tpl" className="input" value={config.templateId} onChange={(e) => changeTemplate(e.target.value)}>
-                {groups.map((g) => (
-                  <optgroup key={g} label={CATEGORY_LABELS[g][lang]}>
-                    {TEMPLATES.filter((tpl) => tpl.category === g).map((tpl) => (
-                      <option key={tpl.id} value={tpl.id}>
-                        {tpl.name[lang]}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-slate-500">{template.summary[lang]}</p>
-            </div>
-            <div>
-              <label htmlFor="pname" className="label">
-                {t("builder.name")}
-              </label>
-              <input
-                id="pname"
-                className="input font-mono"
-                value={nameDraft}
-                maxLength={50}
-                onChange={(e) => setNameDraft(e.target.value)}
-                onBlur={() => {
-                  update({ projectName: nameDraft });
-                  setNameDraft(normalizeConfig({ ...config, projectName: nameDraft }).projectName);
-                }}
-                onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
-                aria-describedby="pname-hint"
-              />
-              <p id="pname-hint" className="mt-1 text-xs text-slate-500">
-                a-z 0-9 - _ .
-              </p>
-            </div>
+      <Card className="p-2">
+        <Stepper items={stages} current={stage} onStepChange={(i) => setStage(i as Stage)} label={t("stage.progress")} />
+      </Card>
 
-            <div className="space-y-4">
-              <div className={usesNode ? "" : "opacity-50"}>
-                <label htmlFor="node" className="label">
-                  {t("builder.node")} {!usesNode && <span className="text-xs font-normal text-slate-500">{t("builder.notUsed")}</span>}
-                </label>
-                <select id="node" className="input" value={config.node} onChange={(e) => update({ node: e.target.value as BuilderConfig["node"] })}>
-                  <option value="lts">LTS (nvm install --lts)</option>
-                  <option value="24">Node 24</option>
-                  <option value="22">Node 22</option>
-                  <option value="20">Node 20</option>
-                </select>
-              </div>
-              <Segmented
-                name="jsPm"
-                legend={t("builder.jsPm")}
-                value={config.jsPm}
-                disabled={!usesNode}
-                hint={!usesNode ? t("builder.notUsed") : undefined}
-                options={[
-                  { value: "npm", label: "npm" },
-                  { value: "pnpm", label: "pnpm" },
-                  { value: "yarn", label: "yarn" },
-                ]}
-                onChange={(v) => update({ jsPm: v })}
-              />
-              <div className={usesPython ? "" : "opacity-50"}>
-                <label htmlFor="py" className="label">
-                  {t("builder.python")} {!usesPython && <span className="text-xs font-normal text-slate-500">{t("builder.notUsed")}</span>}
-                </label>
-                <select id="py" className="input" value={config.python} onChange={(e) => update({ python: e.target.value as BuilderConfig["python"] })}>
-                  <option value="3.13">Python 3.13</option>
-                  <option value="3.12">Python 3.12</option>
-                  <option value="3.11">Python 3.11</option>
-                </select>
-              </div>
-              <Segmented
-                name="pyPm"
-                legend={t("builder.pyPm")}
-                value={config.pyPm}
-                disabled={!usesPython}
-                hint={!usesPython ? t("builder.notUsed") : undefined}
-                options={[
-                  { value: "pip", label: "pip + venv" },
-                  { value: "uv", label: "uv" },
-                ]}
-                onChange={(v) => update({ pyPm: v })}
-              />
-            </div>
+      {/* Summary bar: always visible so users know what they're building. */}
+      <section
+        aria-label={t("summary.label")}
+        className="z-20 -mx-4 md:sticky md:top-14 flex flex-wrap items-center gap-2 border-y border-border bg-bg/90 px-4 py-2.5 backdrop-blur-md sm:mx-0 sm:rounded-lg sm:border"
+      >
+        <span className="text-xs font-semibold uppercase tracking-wide text-subtle">{t("summary.label")}</span>
+        <Badge variant="primary">{template.name[lang]}</Badge>
+        <Badge className="font-mono">{config.projectName}</Badge>
+        {usesNode && <Badge variant="info">Node {config.node === "lts" ? "LTS" : config.node} · {config.jsPm}</Badge>}
+        {usesPython && <Badge variant="info">Python {config.python} · {config.pyPm}</Badge>}
+        {config.addons.map((a) => (
+          <Badge key={a} variant="success" size="sm">
+            + {ADDON_LABELS[a][lang]}
+          </Badge>
+        ))}
+        <span className="ml-auto flex items-center gap-2 text-sm text-muted">
+          {steps.length} {t("builder.stepCount")}
+          <Tooltip content={t("builder.copyAll")}>
+            <Button size="sm" variant="soft" onClick={() => copy(allCommands.join("\n"), t("toast.copied"), `${allCommands.length} commands`)} aria-label={t("builder.copyAll")}>
+              📋 <span className="hidden sm:inline">{t("step.copy")}</span>
+            </Button>
+          </Tooltip>
+        </span>
+      </section>
 
-            <fieldset>
-              <legend className="label">{t("builder.addons")}</legend>
-              <div className="space-y-1.5">
-                {ADDON_IDS.map((id) => {
-                  const supported = template.supportedAddons.includes(id);
-                  return (
-                    <label key={id} className={`flex items-center gap-2 text-sm ${supported ? "cursor-pointer" : "opacity-50"}`}>
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 accent-indigo-600"
-                        disabled={!supported}
-                        checked={supported && config.addons.includes(id)}
-                        onChange={(e) =>
-                          update({ addons: e.target.checked ? [...config.addons, id] : config.addons.filter((a) => a !== id) })
-                        }
-                        aria-describedby={supported ? undefined : `addon-${id}-hint`}
+      <section id="builder" aria-labelledby="stage-h" className="scroll-mt-32 space-y-4">
+        {stage === 0 && (
+          <>
+            {stageTitle}
+            <Tabs value={startTab} onValueChange={(v) => setStartTab(v as "ai" | "pick")}>
+              <TabsList aria-label={t("stage.start")}>
+                <TabsTrigger value="ai">🤖 {t("start.ai")}</TabsTrigger>
+                <TabsTrigger value="pick">📚 {t("start.pick")}</TabsTrigger>
+              </TabsList>
+              <TabsContent value="ai" className="mt-4">
+                <AgentPanel onLoad={loadPlan} />
+              </TabsContent>
+              <TabsContent value="pick" className="mt-4">
+                <fieldset>
+                  <legend className="sr-only">{t("start.pick")}</legend>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {TEMPLATES.map((tpl) => {
+                      const selected = tpl.id === config.templateId;
+                      return (
+                        <label
+                          key={tpl.id}
+                          className={cn(
+                            "motion-base relative flex cursor-pointer flex-col rounded-xl border bg-surface p-4 shadow-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
+                            selected ? "border-primary ring-1 ring-primary" : "border-border hover:border-border-strong"
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name="start-template"
+                            className="sr-only"
+                            checked={selected}
+                            onChange={() => {
+                              changeTemplate(tpl.id);
+                            }}
+                          />
+                          <span className="flex items-center justify-between gap-2">
+                            <Badge size="sm" variant="primary">
+                              {CATEGORY_LABELS[tpl.category][lang]}
+                            </Badge>
+                            {selected && <Badge size="sm" variant="success">✓ {t("start.current")}</Badge>}
+                          </span>
+                          <span className="mt-2 font-semibold text-fg">{tpl.name[lang]}</span>
+                          <span className="mt-1 line-clamp-2 text-sm text-muted">{tpl.summary[lang]}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
+
+        {stage === 1 && (
+          <>
+            {stageTitle}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Card>
+                <CardContent className="space-y-4">
+                  <CardTitle as="h3">{t("builder.config")}</CardTitle>
+                  <Field label={t("builder.template")} hint={template.summary[lang]}>
+                    {(p) => (
+                      <Select {...p} value={config.templateId} onChange={(e) => changeTemplate(e.target.value)}>
+                        {groups.map((g) => (
+                          <optgroup key={g} label={CATEGORY_LABELS[g][lang]}>
+                            {TEMPLATES.filter((tpl) => tpl.category === g).map((tpl) => (
+                              <option key={tpl.id} value={tpl.id}>
+                                {tpl.name[lang]}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </Select>
+                    )}
+                  </Field>
+                  <Field label={t("builder.name")} hint="a-z 0-9 - _ .">
+                    {(p) => (
+                      <Input
+                        {...p}
+                        className="font-mono"
+                        value={nameDraft}
+                        maxLength={50}
+                        onChange={(e) => setNameDraft(e.target.value)}
+                        onBlur={() => {
+                          update({ projectName: nameDraft });
+                          setNameDraft(normalizeConfig({ ...config, projectName: nameDraft }).projectName);
+                        }}
+                        onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
                       />
-                      {ADDON_LABELS[id][lang]}
-                      {!supported && (
-                        <span id={`addon-${id}-hint`} className="text-xs text-slate-500">
-                          · {t("builder.unsupported")}
-                        </span>
+                    )}
+                  </Field>
+                  <fieldset className="space-y-2">
+                    <legend className="mb-1.5 text-sm font-medium text-fg">{t("builder.addons")}</legend>
+                    {ADDON_IDS.map((id) => {
+                      const supported = template.supportedAddons.includes(id);
+                      return (
+                        <Checkbox
+                          key={id}
+                          label={ADDON_LABELS[id][lang]}
+                          description={supported ? undefined : t("builder.unsupported")}
+                          disabled={!supported}
+                          checked={supported && config.addons.includes(id)}
+                          onCheckedChange={(checked) => update({ addons: checked ? [...config.addons, id] : config.addons.filter((a) => a !== id) })}
+                        />
+                      );
+                    })}
+                  </fieldset>
+                </CardContent>
+              </Card>
+              <div className="space-y-4">
+                <Card>
+                  <CardContent className="space-y-4">
+                    <CardTitle as="h3">
+                      Node.js {!usesNode && <span className="text-xs font-normal text-subtle">{t("builder.notUsed")}</span>}
+                    </CardTitle>
+                    <Field label={t("builder.node")}>
+                      {(p) => (
+                        <Select {...p} disabled={!usesNode} value={config.node} onChange={(e) => update({ node: e.target.value as BuilderConfig["node"] })}>
+                          <option value="lts">LTS (nvm install --lts)</option>
+                          <option value="24">Node 24</option>
+                          <option value="22">Node 22</option>
+                          <option value="20">Node 20</option>
+                        </Select>
                       )}
-                    </label>
-                  );
-                })}
+                    </Field>
+                    <Segmented
+                      legend={t("builder.jsPm")}
+                      value={config.jsPm}
+                      disabled={!usesNode}
+                      options={[
+                        { value: "npm", label: "npm" },
+                        { value: "pnpm", label: "pnpm" },
+                        { value: "yarn", label: "yarn" },
+                      ]}
+                      onChange={(v) => update({ jsPm: v })}
+                    />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="space-y-4">
+                    <CardTitle as="h3">
+                      Python {!usesPython && <span className="text-xs font-normal text-subtle">{t("builder.notUsed")}</span>}
+                    </CardTitle>
+                    <Field label={t("builder.python")}>
+                      {(p) => (
+                        <Select {...p} disabled={!usesPython} value={config.python} onChange={(e) => update({ python: e.target.value as BuilderConfig["python"] })}>
+                          <option value="3.13">Python 3.13</option>
+                          <option value="3.12">Python 3.12</option>
+                          <option value="3.11">Python 3.11</option>
+                        </Select>
+                      )}
+                    </Field>
+                    <Segmented
+                      legend={t("builder.pyPm")}
+                      value={config.pyPm}
+                      disabled={!usesPython}
+                      options={[
+                        { value: "pip", label: "pip + venv" },
+                        { value: "uv", label: "uv" },
+                      ]}
+                      onChange={(v) => update({ pyPm: v })}
+                    />
+                  </CardContent>
+                </Card>
               </div>
-            </fieldset>
-          </aside>
+            </div>
+          </>
+        )}
 
-          <div className="min-w-0 space-y-4">
-            <div className="card flex flex-col gap-3 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-lg font-semibold">
-                  {t("builder.steps")} <span className="text-slate-400">· {steps.length} {t("builder.stepCount")}</span>
-                </h2>
+        {stage === 2 && (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {stageTitle}
+              <div className="flex flex-wrap items-center gap-2">
                 <OsToggle os={os} onChange={setOs} />
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button type="button" className="btn-primary" onClick={copyAll}>
-                  📋 {t("builder.copyAll")}
-                </button>
-                <button type="button" className="btn-secondary" onClick={share}>
-                  🔗 {t("builder.share")}
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => downloadText("setup.sh", toBash(steps, config, lang), "text/x-shellscript")}
-                >
-                  ⬇ setup.sh
-                </button>
-                <button type="button" className="btn-secondary" onClick={() => downloadText("setup.ps1", toPowerShell(steps, config, lang))}>
-                  ⬇ setup.ps1
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => downloadText("README.md", toReadme(steps, config, lang, shareUrlFor(config, edits)), "text/markdown")}
-                >
-                  ⬇ README.md
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={async () => downloadBlob(`${config.projectName}-starter.zip`, await buildStarterZip(steps, config, edits, lang))}
-                >
-                  📦 {t("builder.zip")}
-                </button>
-                {(edits.order.length > 0 || edits.removed.length > 0 || edits.custom.length > 0) && (
-                  <button type="button" className="btn-ghost" onClick={() => setEdits(EMPTY_EDITS)}>
+                {hasEdits && (
+                  <Button variant="ghost" size="sm" onClick={resetEdits}>
                     ↺ {t("builder.reset")}
-                  </button>
+                  </Button>
                 )}
               </div>
-              <p className="text-xs text-slate-500">{t("builder.scriptNote")}</p>
             </div>
+            <p className="text-sm text-subtle">{t("review.dragHint")}</p>
 
-            <ol className="space-y-4" aria-label={t("builder.steps")}>
-              {steps.map((step, i) => (
-                <StepCard
-                  key={step.id}
-                  step={step}
-                  index={i}
-                  os={os}
-                  actions={
-                    <>
-                      <button
-                        type="button"
-                        className="btn-ghost"
+            {steps.length === 0 ? (
+              <EmptyState
+                icon="🗂️"
+                title={t("review.emptyTitle")}
+                description={t("review.emptyBody")}
+                action={<Button onClick={resetEdits}>↺ {t("builder.reset")}</Button>}
+              />
+            ) : (
+              <SortableSteps
+                steps={steps}
+                os={os}
+                onReorder={(order) => setEdits((e) => ({ ...e, order }))}
+                renderActions={(step, i) => (
+                  <>
+                    <Tooltip content={t("step.up")}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         disabled={i === 0}
                         aria-label={`${t("step.up")}: ${step.title[lang]}`}
                         onClick={() => setEdits((e) => ({ ...e, order: moveStep(steps.map((s) => s.id), step.id, -1) }))}
                       >
                         ↑
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-ghost"
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content={t("step.down")}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         disabled={i === steps.length - 1}
                         aria-label={`${t("step.down")}: ${step.title[lang]}`}
                         onClick={() => setEdits((e) => ({ ...e, order: moveStep(steps.map((s) => s.id), step.id, 1) }))}
                       >
                         ↓
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-ghost text-red-600 dark:text-red-400"
-                        aria-label={`${t("step.remove")}: ${step.title[lang]}`}
-                        onClick={() => setEdits((e) => ({ ...e, removed: [...e.removed, step.id] }))}
-                      >
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content={t("step.remove")}>
+                      <Button variant="ghost" size="icon" className="text-danger hover:bg-danger-soft hover:text-danger" aria-label={`${t("step.remove")}: ${step.title[lang]}`} onClick={() => removeStep(step)}>
                         ✕
-                      </button>
-                    </>
-                  }
-                />
-              ))}
-            </ol>
-
-            {removedSteps.length > 0 && (
-              <div className="card p-4">
-                <h3 className="font-semibold">{t("builder.removed")}</h3>
-                <ul className="mt-2 flex flex-wrap gap-2">
-                  {removedSteps.map((s) => (
-                    <li key={s.id}>
-                      <button
-                        type="button"
-                        className="btn-secondary px-3 py-1"
-                        onClick={() => setEdits((e) => ({ ...e, removed: e.removed.filter((id) => id !== s.id) }))}
-                      >
-                        ↺ {t("builder.restore")}: {s.title[lang]}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                      </Button>
+                    </Tooltip>
+                  </>
+                )}
+              />
             )}
 
-            <form
-              className="card space-y-3 p-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                addCustom();
-              }}
-            >
-              <h3 className="font-semibold">{t("builder.addCustom")}</h3>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="ctitle" className="label">
-                    {t("builder.customTitle")}
-                  </label>
-                  <input id="ctitle" className="input" value={customTitle} maxLength={120} onChange={(e) => setCustomTitle(e.target.value)} />
-                </div>
-                <div>
-                  <label htmlFor="ccmd" className="label">
-                    {t("builder.customCommand")}
-                  </label>
-                  <textarea
-                    id="ccmd"
-                    className="input font-mono"
-                    rows={2}
-                    value={customCmd}
-                    onChange={(e) => setCustomCmd(e.target.value)}
-                    placeholder={config.jsPm === "npm" ? "npm install zod" : `${config.jsPm} add zod`}
-                  />
-                </div>
+            {removedSteps.length > 0 && (
+              <Card>
+                <CardContent>
+                  <CardTitle>{t("builder.removed")}</CardTitle>
+                  <ul className="mt-3 flex flex-wrap gap-2">
+                    {removedSteps.map((s) => (
+                      <li key={s.id}>
+                        <Button variant="secondary" size="sm" onClick={() => setEdits((e) => ({ ...e, removed: e.removed.filter((id) => id !== s.id) }))}>
+                          ↺ {t("builder.restore")}: {s.title[lang]}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card>
+              <CardContent>
+                <form
+                  className="space-y-3"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    addCustom();
+                  }}
+                >
+                  <CardTitle>{t("builder.addCustom")}</CardTitle>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label={t("builder.customTitle")}>
+                      {(p) => <Input {...p} value={customTitle} maxLength={120} onChange={(e) => setCustomTitle(e.target.value)} />}
+                    </Field>
+                    <Field label={t("builder.customCommand")} error={customError || undefined}>
+                      {(p) => (
+                        <Textarea
+                          {...p}
+                          invalid={!!customError}
+                          className="font-mono"
+                          rows={2}
+                          value={customCmd}
+                          onChange={(e) => {
+                            setCustomCmd(e.target.value);
+                            if (customError) setCustomError("");
+                          }}
+                          placeholder={config.jsPm === "npm" ? "npm install zod" : `${config.jsPm} add zod`}
+                        />
+                      )}
+                    </Field>
+                  </div>
+                  <Button type="submit" variant="secondary" disabled={!customCmd.trim()}>
+                    + {t("builder.add")}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        {stage === 3 && (
+          <>
+            {stageTitle}
+            <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+              <Card>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <CardTitle>
+                      {t("export.commands")} <span className="font-normal text-subtle">· {allCommands.length}</span>
+                    </CardTitle>
+                    <OsToggle os={os} onChange={setOs} />
+                  </div>
+                  {allCommands.length > 0 ? (
+                    <CodeBlock code={allCommands.join("\n")} prompt title={os === "windows" ? "setup.ps1" : "setup.sh"} maxHeight="28rem" />
+                  ) : (
+                    <EmptyState icon="🗂️" title={t("review.emptyTitle")} action={<Button onClick={() => setStage(2)}>{t("stage.review")}</Button>} />
+                  )}
+                  <p className="text-xs text-subtle">{t("builder.scriptNote")}</p>
+                </CardContent>
+              </Card>
+              <div className="space-y-4">
+                <Card>
+                  <CardContent className="space-y-3">
+                    <CardTitle>{t("export.files")}</CardTitle>
+                    <div className="grid gap-2">
+                      <Button className="justify-start" onClick={() => copy(allCommands.join("\n"), t("toast.copied"), `${allCommands.length} commands`)}>
+                        📋 {t("builder.copyAll")}
+                      </Button>
+                      <Button variant="secondary" className="justify-start" onClick={() => download("setup.sh", () => downloadText("setup.sh", toBash(steps, config, lang), "text/x-shellscript"))}>
+                        ⬇ setup.sh
+                      </Button>
+                      <Button variant="secondary" className="justify-start" onClick={() => download("setup.ps1", () => downloadText("setup.ps1", toPowerShell(steps, config, lang)))}>
+                        ⬇ setup.ps1
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="justify-start"
+                        onClick={() => download("README.md", () => downloadText("README.md", toReadme(steps, config, lang, shareUrlFor(config, edits)), "text/markdown"))}
+                      >
+                        ⬇ README.md
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="justify-start"
+                        onClick={() =>
+                          download(`${config.projectName}-starter.zip`, async () =>
+                            downloadBlob(`${config.projectName}-starter.zip`, await buildStarterZip(steps, config, edits, lang))
+                          )
+                        }
+                      >
+                        📦 {t("builder.zip")}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="space-y-3">
+                    <CardTitle>{t("export.shareTitle")}</CardTitle>
+                    <CardDescription>{t("export.shareBody")}</CardDescription>
+                    <Button variant="outline" className="w-full" onClick={() => copy(shareUrlFor(config, edits), t("builder.shareCopied"))}>
+                      🔗 {t("builder.share")}
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
-              {customError && (
-                <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-                  {customError}
-                </p>
-              )}
-              <button type="submit" className="btn-secondary" disabled={!customCmd.trim()}>
-                + {t("builder.add")}
-              </button>
-            </form>
-          </div>
-        </div>
+            </div>
+          </>
+        )}
       </section>
+
+      <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
+        <Button variant="ghost" disabled={stage === 0} onClick={() => setStage((s) => Math.max(0, s - 1) as Stage)}>
+          ← {t("stage.back")}
+        </Button>
+        {stage < 3 && (
+          <Button onClick={() => setStage((s) => Math.min(3, s + 1) as Stage)}>
+            {t("stage.next")}: {stages[stage + 1].label} →
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

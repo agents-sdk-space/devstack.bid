@@ -1,74 +1,136 @@
 @import "tailwindcss";
+@import "./tokens.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Map design tokens into the Tailwind theme → bg-surface, text-muted, border-border, shadow-md … */
 @theme inline {
   --font-sans: var(--font-geist-sans), var(--font-thai), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-bg: var(--nvx-bg);
+  --color-surface: var(--nvx-surface);
+  --color-surface-2: var(--nvx-surface-2);
+  --color-surface-3: var(--nvx-surface-3);
+  --color-border: var(--nvx-border);
+  --color-border-strong: var(--nvx-border-strong);
+  --color-fg: var(--nvx-fg);
+  --color-muted: var(--nvx-muted);
+  --color-subtle: var(--nvx-subtle);
+  --color-primary: var(--nvx-primary);
+  --color-primary-hover: var(--nvx-primary-hover);
+  --color-primary-fg: var(--nvx-primary-fg);
+  --color-primary-soft: var(--nvx-primary-soft);
+  --color-primary-soft-fg: var(--nvx-primary-soft-fg);
+  --color-accent: var(--nvx-accent);
+  --color-success: var(--nvx-success);
+  --color-success-soft: var(--nvx-success-soft);
+  --color-success-fg: var(--nvx-success-fg);
+  --color-warning: var(--nvx-warning);
+  --color-warning-soft: var(--nvx-warning-soft);
+  --color-warning-fg: var(--nvx-warning-fg);
+  --color-danger: var(--nvx-danger);
+  --color-danger-hover: var(--nvx-danger-hover);
+  --color-danger-soft: var(--nvx-danger-soft);
+  --color-danger-fg: var(--nvx-danger-fg);
+  --color-info: var(--nvx-info);
+  --color-info-soft: var(--nvx-info-soft);
+  --color-info-fg: var(--nvx-info-fg);
+  --color-ring: var(--nvx-ring);
+  --color-code-bg: var(--nvx-code-bg);
+  --color-code-fg: var(--nvx-code-fg);
+  --color-overlay: var(--nvx-overlay);
+
+  /* Spacing: one 4px base unit → p-1 = 4px, p-4 = 16px, gap-6 = 24px (Tailwind default, pinned here). */
+  --spacing: 0.25rem;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
+
+  --shadow-sm: var(--nvx-shadow-sm);
+  --shadow-md: var(--nvx-shadow-md);
+  --shadow-lg: var(--nvx-shadow-lg);
+
+  --ease-standard: var(--nvx-ease-standard);
+  --ease-emphasized: var(--nvx-ease-emphasized);
+
+  --text-display: 3.25rem;
+  --text-display--line-height: 1.08;
+  --text-display--letter-spacing: -0.025em;
+
+  --animate-fade-in: nvx-fade-in var(--nvx-duration-base) var(--nvx-ease-standard);
+  --animate-pop-in: nvx-pop-in var(--nvx-duration-base) var(--nvx-ease-emphasized);
+  --animate-slide-in: nvx-slide-in var(--nvx-duration-slow) var(--nvx-ease-standard);
+  --animate-sheet-in: nvx-sheet-in var(--nvx-duration-slow) var(--nvx-ease-emphasized);
 }
 
-:root {
-  color-scheme: light;
+@keyframes nvx-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-.dark {
-  color-scheme: dark;
+@keyframes nvx-pop-in {
+  /* Uses the individual `scale` property so it composes with Tailwind's `translate` utilities. */
+  from { opacity: 0; scale: 0.97; }
+  to { opacity: 1; scale: 1; }
+}
+@keyframes nvx-sheet-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes nvx-slide-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Standard transition for interactive elements, driven by motion tokens. */
+@utility motion-base {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: var(--nvx-duration-base);
+  transition-timing-function: var(--nvx-ease-standard);
+}
+@utility motion-fast {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: var(--nvx-duration-fast);
+  transition-timing-function: var(--nvx-ease-standard);
+}
+/* Shared focus ring: visible for keyboard users only. */
+@utility focus-ring {
+  outline: none;
+  &:focus-visible {
+    box-shadow: 0 0 0 2px var(--nvx-bg), 0 0 0 4px var(--nvx-ring);
+  }
 }
 
 html[data-lang="th"] body {
-  line-height: 1.65;
+  line-height: 1.7;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+  background: var(--nvx-bg);
+  color: var(--nvx-fg);
+  -webkit-font-smoothing: antialiased;
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-indigo-500);
+  outline: 2px solid var(--nvx-ring);
   outline-offset: 2px;
-}
-
-@utility card {
-  @apply rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900;
-}
-
-@utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
-}
-@utility btn-primary {
-  @apply btn bg-indigo-600 text-white hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400;
-}
-@utility btn-secondary {
-  @apply btn border border-slate-300 bg-white text-slate-800 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800;
-}
-@utility btn-ghost {
-  @apply btn px-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800;
-}
-
-@utility input {
-  @apply w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100;
-}
-
-@utility chip {
-  @apply inline-flex items-center rounded-full border border-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:text-slate-300;
-}
-
-@utility label {
-  @apply mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300;
-}
-
-@utility code {
-  @apply overflow-x-auto rounded-xl bg-slate-950 p-3 font-mono text-[13px] leading-relaxed text-slate-100 ring-1 ring-slate-800;
 }
 
 .hero-glow {
   background:
-    radial-gradient(60% 50% at 20% 0%, rgb(99 102 241 / 0.25), transparent 70%),
-    radial-gradient(50% 40% at 90% 10%, rgb(16 185 129 / 0.18), transparent 70%);
+    radial-gradient(60% 50% at 20% 0%, rgb(99 102 241 / 0.22), transparent 70%),
+    radial-gradient(50% 40% at 90% 10%, rgb(16 185 129 / 0.16), transparent 70%);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
-    animation: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

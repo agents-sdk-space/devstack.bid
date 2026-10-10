@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getTemplate } from "@/data/templates";
 import type { AgentPlan } from "@/lib/ai/types";
 import { applyEdits, composeSteps, configForTemplate, flattenCommands } from "@/lib/composer";
+import { Badge, Button, Card, Checkbox, EmptyState, Input, Skeleton, Textarea } from "@/components/ui";
 import { CodeBlock } from "./copy-button";
 import { useLang } from "./prefs";
 
@@ -34,7 +35,7 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
   const [error, setError] = useState("");
   const [useOwnKey, setUseOwnKey] = useState(false);
   const [apiKey, setApiKey] = useState("");
-  const [loaded, setLoaded] = useState(false);
+  const [lastMode, setLastMode] = useState<"auto" | "fallback">("auto");
   const [server, setServer] = useState<{ serverKeyConfigured: boolean; model: string } | null>(null);
 
   useEffect(() => {
@@ -52,7 +53,7 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
     if (prompt.trim().length < 3 || busy) return;
     setBusy(true);
     setError("");
-    setLoaded(false);
+    setLastMode(mode);
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (mode === "auto" && useOwnKey && apiKey.trim()) headers["x-openai-key"] = apiKey.trim();
@@ -60,8 +61,10 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? t("agent.error"));
       setPlan(data as AgentPlan);
+      requestAnimationFrame(() => document.getElementById("agent-result")?.focus({ preventScroll: false }));
     } catch (e) {
       setError((e as Error).message || t("agent.error"));
+      setPlan(null);
     } finally {
       setBusy(false);
     }
@@ -74,21 +77,24 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
   }, [plan]);
 
   const template = plan ? getTemplate(plan.templateId) : undefined;
+  const canSubmit = !busy && prompt.trim().length >= 3;
 
   return (
-    <section id="agent" aria-labelledby="agent-h" className="card scroll-mt-24 overflow-hidden">
-      <div className="hero-glow border-b border-slate-200 p-5 dark:border-slate-800 sm:p-6">
+    <section id="agent" aria-labelledby="agent-h" className="scroll-mt-32 space-y-4">
+      <Card className="hero-glow overflow-hidden p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="agent-h" className="text-2xl font-bold">
+          <h3 id="agent-h" className="text-xl font-bold text-fg">
             🤖 {t("agent.title")}
-          </h2>
-          {server && (
-            <span className={`chip ${server.serverKeyConfigured ? "border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-300" : ""}`}>
+          </h3>
+          {server ? (
+            <Badge variant={server.serverKeyConfigured ? "success" : "neutral"}>
               {t("agent.serverAi")}: {server.serverKeyConfigured ? `${t("agent.available")} · ${server.model}` : t("agent.notConfigured")}
-            </span>
+            </Badge>
+          ) : (
+            <Skeleton className="h-5 w-48 rounded-full" />
           )}
         </div>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{t("agent.subtitle")}</p>
+        <p className="mt-1 text-sm text-muted">{t("agent.subtitle")}</p>
 
         <form
           className="mt-4 space-y-3"
@@ -100,94 +106,124 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
           <label htmlFor="agent-prompt" className="sr-only">
             {t("agent.label")}
           </label>
-          <textarea
+          <Textarea
             id="agent-prompt"
-            className="input min-h-24 resize-y text-base"
+            className="min-h-24 resize-y text-base"
             placeholder={t("agent.placeholder")}
             value={prompt}
             maxLength={2000}
+            aria-keyshortcuts="Control+Enter Meta+Enter"
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit("auto");
             }}
           />
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="text-slate-500">{t("agent.examples")}</span>
+          <div className="flex flex-wrap items-center gap-1.5 text-sm">
+            <span className="mr-1 text-subtle">{t("agent.examples")}</span>
             {EXAMPLES[lang].map((ex) => (
-              <button key={ex} type="button" className="chip hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => setPrompt(ex)}>
+              <button
+                key={ex}
+                type="button"
+                className="focus-ring motion-fast rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-muted hover:border-primary hover:text-primary"
+                onClick={() => setPrompt(ex)}
+              >
                 {ex}
               </button>
             ))}
           </div>
-          <div className="flex flex-col gap-2">
-            <label className="inline-flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={useOwnKey} onChange={(e) => setUseOwnKey(e.target.checked)} className="h-4 w-4 accent-indigo-600" />
-              {t("agent.ownKey")}
-            </label>
-            {useOwnKey && (
-              <div className="max-w-md">
-                <label htmlFor="agent-key" className="sr-only">
-                  {t("agent.keyLabel")}
-                </label>
-                <input
-                  id="agent-key"
-                  type="password"
-                  autoComplete="off"
-                  spellCheck={false}
-                  className="input font-mono"
-                  placeholder="sk-..."
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                />
-              </div>
-            )}
-          </div>
+          <Checkbox label={t("agent.ownKey")} checked={useOwnKey} onCheckedChange={setUseOwnKey} />
+          {useOwnKey && (
+            <div className="max-w-md">
+              <label htmlFor="agent-key" className="sr-only">
+                {t("agent.keyLabel")}
+              </label>
+              <Input
+                id="agent-key"
+                type="password"
+                autoComplete="off"
+                spellCheck={false}
+                className="font-mono"
+                placeholder="sk-..."
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+              />
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
-            <button type="submit" className="btn-primary" disabled={busy || prompt.trim().length < 3}>
-              {busy ? `⏳ ${t("agent.thinking")}` : `✨ ${t("agent.submit")}`}
-            </button>
-            <button type="button" className="btn-secondary" disabled={busy || prompt.trim().length < 3} onClick={() => submit("fallback")}>
+            <Button type="submit" loading={busy && lastMode === "auto"} disabled={!canSubmit}>
+              {busy && lastMode === "auto" ? t("agent.thinking") : `✨ ${t("agent.submit")}`}
+            </Button>
+            <Button variant="secondary" loading={busy && lastMode === "fallback"} disabled={!canSubmit} onClick={() => submit("fallback")}>
               {t("agent.offline")}
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
+      </Card>
 
       <div aria-live="polite" aria-busy={busy}>
-        {error && <p className="m-5 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">{error}</p>}
-        {plan && (
-          <div className="space-y-5 p-5 sm:p-6">
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`chip ${
-                  plan.source === "openai"
-                    ? "border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-300"
-                    : "border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-300"
-                }`}
-              >
+        {busy ? (
+          <Card className="space-y-4 p-5 sm:p-6" role="status">
+            <span className="sr-only">{t("agent.thinking")}</span>
+            <div className="flex gap-2">
+              <Skeleton className="h-6 w-32 rounded-full" />
+              <Skeleton className="h-6 w-40 rounded-full" />
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Skeleton className="h-40" />
+              <Skeleton className="h-40" />
+            </div>
+          </Card>
+        ) : error ? (
+          <EmptyState
+            tone="danger"
+            icon="⚠️"
+            title={t("agent.errorTitle")}
+            description={error}
+            action={
+              <>
+                <Button onClick={() => submit(lastMode)} disabled={!canSubmit}>
+                  ↻ {t("agent.retry")}
+                </Button>
+                {lastMode === "auto" && (
+                  <Button variant="secondary" onClick={() => submit("fallback")} disabled={!canSubmit}>
+                    {t("agent.retryOffline")}
+                  </Button>
+                )}
+              </>
+            }
+          />
+        ) : !plan ? (
+          <EmptyState icon="💬" title={t("agent.emptyTitle")} description={t("agent.emptyBody")} />
+        ) : (
+          <Card id="agent-result" tabIndex={-1} aria-label={t("agent.planReady")} className="space-y-5 p-5 outline-none sm:p-6 animate-fade-in">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge variant={plan.source === "openai" ? "success" : "warning"}>
                 {plan.source === "openai" ? `${t("agent.sourceAi")} · ${plan.model}` : t("agent.sourceFallback")}
-              </span>
-              <span className="chip">
+              </Badge>
+              <Badge variant="primary">
                 {t("agent.template")}: {template?.name[lang]}
-              </span>
-              <span className="chip font-mono">{plan.projectName}</span>
+              </Badge>
+              <Badge className="font-mono">{plan.projectName}</Badge>
               {plan.addons.map((a) => (
-                <span key={a} className="chip">
+                <Badge key={a} variant="outline">
                   + {a}
-                </span>
+                </Badge>
               ))}
             </div>
             {plan.fallbackReason && (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-subtle">
                 {t("agent.reason")}: {plan.fallbackReason}
               </p>
             )}
-            <p className="whitespace-pre-line">{plan.summary}</p>
+            <p className="whitespace-pre-line text-fg">{plan.summary}</p>
 
             {plan.warnings.length > 0 && (
-              <div className="rounded-xl bg-amber-50 p-3 text-sm dark:bg-amber-500/10">
-                <p className="font-semibold text-amber-800 dark:text-amber-300">{t("agent.warnings")}</p>
-                <ul className="mt-1 list-disc pl-5">
+              <div className="rounded-lg bg-warning-soft p-3 text-sm">
+                <p className="font-semibold text-warning-fg">{t("agent.warnings")}</p>
+                <ul className="mt-1 list-disc pl-5 text-fg">
                   {plan.warnings.map((w) => (
                     <li key={w}>{w}</li>
                   ))}
@@ -196,37 +232,37 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
             )}
 
             <div className="grid gap-5 lg:grid-cols-2">
-              <div>
-                <h3 className="mb-2 font-semibold">{t("agent.commands")}</h3>
-                <CodeBlock code={preview.join("\n")} />
+              <div className="min-w-0">
+                <h4 className="mb-2 font-semibold text-fg">{t("agent.commands")}</h4>
+                <CodeBlock code={preview.join("\n")} prompt maxHeight="22rem" />
                 {plan.extraSteps.length > 0 && (
                   <>
-                    <h3 className="mb-2 mt-4 font-semibold">{t("agent.extra")}</h3>
+                    <h4 className="mb-2 mt-4 font-semibold text-fg">{t("agent.extra")}</h4>
                     <ul className="space-y-2 text-sm">
                       {plan.extraSteps.map((s) => (
-                        <li key={s.id} className="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
-                          <p className="font-medium">{s.title[lang]}</p>
-                          <p className="text-slate-600 dark:text-slate-300">{s.explanation[lang]}</p>
+                        <li key={s.id} className="rounded-lg border border-border p-3">
+                          <p className="font-medium text-fg">{s.title[lang]}</p>
+                          <p className="text-muted">{s.explanation[lang]}</p>
                         </li>
                       ))}
                     </ul>
                   </>
                 )}
               </div>
-              <div className="space-y-4">
+              <div className="min-w-0 space-y-4">
                 <div>
-                  <h3 className="mb-2 font-semibold">{t("template.fileTree")}</h3>
-                  <pre className="code text-xs">{plan.fileTree.join("\n")}</pre>
+                  <h4 className="mb-2 font-semibold text-fg">{t("template.fileTree")}</h4>
+                  <pre className="overflow-x-auto rounded-lg bg-surface-2 p-3 font-mono text-xs leading-6 text-muted">{plan.fileTree.join("\n")}</pre>
                 </div>
                 {plan.starterFiles.length > 0 && (
                   <div>
-                    <h3 className="mb-2 font-semibold">{t("agent.files")}</h3>
+                    <h4 className="mb-2 font-semibold text-fg">{t("agent.files")}</h4>
                     <div className="space-y-2">
                       {plan.starterFiles.map((f) => (
-                        <details key={f.path} className="rounded-xl border border-slate-200 p-2 dark:border-slate-800">
-                          <summary className="cursor-pointer font-mono text-sm">{f.path}</summary>
+                        <details key={f.path} className="rounded-lg border border-border p-2">
+                          <summary className="focus-ring cursor-pointer rounded font-mono text-sm">{f.path}</summary>
                           <div className="mt-2">
-                            <CodeBlock code={f.content} />
+                            <CodeBlock code={f.content} title={f.path} maxHeight="20rem" />
                           </div>
                         </details>
                       ))}
@@ -235,8 +271,8 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
                 )}
                 {plan.nextSteps.length > 0 && (
                   <div>
-                    <h3 className="mb-2 font-semibold">{t("template.next")}</h3>
-                    <ul className="list-disc space-y-1 pl-5 text-sm">
+                    <h4 className="mb-2 font-semibold text-fg">{t("template.next")}</h4>
+                    <ul className="list-disc space-y-1 pl-5 text-sm text-fg">
                       {plan.nextSteps.map((n) => (
                         <li key={n}>{n}</li>
                       ))}
@@ -246,20 +282,12 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                className="btn-primary px-5 py-2.5"
-                onClick={() => {
-                  onLoad(plan);
-                  setLoaded(true);
-                }}
-              >
+            <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
+              <Button size="lg" onClick={() => onLoad(plan)}>
                 ⤵ {t("agent.load")}
-              </button>
-              {loaded && <span className="text-sm text-emerald-600 dark:text-emerald-400">{t("agent.loaded")}</span>}
+              </Button>
             </div>
-          </div>
+          </Card>
         )}
       </div>
     </section>

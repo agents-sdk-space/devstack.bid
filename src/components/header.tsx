@@ -2,64 +2,129 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { Button, cn, Dialog, DialogContent, DialogTrigger, SearchIcon, Tooltip } from "@/components/ui";
+import { CommandPalette, PaletteTrigger } from "./command-palette";
 import { useDarkMode, useLang } from "./prefs";
 
 const NAV = [
-  { href: "/", key: "nav.home" },
-  { href: "/templates", key: "nav.templates" },
-  { href: "/builder", key: "nav.builder" },
+  { href: "/", key: "nav.home", icon: "🏠" },
+  { href: "/templates", key: "nav.templates", icon: "📚" },
+  { href: "/builder", key: "nav.builder", icon: "🧩" },
+  { href: "/design", key: "nav.design", icon: "🎨" },
 ] as const;
+
+function isActive(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+}
 
 export function Header() {
   const { t, lang, setLang } = useLang();
   const { dark, toggle } = useDarkMode();
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur dark:border-slate-800/80 dark:bg-slate-950/80">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:rounded-lg focus:bg-indigo-600 focus:px-3 focus:py-2 focus:text-white">
+    <header className="sticky top-0 z-30 border-b border-border bg-bg/80 backdrop-blur-md">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-fg"
+      >
         {t("skip")}
       </a>
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight" aria-label="NVX Stack Builder home">
-          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-indigo-500 to-emerald-500 text-sm font-black text-white">
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4">
+        <Link href="/" className="focus-ring flex items-center gap-2 rounded-md font-semibold tracking-tight" aria-label="NVX Stack Builder home">
+          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-md bg-gradient-to-br from-indigo-500 to-emerald-500 text-[11px] font-black text-white shadow-sm">
             NVX
           </span>
-          <span className="hidden sm:inline">NVX Stack Builder</span>
+          <span className="hidden sm:inline">Stack Builder</span>
         </Link>
-        <nav aria-label="Main" className="order-3 flex w-full gap-1 overflow-x-auto sm:order-none sm:ml-6 sm:w-auto">
+
+        <nav aria-label="Main" className="ml-4 hidden items-center gap-1 lg:flex">
           {NAV.map((item) => {
-            const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            const active = isActive(pathname, item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition ${
-                  active
-                    ? "bg-indigo-50 font-semibold text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300"
-                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                }`}
+                className={cn(
+                  "focus-ring motion-fast whitespace-nowrap rounded-md px-3 py-1.5 text-sm",
+                  active ? "bg-primary-soft font-semibold text-primary-soft-fg" : "text-muted hover:bg-surface-2 hover:text-fg"
+                )}
               >
                 {t(item.key)}
               </Link>
             );
           })}
         </nav>
-        <div className="ml-auto flex items-center gap-2">
-          <button
-            type="button"
-            className="btn-secondary px-3 py-1.5"
-            onClick={() => setLang(lang === "en" ? "th" : "en")}
-            aria-label={t("toggle.langLabel")}
-          >
-            <span aria-hidden>🌐</span> {t("toggle.lang")}
-          </button>
-          <button type="button" className="btn-secondary px-3 py-1.5" onClick={toggle} aria-label={t("toggle.theme")} aria-pressed={dark}>
-            <span aria-hidden>{dark ? "☀️" : "🌙"}</span>
-          </button>
+
+        <div className="ml-auto flex items-center gap-1.5">
+          <PaletteTrigger onClick={() => setPaletteOpen(true)} />
+          <Tooltip content={t("palette.open")}>
+            <Button variant="ghost" size="icon" className="md:hidden" aria-label={t("palette.open")} onClick={() => setPaletteOpen(true)}>
+              <SearchIcon className="text-base" />
+            </Button>
+          </Tooltip>
+          <Button variant="ghost" size="sm" onClick={() => setLang(lang === "en" ? "th" : "en")} aria-label={t("toggle.langLabel")}>
+            <span aria-hidden>🌐</span>
+            <span className="hidden sm:inline">{t("toggle.lang")}</span>
+          </Button>
+          <Tooltip content={t("toggle.theme")}>
+            <Button variant="ghost" size="icon" onClick={toggle} aria-label={t("toggle.theme")} aria-pressed={dark}>
+              <span aria-hidden>{dark ? "☀️" : "🌙"}</span>
+            </Button>
+          </Tooltip>
+          <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="lg:hidden" aria-label={t("nav.menu")}>
+                <svg viewBox="0 0 20 20" className="h-5 w-5" aria-hidden>
+                  <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M3 5h14M3 10h14M3 15h14" />
+                </svg>
+              </Button>
+            </DialogTrigger>
+            <DialogContent side="right" title={t("nav.mainMenu")} closeLabel={t("nav.close")}>
+              <nav aria-label="Mobile">
+                <ul className="space-y-1">
+                  {NAV.map((item) => {
+                    const active = isActive(pathname, item.href);
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setMenuOpen(false)}
+                          aria-current={active ? "page" : undefined}
+                          className={cn(
+                            "focus-ring motion-fast flex items-center gap-3 rounded-md px-3 py-3 text-base",
+                            active ? "bg-primary-soft font-semibold text-primary-soft-fg" : "text-fg hover:bg-surface-2"
+                          )}
+                        >
+                          <span aria-hidden>{item.icon}</span>
+                          {t(item.key)}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </nav>
+              <div className="mt-6 space-y-2 border-t border-border pt-4">
+                <Button
+                  variant="secondary"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setPaletteOpen(true);
+                  }}
+                >
+                  <SearchIcon /> {t("palette.open")}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </header>
   );
 }
@@ -67,7 +132,7 @@ export function Header() {
 export function Footer() {
   const { t } = useLang();
   return (
-    <footer className="mt-16 border-t border-slate-200 py-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+    <footer className="mt-16 border-t border-border py-8 text-center text-sm text-subtle">
       <p className="mx-auto max-w-3xl px-4">{t("footer.text")}</p>
     </footer>
   );
