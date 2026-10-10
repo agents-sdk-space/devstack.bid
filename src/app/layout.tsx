@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Noto_Sans_Thai } from "next/font/google";
+import { Geist, Geist_Mono, IBM_Plex_Sans_Thai } from "next/font/google";
 import { Footer, Header } from "@/components/header";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-const notoThai = Noto_Sans_Thai({ variable: "--font-thai", subsets: ["thai"], weight: ["400", "500", "600", "700"] });
+// Thai glyphs come from IBM Plex Sans Thai; Latin from Geist (see --font-sans in globals.css).
+const plexThai = IBM_Plex_Sans_Thai({ variable: "--font-thai", subsets: ["thai"], weight: ["400", "500", "600", "700"], display: "swap" });
 
 export const metadata: Metadata = {
   title: {
@@ -30,16 +32,18 @@ const PREFS_SCRIPT = `(function(){try{var d=document.documentElement;var t=local
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" data-lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} ${notoThai.variable} h-full`}>
+    <html lang="en" data-lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} ${plexThai.variable} h-full`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: PREFS_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col font-sans">
-        <Header />
-        <main id="main" className="flex-1">
-          {children}
-        </main>
-        <Footer />
+        <Providers>
+          <Header />
+          <main id="main" tabIndex={-1} className="flex-1 outline-none">
+            {children}
+          </main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
