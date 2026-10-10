@@ -190,6 +190,10 @@ Production: `npm run build` แล้ว `npm start`
 
 ## Screenshots
 
+**v0.5 (Apple-inspired black theme, preview):** see `./screenshots/v0.5/` (`preview-*`).
+
+> Tool logos (via [Simple Icons](https://simpleicons.org), CC0) are trademarks of their respective owners and are used only to identify the tools. See [NOTICE](./NOTICE). · โลโก้เครื่องมือเป็นเครื่องหมายการค้าของเจ้าของ ใช้เพื่อระบุเครื่องมือเท่านั้น
+
 v0.2 (NVX UI). Older v0.1 screenshots remain in `./screenshots/`.
 
 | Home (light) | Home (dark) |
