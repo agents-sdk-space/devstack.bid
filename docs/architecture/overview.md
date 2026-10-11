@@ -56,6 +56,7 @@ flowchart LR
 | Rate limiting, env, HTTP limits, security headers | `src/lib/server/*`, `src/lib/rate-limit.ts`, `src/lib/security-headers.ts`, `next.config.ts`, `public/_headers` | [api-hardening.md](./api-hardening.md) |
 | UI framework | `src/app/tokens.css`, `src/app/globals.css`, `src/components/ui/*`, `src/components/brand/*` | [ui-framework.md](./ui-framework.md) |
 | Cloudflare / OpenNext runtime | `wrangler.jsonc`, `open-next.config.ts`, `scripts/patch-opennext.mjs`, `cloudflare-env.d.ts` | [cloudflare-runtime.md](./cloudflare-runtime.md) |
+| Chat data model (D1, schema only) | `migrations/*.sql`, binding `DB` | [chat-data-model.md](./chat-data-model.md) |
 
 ## เส้นทาง (routes)
 

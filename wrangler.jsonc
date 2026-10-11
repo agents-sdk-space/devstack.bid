@@ -24,6 +24,17 @@
       "service": "nvx-stack-builder"
     }
   ],
+  // D1 (SQLite) for chat history. Created 2026-10-11 (region WNAM). Schema: migrations/ and
+  // docs/reference/d1-schema.md. Apply with `npm run db:migrate:remote` (approval required).
+  // R2 binding ASSETS_BUCKET (bucket nvx-assets) is NOT added yet: R2 is not enabled on the account.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nvx-db",
+      "database_id": "3ee9bbab-06b5-49da-b175-5f7162ad5086",
+      "migrations_dir": "migrations"
+    }
+  ],
   "vars": {
     "OPENAI_MODEL": "gpt-6.1-sol",
     "OPENAI_MAX_OUTPUT_TOKENS": "6000",

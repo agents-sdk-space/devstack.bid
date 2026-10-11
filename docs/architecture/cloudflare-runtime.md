@@ -36,6 +36,10 @@
 - rate-limit counters เป็นต่อ Cloudflare location
 - **ห้าม** เพิ่ม `routes` หรือ custom domain จนกว่าจะได้รับอนุมัติตาม [custom-domain.md](../operations/custom-domain.md)
 
+## D1 (ฐานข้อมูล)
+
+Worker มี binding `DB` ชี้ D1 `nvx-db` (ประกาศใน `d1_databases` ของ `wrangler.jsonc` พร้อม `migrations_dir`) ตอนนี้ยังไม่มีโค้ดเรียกใช้ D1 ดู schema ที่ [chat-data-model.md](./chat-data-model.md) และวิธีดูแลที่ [d1-database.md](../operations/d1-database.md) ส่วน R2 ยังไม่ได้เปิดใช้
+
 ## สถานะ deploy ล่าสุด
 
 Production (v0.6.0) ที่ `https://devstack.bid` และ `www.devstack.bid` (Workers Custom Domains, redirect www → apex) บัญชี `2d92bd5b25768fa9093d6adc0a8887fc` เวอร์ชันปัจจุบัน `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (ก่อนหน้า `671b6b3b-1074-40cb-84b0-0df2681b69ce` v0.5.1) workers.dev สำรอง `https://nvx-stack-builder.examplessdk.workers.dev` ส่วน deploy เดิม (v0.3.0) ที่ `https://nvx-stack-builder.agen-sdk-work.workers.dev` บัญชี `f70d35188a3c56b9781538c73a86e04e` ยังเปิดอยู่และไม่ถูกแก้ไข

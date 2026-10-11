@@ -8,7 +8,8 @@
 |---|---|
 | [`package.json`](../../package.json) | dependencies, npm scripts ([npm-scripts.md](./npm-scripts.md)) |
 | [`next.config.ts`](../../next.config.ts) | Cache Components, security headers, real-404 rewrite, dev bindings |
-| [`wrangler.jsonc`](../../wrangler.jsonc) | Worker config, vars, rate limits |
+| [`wrangler.jsonc`](../../wrangler.jsonc) | Worker config, vars, rate limits, D1 binding `DB` |
+| [`migrations/0001_schema_meta.sql`](../../migrations/0001_schema_meta.sql), [`migrations/0002_chat_history.sql`](../../migrations/0002_chat_history.sql) | D1 migrations ของ `nvx-db` ([d1-schema.md](./d1-schema.md)) |
 | [`open-next.config.ts`](../../open-next.config.ts) | OpenNext: static-assets incremental cache |
 | [`cloudflare-env.d.ts`](../../cloudflare-env.d.ts) | ชนิดของ Cloudflare bindings |
 | [`tsconfig.json`](../../tsconfig.json), [`eslint.config.mjs`](../../eslint.config.mjs), [`vitest.config.mts`](../../vitest.config.mts) | TypeScript, ESLint, Vitest |
