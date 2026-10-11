@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { KNOWN_TEMPLATE_IDS } from "./src/data/template-ids";
+import docsNav from "./src/generated/docs-nav.json";
 import { securityHeaders } from "./src/lib/security-headers";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -21,8 +22,18 @@ const nextConfig: NextConfig = {
     // page's notFound() streams after the static shell (status 200). Sending unknown ids to a path
     // no route matches renders the normal not-found page with status 404. No middleware needed.
     const known = KNOWN_TEMPLATE_IDS.map((id) => id.replace(/[-]/g, "\\-")).join("|");
+    // Docs: /docs/<slug>.md serves the raw Markdown (route handler under /docs/raw), and unknown
+    // /docs/<slug> paths get a real 404 the same way as unknown templates.
+    const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\/-]/g, "\\$&");
+    const docSlugs = docsNav.sections.flatMap((s) => s.pages.map((p) => p.slug)).filter(Boolean).map(esc).join("|");
     return {
-      beforeFiles: [{ source: `/templates/:id((?!(?:${known})$)[^/]+)`, destination: "/__nvx_not_found" }],
+      beforeFiles: [
+        { source: `/templates/:id((?!(?:${known})$)[^/]+)`, destination: "/__nvx_not_found" },
+        { source: "/docs.md", destination: "/docs/raw/index" },
+        { source: "/docs/:path((?!raw/).+)\\.md", destination: "/docs/raw/:path" },
+        { source: "/docs/agents/platform-manifest.json", destination: "/docs/raw/agents/platform-manifest.json" },
+        { source: `/docs/:path((?!(?:${docSlugs}|agents/platform-manifest\\.json)$)(?!raw/)(?!.*\\.md$).+)`, destination: "/__nvx_not_found" },
+      ],
       afterFiles: [],
       fallback: [],
     };

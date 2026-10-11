@@ -13,6 +13,7 @@
 | `PLAN_LIMIT_PER_MIN` | var | 1–6000 | 20 | — | limit ของ general limiter แบบ in-memory (ใช้นอก Workers หรือเมื่อ binding ล้ม) |
 | `PLAN_AI_LIMIT_PER_MIN` | var | 1–600 | 5 | — | limit ของ AI limiter แบบ in-memory |
 
+| `NEXT_PUBLIC_REPO_URL` | build-time (public) | URL `https://` ของ repo เช่น `https://github.com/<owner>/nvx-stack-builder` | ไม่ตั้ง | — | เปิดปุ่ม "Edit on GitHub" ในหน้า `/docs` และเปลี่ยนลิงก์ไปไฟล์โค้ดในเอกสารเป็นลิงก์ GitHub ([`src/lib/docs.ts`](../../src/lib/docs.ts), [`scripts/build-docs.mjs`](../../scripts/build-docs.mjs)) ค่าที่ไม่ใช่ https ถูกเมิน ถ้าไม่ตั้ง ปุ่มจะซ่อน |
 | `NEXT_PUBLIC_SITE_URL` | build-time (public) | URL เต็ม | `https://devstack.bid` | — | `metadataBase` ใน [`src/app/layout.tsx`](../../src/app/layout.tsx) ใช้สร้าง URL เต็มของ `og:image` / `twitter:image` ถูกฝังตอน build (ไม่ใช่ secret) ถ้า deploy ไปโดเมนอื่นให้ตั้งก่อน `npm run cf:build` |
 
 ค่าว่าง (`""`) ถือว่าไม่ได้ตั้ง

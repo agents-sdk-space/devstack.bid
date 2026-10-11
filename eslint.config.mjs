@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     ".open-next/**",
     ".wrangler/**",
     "cloudflare-env.d.ts",
+    // Generated docs bundle (scripts/build-docs.mjs)
+    "src/generated/**",
   ]),
 ]);
 

@@ -41,6 +41,7 @@ import {
 } from "@/components/ui";
 import { ArrowUp, Blocks, Copy, Download, Languages, LayoutGrid, Link2, Moon, RotateCw, SearchX, ShieldCheck, Sparkles, Sun, Trash2, TriangleAlert } from "lucide-react";
 import { Mascot } from "./brand/mascot";
+import { SIGNATURE_COMMANDS, TerminalSignature } from "./brand/terminal-signature";
 import { ToolTile } from "./brand/tool-icon";
 import { useLang } from "./prefs";
 
@@ -66,6 +67,7 @@ const SECTIONS: { id: string; title: Bi; group: "tokens" | "components" }[] = [
   { id: "skeleton", title: { en: "Skeleton & Spinner", th: "โครงร่างระหว่างโหลด" }, group: "components" },
   { id: "icons", title: { en: "Icons & tool tiles", th: "ไอคอนและไทล์เครื่องมือ" }, group: "components" },
   { id: "mascot", title: { en: "Brand mascot", th: "มาสคอตของแบรนด์" }, group: "components" },
+  { id: "signature", title: { en: "DevStack signature", th: "ซิกเนเจอร์ DevStack" }, group: "components" },
 ];
 
 function Section({ id, title, description, usage, children }: { id: string; title: Bi; description: Bi; usage?: string; children: ReactNode }) {
@@ -708,6 +710,34 @@ export function DesignSystem() {
                 <span className="font-mono text-[10px] text-subtle">brand-pink #fb0fab</span>
               </span>
             </Demo>
+          </Section>
+
+          <Section
+            id="signature"
+            title={SECTIONS[19].title}
+            description={{
+              en: "The DevStack signature appears on every page (footer) and on the docs landing. A black terminal with a thick white outline, four tool tiles (JavaScript, curl, npm, PyPI; simple-icons marks plus text) and a prompt that types real, working commands, with the matching tile lit. Move the pointer near it: the outline lights up where you are, text glows on hover and the cursor pulses. On touch, a tap lights the edge. Static under reduced motion. HTML + inline SVG in container-query units, so it is crisp at any size.",
+              th: "ซิกเนเจอร์ DevStack ปรากฏทุกหน้า (ส่วนท้าย) และหน้าแรกของเอกสาร เป็นหน้าต่างเทอร์มินัลสีดำขอบขาวหนา มีไทล์เครื่องมือ 4 ช่อง (JavaScript, curl, npm, PyPI ใช้โลโก้จาก simple-icons และข้อความ) และ prompt ที่พิมพ์คำสั่งจริงที่ใช้งานได้ พร้อมไฮไลต์ไทล์ที่ตรงกัน ขยับเมาส์เข้าใกล้: ขอบจะสว่างตรงตำแหน่งเมาส์ ตัวอักษรเรืองแสงเมื่อชี้ และเคอร์เซอร์เต้นเบา ๆ บนจอสัมผัส แตะเพื่อให้ขอบสว่าง หยุดนิ่งเมื่อตั้ง reduced motion สร้างด้วย HTML + SVG และหน่วย container query จึงคมชัดทุกขนาด",
+            }}
+            usage={`import { TerminalSignature } from "@/components/brand/terminal-signature";\n<TerminalSignature className="w-56" />                 // footer\n<TerminalSignature className="w-full max-w-md" />      // docs landing\n<TerminalSignature animate={false} />                  // static (shows the curl command)`}
+          >
+            <Demo className="items-end gap-8">
+              {[160, 280, 440].map((w) => (
+                <span key={w} className="flex flex-col items-center gap-2" style={{ width: w }}>
+                  <TerminalSignature animate={w === 440} />
+                  <span className="font-mono text-[10px] text-subtle">
+                    {w}px{w === 440 ? " · typing" : " · static"}
+                  </span>
+                </span>
+              ))}
+            </Demo>
+            <ul className="mt-4 space-y-1 font-mono text-xs text-muted">
+              {SIGNATURE_COMMANDS.map((c) => (
+                <li key={c.text}>
+                  <span className="text-subtle">{c.tile.padEnd(5, " ")}</span> {c.text}
+                </li>
+              ))}
+            </ul>
           </Section>
         </div>
       </div>

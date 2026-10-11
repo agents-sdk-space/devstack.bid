@@ -2,7 +2,7 @@
   "$comment": "Machine-readable map of NVX Stack Builder for AI agents. Verified by `npm run docs:check` (templateIds must equal src/data/template-ids.ts; every keyFiles path must exist). Human docs: docs/agents/AGENT-PLAYBOOK.md",
   "name": "nvx-stack-builder",
   "version": "0.5.1",
-  "branchState": "main = v0.5.1 (custom domain devstack.bid on top of v0.5.0)",
+  "branchState": "main = v0.5.1 (custom domain devstack.bid). feat/docs-site = in-app docs at /docs (not merged, not deployed)",
   "stack": {
     "framework": "Next.js 16.4 App Router",
     "language": "TypeScript",
@@ -140,6 +140,28 @@
         "AGENTS.md"
       ],
       "docs": "docs/contributing/docs-maintenance.md"
+    },
+    {
+      "id": "docs-site",
+      "summary": "In-app docs at /docs: docs/**/*.md compiled at build time (no runtime fs) into sanitized HTML + raw Markdown; raw .md routes, llms.txt, client search, Mermaid pre-rendered to SVG",
+      "keyFiles": [
+        "scripts/build-docs.mjs",
+        "scripts/render-diagrams.mjs",
+        "src/lib/docs.ts",
+        "src/lib/docs-search.ts",
+        "src/app/docs/layout.tsx",
+        "src/app/docs/page.tsx",
+        "src/app/docs/[...slug]/page.tsx",
+        "src/app/docs/raw/[...slug]/route.ts",
+        "src/app/llms.txt/route.ts",
+        "src/app/llms-full.txt/route.ts",
+        "src/components/docs/docs-shell.tsx",
+        "src/components/docs/doc-view.tsx",
+        "src/components/docs/doc-article.tsx",
+        "src/components/docs/doc-toc.tsx",
+        "tests/docs-site.test.ts"
+      ],
+      "docs": "docs/architecture/docs-site.md"
     }
   ],
   "templateIds": [
@@ -176,6 +198,31 @@
     {
       "path": "/design",
       "file": "src/app/design/page.tsx"
+    },
+    {
+      "path": "/docs",
+      "file": "src/app/docs/page.tsx",
+      "notes": "docs landing rendered from docs/README.md"
+    },
+    {
+      "path": "/docs/[...slug]",
+      "file": "src/app/docs/[...slug]/page.tsx",
+      "notes": "one page per docs/**/*.md (lower-case path without .md); unknown slugs return real 404 via next.config.ts rewrite"
+    },
+    {
+      "path": "/docs/<slug>.md",
+      "file": "src/app/docs/raw/[...slug]/route.ts",
+      "notes": "exact raw Markdown, text/markdown; /docs/index.md = docs/README.md; rewritten to /docs/raw/<slug>"
+    },
+    {
+      "path": "/llms.txt",
+      "file": "src/app/llms.txt/route.ts",
+      "notes": "llmstxt.org index of every raw docs URL"
+    },
+    {
+      "path": "/llms-full.txt",
+      "file": "src/app/llms-full.txt/route.ts",
+      "notes": "all docs concatenated"
     }
   ],
   "endpoints": [
@@ -221,7 +268,9 @@
     "build": "npm run build",
     "cfBuild": "npm run cf:build",
     "export": "npm run export -- <templateId> --out <dir>",
-    "deploy": "npm run deploy  # REQUIRES HUMAN APPROVAL"
+    "deploy": "npm run deploy  # REQUIRES HUMAN APPROVAL",
+    "docsBundle": "npm run docs:bundle  # also runs automatically before dev/build/test/typecheck",
+    "docsDiagrams": "PLAYWRIGHT_DIR=/tmp/pw npm run docs:diagrams  # after editing a Mermaid block"
   },
   "env": [
     {
@@ -265,6 +314,12 @@
       "secret": false,
       "default": "https://devstack.bid",
       "notes": "build-time metadataBase for og:image / twitter:image"
+    },
+    {
+      "name": "NEXT_PUBLIC_REPO_URL",
+      "secret": false,
+      "default": null,
+      "notes": "build-time; https repo URL enables 'Edit on GitHub' and GitHub links to source files in /docs"
     }
   ],
   "bindings": [

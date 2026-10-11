@@ -46,6 +46,10 @@ next-env.d.ts
 .env*.local
 !.env.example
 
+# Generated docs bundle (scripts/build-docs.mjs, rebuilt by prebuild/predev/pretest/pretypecheck)
+/src/generated/
+/public/docs-search-index.json
+
 # Cloudflare / OpenNext
 /.open-next/
 /.wrangler/
