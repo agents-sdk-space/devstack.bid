@@ -198,7 +198,7 @@ describe("studio API routes", () => {
 });
 
 describe("studio headers, assets and brand", async () => {
-  const { securityHeaders, studioContentSecurityPolicy, STUDIO_ISOLATION_HEADERS } = await import("@/lib/security-headers");
+  const { securityHeaders, studioContentSecurityPolicy, studioPreviewContentSecurityPolicy, STUDIO_ISOLATION_HEADERS } = await import("@/lib/security-headers");
   const headersFile = readFileSync(join(process.cwd(), "public/_headers"), "utf8");
   const block = (pattern: string) => {
     const lines = headersFile.split("\n");
@@ -224,6 +224,31 @@ describe("studio headers, assets and brand", async () => {
     const csp = studioContentSecurityPolicy();
     expect(csp).not.toMatch(/'unsafe-eval'|script-src[^;]*'unsafe-inline'/);
     expect(csp).toContain("'wasm-unsafe-eval'");
+  });
+
+  it("no third-party sandbox: no StackBlitz/WebContainer frames, only the same-origin preview page", () => {
+    const csp = studioContentSecurityPolicy();
+    expect(csp).toMatch(/frame-src 'self'(;|$)/);
+    expect(headersFile).not.toMatch(/stackblitz|webcontainer|staticblitz/i);
+    const studioPkg = JSON.parse(readFileSync(join(process.cwd(), "studio/package.json"), "utf8"));
+    expect(Object.keys({ ...studioPkg.dependencies, ...studioPkg.devDependencies })).not.toContain("@webcontainer/api");
+    expect(studioPkg.dependencies).toHaveProperty("sucrase");
+  });
+
+  it("/studio/preview/* detaches the Studio CSP + X-Frame-Options and allows no network", () => {
+    const preview = block("/studio/preview/*");
+    expect(preview).toContain("! Content-Security-Policy");
+    expect(preview).toContain("! X-Frame-Options");
+    expect(preview).toContain(`Content-Security-Policy: ${studioPreviewContentSecurityPolicy()}`);
+    const csp = studioPreviewContentSecurityPolicy();
+    expect(csp).toContain("default-src 'none'");
+    expect(csp).toContain("connect-src 'none'");
+    expect(csp).toContain("frame-ancestors 'self'");
+    expect(csp).not.toMatch(/https?:/);
+    // Order matters: the detach must come after the /studio/* block it overrides.
+    expect(headersFile.indexOf("/studio/preview/*")).toBeGreaterThan(headersFile.indexOf("/studio/*"));
+    const html = readFileSync(join(process.cwd(), "studio/public/preview/index.html"), "utf8");
+    expect(html).not.toMatch(/<script[^>]+src=|https?:\/\//);
   });
 
   it("brand copies in studio/src/brand match the Next.js sources", async () => {

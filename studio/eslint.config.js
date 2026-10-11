@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   // src/brand/* is generated from the Next.js app (scripts/sync-studio-brand.mjs) and linted there.
-  { ignores: ['dist', 'node_modules', 'test-results', 'playwright-report', 'e2e-artifacts', 'src/brand'] },
+  { ignores: ['dist', 'node_modules', 'test-results', 'playwright-report', 'e2e-artifacts', 'src/brand', 'public/preview/vendor.js'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],

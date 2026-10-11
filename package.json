@@ -1,6 +1,6 @@
 {
   "name": "nvx-stack-builder",
-  "version": "0.8.0-rc.1",
+  "version": "0.8.0-rc.2",
   "private": true,
   "scripts": {
     "predev": "node scripts/build-docs.mjs",
@@ -31,7 +31,9 @@
     "studio:build": "node scripts/build-studio.mjs --force",
     "studio:dev": "npm --prefix studio run dev",
     "studio:check": "node scripts/sync-studio-brand.mjs --check && npm --prefix studio run lint && npm --prefix studio run typecheck && npm --prefix studio test",
-    "studio:e2e": "npm --prefix studio run test:e2e"
+    "studio:e2e": "npm --prefix studio run test:e2e",
+    "licenses": "node scripts/third-party-licenses.mjs",
+    "licenses:check": "node scripts/third-party-licenses.mjs --check"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

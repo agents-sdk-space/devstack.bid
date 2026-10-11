@@ -26,7 +26,7 @@ export function XTerm({ attach, testId }: XTermProps) {
     if (!el) return;
     const term = new Terminal({
       theme: THEME,
-      fontFamily: '"JetBrains Mono", monospace',
+      fontFamily: '"IBM Plex Mono", ui-monospace, monospace',
       fontSize: 12,
       convertEol: false,
       scrollback: 5000,

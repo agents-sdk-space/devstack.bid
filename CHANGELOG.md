@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0-rc.2] - 2026-10-11 (branch `merge/devstack-workspace`, local, not deployed)
+
+Open source only: we removed everything in the Studio that was not open source or could carry commercial or usage-based fees.
+
+### Removed
+
+- **WebContainers** (`@webcontainer/api`, StackBlitz). Its runtime is proprietary and needs a commercial license for some production use. Also removed: the StackBlitz / `*.webcontainer-api.io` / `*.webcontainer.io` / `*.staticblitz.com` `frame-src` entries in the Studio CSP, the in-browser `npm install` and Vite dev server, and the **Shell (jsh)** terminal tab. Generated apps can no longer import npm packages other than `react` / `react-dom`, run Node, or keep state across edits (HMR).
+
+### Added
+
+- **Static preview** for the Studio, fully open source:
+  - `studio/src/sandbox/staticBundler.ts` compiles the project in the browser with Sucrase (MIT) and turns `public/` files into data URLs;
+  - `studio/public/preview/index.html` runs the bundle in `<iframe sandbox="allow-scripts allow-forms allow-modals">` with a small `require()` loader and the vendored React 19 runtime (`studio/src/preview/vendor.ts`, built by `vite.preview.config.ts`, ~220 KB);
+  - the iframe forwards console output and errors to the Output tab, and edits rebuild in about 0.3 s;
+  - the PGlite SQL bridge (`devstack:sql`) is unchanged and now accepts only messages from the preview iframe's opaque origin.
+- `/studio/preview/*` headers: the block detaches the Studio CSP and `X-Frame-Options` and sets `studioPreviewContentSecurityPolicy()` (`default-src 'none'`, `connect-src 'none'`, `frame-ancestors 'self'`). The Studio CSP now has `frame-src 'self'` only.
+- **License audit**: `scripts/third-party-licenses.mjs` (`npm run licenses`, `npm run licenses:check`) reads both lockfiles and writes `THIRD_PARTY_LICENSES.md`. `tests/licenses.test.ts` fails on any production dependency that is not permissive (OSI-approved permissive, OFL-1.1 fonts, CC0, PostgreSQL License). The audit found nothing to replace: dual licenses (`jszip` MIT/GPL, `dompurify` MPL/Apache, PGlite Apache/PostgreSQL) use the permissive option; `caniuse-lite` (CC-BY-4.0, build-time data) and `sharp-libvips` (LGPL, optional, dev-only, not shipped) are documented.
+- AGENTS.md invariant 9 (open-source dependencies only).
+
+### Changed
+
+- Studio e2e: the todo flow now adds a todo inside the preview iframe and checks it in the Data Inspector (PGlite bridge), and asserts that the only iframe is the same-origin sandboxed preview.
+- The Studio terminal uses IBM Plex Mono (it referenced JetBrains Mono, which was not loaded).
+- Docs, README, `llms.txt` intro and the platform manifest describe the static preview instead of WebContainers.
+
 ## [0.8.0-rc.1] - 2026-10-11 (branch `merge/devstack-workspace`, local trial merge, not deployed)
 
 ### Added

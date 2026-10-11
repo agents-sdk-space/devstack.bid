@@ -1,8 +1,8 @@
 {
   "$comment": "Machine-readable map of NVX Stack Builder for AI agents. Verified by `npm run docs:check` (templateIds must equal src/data/template-ids.ts; every keyFiles path must exist). Human docs: docs/agents/AGENT-PLAYBOOK.md",
   "name": "nvx-stack-builder",
-  "version": "0.8.0-rc.1",
-  "branchState": "main = v0.7.0 (production devstack.bid). merge/devstack-workspace = v0.8.0-rc.1: DEVSTACK v0.2.0 merged as the Studio sub-app at /studio/ (local trial merge, not deployed, not pushed).",
+  "version": "0.8.0-rc.2",
+  "branchState": "main = v0.7.0 (production devstack.bid). merge/devstack-workspace = v0.8.0-rc.2: DEVSTACK v0.2.0 merged as the Studio sub-app at /studio/, WebContainers replaced by an open-source static preview, license audit added (local trial merge, not deployed, not pushed).",
   "stack": {
     "framework": "Next.js 16.4 App Router",
     "language": "TypeScript",
@@ -175,7 +175,7 @@
     },
     {
       "id": "studio",
-      "summary": "Studio (/studio/): DEVSTACK v0.2.0 browser workspace (Vite + React SPA in studio/, own lockfile) built into public/studio and served from Worker static assets with COOP/COEP + Studio CSP scoped to /studio/* in public/_headers. Agents (router, CodeAgent, DBAgent, DesignAgent), WebContainers Node sandbox, PGlite + pgvector, export zip. LLM/image calls go to /api/studio/* (Workers AI STUDIO_MODEL, then HF_MODEL) with cookie identity, D1 quotas and NVX_STUDIO_LIMITER; mock agents when AI is unavailable.",
+      "summary": "Studio (/studio/): DEVSTACK v0.2.0 browser workspace (Vite + React SPA in studio/, own lockfile) built into public/studio and served from Worker static assets with COOP/COEP + Studio CSP scoped to /studio/* in public/_headers. Agents (router, CodeAgent, DBAgent, DesignAgent), open-source static preview (Sucrase bundle in a sandboxed, network-less iframe at /studio/preview/ with its own CSP; react/react-dom only), PGlite + pgvector, export zip. LLM/image calls go to /api/studio/* (Workers AI STUDIO_MODEL, then HF_MODEL) with cookie identity, D1 quotas and NVX_STUDIO_LIMITER; mock agents when AI is unavailable.",
       "keyFiles": [
         "studio/package.json",
         "studio/vite.config.ts",
@@ -189,7 +189,13 @@
         "scripts/build-studio.mjs",
         "scripts/sync-studio-brand.mjs",
         "public/_headers",
-        "tests/studio.test.ts"
+        "tests/studio.test.ts",
+        "studio/src/sandbox/staticBundler.ts",
+        "studio/src/sandbox/staticPreview.ts",
+        "studio/src/preview/vendor.ts",
+        "studio/public/preview/index.html",
+        "scripts/third-party-licenses.mjs",
+        "THIRD_PARTY_LICENSES.md"
       ],
       "docs": "docs/architecture/studio.md"
     }
@@ -350,7 +356,8 @@
     "studioBuild": "npm run studio:build  # also runs automatically in prebuild",
     "studioCheck": "npm run studio:check",
     "studioDev": "npm run studio:dev  # with npm run dev on :3000",
-    "studioE2e": "npm run studio:e2e  # against a running preview (STUDIO_BASE_URL)"
+    "studioE2e": "npm run studio:e2e  # against a running preview (STUDIO_BASE_URL)",
+    "licenses": "npm run licenses  # regenerate THIRD_PARTY_LICENSES.md after dependency changes (npm test enforces the policy)"
   },
   "env": [
     {
@@ -548,7 +555,8 @@
     "Keep the existing page structure/layout; restyle only via tokens and classes unless approved",
     "Both themes pass WCAG AA contrast tests; no emoji in src/; all UI text bilingual",
     "Docs updated with code; npm run docs:check passes",
-    "Studio code (WebContainers, PGlite) runs only in the visitor's browser; the server only proxies LLM/image calls through /api/studio/* with quotas. COOP/COEP stay scoped to /studio/*."
+    "Studio code (sandboxed preview iframe, PGlite) runs only in the visitor's browser; the server only proxies LLM/image calls through /api/studio/* with quotas. COOP/COEP stay scoped to /studio/*.",
+    "Open-source dependencies only: production dependencies of the site and the Studio use permissive licenses with no commercial or usage-based terms (scripts/third-party-licenses.mjs, enforced by npm test; THIRD_PARTY_LICENSES.md)."
   ],
   "docs": {
     "index": "docs/README.md",

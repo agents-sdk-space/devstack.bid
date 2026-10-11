@@ -21,15 +21,24 @@
   Cache-Control: public, max-age=300, stale-while-revalidate=86400
 
 # /studio (merged DEVSTACK workspace, a Vite SPA built into public/studio by scripts/build-studio.mjs).
-# Served straight from static assets, so these headers are the only ones it gets. Cross-origin
-# isolation (COOP + COEP) is required by WebContainers (SharedArrayBuffer) and is scoped to /studio
-# only: the rest of the site keeps its CSP from next.config.ts and no COEP. Same CSP as the main
-# site plus: wasm compile (PGlite), and the StackBlitz/WebContainer frames for the Node sandbox and
-# the live preview. Mirrored in src/lib/security-headers.ts (studioContentSecurityPolicy, tested).
+# Served straight from static assets, so these headers are the only ones it gets. COOP + COEP are
+# scoped to /studio only (the rest of the site keeps its CSP from next.config.ts and no COEP). Same
+# CSP as the main site plus: wasm compile (PGlite) and frame-src 'self' for the static preview page.
+# Mirrored in src/lib/security-headers.ts (studioContentSecurityPolicy, tested).
 /studio/*
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Embedder-Policy: require-corp
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://cloudflareinsights.com; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; frame-src https://stackblitz.com https://*.stackblitz.com https://*.webcontainer-api.io https://*.webcontainer.io https://*.staticblitz.com; worker-src 'self' blob:; manifest-src 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://cloudflareinsights.com; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; frame-src 'self'; worker-src 'self' blob:; manifest-src 'self'
+
+# Static preview host page: runs the user's generated app inside <iframe sandbox="allow-scripts ...">
+# (opaque origin). It must be frameable by the Studio and may eval code, but has no network at all.
+# Detach the /studio/* CSP and the site-wide X-Frame-Options first, then set its own policy.
+# Mirrored in src/lib/security-headers.ts (studioPreviewContentSecurityPolicy, tested).
+/studio/preview/*
+  ! Content-Security-Policy
+  ! X-Frame-Options
+  Content-Security-Policy: default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data: blob:; connect-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
+  Cache-Control: no-cache
 
 /studio/assets/*
   Cache-Control: public, max-age=31536000, immutable

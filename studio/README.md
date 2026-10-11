@@ -13,7 +13,8 @@ Read the full guides in the main docs: [user guide](../docs/user-guide/studio.md
 What changed from standalone DEVSTACK:
 
 - `base: '/studio/'`, and the build output goes to `../public/studio`.
+- WebContainers was removed (0.8.0-rc.2). The live preview is open source: `src/sandbox/staticBundler.ts` compiles the project with Sucrase and `public/preview/index.html` runs it in a sandboxed, network-less iframe with the React runtime from `src/preview/vendor.ts` (built by `vite.preview.config.ts`). Only `react` / `react-dom` can be imported; there is no npm install, Node or shell.
 - The server proxy (Node server, Vercel and Cloudflare Pages functions, `LLM_API_KEY`) was removed. The client calls `/api/studio/*` (`src/shared/apiPaths.ts`), which the Next.js app implements with Workers AI, Hugging Face, cookie identity and D1 quotas.
 - Theme: `src/brand/*` is GENERATED from the Next.js design system (`npm run studio:brand`; do not edit). `src/index.css` maps the `devstack-*` utilities onto NVX tokens.
 - UI text is Thai + English (`src/i18n.ts`, shared `nvx-lang`). Agent log lines stay English.
-- `docs/spec.md` is the original DEVSTACK blueprint, kept for history.
+- `docs/spec.md` is the original DEVSTACK blueprint, kept for history (it still describes the WebContainers sandbox).

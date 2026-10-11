@@ -16,32 +16,6 @@ function OutputTerminal() {
   return <XTerm attach={attach} testId="terminal-output" />;
 }
 
-function ShellTerminal() {
-  const rt = useRuntime();
-  const attach = useCallback(
-    (term: Terminal) => {
-      let disposed = false;
-      let input: { dispose: () => void } | undefined;
-      let resize: { dispose: () => void } | undefined;
-      rt.startShell(term.cols, term.rows, (d) => {
-        if (!disposed) term.write(d);
-      })
-        .then((sh) => {
-          input = term.onData((d) => sh.write(d));
-          resize = term.onResize(({ cols, rows }) => sh.resize(cols, rows));
-        })
-        .catch((err: unknown) => term.write(`\r\nShell unavailable: ${String(err)}\r\n`));
-      return () => {
-        disposed = true;
-        input?.dispose();
-        resize?.dispose();
-      };
-    },
-    [rt],
-  );
-  return <XTerm attach={attach} testId="terminal-shell" />;
-}
-
 export function PreviewTerminal() {
   const { t } = useLang();
   const rt = useRuntime();
@@ -49,7 +23,6 @@ export function PreviewTerminal() {
   const nonce = useDevstack((s) => s.previewNonce);
   const sandbox = useDevstack((s) => s.sandbox);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [tab, setTab] = useState<'output' | 'shell'>('output');
   const [reloads, setReloads] = useState(0);
 
   useEffect(() => {
@@ -69,8 +42,8 @@ export function PreviewTerminal() {
           <div className="flex min-w-0 items-center gap-2">
             {previewUrl && (
               <>
-                <span className="truncate font-mono text-[10px] text-devstack-muted" title={previewUrl}>
-                  localhost:5173
+                <span className="truncate font-mono text-[10px] text-devstack-muted" title={t('preview.static.hint')}>
+                  {t('preview.static')}
                 </span>
                 <button
                   type="button"
@@ -91,35 +64,28 @@ export function PreviewTerminal() {
               data-testid="preview-iframe"
               title={t('preview.title')}
               src={previewUrl}
-              allow="cross-origin-isolated; clipboard-write"
+              sandbox="allow-scripts allow-forms allow-modals"
+              referrerPolicy="no-referrer"
               className="h-full w-full border-0 bg-black"
             />
           ) : (
             <p className="p-4 font-mono text-xs text-devstack-muted">
               {sandbox.phase === 'error'
                 ? `Sandbox unavailable: ${sandbox.message ?? 'unknown error'}`
-                : `Preview appears when the sandbox dev server is ready (${sandbox.message ?? sandbox.phase})…`}
+                : `${t('preview.waiting')} (${sandbox.message ?? sandbox.phase})…`}
             </p>
           )}
         </div>
       </section>
       <section className="panel flex min-h-0 flex-col overflow-hidden" data-testid="terminal-panel">
         <header className="panel-header flex items-center gap-1 px-2 py-1.5">
-          {(['output', 'shell'] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              disabled={t === 'shell' && sandbox.phase !== 'ready'}
-              onClick={() => setTab(t)}
-              className={`rounded px-2 py-0.5 font-mono text-[11px] disabled:opacity-40 ${
-                tab === t ? 'bg-devstack-secondary text-devstack-accent' : 'text-devstack-muted hover:text-white'
-              }`}
-            >
-              {t === 'output' ? 'Output' : 'Shell (jsh)'}
-            </button>
-          ))}
+          <span className="rounded bg-devstack-secondary px-2 py-0.5 font-mono text-[11px] text-devstack-accent">
+            {t('preview.output')}
+          </span>
         </header>
-        <div className="min-h-0 flex-1">{tab === 'output' ? <OutputTerminal /> : <ShellTerminal />}</div>
+        <div className="min-h-0 flex-1">
+          <OutputTerminal />
+        </div>
       </section>
     </div>
   );

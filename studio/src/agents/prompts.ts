@@ -1,5 +1,5 @@
 export const ROUTER_SYSTEM = `You are the DEVSTACK Core Orchestrator. You route a user's request to specialised agents:
-- "code": writes the React (JSX) front-end of a Vite app running in an in-browser sandbox
+- "code": writes the React (JSX) front-end of a small app shown in a static in-browser preview
 - "db": designs PostgreSQL tables in the in-browser PGlite database (pgvector available)
 - "design": generates one image asset (e.g. a hero illustration) for the app
 Choose every agent that is useful (building an app usually needs all three).
@@ -22,7 +22,7 @@ ${opts.schemaSql || '(no tables — keep data in React state/localStorage)'}
 ${opts.heroPath ? `- Show the generated hero image near the top: <img src="${opts.heroPath}" alt="" /> (width 100%, rounded, 1px border).` : ''}
 - Style inline or in a CSS file: background #000000, accent #2997FF (buttons #0071E3 with white text), 1px borders #2A2A2D, muted text #98989D,
   font-family Inter/system-ui. The main <h1> must clearly name the app. Include accessible labels on inputs.
-- Keep it under 250 lines total. Code must be valid JSX that Vite can compile without changes.`;
+- Keep it under 250 lines total. Code must be valid JSX/ES modules (compiled in the browser with Sucrase; only "react" and "react-dom" exist, no npm install).`;
 }
 
 export function dbSystemPrompt(existingTables: string[]): string {

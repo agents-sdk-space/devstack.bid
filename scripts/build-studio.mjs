@@ -6,7 +6,7 @@
  * `npm run cf:build`, `preview` and `deploy` always include a fresh Studio.
  *
  * - Installs studio/node_modules with `npm ci` when missing (the Studio has its own lockfile, so its
- *   dependencies — Vite 8, Monaco, PGlite, WebContainers, xterm — never touch the Next.js tree).
+ *   dependencies — Vite 8, Monaco, PGlite, Sucrase, xterm — never touch the Next.js tree).
  * - Re-syncs the brand copies first (scripts/sync-studio-brand.mjs).
  * - Skips the Vite build when the inputs are unchanged (hash stamp in public/studio/.build-stamp).
  * Usage: node scripts/build-studio.mjs [--force]
@@ -31,8 +31,9 @@ function inputsHash() {
   const h = crypto.createHash("sha256");
   const walk = (dir) => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-      if (["node_modules", "test-results", "e2e", "dist"].includes(e.name)) continue;
+      if (["node_modules", "test-results", "playwright-report", "e2e", "dist"].includes(e.name)) continue;
       const p = path.join(dir, e.name);
+      if (path.relative(STUDIO, p) === path.join("public", "preview", "vendor.js")) continue; // build output
       if (e.isDirectory()) walk(p);
       else h.update(path.relative(STUDIO, p)).update(fs.readFileSync(p));
     }

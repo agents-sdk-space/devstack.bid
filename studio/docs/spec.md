@@ -1,3 +1,5 @@
+> Historical blueprint of DEVSTACK v0.2.0. In devstack.bid the WebContainers runtime described below was replaced by an open-source static preview (Sucrase + sandboxed iframe); see ../../docs/architecture/studio.md.
+
 # DEVSTACK — Original Blueprint (from user)
 
 ## 1. Brand system & design language

@@ -28,17 +28,9 @@ export function contentSecurityPolicy(dev = false): string {
  * CSP for /studio (the merged DEVSTACK workspace). The Studio is served from static assets, so the
  * policy lives in public/_headers (block `/studio/*`, together with COOP/COEP); this function is the
  * tested source of truth for that line (tests/studio.test.ts). Differences from the site CSP:
- * 'wasm-unsafe-eval' (PGlite compiles Postgres WASM) and frame-src for the StackBlitz WebContainer
- * frames (Node sandbox + live preview). No 'unsafe-inline' scripts: the Vite build has none.
+ * 'wasm-unsafe-eval' (PGlite compiles Postgres WASM) and frame-src 'self' for the static preview
+ * page (/studio/preview/). No third-party frames, no 'unsafe-inline' scripts: the Vite build has none.
  */
-export const STUDIO_FRAME_SOURCES = [
-  "https://stackblitz.com",
-  "https://*.stackblitz.com",
-  "https://*.webcontainer-api.io",
-  "https://*.webcontainer.io",
-  "https://*.staticblitz.com",
-];
-
 export function studioContentSecurityPolicy(): string {
   return [
     "default-src 'self'",
@@ -52,13 +44,42 @@ export function studioContentSecurityPolicy(): string {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    `frame-src ${STUDIO_FRAME_SOURCES.join(" ")}`,
+    "frame-src 'self'",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
   ].join("; ");
 }
 
-/** Cross-origin isolation for /studio only (WebContainers need SharedArrayBuffer). */
+/**
+ * CSP for the static preview host page /studio/preview/* (block `/studio/preview/*` in
+ * public/_headers, which detaches the Studio CSP and X-Frame-Options first). The page is loaded in
+ * <iframe sandbox="allow-scripts allow-forms allow-modals"> (opaque origin) and runs the user's
+ * generated app, so it may evaluate code but cannot load or send anything: no network at all,
+ * only inline/data resources, and only the Studio may frame it.
+ */
+export function studioPreviewContentSecurityPolicy(): string {
+  return [
+    "default-src 'none'",
+    "script-src 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'unsafe-inline'",
+    "img-src data: blob:",
+    "font-src data:",
+    "media-src data: blob:",
+    "connect-src 'none'",
+    "frame-src 'none'",
+    "worker-src 'none'",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'",
+    "frame-ancestors 'self'",
+  ].join("; ");
+}
+
+/**
+ * Cross-origin isolation for /studio only. Not strictly required any more (the WebContainers
+ * sandbox that needed SharedArrayBuffer was removed in 0.8.0-rc.2); kept so the Studio stays an
+ * isolated browsing context group with no cross-origin subresources.
+ */
 export const STUDIO_ISOLATION_HEADERS = {
   "Cross-Origin-Opener-Policy": "same-origin",
   "Cross-Origin-Embedder-Policy": "require-corp",

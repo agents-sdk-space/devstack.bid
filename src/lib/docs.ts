@@ -77,7 +77,7 @@ export function llmsTxt(site = SITE_URL): string {
     "",
     "> NVX Stack Builder (https://devstack.bid) turns npm, nvm, npx, pip and PyPI setup commands into ordered, de-duplicated, bilingual (Thai/English) Stack Templates that people review and run themselves. The server never executes commands.",
     "",
-    "Apps on the site: Stack Builder (/templates, /builder), User Chat (/chat, Workers AI + Hugging Face), Dev Chat (/chat/dev, OpenAI Orchestrator agent with a hosted sandbox), Sandbox Factory (/factory, bring your own OpenAI key) and Studio (/studio/, beta: AI agents build a full-stack app in the browser with a WebContainers Node sandbox, PGlite + pgvector and one-click export; code runs only in the visitor's browser).",
+    "Apps on the site: Stack Builder (/templates, /builder), User Chat (/chat, Workers AI + Hugging Face), Dev Chat (/chat/dev, OpenAI Orchestrator agent with a hosted sandbox), Sandbox Factory (/factory, bring your own OpenAI key) and Studio (/studio/, beta: AI agents build a full-stack app in the browser with a static in-browser preview (Sucrase, sandboxed iframe), PGlite + pgvector and one-click export; code runs only in the visitor's browser).",
     "",
     "Every page below is the exact Markdown source from the repository's docs/ folder (text/markdown, UTF-8). Docs are written in Thai with English technical terms. The rendered page is the same URL without `.md`.",
     "",

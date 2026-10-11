@@ -56,7 +56,7 @@ export function EditorPanel() {
             {activeFile}
           </span>
           <span className="text-[10px] text-devstack-muted">
-            edits hot-reload in the sandbox
+            edits reload the preview
           </span>
         </div>
         <div className="min-h-0 flex-1">

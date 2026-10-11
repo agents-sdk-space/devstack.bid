@@ -79,6 +79,13 @@ export const STRINGS = {
   'export.title': { en: 'Deploy / Export', th: 'Deploy / Export' },
   'export.subtitle': { en: 'Snapshot the sandbox, database and assets into a deployable bundle.', th: 'รวมโค้ดใน sandbox ฐานข้อมูล และภาพ เป็นไฟล์ zip ที่ deploy ได้' },
   'common.close': { en: 'Close', th: 'ปิด' },
+  'preview.static': { en: 'static preview', th: 'พรีวิวแบบ static' },
+  'preview.static.hint': {
+    en: 'Bundled in your browser with Sucrase and run in a sandboxed iframe. Only react and react-dom can be imported; there is no npm install.',
+    th: 'รวมโค้ดในเบราว์เซอร์ด้วย Sucrase แล้วรันใน iframe แบบ sandbox import ได้เฉพาะ react และ react-dom ไม่มี npm install',
+  },
+  'preview.waiting': { en: 'Preview appears when the bundle is ready', th: 'พรีวิวจะแสดงเมื่อรวมโค้ดเสร็จ' },
+  'preview.output': { en: 'Output (bundler + console)', th: 'Output (bundler + console)' },
   'preview.title': { en: 'Sandbox preview', th: 'ตัวอย่างแอปใน sandbox' },
 } as const satisfies Record<string, Record<Lang, string>>;
 

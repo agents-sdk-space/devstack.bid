@@ -1,4 +1,7 @@
-/** Files for the in-browser sandbox project (a Vite + React app run inside WebContainers). */
+/**
+ * Files for the Studio project: a standard Vite + React app. In the Studio it is compiled in the
+ * browser (Sucrase) for the static preview; the exported zip runs with `npm install && npm run dev`.
+ */
 
 export const SANDBOX_PACKAGE_JSON = `{
   "name": "devstack-app",

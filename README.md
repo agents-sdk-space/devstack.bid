@@ -16,11 +16,11 @@ An open developer platform from the NVX community. You can turn setup commands i
 | **Chat** | [`/chat`](https://devstack.bid/chat) | A free AI chat (General, Thai, Code, Stronger and Image modes) with history saved per browser. | Workers AI (Gemma 4, SEA-LION, Qwen Coder, FLUX) and HF DeepSeek V3, with free daily quotas. |
 | **Dev Chat** | [`/chat/dev`](https://devstack.bid/chat/dev) | The Image and Research Orchestrator agent, with a live sandbox panel (commands, subagents, files). | OpenAI Agents API on our key, capped at a few turns per day. |
 | **Sandbox Factory** | [`/factory`](https://devstack.bid/factory) | Your own agent and sandbox (OpenAI-hosted or self-hosted `codex exec-server`). | Your OpenAI key, sent per request and never stored. |
-| **Studio** (beta) | [`/studio/`](https://devstack.bid/studio/) | Four agents (Core, Code, DB, Design) build a full-stack app in your browser: a WebContainers Node sandbox with a live preview, PGlite + pgvector, AI images, and a one-click export (source, SQL, Prisma, Vercel/Cloudflare/Docker). | Workers AI, then HF DeepSeek, through our server with free daily quotas. Mock agents when AI is unavailable. |
+| **Studio** (beta) | [`/studio/`](https://devstack.bid/studio/) | Four agents (Core, Code, DB, Design) build a full-stack app in your browser: a static live preview (Sucrase + sandboxed iframe, React only), PGlite + pgvector, AI images, and a one-click export (source, SQL, Prisma, Vercel/Cloudflare/Docker). | Workers AI, then HF DeepSeek, through our server with free daily quotas. Mock agents when AI is unavailable. |
 | **Docs** | [`/docs`](https://devstack.bid/docs) | 54 pages: user guides, architecture, operations, reference. Each one is also served as raw Markdown for AI agents. | — |
 | **NVXDEV** | `npx nvxdev init`, `pip install nvxdev` | The DevStack CLI. It is reserved in the terminal signature but **not published yet** (hidden until the packages exist on npm and PyPI). | — |
 
-Commands are **text only**: our server never executes user, AI or template commands. Studio code runs only inside your browser (WebContainers and PGlite).
+Commands are **text only**: our server never executes user, AI or template commands. Studio code runs only inside your browser (sandboxed preview iframe and PGlite).
 
 เซิร์ฟเวอร์ของเรา **ไม่รันคำสั่งใด ๆ** ของผู้ใช้ AI หรือเทมเพลต โค้ดใน Studio รันในเบราว์เซอร์ของคุณเท่านั้น
 
@@ -55,9 +55,10 @@ Without any keys everything still works. The planner uses its offline rules, the
 | `npm run build` | Docs bundle, then the Studio (`public/studio/`), then `next build` |
 | `npm run preview` | OpenNext build plus `wrangler dev` (:8787): the real Workers runtime, headers and 404s |
 | `npm run lint` / `npm run typecheck` / `npm test` | ESLint, `tsc --noEmit`, Vitest (site, API, quotas, Studio proxy and headers) |
-| `npm run studio:check` | Studio brand sync, ESLint, `tsc -b` and Vitest (agents, PGlite + pgvector, export, sandbox) |
+| `npm run studio:check` | Studio brand sync, ESLint, `tsc -b` and Vitest (agents, PGlite + pgvector, export, static preview bundler) |
 | `npm run studio:e2e` | Playwright against a running preview: the full "build a todo app" flow plus site regressions |
 | `npm run docs:check` | Docs freshness: links, paths, env vars, scripts, manifest |
+| `npm run licenses` / `licenses:check` | Regenerate / verify [THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md) (permissive licenses only; also enforced by `npm test`) |
 | `npm run export -- <id> --out dir` | Writes `setup.sh` / `setup.ps1` / `README.md` for a template |
 | `npm run deploy` | Build plus deploy to Cloudflare. **Needs owner approval** ([deploy guide](./docs/operations/deploy-cloudflare.md)). |
 
@@ -75,12 +76,12 @@ Browser (no secrets)                                        Cloudflare Worker "n
 /factory (your key, per request) ───────────────────────►  /api/factory/* ─────────► OpenAI Agents API (your key)
 /studio/  (static Vite app, COOP + COEP, Studio CSP)
   AgentOrchestrator → Code / DB / Design agents ────────►  /api/studio/llm/chat ───► Workers AI (Qwen Coder) → HF DeepSeek
-  WebContainers sandbox (stackblitz) · PGlite + pgvector ►  /api/studio/image ──────► Workers AI FLUX
+  Static preview (Sucrase, sandboxed iframe) · PGlite ───►  /api/studio/image ──────► Workers AI FLUX
   Export (JSZip)                                            └ cookie identity (HMAC) · D1 nvx-db quotas · rate-limit bindings
 ```
 
 - **Stack:** Next.js 16.4 App Router, React 19, TypeScript and Tailwind v4, deployed to Cloudflare Workers with `@opennextjs/cloudflare`. Storage is D1 `nvx-db` (chat history and quota counters). AI is the Workers AI binding plus the Hugging Face router.
-- **Studio:** a separate Vite + React app in [`studio/`](./studio/) with its own lockfile. It is built into `public/studio/` and served by the same Worker from static assets. Cross-origin isolation (needed by WebContainers) is scoped to `/studio/*` only. See [docs/architecture/studio.md](./docs/architecture/studio.md).
+- **Studio:** a separate Vite + React app in [`studio/`](./studio/) with its own lockfile. It is built into `public/studio/` and served by the same Worker from static assets. COOP/COEP and the Studio CSP are scoped to `/studio/*` only; the preview page `/studio/preview/` has its own no-network CSP. See [docs/architecture/studio.md](./docs/architecture/studio.md).
 - **Design system:** a black, terminal-style "Apple developer" look with the NVX tokens (`src/app/tokens.css`), the animated pink-blob mascot, and the DevStack terminal signature window. The Studio receives a synced copy (`npm run studio:brand`). See [docs/concepts/design-system.md](./docs/concepts/design-system.md).
 
 ## Key handling / การจัดการ key
@@ -99,7 +100,7 @@ key ของเซิร์ฟเวอร์เป็น secret ของ Work
 | No `OPENAI_API_KEY` / HF down | The planner uses its offline rule-based plans |
 | A Workers AI model fails | Chat and Studio move to HF DeepSeek V3 (and HF to Workers AI) |
 | No AI or D1 on the server, or the Studio quota is used up | Studio agents use deterministic mock LLM, template schema/app and placeholder images. The chat shows `CodeAgent (mock)` etc. |
-| WebContainers unavailable (browser or isolation) | Studio still runs agents, DB, assets and export. The preview shows the error. |
+| Generated code does not compile or imports a package other than `react` / `react-dom` | The preview shows the error and the Output tab names the file. Agents, DB, assets and export keep working. |
 | R2 not enabled | Chat attachments return `uploads_disabled` |
 
 ## Deploy
@@ -122,4 +123,4 @@ We welcome issues and pull requests. Please read [CONTRIBUTING.md](./CONTRIBUTIN
 
 ## License
 
-[MIT](./LICENSE) © NVX DEVELOPER BOTH and contributors. The Studio is the team's DEVSTACK workspace (v0.2.0), merged into this repository under the same license. It uses [WebContainers](https://webcontainers.io) from StackBlitz, which requires a commercial license for some production uses (see their terms). Tool logos come from [Simple Icons](https://simpleicons.org) (CC0) and are trademarks of their owners ([NOTICE](./NOTICE)).
+[MIT](./LICENSE) © NVX DEVELOPER BOTH and contributors. The Studio is the team's DEVSTACK workspace (v0.2.0), merged into this repository under the same license. Every dependency is open source under a permissive license (MIT, ISC, BSD, Apache-2.0, OFL-1.1 for fonts; PGlite/pgvector under Apache-2.0 / the PostgreSQL License) with no commercial or usage-based terms: see [THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md). Tool logos come from [Simple Icons](https://simpleicons.org) (CC0) and are trademarks of their owners ([NOTICE](./NOTICE)).

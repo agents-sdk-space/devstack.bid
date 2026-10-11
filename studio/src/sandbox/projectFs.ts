@@ -5,7 +5,7 @@ export type FileChangeListener = (path: string, content: FileContent) => void;
 
 /**
  * Project filesystem used by agents and the editor. Keeps the canonical copy in memory
- * (so export works without the runtime) and writes through to the WebContainer when mounted.
+ * (so export works without the runtime) and can write through to an optional mirror FS.
  */
 export class ProjectFs implements SandboxFs {
   readonly memory: MemoryFs;

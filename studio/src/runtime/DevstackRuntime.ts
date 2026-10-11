@@ -10,11 +10,11 @@ import { MockLLMProvider } from '@/llm/mockProvider';
 import type { LLMProvider } from '@/llm/types';
 import type { HealthResponseBody } from '@/shared/apiTypes';
 import { isMutation, validateBridgeSql } from '@/sandbox/dbBridge';
-import { isBinaryPath } from '@/sandbox/paths';
 import { ProjectFs } from '@/sandbox/projectFs';
 import { getInitialSandboxFiles } from '@/sandbox/template';
 import type { SandboxStatus } from '@/sandbox/types';
-import { WebContainerSandbox } from '@/sandbox/webcontainer';
+import { affectsPreview, isBinaryPath } from '@/sandbox/paths';
+import { StaticPreviewSandbox } from '@/sandbox/staticPreview';
 import { Store } from './store';
 import { TerminalBuffer } from './terminalBuffer';
 
@@ -65,7 +65,7 @@ export class DevstackRuntime {
   readonly store: Store<DevstackState>;
   private llm: LLMProvider = new MockLLMProvider();
   private generateImage: ImageGenerator = createImageGenerator(null);
-  private sandbox: WebContainerSandbox;
+  private sandbox: StaticPreviewSandbox;
   private orchestrator: AgentOrchestrator;
   private previewWindow: () => Window | null = () => null;
   private started = false;
@@ -111,10 +111,10 @@ export class DevstackRuntime {
       exporting: false,
       lastExport: null,
     });
-    this.sandbox = new WebContainerSandbox({
+    this.sandbox = new StaticPreviewSandbox({
       onOutput: (c) => this.terminal.write(c),
       onStatus: (s) => this.store.setState({ sandbox: s }),
-      onPreviewUrl: (url) => this.store.setState((st) => ({ previewUrl: url, previewNonce: st.previewNonce + 1 })),
+      onBundle: (url) => this.store.setState((st) => ({ previewUrl: url, previewNonce: st.previewNonce + 1 })),
     });
     this.orchestrator = new AgentOrchestrator({
       broker: this.broker,
@@ -125,7 +125,7 @@ export class DevstackRuntime {
     });
   }
 
-  /** Idempotent startup: backend discovery, DB, WebContainer, event wiring. */
+  /** Idempotent startup: backend discovery, DB, static preview, event wiring. */
   start(): void {
     if (this.started) return;
     this.started = true;
@@ -151,12 +151,7 @@ export class DevstackRuntime {
       });
 
     if (this.enableSandbox) {
-      void this.sandbox
-        .boot(this.fs.memory.snapshot(), (wcFs) => this.fs.attachMirror(wcFs))
-        .then(async (lock) => {
-          if (lock) await this.fs.writeFromMirror('package-lock.json', lock);
-        })
-        .catch(() => undefined);
+      void this.sandbox.boot(this.fs.memory.snapshot());
     } else {
       this.store.setState({ sandbox: { phase: 'error', message: 'Sandbox disabled' } });
     }
@@ -194,6 +189,7 @@ export class DevstackRuntime {
       b.on('db:schema-changed', () => this.refreshDb()),
       b.on('db:data-changed', () => this.refreshDb()),
       this.fs.onChange((path, content) => {
+        if (this.enableSandbox && affectsPreview(path)) this.sandbox.schedule(() => this.fs.memory.snapshot());
         if (typeof content !== 'string' || isBinaryPath(path)) {
           this.store.setState((s) =>
             s.binaryFiles.includes(path) ? {} : { binaryFiles: [...s.binaryFiles, path].sort() },
@@ -207,13 +203,28 @@ export class DevstackRuntime {
     const onMessage = (event: MessageEvent) => {
       const preview = this.previewWindow();
       if (!preview || event.source !== preview) return;
-      const url = this.store.getState().previewUrl;
-      if (url && new URL(url).origin !== event.origin) return;
-      const data = event.data as { type?: string; id?: number };
+      // The preview iframe is sandboxed without allow-same-origin, so its origin is opaque ("null").
+      if (event.origin !== 'null') return;
+      const data = event.data as { type?: string; id?: number; level?: string; text?: string };
+      if (data?.type === 'nvx-preview:hello') {
+        const msg = this.sandbox.loadMessage();
+        if (msg) preview.postMessage(msg, '*');
+        return;
+      }
+      if (data?.type === 'nvx-preview:console' || data?.type === 'nvx-preview:error') {
+        const red = data.type === 'nvx-preview:error' || data.level === 'error';
+        const text = String(data.text ?? '').slice(0, 4000).replace(/\r?\n/g, '\r\n');
+        this.terminal.write(`${red ? '\x1b[31m' : '\x1b[90m'}[preview] ${text}\x1b[0m\r\n`);
+        return;
+      }
+      if (data?.type === 'nvx-preview:ready') {
+        this.terminal.write('\x1b[36m[studio]\x1b[0m preview rendered\r\n');
+        return;
+      }
       if (data?.type !== 'devstack:sql') return;
       const req = validateBridgeSql(data);
       const reply = (msg: Record<string, unknown>) =>
-        (event.source as Window).postMessage({ type: 'devstack:sql:result', id: data.id, ...msg }, event.origin);
+        (event.source as Window).postMessage({ type: 'devstack:sql:result', id: data.id, ...msg }, '*');
       if (typeof req === 'string') {
         reply({ error: req });
         return;
@@ -324,9 +335,5 @@ export class DevstackRuntime {
     } finally {
       this.store.setState({ exporting: false });
     }
-  }
-
-  startShell(cols: number, rows: number, onData: (d: string) => void) {
-    return this.sandbox.startShell(cols, rows, onData);
   }
 }

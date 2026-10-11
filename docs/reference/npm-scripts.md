@@ -30,6 +30,8 @@
 | `npm run studio:check` | ตรวจ brand copy + ESLint + `tsc -b` + Vitest ของ Studio | ก่อน commit ที่แตะ `studio/` |
 | `npm run studio:brand` | `node scripts/sync-studio-brand.mjs` คัดลอก tokens, mascot, terminal signature ไป `studio/src/brand/` | หลังแก้ `tokens.css`, `globals.css` (ส่วน mascot/signature) หรือ `src/components/brand/*` |
 | `npm run studio:e2e` | Playwright ของ Studio (flow "build a todo app") กับ `wrangler dev`/preview ที่รันอยู่ | ตรวจ Studio แบบ end-to-end (`STUDIO_BASE_URL`, ค่าเริ่มต้น `http://127.0.0.1:8787`) |
+| `npm run licenses` | `node scripts/third-party-licenses.mjs` อ่าน lockfile ของเว็บและ Studio แล้วเขียน `THIRD_PARTY_LICENSES.md` | หลังเพิ่ม/อัปเดต dependency |
+| `npm run licenses:check` | `node scripts/third-party-licenses.mjs --check` | ตรวจว่าไม่มี license นอกนโยบาย (permissive เท่านั้น) และไฟล์เป็นปัจจุบัน (`npm test` ตรวจให้ด้วย) |
 
 ## ตัวเลือกของ `npm run export`
 
@@ -51,6 +53,7 @@ npm run export -- fastapi-ai --py uv --addons testing,docker --out /tmp/fastapi 
 | [`scripts/render-diagrams.mjs`](../../scripts/render-diagrams.mjs) | `npm run docs:diagrams` | SVG ของ Mermaid |
 | [`scripts/build-studio.mjs`](../../scripts/build-studio.mjs) | `npm run studio:build` (และ `prebuild`) | build Studio → `public/studio/` ตรวจว่าไม่มีไฟล์เกิน 25 MiB |
 | [`scripts/sync-studio-brand.mjs`](../../scripts/sync-studio-brand.mjs) | `npm run studio:brand` (`--check` ใน test) | คัดลอก design system ไปให้ Studio |
+| [`scripts/third-party-licenses.mjs`](../../scripts/third-party-licenses.mjs) | `npm run licenses` (`--check`, และใน `tests/licenses.test.ts`) | audit license ของ dependency production และสร้าง `THIRD_PARTY_LICENSES.md` |
 
 ## คำสั่ง wrangler ที่ใช้บ่อย (ต้องมี token และอนุมัติสำหรับคำสั่งที่เขียน)
 

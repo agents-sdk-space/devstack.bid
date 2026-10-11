@@ -69,7 +69,7 @@ test('build a todo app: code, sandbox preview, DB, vectors, image, export', asyn
     .evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0);
   expect(imgOk).toBe(true);
 
-  // --- live preview inside WebContainer ---
+  // --- live preview (Sucrase bundle in a sandboxed iframe) ---
   await expect(page.getByTestId('sandbox-phase')).toHaveText('ready', { timeout: 6 * 60_000 });
   await expect
     .poll(
@@ -82,6 +82,19 @@ test('build a todo app: code, sandbox preview, DB, vectors, image, export', asyn
     .toMatch(/todo|task/i);
   const frame = await previewFrame(page);
   await expect(frame.locator('input').first()).toBeVisible();
+  // Static preview: sandboxed same-origin page (opaque origin), no third-party frames.
+  const iframe = page.getByTestId('preview-iframe');
+  await expect(iframe).toHaveAttribute('sandbox', 'allow-scripts allow-forms allow-modals');
+  expect(await iframe.getAttribute('src')).toBe('/studio/preview/');
+  expect(await page.locator('iframe').evaluateAll((els) => els.map((e) => (e as HTMLIFrameElement).src))).toEqual([
+    new URL('/studio/preview/', page.url()).href,
+  ]);
+  await expect(page.getByTestId('terminal-output')).toContainText(/bundled \d+ modules/);
+  // The generated app writes through the postMessage SQL bridge into PGlite.
+  await expect(frame.getByText(/Storage: DEVSTACK PGlite/)).toBeVisible();
+  await frame.getByLabel('New todo').fill('Ship the static preview');
+  await frame.getByRole('button', { name: 'Add' }).click();
+  await expect(frame.getByText('Ship the static preview')).toBeVisible();
   await page.screenshot({ path: `${SHOTS}/studio-02-todo-app-built.png` });
 
   // --- Data Inspector ---
@@ -92,6 +105,7 @@ test('build a todo app: code, sandbox preview, DB, vectors, image, export', asyn
   await page.getByTestId('inspector-tab-grid').click();
   await expect(page.getByTestId('data-grid')).toBeVisible();
   await expect(page.getByTestId('data-grid').locator('th').first()).toBeVisible();
+  await expect(page.getByTestId('data-grid')).toContainText('Ship the static preview');
   await page.getByTestId('inspector-tab-schema').click();
   await expect(page.getByTestId('schema-topology')).toContainText(/todo|task/i);
 

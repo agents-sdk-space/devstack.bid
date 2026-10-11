@@ -3,8 +3,8 @@ import { isMutation, validateBridgeSql } from './dbBridge';
 import { MemoryFs } from './memoryFs';
 import { isBinaryPath, normalizeProjectPath } from './paths';
 import { ProjectFs } from './projectFs';
-import { scaffoldFiles } from './template';
-import { toFileSystemTree } from './webcontainer';
+import { getInitialSandboxFiles, scaffoldFiles, TODO_APP_FILES } from './template';
+import { affectsPreview, buildPreviewBundle, inlinePublicUrls, toDataUrl } from './staticBundler';
 
 describe('paths', () => {
   it('normalizes and rejects traversal', () => {
@@ -47,14 +47,93 @@ describe('MemoryFs / ProjectFs', () => {
   });
 });
 
-describe('toFileSystemTree', () => {
-  it('builds nested WebContainer trees', () => {
-    const tree = toFileSystemTree({ 'package.json': '{}', 'src/App.jsx': 'x', 'src/lib/u.js': 'y', 'public/a.png': new Uint8Array([1]) });
-    expect(tree).toEqual({
-      'package.json': { file: { contents: '{}' } },
-      src: { directory: { 'App.jsx': { file: { contents: 'x' } }, lib: { directory: { 'u.js': { file: { contents: 'y' } } } } } },
-      public: { directory: { 'a.png': { file: { contents: new Uint8Array([1]) } } } },
+/** Minimal CommonJS loader equivalent to the one in public/preview/index.html (for tests). */
+function runBundle(bundle: NonNullable<ReturnType<typeof buildPreviewBundle>['bundle']>, vendor: Record<string, unknown>) {
+  const cache: Record<string, { exports: Record<string, unknown> }> = {};
+  const load = (from: string, spec: string): unknown => {
+    if (spec in vendor) return vendor[spec];
+    const dir = from.split('/').slice(0, -1);
+    const parts = [...dir, ...spec.split('/')].filter((x) => x && x !== '.');
+    const p = parts.join('/');
+    const id = ['', '.jsx', '.js'].map((e) => p + e).find((c) => c in bundle.modules || c in bundle.css);
+    if (!id) throw new Error(`Cannot resolve ${spec}`);
+    if (id in bundle.css) return {};
+    if (cache[id]) return cache[id].exports;
+    const module = { exports: {} as Record<string, unknown> };
+    cache[id] = module;
+    new Function('require', 'module', 'exports', bundle.modules[id] as string)((s: string) => load(id, s), module, module.exports);
+    return module.exports;
+  };
+  return load;
+}
+
+describe('static preview bundler (Sucrase)', () => {
+  const hero = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+  const files = { ...getInitialSandboxFiles(), ...TODO_APP_FILES, 'public/assets/todo-hero.png': hero };
+
+  it('compiles the todo app into CommonJS modules with the entry from index.html', () => {
+    const res = buildPreviewBundle(files);
+    expect(res.errors).toEqual([]);
+    const b = res.bundle!;
+    expect(b.entry).toBe('src/main.jsx');
+    expect(Object.keys(b.modules).sort()).toEqual(['src/App.jsx', 'src/devstackDb.js', 'src/main.jsx']);
+    expect(b.css['src/index.css']).toContain('color-scheme: dark');
+    expect(b.modules['src/App.jsx']).toContain('require("react/jsx-runtime")');
+    expect(b.modules['src/App.jsx']).not.toMatch(/<main|vite\.config/);
+    // public URL rewritten to an inline data URL (the preview has no network).
+    expect(b.modules['src/App.jsx']).toContain('data:image/png;base64,iVBORw==');
+    expect(b.assets['/assets/todo-hero.png']).toBe('data:image/png;base64,iVBORw==');
+    expect(b.title).toBe('DEVSTACK App');
+  });
+
+  it('runs the compiled modules with only react + react-dom provided', () => {
+    const { bundle } = buildPreviewBundle(files);
+    const rendered: unknown[] = [];
+    const jsx = (type: unknown, props: unknown) => ({ type, props });
+    const vendor = {
+      react: { StrictMode: 'StrictMode', useState: (v: unknown) => [v, () => undefined], useEffect: () => undefined },
+      'react/jsx-runtime': { jsx, jsxs: jsx, Fragment: 'Fragment' },
+      'react-dom/client': { createRoot: () => ({ render: (el: unknown) => rendered.push(el) }) },
+    };
+    const g = globalThis as unknown as { document?: unknown };
+    const prev = g.document;
+    g.document = { getElementById: () => ({}) };
+    try {
+      runBundle(bundle!, vendor)('', './src/main.jsx');
+    } finally {
+      g.document = prev;
+    }
+    expect(rendered).toHaveLength(1);
+  });
+
+  it('reports syntax errors with the file path instead of a bundle', () => {
+    const res = buildPreviewBundle({ ...files, 'src/App.jsx': 'export default function App() { return <div> }' });
+    expect(res.bundle).toBeNull();
+    expect(res.errors[0]).toMatch(/^src\/App\.jsx: /);
+  });
+
+  it('compiles TypeScript, JSON and skips config/tests', () => {
+    const res = buildPreviewBundle({
+      ...files,
+      'src/util.ts': 'export const n: number = 1;',
+      'src/data.json': '{"a":1}',
+      'src/App.test.jsx': 'boom(',
     });
+    expect(res.errors).toEqual([]);
+    expect(res.bundle!.modules['src/util.ts']).toContain('exports.n = n');
+    expect(res.bundle!.modules['src/data.json']).toBe('module.exports = {"a":1};');
+    expect(res.bundle!.modules).not.toHaveProperty('src/App.test.jsx');
+    expect(res.bundle!.modules).not.toHaveProperty('vite.config.js');
+  });
+
+  it('inlines public URLs in JS strings and CSS url()', () => {
+    const map = { '/a.svg': 'data:x' };
+    expect(inlinePublicUrls(`img("/a.svg"); url(/a.svg) "/a.svgz"`, map)).toBe(`img("data:x"); url("data:x") "/a.svgz"`);
+    expect(toDataUrl('x.svg', '<svg/>')).toMatch(/^data:image\/svg\+xml;charset=utf-8,/);
+    expect(toDataUrl('x.txt', 'hi')).toBeNull();
+    expect(affectsPreview('src/App.jsx')).toBe(true);
+    expect(affectsPreview('package.json')).toBe(false);
+    expect(affectsPreview('vite.config.js')).toBe(false);
   });
 
   it('scaffold always contains the DB bridge and entry points', () => {
