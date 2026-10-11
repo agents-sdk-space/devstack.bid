@@ -5,7 +5,7 @@
 | คำสั่ง | ทำอะไร | ใช้เมื่อ |
 |---|---|---|
 | `npm run dev` | `next dev` ที่ :3000 พร้อม Cloudflare bindings ใน dev | พัฒนาประจำวัน |
-| `predev`, `prebuild`, `pretest`, `pretypecheck` | `node scripts/build-docs.mjs` อัตโนมัติก่อน `dev` / `build` / `test` / `typecheck` (`prebuild` รัน `node scripts/build-studio.mjs` ต่อด้วย) | สร้าง docs bundle และ Studio ใหม่ ไม่ต้องรันเอง |
+| `predev`, `prebuild`, `pretest`, `pretypecheck` | `node scripts/build-docs.mjs` อัตโนมัติก่อน `dev` / `build` / `test` / `typecheck` (`prebuild` รัน `node scripts/build-studio.mjs` ต่อด้วย ส่วน `pretypecheck` รัน `next typegen` เพื่อสร้าง type `PageProps` / `LayoutProps` ใน `.next/types` บน checkout ใหม่) | สร้าง docs bundle และ Studio ใหม่ ไม่ต้องรันเอง |
 | `npm run build` | `next build` (target Node) | ตรวจ build หรือ deploy แบบ Node server |
 | `npm run start` | `next start` | รันผล build แบบ Node |
 | `npm run lint` | `eslint` | ก่อน commit |
