@@ -27,6 +27,8 @@
   // D1 (SQLite) for chat history. Created 2026-10-11 (region WNAM). Schema: migrations/ and
   // docs/reference/d1-schema.md. Apply with `npm run db:migrate:remote` (approval required).
   // R2 binding ASSETS_BUCKET (bucket nvx-assets) is NOT added yet: R2 is not enabled on the account.
+  // Workers AI (User Chat on /chat). Always runs remotely, also in `wrangler dev`/preview.
+  "ai": { "binding": "AI" },
   "d1_databases": [
     {
       "binding": "DB",
@@ -38,7 +40,48 @@
   "vars": {
     "OPENAI_MODEL": "gpt-6.1-sol",
     "OPENAI_MAX_OUTPUT_TOKENS": "6000",
-    "OPENAI_TIMEOUT_MS": "75000"
+    "OPENAI_TIMEOUT_MS": "75000",
+    // /chat (Image and Research Orchestrator). Limits are cost guards for a public page; see
+    // docs/reference/config-env.md. CHAT_AGENT_ID empty = inline config from agents/orchestrator/agent.json.
+    "CHAT_ENABLED": "true",
+    "CHAT_MODEL": "gpt-6.1-sol",
+    "CHAT_AGENT_ID": "",
+    "CHAT_REASONING_EFFORT": "low",
+    "CHAT_ENVIRONMENT": "openai_hosted",
+    "CHAT_CONTAINER_SIZE": "small",
+    "CHAT_MAX_INPUT_CHARS": "2000",
+    "CHAT_MAX_OUTPUT_TOKENS": "2000",
+    "CHAT_TURN_TIMEOUT_MS": "180000",
+    // Free users (per cookie per day, reset at midnight Asia/Bangkok; per-IP backstop x FREE_IP_MULTIPLIER).
+    "FREE_DAILY_MESSAGES": "20",
+    "FREE_DAILY_IMAGES": "5",
+    "FREE_IP_MULTIPLIER": "3",
+    "MAX_ATTACHMENT_BYTES": "10485760",
+    // OpenAI Orchestrator agent (server key, ~$30 credit): low caps.
+    "CHAT_AGENT_TURNS_PER_DAY": "5",
+    "CHAT_GLOBAL_TURNS_PER_DAY": "30",
+    "CHAT_AGENT_IMAGES_PER_DAY": "2",
+    "CHAT_GLOBAL_IMAGES_PER_DAY": "20",
+    // User Chat site-wide daily caps (Workers AI / HF).
+    "CHAT_USER_GLOBAL_PER_DAY": "3000",
+    "CHAT_USER_GLOBAL_IMAGES_PER_DAY": "500",
+    "CHAT_IMAGE_MODEL": "gpt-image-2.5-sunburst",
+    "CHAT_IMAGE_QUALITY": "low",
+    "CHAT_DAILY_BUDGET_USD": "1",
+    // Hugging Face router (HF_TOKEN secret): planner + plain chat. OpenAI server-key fallback off.
+    // Workers AI models (User Chat). Verified in the catalog 2026-10-11.
+    "WAI_MODEL": "@cf/google/gemma-4-26b-a4b-it",
+    "WAI_THAI_MODEL": "@cf/aisingapore/gemma-sea-lion-v4-27b-it",
+    "WAI_CODE_MODEL": "@cf/qwen/qwen2.5-coder-32b-instruct",
+    "WAI_IMAGE_MODEL": "@cf/black-forest-labs/flux-1-schnell",
+    "WAI_MAX_TOKENS": "1500",
+    "HF_MODEL": "deepseek-ai/DeepSeek-V3",
+    "HF_FAST_MODEL": "meta-llama/Llama-3.1-8B-Instruct",
+    "OPENAI_FALLBACK": "false",
+    // /factory (bring your own OpenAI key): anti-abuse only.
+    "FACTORY_ENABLED": "true",
+    "FACTORY_SESSIONS_PER_HOUR": "10",
+    "FACTORY_TURNS_PER_HOUR": "60"
   },
   // Workers Rate Limiting API (no separate resource to create; counters are per Cloudflare location).
   // namespace_id is an arbitrary account-unique integer string chosen for this app.
@@ -54,6 +97,18 @@
       "name": "NVX_PLAN_LIMITER",
       "namespace_id": "4712",
       "simple": { "limit": 20, "period": 60 }
+    },
+    {
+      // POST /api/chat/turn burst guard: 4 per IP per minute (hourly/daily limits live in D1).
+      "name": "NVX_CHAT_LIMITER",
+      "namespace_id": "4713",
+      "simple": { "limit": 4, "period": 60 }
+    },
+    {
+      // /api/factory/* (bring-your-own-key) burst guard: 10 per IP per minute.
+      "name": "NVX_FACTORY_LIMITER",
+      "namespace_id": "4714",
+      "simple": { "limit": 10, "period": 60 }
     }
   ],
   "observability": {
@@ -61,5 +116,5 @@
     "head_sampling_rate": 1
   },
   "upload_source_maps": true
-  // Secret (set with `wrangler secret put`, never committed): OPENAI_API_KEY
+  // Secrets (set with `wrangler secret put`, never committed): OPENAI_API_KEY, CHAT_COOKIE_SECRET, HF_TOKEN
 }

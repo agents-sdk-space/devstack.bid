@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Blocks, BookOpen, House, Languages, LayoutGrid, Menu, Moon, Palette, Sun } from "lucide-react";
+import { Blocks, BookOpen, House, Languages, LayoutGrid, Menu, FlaskConical, MessagesSquare, Moon, Palette, SquareTerminal, Sun } from "lucide-react";
 import { Button, cn, Dialog, DialogContent, DialogTrigger, SearchIcon, Tooltip } from "@/components/ui";
 import { CommandPalette, PaletteTrigger } from "./command-palette";
 import { Mascot } from "./brand/mascot";
@@ -14,12 +14,16 @@ const NAV = [
   { href: "/", key: "nav.home", Icon: House },
   { href: "/templates", key: "nav.templates", Icon: LayoutGrid },
   { href: "/builder", key: "nav.builder", Icon: Blocks },
+  { href: "/chat", key: "nav.chat", Icon: MessagesSquare },
+  { href: "/chat/dev", key: "nav.devChat", Icon: SquareTerminal, wide: true },
+  { href: "/factory", key: "nav.factory", Icon: FlaskConical, wide: true },
   { href: "/docs", key: "nav.docs", Icon: BookOpen },
-  { href: "/design", key: "nav.design", Icon: Palette },
+  { href: "/design", key: "nav.design", Icon: Palette, wide: true },
 ] as const;
 
 function isActive(pathname: string, href: string) {
-  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+  if (href === "/" || href === "/chat") return pathname === href;
+  return pathname.startsWith(href);
 }
 
 export function Header() {
@@ -53,6 +57,7 @@ export function Header() {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "focus-ring motion-fast whitespace-nowrap rounded-md px-3 py-1.5 text-[13px]",
+                  "wide" in item && item.wide && "hidden xl:inline-block",
                   active ? "font-medium text-fg" : "text-subtle hover:text-fg"
                 )}
               >
@@ -80,7 +85,7 @@ export function Header() {
           </Tooltip>
           <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden" aria-label={t("nav.menu")}>
+              <Button variant="ghost" size="icon" className="xl:hidden" aria-label={t("nav.menu")}>
                 <Menu className="h-5 w-5" aria-hidden />
               </Button>
             </DialogTrigger>

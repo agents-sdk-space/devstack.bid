@@ -3,3 +3,11 @@ OPENAI_API_KEY=
 # OPENAI_MODEL=gpt-6.1-sol
 # OPENAI_MAX_OUTPUT_TOKENS=6000
 # OPENAI_TIMEOUT_MS=75000
+# /chat: HMAC key for the anonymous chat cookie (32+ random chars, e.g. `openssl rand -hex 32`).
+CHAT_COOKIE_SECRET=
+# Optional overrides (defaults live in wrangler.jsonc "vars"):
+# CHAT_ENVIRONMENT=none
+# CHAT_GLOBAL_TURNS_PER_DAY=150
+# Hugging Face router token (fine-grained, "Make calls to Inference Providers"):
+HF_TOKEN=
+# OPENAI_FALLBACK=false

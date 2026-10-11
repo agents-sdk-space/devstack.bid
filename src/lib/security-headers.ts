@@ -7,11 +7,12 @@
 export function contentSecurityPolicy(dev = false): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""}`,
+    // Cloudflare Web Analytics is injected on the devstack.bid zone (beacon script + RUM endpoint).
+    `script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com${dev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
-    `connect-src 'self'${dev ? " ws: wss:" : ""}`,
+    `connect-src 'self' https://cloudflareinsights.com${dev ? " ws: wss:" : ""}`,
     "media-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",

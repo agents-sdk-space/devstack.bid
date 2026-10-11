@@ -106,6 +106,7 @@ describe("security headers", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("connect-src 'self'");
+    expect(csp).toContain("https://static.cloudflareinsights.com");
     expect(csp).not.toContain("unsafe-eval");
     expect(contentSecurityPolicy(true)).toContain("unsafe-eval");
   });
@@ -125,6 +126,8 @@ describe("POST /api/plan hardening", () => {
 
   async function route(env: Record<string, string> = {}) {
     vi.stubEnv("OPENAI_API_KEY", env.OPENAI_API_KEY ?? "");
+    vi.stubEnv("HF_TOKEN", env.HF_TOKEN ?? "");
+    vi.stubEnv("OPENAI_FALLBACK", env.OPENAI_FALLBACK ?? (env.OPENAI_API_KEY && !env.HF_TOKEN ? "true" : "false"));
     vi.stubEnv("PLAN_LIMIT_PER_MIN", env.PLAN_LIMIT_PER_MIN ?? "20");
     vi.stubEnv("PLAN_AI_LIMIT_PER_MIN", env.PLAN_AI_LIMIT_PER_MIN ?? "5");
     return import("@/app/api/plan/route");
@@ -135,6 +138,20 @@ describe("POST /api/plan hardening", () => {
     expect((await POST(jsonReq("{}", { "content-type": "text/plain", "cf-connecting-ip": "1.1.1.1" }))).status).toBe(415);
     expect((await POST(jsonReq(JSON.stringify({ prompt: "x".repeat(20_000) }), { "cf-connecting-ip": "1.1.1.2" }))).status).toBe(413);
     expect((await POST(jsonReq(JSON.stringify({ prompt: "" }), { "cf-connecting-ip": "1.1.1.3" }))).status).toBe(400);
+  });
+
+  it("tries Hugging Face first and never falls back to the server OpenAI key unless OPENAI_FALLBACK=true", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: "overloaded" }), { status: 503 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { POST } = await route({ HF_TOKEN: "hf_testtoken0123456789abcdef", OPENAI_API_KEY: "sk-test-server-key-0123456789abcdef", OPENAI_FALLBACK: "false" });
+    const res = await POST(jsonReq(JSON.stringify({ prompt: "booking site", lang: "en" }), { "cf-connecting-ip": "7.7.7.1" }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.source).toBe("fallback");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0][0])).toContain("router.huggingface.co");
+    expect(JSON.stringify(body)).not.toContain("hf_testtoken");
+    vi.unstubAllGlobals();
   });
 
   it("serves the offline planner and returns 429 with Retry-After past the per-IP limit", async () => {

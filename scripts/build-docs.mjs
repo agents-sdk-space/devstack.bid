@@ -44,14 +44,14 @@ export const SECTIONS = [
   {
     id: "user-guide",
     label: { th: "คู่มือผู้ใช้", en: "User guide" },
-    files: ["getting-started", "templates", "builder", "ai-agent", "sharing", "downloads", "language-theme", "troubleshooting"].map((f) => `user-guide/${f}.md`),
+    files: ["getting-started", "templates", "builder", "ai-agent", "chat", "dev-chat", "sandbox-factory", "sharing", "downloads", "language-theme", "troubleshooting"].map((f) => `user-guide/${f}.md`),
   },
   { id: "concepts", label: { th: "แนวคิด", en: "Concepts" }, files: ["stack-template", "composition", "safety-model", "design-system"].map((f) => `concepts/${f}.md`) },
   {
     id: "architecture",
     label: { th: "สถาปัตยกรรม", en: "Architecture" },
     files: [
-      ...["overview", "data-flow", "templates-and-composer", "scripts-and-share", "ai-planner", "api-hardening", "ui-framework", "cloudflare-runtime", "docs-site", "chat-data-model"].map((f) => `architecture/${f}.md`),
+      ...["overview", "data-flow", "templates-and-composer", "scripts-and-share", "ai-planner", "api-hardening", "ui-framework", "cloudflare-runtime", "docs-site", "chat-data-model", "chat-orchestrator"].map((f) => `architecture/${f}.md`),
       "UI-FRAMEWORK.md",
     ],
   },
@@ -66,7 +66,7 @@ export const SECTIONS = [
     label: { th: "ร่วมพัฒนา", en: "Contributing" },
     files: ["add-template", "add-component", "testing", "release-process", "docs-maintenance"].map((f) => `contributing/${f}.md`),
   },
-  { id: "reference", label: { th: "อ้างอิง", en: "Reference" }, files: ["api-plan", "template-schema", "config-env", "d1-schema", "npm-scripts", "file-map"].map((f) => `reference/${f}.md`) },
+  { id: "reference", label: { th: "อ้างอิง", en: "Reference" }, files: ["api-plan", "api-chat", "template-schema", "config-env", "d1-schema", "npm-scripts", "file-map"].map((f) => `reference/${f}.md`) },
   { id: "agents", label: { th: "สำหรับ AI agent", en: "For AI agents" }, files: ["agents/AGENT-PLAYBOOK.md"] },
 ];
 

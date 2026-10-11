@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-11
+
+### Added
+
+- **User Chat** at `/chat`: free AI chat on Cloudflare Workers AI (binding `AI`) with modes General (Gemma 4 26B), Thai (SEA-LION v4 27B), Code (Qwen2.5 Coder 32B), Image (FLUX.1 schnell) and Stronger (DeepSeek V3 via the Hugging Face router). Each provider falls back to the other automatically.
+- **Dev Chat** at `/chat/dev`: the Image and Research Orchestrator (OpenAI Agents API) with a live Sandbox panel showing commands, subagents, docs lookups, files and token usage.
+- **Sandbox Factory** at `/factory`: bring your own OpenAI key (sent per request in `x-openai-key`; never stored or logged). Pick a template (Orchestrator or Blank), a model (gpt-6.1-sol, gpt-6-astra or gpt-6-luna) and an environment:
+  - OpenAI-hosted;
+  - self-hosted, with a copyable `codex exec-server` command and live environment status.
+- **Free-tier quotas** (in D1, per cookie with a per-IP backstop, reset at midnight Asia/Bangkok):
+  - User Chat: 20 messages/day and 5 images/day.
+  - Dev Chat: 5 agent turns/day per cookie and 30 site-wide, plus a $1/day budget.
+  - The remaining quota is shown in the UI, and limit messages are in Thai and English.
+- `/api/chat/attachments`: enforces the 10 MB limit and MIME checks. It answers 503 `uploads_disabled` until R2 exists.
+- Hugging Face provider for the `/api/plan` planner: DeepSeek V3 first, then OpenAI only if `OPENAI_FALLBACK=true`, then the offline planner.
+- D1 migrations:
+  - `0003_chat_runtime`: `usage_counters`, `attachment_blobs`, `agent_session_id`, `meta`.
+  - `0004_factory`: `source`, `environment`.
+  - `0005_channels`: `channel` 'user'|'dev'.
+- `agents/orchestrator/`: the agent definition and a Python reference app (OpenAI Agents API; self-hosted executor support).
+- `robots.txt` and `sitemap.xml`.
+- Docs:
+  - user guides: chat, dev-chat, sandbox-factory;
+  - `architecture/chat-orchestrator.md`;
+  - `reference/api-chat.md`;
+  - env/config tables;
+  - `operations/audit-2026-10-11.md`.
+
+### Changed
+
+- Navigation: Chat, Dev Chat and Factory were added to the header, mobile menu and command palette. Between 1024 and 1279 px the header shows a compact set, and the hamburger menu holds the rest.
+- CSP now allows Cloudflare Web Analytics (`static.cloudflareinsights.com` script, `cloudflareinsights.com` connect).
+
+### Fixed
+
+- `getCloudflareContext` is now a static import with `{ async: true }`. The old dynamic import failed after the first request ("Cannot perform I/O on behalf of a different request"), so the `/api/plan` Workers rate limiter silently fell back to in-memory counters.
+
+## [0.6.1] - 2026-10-11 (D1 binding + chat schema; deployed 450890b7)
+
 ### Added
 
 - **D1 database `nvx-db`** (binding `DB`, region WNAM), with migrations in `migrations/` applied to remote:
