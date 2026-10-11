@@ -85,3 +85,15 @@ Workers มี free tier; ค่าใช้จ่ายหลักคือ Op
   - ภาพหน้าจออยู่ที่ `screenshots/v0.6/live-*`
 - **ข้อสังเกต:** console มี error จาก CSP บล็อก `static.cloudflareinsights.com/beacon.min.js` (Web Analytics ที่ Cloudflare ฉีดเข้ามา) ไม่มีผลกับการทำงาน; จะเปิดใน CSP หรือปิด Web Analytics ต้องให้ผู้ใช้ตัดสินใจ
 - **rollback:** `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1)
+
+## บันทึก deploy: เพิ่ม D1 binding (11 ต.ค. 2026)
+
+- สร้าง D1 `nvx-db` (`3ee9bbab-06b5-49da-b175-5f7162ad5086`, WNAM) แล้ว apply migration `0001` และ `0002` บน remote ([d1-database.md](./d1-database.md))
+- deploy จาก branch `feat/d1-chat-schema` หลังจาก lint, typecheck, tests, docs:check และ cf:build ผ่าน; ได้ version `450890b7-5432-4795-afbc-1c7ebd241bff`; binding `env.DB (nvx-db)`; custom domain ยังอยู่ครบ
+- ตรวจบนเว็บจริง:
+  - ทุกหน้าได้ 200 และ 404 จริง
+  - raw `.md` ทั้ง 46 ไฟล์ตรงกับต้นฉบับทุก byte
+  - `GET /api/plan` ปกติ; www ตอบ 308
+  - หน้า docs ใหม่และ ER diagram โหลดได้ ไม่มี console error นอกจาก beacon ของ Web Analytics
+- rollback: `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (v0.6.0)
+

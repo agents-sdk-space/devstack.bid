@@ -2,7 +2,7 @@
   "$comment": "Machine-readable map of NVX Stack Builder for AI agents. Verified by `npm run docs:check` (templateIds must equal src/data/template-ids.ts; every keyFiles path must exist). Human docs: docs/agents/AGENT-PLAYBOOK.md",
   "name": "nvx-stack-builder",
   "version": "0.6.0",
-  "branchState": "main = v0.6.0 (in-app docs at /docs, llms.txt, DevStack signature; deployed to devstack.bid). feat/docs-site merged.",
+  "branchState": "main = v0.6.0 (deployed to devstack.bid). feat/d1-chat-schema = D1 nvx-db binding + chat schema migrations (schema only, no UI)",
   "stack": {
     "framework": "Next.js 16.4 App Router",
     "language": "TypeScript",
@@ -162,6 +162,16 @@
         "tests/docs-site.test.ts"
       ],
       "docs": "docs/architecture/docs-site.md"
+    },
+    {
+      "id": "chat-data-model",
+      "summary": "D1 database nvx-db (binding DB) with chat-history schema: users, conversations, messages, attachments (R2 keys), api_clients (hashed API keys). Schema only; no endpoints/UI yet. R2 bucket nvx-assets pending (R2 not enabled on account).",
+      "keyFiles": [
+        "migrations/0001_schema_meta.sql",
+        "migrations/0002_chat_history.sql",
+        "wrangler.jsonc"
+      ],
+      "docs": "docs/architecture/chat-data-model.md"
     }
   ],
   "templateIds": [
@@ -270,7 +280,9 @@
     "export": "npm run export -- <templateId> --out <dir>",
     "deploy": "npm run deploy  # REQUIRES HUMAN APPROVAL",
     "docsBundle": "npm run docs:bundle  # also runs automatically before dev/build/test/typecheck",
-    "docsDiagrams": "PLAYWRIGHT_DIR=/tmp/pw npm run docs:diagrams  # after editing a Mermaid block"
+    "docsDiagrams": "PLAYWRIGHT_DIR=/tmp/pw npm run docs:diagrams  # after editing a Mermaid block",
+    "dbMigrateLocal": "npm run db:migrate:local",
+    "dbMigrateRemote": "npm run db:migrate:remote  # REQUIRES HUMAN APPROVAL"
   },
   "env": [
     {
@@ -343,6 +355,13 @@
       "name": "WORKER_SELF_REFERENCE",
       "type": "service",
       "service": "nvx-stack-builder"
+    },
+    {
+      "name": "DB",
+      "type": "d1",
+      "databaseName": "nvx-db",
+      "databaseId": "3ee9bbab-06b5-49da-b175-5f7162ad5086",
+      "migrationsDir": "migrations"
     }
   ],
   "deployTarget": {
@@ -374,10 +393,11 @@
     "workersDevSubdomain": "examplessdk",
     "accountId": "2d92bd5b25768fa9093d6adc0a8887fc",
     "accountName": "Examplessdk@gmail.com's Account",
-    "deployedVersion": "v0.6.0",
-    "currentVersionId": "7ddd9404-a31f-4e31-8460-82b3b90c7d0e",
-    "previousVersionId": "671b6b3b-1074-40cb-84b0-0df2681b69ce",
+    "deployedVersion": "v0.6.0 + D1 binding (feat/d1-chat-schema b90ca11)",
+    "currentVersionId": "450890b7-5432-4795-afbc-1c7ebd241bff",
+    "previousVersionId": "7ddd9404-a31f-4e31-8460-82b3b90c7d0e",
     "olderVersionIds": [
+      "671b6b3b-1074-40cb-84b0-0df2681b69ce",
       "d369f2b6-863a-4e44-8f9e-b5551e18361a",
       "107ab78e-2cdd-4159-95e7-e8fcb89130aa"
     ],
@@ -385,7 +405,17 @@
     "otherWorkersInAccount": [
       "odd-violet-5e66 (not ours, never modify)"
     ],
-    "tokenNotes": "Attaching custom domains needs one token with Account Workers Scripts:Edit + zone access; CLOUDFLARE_API_TOKEN_DEVSTACK lacks Workers Scripts, CLOUDFLARE_API_TOKEN_EXAMPLESSDK worked."
+    "tokenNotes": "Attaching custom domains needs one token with Account Workers Scripts:Edit + zone access; CLOUDFLARE_API_TOKEN_DEVSTACK lacks Workers Scripts, CLOUDFLARE_API_TOKEN_EXAMPLESSDK worked.",
+    "d1": {
+      "database": "nvx-db",
+      "id": "3ee9bbab-06b5-49da-b175-5f7162ad5086",
+      "region": "WNAM",
+      "appliedMigrations": [
+        "0001_schema_meta.sql",
+        "0002_chat_history.sql"
+      ]
+    },
+    "r2": "not created: R2 not enabled on account (error 10042); needs owner to enable in dashboard + token with Workers R2 Storage:Edit"
   },
   "invariants": [
     "Commands are text only; the server never executes them",
@@ -400,7 +430,9 @@
     "index": "docs/README.md",
     "playbook": "docs/agents/AGENT-PLAYBOOK.md",
     "history": "docs/history/SUBSYSTEM-HISTORY.md",
-    "deploy": "docs/DEPLOY.md"
+    "deploy": "docs/DEPLOY.md",
+    "d1Schema": "docs/reference/d1-schema.md",
+    "d1Operations": "docs/operations/d1-database.md"
   },
   "previousDeployments": [
     {

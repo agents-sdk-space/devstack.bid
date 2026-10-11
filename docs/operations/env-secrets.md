@@ -27,7 +27,7 @@ printenv OPENAI_API_KEY | npx wrangler secret put OPENAI_API_KEY
 
 ### Cloudflare API token
 
-- ใช้ token แบบ account-scoped สิทธิ์ขั้นต่ำ: **Workers Scripts: Edit**, **Account Settings: Read** (ดู [DEPLOY.md](../DEPLOY.md) หัวข้อ 7)
+- ใช้ token แบบ account-scoped สิทธิ์ขั้นต่ำ: **Workers Scripts: Edit**, **Account Settings: Read** (ดู [DEPLOY.md](../DEPLOY.md) หัวข้อ 7); ถ้าใช้ `wrangler d1` ต้องเพิ่ม **D1: Edit** และสำหรับ R2 ต้องเพิ่ม **Workers R2 Storage: Edit** (ดู [d1-database.md](./d1-database.md))
 - ส่งเป็นตัวแปร `CLOUDFLARE_API_TOKEN` เฉพาะคำสั่งที่ต้องใช้ ห้ามพิมพ์ค่าออกหน้าจอ ห้ามเขียนลงไฟล์ใน repo
 - ถ้าตัวแปรมีข้อความอื่นปนมา (เช่นวางทั้งหน้าเว็บ) ให้ดึงเฉพาะ token ใน process โดยไม่ echo
 

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **D1 database `nvx-db`** (binding `DB`, region WNAM), with migrations in `migrations/` applied to remote:
+  - `0001_schema_meta`
+  - `0002_chat_history`: tables `users`, `conversations`, `messages`, `attachments` and `api_clients`, with indexes, `STRICT` tables, CHECK constraints and cascading deletes.
+  - Schema only: no endpoints or UI read or write these tables yet.
+- npm scripts `db:migrate:local`, `db:migrate:remote`, `db:migrations:list`.
+- Docs: `architecture/chat-data-model.md`, `reference/d1-schema.md`, `operations/d1-database.md`. docs:check rule 5 now also covers D1/R2 bindings.
+
+### Not done
+
+- R2 bucket `nvx-assets` (`ASSETS_BUCKET`): R2 is not enabled on the account (API error 10042). The account owner has to enable it in the dashboard.
+
 ## [0.6.0] - 2026-10-11
 
 ### Added

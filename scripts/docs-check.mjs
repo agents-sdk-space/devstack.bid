@@ -6,7 +6,7 @@
  *  2. relative markdown links in docs/, README.md and AGENTS.md resolve
  *  3. backticked repo paths (src/, scripts/, tests/, docs/, public/) exist
  *  4. every template id appears in the template reference and user guide
- *  5. every env var / rate-limit binding appears in docs/reference/config-env.md
+ *  5. every env var / rate-limit / D1 / R2 binding appears in docs/reference/config-env.md
  *  6. every npm script appears in docs/reference/npm-scripts.md
  *  7. docs/agents/platform-manifest.json parses, templateIds match, keyFiles exist
  * Usage: node scripts/docs-check.mjs [--report] [--root <dir>]
@@ -101,6 +101,7 @@ export function envVarNames(root) {
       const cfg = JSON.parse(stripJsonComments(wr));
       Object.keys(cfg.vars ?? {}).forEach((k) => names.add(k));
       (cfg.ratelimits ?? []).forEach((r) => r.name && names.add(r.name));
+      [...(cfg.d1_databases ?? []), ...(cfg.r2_buckets ?? [])].forEach((b) => b.binding && names.add(b.binding));
     } catch {
       /* invalid wrangler.jsonc is reported by wrangler itself */
     }
