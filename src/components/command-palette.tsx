@@ -7,7 +7,7 @@ import { TEMPLATES } from "@/data/templates";
 import { CATEGORY_LABELS } from "@/lib/i18n";
 import { Dialog, DialogContent, Kbd, SearchIcon } from "@/components/ui";
 import { useDarkMode, useLang } from "./prefs";
-import { Blocks, BookOpen, FileText, FlaskConical, House, Languages, LayoutGrid, MessagesSquare, Palette, SquareTerminal, SunMoon } from "lucide-react";
+import { AppWindow, Blocks, BookOpen, FileText, FlaskConical, House, Languages, LayoutGrid, MessagesSquare, Palette, SquareTerminal, SunMoon } from "lucide-react";
 import docsNav from "@/generated/docs-nav.json";
 import { templateTool, ToolTile } from "./brand/tool-icon";
 
@@ -61,11 +61,12 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
                   ["/chat", MessagesSquare, t("nav.chat")],
                   ["/chat/dev", SquareTerminal, t("nav.devChat")],
                   ["/factory", FlaskConical, t("nav.factory")],
+                  ["/studio/", AppWindow, t("nav.studio")],
                   ["/docs", BookOpen, t("nav.docs")],
                   ["/design", Palette, t("nav.design")],
                 ] as const
               ).map(([href, Icon, label]) => (
-                <Command.Item key={href} value={`page ${label} ${href}`} onSelect={() => run(() => router.push(href))} className={itemClass}>
+                <Command.Item key={href} value={`page ${label} ${href}`} onSelect={() => run(() => (href === "/studio/" ? window.location.assign(href) : router.push(href)))} className={itemClass}>
                   <Icon className="h-4 w-4 text-subtle" aria-hidden />
                   {label}
                   <span className="ml-auto font-mono text-xs text-subtle">{href}</span>

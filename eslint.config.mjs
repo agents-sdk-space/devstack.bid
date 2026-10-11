@@ -18,6 +18,9 @@ const eslintConfig = defineConfig([
     "cloudflare-env.d.ts",
     // Generated docs bundle (scripts/build-docs.mjs)
     "src/generated/**",
+    // Studio sub-app (Vite + React, own ESLint/TS config: npm run studio:check) and its build output
+    "studio/**",
+    "public/studio/**",
   ]),
 ]);
 

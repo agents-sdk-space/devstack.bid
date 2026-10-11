@@ -16,7 +16,10 @@ export type LimitKind =
   | "image_ip_day"
   | "image_global_day"
   | "factory_session_ip_hour"
-  | "factory_turn_ip_hour";
+  | "factory_turn_ip_hour"
+  | "studio_user_day"
+  | "studio_ip_day"
+  | "studio_global_day";
 
 export interface LimitRule {
   scope: string;

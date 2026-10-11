@@ -81,7 +81,15 @@
     // /factory (bring your own OpenAI key): anti-abuse only.
     "FACTORY_ENABLED": "true",
     "FACTORY_SESSIONS_PER_HOUR": "10",
-    "FACTORY_TURNS_PER_HOUR": "60"
+    "FACTORY_TURNS_PER_HOUR": "60",
+    // /studio (merged DEVSTACK workspace): agents call /api/studio/* -> Workers AI (STUDIO_MODEL),
+    // then Hugging Face. Free calls per cookie per day; images share FREE_DAILY_IMAGES with /chat.
+    "STUDIO_ENABLED": "true",
+    "STUDIO_MODEL": "@cf/qwen/qwen2.5-coder-32b-instruct",
+    "STUDIO_PROVIDER": "wai",
+    "STUDIO_MAX_TOKENS": "4000",
+    "STUDIO_DAILY_CALLS": "60",
+    "STUDIO_GLOBAL_CALLS_PER_DAY": "3000"
   },
   // Workers Rate Limiting API (no separate resource to create; counters are per Cloudflare location).
   // namespace_id is an arbitrary account-unique integer string chosen for this app.
@@ -109,6 +117,12 @@
       "name": "NVX_FACTORY_LIMITER",
       "namespace_id": "4714",
       "simple": { "limit": 10, "period": 60 }
+    },
+    {
+      // /api/studio/* burst guard: 20 per IP per minute (one Studio build makes ~3-6 calls).
+      "name": "NVX_STUDIO_LIMITER",
+      "namespace_id": "4715",
+      "simple": { "limit": 20, "period": 60 }
     }
   ],
   "observability": {

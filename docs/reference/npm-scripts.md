@@ -5,7 +5,7 @@
 | คำสั่ง | ทำอะไร | ใช้เมื่อ |
 |---|---|---|
 | `npm run dev` | `next dev` ที่ :3000 พร้อม Cloudflare bindings ใน dev | พัฒนาประจำวัน |
-| `predev`, `prebuild`, `pretest`, `pretypecheck` | `node scripts/build-docs.mjs` อัตโนมัติก่อน `dev` / `build` / `test` / `typecheck` | สร้าง docs bundle ใหม่ทุกครั้ง ไม่ต้องรันเอง |
+| `predev`, `prebuild`, `pretest`, `pretypecheck` | `node scripts/build-docs.mjs` อัตโนมัติก่อน `dev` / `build` / `test` / `typecheck` (`prebuild` รัน `node scripts/build-studio.mjs` ต่อด้วย) | สร้าง docs bundle และ Studio ใหม่ ไม่ต้องรันเอง |
 | `npm run build` | `next build` (target Node) | ตรวจ build หรือ deploy แบบ Node server |
 | `npm run start` | `next start` | รันผล build แบบ Node |
 | `npm run lint` | `eslint` | ก่อน commit |
@@ -25,6 +25,11 @@
 | `npm run docs:diagrams` | `node scripts/render-diagrams.mjs` เรนเดอร์บล็อก Mermaid เป็น `public/docs-assets/diagrams/<hash>.svg` | หลังแก้ diagram (ต้องมี Playwright: `PLAYWRIGHT_DIR=/tmp/pw npm run docs:diagrams`) |
 | `npm run docs:pdf` | `node scripts/docs-pdf.mjs` สร้าง `docs/dist/NVX-User-Guide.pdf` จาก `docs/user-guide/` | หลังแก้คู่มือผู้ใช้ (ต้องมี Chromium ของ Playwright และฟอนต์ไทย) |
 | `postinstall` | `node scripts/patch-opennext.mjs` (อัตโนมัติหลัง `npm install`) | patch adapter สำหรับ Next 16.4 |
+| `npm run studio:build` | `node scripts/build-studio.mjs --force` build แอป Vite ใน `studio/` → `public/studio/` (ติดตั้ง `studio/node_modules` ให้ถ้ายังไม่มี) | build Studio ใหม่ทันที (`prebuild` ทำให้อัตโนมัติและข้ามถ้าไฟล์ไม่เปลี่ยน) |
+| `npm run studio:dev` | `vite` ของ Studio ที่ :43123 (proxy `/api` และ `/brand` ไปที่ `next dev` :3000) | แก้ UI ของ Studio แบบ hot reload (รัน `npm run dev` คู่กัน) |
+| `npm run studio:check` | ตรวจ brand copy + ESLint + `tsc -b` + Vitest ของ Studio | ก่อน commit ที่แตะ `studio/` |
+| `npm run studio:brand` | `node scripts/sync-studio-brand.mjs` คัดลอก tokens, mascot, terminal signature ไป `studio/src/brand/` | หลังแก้ `tokens.css`, `globals.css` (ส่วน mascot/signature) หรือ `src/components/brand/*` |
+| `npm run studio:e2e` | Playwright ของ Studio (flow "build a todo app") กับ `wrangler dev`/preview ที่รันอยู่ | ตรวจ Studio แบบ end-to-end (`STUDIO_BASE_URL`, ค่าเริ่มต้น `http://127.0.0.1:8787`) |
 
 ## ตัวเลือกของ `npm run export`
 
@@ -44,6 +49,8 @@ npm run export -- fastapi-ai --py uv --addons testing,docker --out /tmp/fastapi 
 | [`scripts/docs-pdf.mjs`](../../scripts/docs-pdf.mjs) | `npm run docs:pdf` | PDF คู่มือผู้ใช้ |
 | [`scripts/build-docs.mjs`](../../scripts/build-docs.mjs) | `npm run docs:bundle` (และ pre-hooks) | docs bundle สำหรับ `/docs` ([docs-site.md](../architecture/docs-site.md)) |
 | [`scripts/render-diagrams.mjs`](../../scripts/render-diagrams.mjs) | `npm run docs:diagrams` | SVG ของ Mermaid |
+| [`scripts/build-studio.mjs`](../../scripts/build-studio.mjs) | `npm run studio:build` (และ `prebuild`) | build Studio → `public/studio/` ตรวจว่าไม่มีไฟล์เกิน 25 MiB |
+| [`scripts/sync-studio-brand.mjs`](../../scripts/sync-studio-brand.mjs) | `npm run studio:brand` (`--check` ใน test) | คัดลอก design system ไปให้ Studio |
 
 ## คำสั่ง wrangler ที่ใช้บ่อย (ต้องมี token และอนุมัติสำหรับคำสั่งที่เขียน)
 
