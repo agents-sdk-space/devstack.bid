@@ -35,7 +35,7 @@
 | ชื่อ | ใช้กับ | หมายเหตุ |
 |---|---|---|
 | `CLOUDFLARE_API_TOKEN` | wrangler (deploy, secret, rollback) | token เท่านั้น ห้ามพิมพ์/commit สิทธิ์ขั้นต่ำ Workers Scripts: Edit + Account Settings: Read |
-| `CLOUDFLARE_ACCOUNT_ID` | wrangler | บัญชีทดสอบ `f70d35188a3c56b9781538c73a86e04e` |
+| `CLOUDFLARE_ACCOUNT_ID` | wrangler | บัญชีทดสอบปัจจุบัน `2d92bd5b25768fa9093d6adc0a8887fc` (space6, v0.5.0); บัญชีเดิม `f70d35188a3c56b9781538c73a86e04e` (v0.3.0) |
 | `NODE_ENV` | Next.js | `development` เปิด CSP แบบ dev (`unsafe-eval`, `ws:`) และไม่ส่ง HSTS |
 
 ## ไฟล์ตัวอย่าง

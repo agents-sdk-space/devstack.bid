@@ -4,7 +4,7 @@
 
 ## 1. ภาพรวมแพลตฟอร์ม
 
-แอป Next.js 16.4 ที่ทำงานฝั่ง client เป็นหลัก มี API เดียว (`/api/plan`) deploy เป็น Cloudflare Worker ชื่อ `nvx-stack-builder` บน workers.dev (TEST, v0.3.0) ไม่มีฐานข้อมูล ไม่มีบัญชีผู้ใช้ สถานะผู้ใช้อยู่ใน URL hash และ localStorage แผนภาพดู [architecture/overview.md](../architecture/overview.md)
+แอป Next.js 16.4 ที่ทำงานฝั่ง client เป็นหลัก มี API เดียว (`/api/plan`) deploy เป็น Cloudflare Worker ชื่อ `nvx-stack-builder` บน workers.dev (TEST v0.5.0 ที่ `nvx-stack-builder.space6.workers.dev`; v0.3.0 เดิมยังอยู่ที่ `agen-sdk-work.workers.dev`) ไม่มีฐานข้อมูล ไม่มีบัญชีผู้ใช้ สถานะผู้ใช้อยู่ใน URL hash และ localStorage แผนภาพดู [architecture/overview.md](../architecture/overview.md)
 
 *EN: Client-heavy Next.js 16.4 app, one API route, Cloudflare Worker on workers.dev, no database.*
 

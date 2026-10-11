@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-11
+
+Release of the `feat/terminal-theme` branch: merge commit `61445c5`. v0.4 was never released separately because the v0.5 design replaces it.
+
+### Deployed (TEST)
+
+- Live at https://nvx-stack-builder.space6.workers.dev. This is a new Worker `nvx-stack-builder` in account `2d92bd5b25768fa9093d6adc0a8887fc` ("Examplessdk@gmail.com's Account", workers.dev subdomain `space6`), with no routes or custom domains.
+  - Deployed 2026-10-11 08:47 ICT from `f995d24`.
+  - Version ids: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (current, with the `OPENAI_API_KEY` secret) and `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (same code before the secret).
+- Live smoke test passed:
+  - pages 200, real 404s, security headers
+  - brand assets, manifest and OG image
+  - no horizontal scroll in TH/EN at 1440/390px, no console errors
+  - a Thai AI prompt returned `source: "openai"`
+  - 429 + `Retry-After: 60` after the per-minute limit
+- The existing Worker `odd-violet-5e66` in that account was not touched. The v0.3.0 test deploy (`agen-sdk-work.workers.dev`, account `f70d…e04e`) is unchanged and still live.
+
 ### Added (brand logo and animated mascot)
 
 - **Logo:** the pink blob character replaces the blue "NVX" square in the header, next to the unchanged "Stack Builder" wordmark.
@@ -129,6 +146,8 @@ Test deployment: https://nvx-stack-builder.agen-sdk-work.workers.dev (workers.de
 - Vitest unit tests (21), `npm run export` CLI for contributors, MIT license, README (TH+EN),
   CONTRIBUTING, CODE_OF_CONDUCT, `.env.example`.
 
-[Unreleased]: https://github.com/OWNER/nvx-stack-builder/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/OWNER/nvx-stack-builder/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/OWNER/nvx-stack-builder/compare/v0.3.0...v0.5.0
+[0.3.0]: https://github.com/OWNER/nvx-stack-builder/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/OWNER/nvx-stack-builder/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/OWNER/nvx-stack-builder/releases/tag/v0.1.0

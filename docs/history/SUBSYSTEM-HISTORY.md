@@ -8,11 +8,11 @@
 |---|---|---|---|---|
 | v0.1.0 | tag `v0.1.0` | `dfc868c` (ฟีเจอร์หลักใน `a452dc5`) | 10 ต.ค. 2026 20:11–21:18 | catalog 10 เทมเพลต, builder, AI agent + offline fallback |
 | v0.2.0 | tag `v0.2.0`, branch `feat/ui-framework` | `1c5aca8` (merge), release `9116943` | 10 ต.ค. 2026 21:29–21:31 | NVX UI design system, `/design`, builder wizard 4 ขั้น, command palette |
-| v0.3.0 | tag `v0.3.0` (= `main`), branch `feat/cloudflare-production` | `510048b` (merge), release `576f6f7` | 10 ต.ค. 22:26 – 11 ต.ค. 00:35 | Cloudflare Workers + production hardening, TEST deploy |
+| v0.3.0 | tag `v0.3.0`, branch `feat/cloudflare-production` | `510048b` (merge), release `576f6f7` | 10 ต.ค. 22:26 – 11 ต.ค. 00:35 | Cloudflare Workers + production hardening, TEST deploy |
 | v0.4 (ไม่มี tag) | branch `feat/terminal-theme` | `2210920` … `abec887` | 11 ต.ค. 2026 00:54 | ธีมเทอร์มินัลดำเป็นค่าเริ่มต้น (ยังไม่ merge/deploy) |
-| v0.5 (ไม่มี tag) | branch `feat/terminal-theme` | `3dad906` … `9790c94` | 11 ต.ค. 2026 06:03 | ธีมอ้างอิง Apple Developer, โลโก้เครื่องมือจริง (ยังไม่ merge/deploy) |
+| v0.5.0 | tag `v0.5.0` (= `main`), branch `feat/terminal-theme` | `3dad906` … `9790c94` (ธีม), docs `07c3310` … `5d5b583`, โลโก้และมาสคอต `f995d24`, merge `61445c5` | 11 ต.ค. 2026 06:03–08:50 | ธีมอ้างอิง Apple Developer, โลโก้เครื่องมือจริง, ชุดเอกสาร, มาสคอตที่ขยับได้, TEST deploy ใหม่ที่ `space6.workers.dev` |
 
-หมายเหตุ: `package.json` ยังเป็น `0.3.0` บน branch นี้ เพราะ v0.4/v0.5 ยังไม่ release
+หมายเหตุ: v0.4 (`2210920` … `abec887`) ไม่ถูก tag แยก เพราะ v0.5 แทนที่ดีไซน์ทั้งหมด และ `package.json` เป็น `0.5.0` ตั้งแต่ release commit ของ v0.5.0
 
 ---
 

@@ -4,7 +4,7 @@
 
 ## สถานการณ์ปัจจุบัน
 
-- Worker ทดสอบเสิร์ฟที่ `nvx-stack-builder.agen-sdk-work.workers.dev` เท่านั้น (`workers_dev: true`, ไม่มี `routes`)
+- Worker ทดสอบเสิร์ฟที่ `nvx-stack-builder.space6.workers.dev` (v0.5.0) และ `nvx-stack-builder.agen-sdk-work.workers.dev` (v0.3.0 เดิม) เท่านั้น (`workers_dev: true`, ไม่มี `routes`)
 - zone `agents-sdk.space` (id `dfb531c381f8e6dd75082a6fe964f71b`) มี apex record `AAAA 100::` แบบ proxied ซึ่งเป็นรูปแบบที่ใช้กับ Worker routes และ Worker ที่มีอยู่ **`agents-sdk-space`** น่าจะเสิร์ฟ apex อยู่ — **ห้ามแตะ** zone นี้, DNS, routes หรือ Worker นั้น
 - zone อยู่ในบัญชี `9d56815c97f330febf9d6a0bb7f234d1` ซึ่ง token ปัจจุบันเข้าไม่ถึง (token ปัจจุบันจำกัดที่บัญชี `f70d…e04e`)
 

@@ -27,10 +27,10 @@ merge เข้า `main`, deploy, push, การผูกโดเมน, ก�
 
 ## สถานะปัจจุบัน
 
-- `main` = `v0.3.0` (`510048b`) ซึ่ง deploy เป็น TEST แล้ว
-- `feat/terminal-theme` มีงาน v0.4 + v0.5 + เอกสารชุดนี้ ยังไม่ merge/deploy รอเจ้าของรีวิว
-- ข้อเสนอ: ออกเป็น **v0.5.0** เมื่อได้รับอนุมัติ (ข้าม v0.4 เพราะ v0.5 แทนที่ดีไซน์ v0.4)
+- `main` = `v0.5.0` (tag `v0.5.0` บน release commit หลัง merge `61445c5` ของ `feat/terminal-theme`) และ deploy เป็น TEST ที่ `https://nvx-stack-builder.space6.workers.dev` แล้ว
+- v0.4 ไม่ถูกออกเป็นรุ่นแยก เพราะ v0.5 แทนที่ดีไซน์ v0.4 ทั้งหมด
+- deploy v0.3.0 เดิม (`agen-sdk-work.workers.dev`) ยังเปิดอยู่และไม่ถูกแก้ไข
 
 ## Hotfix
 
-แตก branch จาก tag ล่าสุดที่ deploy (`git switch -c fix/<เรื่อง> v0.3.0`), แก้ + test, ออก `v0.3.1` ตามขั้นตอนเดียวกัน แล้ว merge กลับเข้า feature branch ที่ค้างอยู่ ถ้าเร่งด่วนมากให้ [rollback](../operations/rollback.md) ก่อนแล้วค่อยแก้
+แตก branch จาก tag ล่าสุดที่ deploy (`git switch -c fix/<เรื่อง> v0.5.0`), แก้ + test, ออก `v0.5.1` ตามขั้นตอนเดียวกัน แล้ว merge กลับเข้า feature branch ที่ค้างอยู่ ถ้าเร่งด่วนมากให้ [rollback](../operations/rollback.md) ก่อนแล้วค่อยแก้

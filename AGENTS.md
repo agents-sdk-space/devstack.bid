@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # AGENTS.md — operating NVX Stack Builder
 
-NVX Stack Builder is a Next.js 16.4 app (App Router, React 19, TypeScript, Tailwind v4) that turns developer setup commands into ordered, de-duplicated, bilingual (TH/EN) **Stack Templates**. Users pick a template or ask the AI planner, then reorder, edit, share and download `setup.sh` / `setup.ps1` / a starter zip. It is deployed as a Cloudflare Worker through `@opennextjs/cloudflare`.
+NVX Stack Builder is a Next.js 16.4 app (App Router, React 19, TypeScript, Tailwind v4) that turns developer setup commands into ordered, de-duplicated, bilingual (TH/EN) **Stack Templates**. Users pick a template or ask the AI planner, then reorder, edit, share and download `setup.sh` / `setup.ps1` / a starter zip. It is deployed as a Cloudflare Worker through `@opennextjs/cloudflare` (test: https://nvx-stack-builder.space6.workers.dev).
 
 Full playbook (TH + EN): [docs/agents/AGENT-PLAYBOOK.md](docs/agents/AGENT-PLAYBOOK.md). Machine-readable map: [docs/agents/platform-manifest.json](docs/agents/platform-manifest.json). Docs index: [docs/README.md](docs/README.md).
 
@@ -66,7 +66,9 @@ npm run export -- <templateId> --out /tmp/x   # write setup.sh/ps1 for a templat
   - Prompt: `instructions()` in `src/lib/ai/openai.ts`.
   - Output shape: change `src/lib/ai/schema.ts` and `rawPlanSchema` in `src/lib/ai/plan.ts` together.
 - **Deploy a test build (approval required).** Follow `docs/operations/deploy-cloudflare.md`, record the version id, then run the smoke tests.
-- **Roll back (approval required).** `npx wrangler rollback <version-id> --name nvx-stack-builder -m "<reason>"`. The current id is `0fb9ecd4-d788-468c-8843-559545c357e3`; the previous one is `9b9b678a-f0b4-4727-96d7-e5f81fc00391`.
+- **Roll back (approval required).** Run `npx wrangler rollback <version-id> --name nvx-stack-builder -m "<reason>"` with the right `CLOUDFLARE_ACCOUNT_ID`.
+  - Current test deploy (v0.5.0): https://nvx-stack-builder.space6.workers.dev, account `2d92bd5b25768fa9093d6adc0a8887fc`. Version ids: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (current), `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (same code, no secret).
+  - Previous test deploy (v0.3.0, left untouched): account `f70d35188a3c56b9781538c73a86e04e`, version `0fb9ecd4-d788-468c-8843-559545c357e3`.
 
 ## Verification checklist before you report done
 

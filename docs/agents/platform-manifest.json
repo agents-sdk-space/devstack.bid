@@ -1,8 +1,8 @@
 {
   "$comment": "Machine-readable map of NVX Stack Builder for AI agents. Verified by `npm run docs:check` (templateIds must equal src/data/template-ids.ts; every keyFiles path must exist). Human docs: docs/agents/AGENT-PLAYBOOK.md",
   "name": "nvx-stack-builder",
-  "version": "0.3.0",
-  "branchState": "feat/terminal-theme (v0.4 terminal + v0.5 Apple-inspired themes, unmerged, undeployed)",
+  "version": "0.5.0",
+  "branchState": "main = v0.5.0 (merge 61445c5 of feat/terminal-theme: Apple-inspired black theme, docs site, animated brand mascot)",
   "stack": {
     "framework": "Next.js 16.4 App Router",
     "language": "TypeScript",
@@ -198,6 +198,16 @@
         429
       ],
       "docs": "docs/reference/api-plan.md"
+    },
+    {
+      "method": "GET",
+      "path": "/manifest.webmanifest",
+      "purpose": "web app manifest (src/app/manifest.ts)"
+    },
+    {
+      "method": "GET",
+      "path": "/opengraph-image.png",
+      "purpose": "Open Graph card 1200x630"
     }
   ],
   "commands": {
@@ -249,6 +259,12 @@
       "secret": false,
       "default": "20",
       "notes": "in-memory fallback limiter"
+    },
+    {
+      "name": "NEXT_PUBLIC_SITE_URL",
+      "secret": false,
+      "default": "https://nvx-stack-builder.space6.workers.dev",
+      "notes": "build-time metadataBase for og:image / twitter:image"
     }
   ],
   "bindings": [
@@ -277,12 +293,18 @@
   "deployTarget": {
     "environment": "test",
     "worker": "nvx-stack-builder",
-    "url": "https://nvx-stack-builder.agen-sdk-work.workers.dev",
-    "accountId": "f70d35188a3c56b9781538c73a86e04e",
-    "deployedVersion": "v0.3.0",
-    "currentVersionId": "0fb9ecd4-d788-468c-8843-559545c357e3",
-    "previousVersionId": "9b9b678a-f0b4-4727-96d7-e5f81fc00391",
-    "routes": "none (workers.dev only)"
+    "url": "https://nvx-stack-builder.space6.workers.dev",
+    "accountId": "2d92bd5b25768fa9093d6adc0a8887fc",
+    "accountName": "Examplessdk@gmail.com's Account",
+    "workersDevSubdomain": "space6",
+    "deployedVersion": "v0.5.0",
+    "deployedFromCommit": "f995d24",
+    "currentVersionId": "d369f2b6-863a-4e44-8f9e-b5551e18361a",
+    "previousVersionId": "107ab78e-2cdd-4159-95e7-e8fcb89130aa",
+    "routes": "none (workers.dev only)",
+    "otherWorkersInAccount": [
+      "odd-violet-5e66 (not ours, never modify)"
+    ]
   },
   "invariants": [
     "Commands are text only; the server never executes them",
@@ -298,5 +320,17 @@
     "playbook": "docs/agents/AGENT-PLAYBOOK.md",
     "history": "docs/history/SUBSYSTEM-HISTORY.md",
     "deploy": "docs/DEPLOY.md"
-  }
+  },
+  "previousDeployments": [
+    {
+      "environment": "test",
+      "worker": "nvx-stack-builder",
+      "url": "https://nvx-stack-builder.agen-sdk-work.workers.dev",
+      "accountId": "f70d35188a3c56b9781538c73a86e04e",
+      "deployedVersion": "v0.3.0",
+      "currentVersionId": "0fb9ecd4-d788-468c-8843-559545c357e3",
+      "previousVersionId": "9b9b678a-f0b4-4727-96d7-e5f81fc00391",
+      "status": "live, intentionally left untouched"
+    }
+  ]
 }

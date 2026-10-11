@@ -116,7 +116,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full checklist.
 ### Deploy
 
 - **Vercel**: import the GitHub repo → framework "Next.js" → add `OPENAI_API_KEY` (optional) and `OPENAI_MODEL` → Deploy.
-- **Cloudflare Workers** (configured): `npm run preview` / `npm run deploy` via `@opennextjs/cloudflare`. Full guide: [docs/DEPLOY.md](docs/DEPLOY.md). Test deployment: https://nvx-stack-builder.agen-sdk-work.workers.dev
+- **Cloudflare Workers** (configured): `npm run preview` / `npm run deploy` via `@opennextjs/cloudflare`. Full guide: [docs/DEPLOY.md](docs/DEPLOY.md). Test deployment (v0.5.0): https://nvx-stack-builder.space6.workers.dev
 - **Any Node host / Docker**: `npm ci && npm run build && npm start`.
 
 ---

@@ -1,8 +1,16 @@
 # Deploying NVX Stack Builder to Cloudflare Workers
 
-> **Status (2026-10-11, v0.3.0):** a TEST deployment is live at **https://nvx-stack-builder.agen-sdk-work.workers.dev** (Worker `nvx-stack-builder`, account `f70d35188a3c56b9781538c73a86e04e`, workers.dev only, no routes or custom domains). Verified live: all pages 200, real 404s, security headers, `/api/plan` Thai prompt → `source: "openai"` (gpt-6.1-sol), 429 + `Retry-After: 60` after 20 POSTs/min. Rollback target: version `0fb9ecd4-d788-468c-8843-559545c357e3` (current); earlier `9b9b678a-f0b4-4727-96d7-e5f81fc00391`.
+> **Status (2026-10-11, v0.5.0):** the current TEST deployment is live at **https://nvx-stack-builder.space6.workers.dev** (Worker `nvx-stack-builder`, account `2d92bd5b25768fa9093d6adc0a8887fc` "Examplessdk@gmail.com's Account", workers.dev subdomain `space6`, no routes or custom domains). Deployed 2026-10-11 08:47 ICT from commit `f995d24` (released as tag `v0.5.0`). Verified live:
+> - all pages 200 (including the 10 template pages); `/templates/unknown` and `/definitely-missing` return a real 404
+> - security headers on pages, and `Cache-Control` on `/brand/*`
+> - manifest, favicon, icons and the OG image are served
+> - no horizontal scroll at 1440px or 390px, in Thai or English; no console errors
+> - the mascot animates and goes static under reduced motion
+> - `/api/plan`: 415/413/400; a Thai prompt returns `source: "openai"` (gpt-6.1-sol); after 20–21 POSTs/min it returns 429 with `Retry-After: 60`
 >
-> The test Worker lives in account `f70d…e04e`, the one the current token can reach, with the user's approval. Account `9d56815c97f330febf9d6a0bb7f234d1` would need a token that includes it (see section 7).
+> Rollback targets in that account: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (current: code + `OPENAI_API_KEY` secret); `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (same code before the secret was set, so the AI agent falls back to the offline planner). That account has no earlier versions. The only other Worker in the account, `odd-violet-5e66`, was not touched.
+>
+> **Previous test deployment (unchanged, still live):** https://nvx-stack-builder.agen-sdk-work.workers.dev (account `f70d35188a3c56b9781538c73a86e04e`, v0.3.0, version `0fb9ecd4-d788-468c-8843-559545c357e3`, earlier `9b9b678a-f0b4-4727-96d7-e5f81fc00391`). It is left untouched on purpose and still serves the v0.3.0 design.
 
 - [English](#english)
 - [ภาษาไทย](#ภาษาไทย)
@@ -56,7 +64,8 @@ Users can still paste their own OpenAI key in the UI. It travels only in the `x-
 
 ```bash
 export CLOUDFLARE_API_TOKEN=...          # only the token string, nothing else
-export CLOUDFLARE_ACCOUNT_ID=f70d35188a3c56b9781538c73a86e04e   # test account (agen-sdk-work.workers.dev)
+export CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc   # current test account (space6.workers.dev)
+# previous test account (v0.3.0, agen-sdk-work.workers.dev): f70d35188a3c56b9781538c73a86e04e
 
 # 1) make sure the worker name is free (should say it does not exist)
 npx wrangler deployments list --name nvx-stack-builder
@@ -106,7 +115,7 @@ Steps, when the owner approves:
 
 ### 7. Token permissions
 
-The current token (`restless-heart-ac34`) is scoped to account `f70d…e04e` only, which is enough for this test deploy. To deploy to another account:
+Each test account uses its own account-scoped token. The v0.3.0 token (`restless-heart-ac34`) covers only `f70d…e04e`. The v0.5.0 deploy used a separate token scoped to `2d92…87fc`, passed only as `CLOUDFLARE_API_TOKEN` to wrangler and never printed or stored. Its `/user/tokens/verify` returns non-JSON, which is normal for account tokens: check them with `/accounts/<id>/tokens/verify` or `wrangler whoami`. To deploy to yet another account:
 
 Minimum for the test deploy (account-scoped token, resources must include account `9d56815c97f330febf9d6a0bb7f234d1`):
 
@@ -122,7 +131,9 @@ Minimum for the test deploy (account-scoped token, resources must include accoun
 
 ## ภาษาไทย
 
-> **สถานะ (11 ต.ค. 2026, v0.3.0):** deploy ทดสอบแล้วที่ **https://nvx-stack-builder.agen-sdk-work.workers.dev** (Worker `nvx-stack-builder` บัญชี `f70d35188a3c56b9781538c73a86e04e` ใช้ workers.dev เท่านั้น ไม่มี route หรือ custom domain) ตรวจบนเว็บจริงผ่านทุกข้อ: ทุกหน้าได้ 200, 404 จริง, security headers ครบ, prompt ภาษาไทยได้ `source: "openai"`, rate limit ตอบ 429 หลังครบ 20 ครั้งต่อนาที เวอร์ชันปัจจุบันสำหรับ rollback คือ `0fb9ecd4-d788-468c-8843-559545c357e3` (ก่อนหน้า `9b9b678a-f0b4-4727-96d7-e5f81fc00391`)
+> **สถานะ (11 ต.ค. 2026, v0.5.0):** deploy ทดสอบล่าสุดอยู่ที่ **https://nvx-stack-builder.space6.workers.dev** (Worker `nvx-stack-builder` บัญชี `2d92bd5b25768fa9093d6adc0a8887fc` "Examplessdk@gmail.com's Account" subdomain `space6` ใช้ workers.dev เท่านั้น) deploy เมื่อ 11 ต.ค. 2026 08:47 (ICT) จาก commit `f995d24` (tag `v0.5.0`) ตรวจบนเว็บจริงผ่านทุกข้อ: ทุกหน้าได้ 200, 404 จริง, security headers, manifest/favicon/OG image, ไม่มี horizontal scroll ทั้งไทยและอังกฤษ, prompt ภาษาไทยได้ `source: "openai"`, rate limit ตอบ 429 พร้อม `Retry-After: 60` เวอร์ชันสำหรับ rollback: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (ปัจจุบัน) และ `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (โค้ดเดียวกันแต่ยังไม่ตั้ง secret) Worker เดิม `odd-violet-5e66` ในบัญชีนั้นไม่ถูกแตะ
+>
+> deploy ทดสอบเดิม (v0.3.0) ที่ https://nvx-stack-builder.agen-sdk-work.workers.dev บัญชี `f70d35188a3c56b9781538c73a86e04e` ยังอยู่และไม่ถูกแก้ไข (เวอร์ชัน `0fb9ecd4-d788-468c-8843-559545c357e3`)
 
 ### 1. สิ่งที่ต้องมี
 - Node.js **22 ขึ้นไป** สำหรับ Wrangler 4
@@ -146,7 +157,7 @@ npm run preview    # รันใน Workers runtime ที่ http://localhost:
 ### 4. Deploy (workers.dev เท่านั้น)
 ```bash
 export CLOUDFLARE_API_TOKEN=...      # ใส่เฉพาะตัว token
-export CLOUDFLARE_ACCOUNT_ID=f70d35188a3c56b9781538c73a86e04e   # บัญชีทดสอบ
+export CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc   # บัญชีทดสอบปัจจุบัน (space6) · บัญชีเดิม v0.3.0: f70d35188a3c56b9781538c73a86e04e
 npx wrangler deployments list --name nvx-stack-builder   # ตรวจว่าชื่อยังว่าง ถ้าไม่ว่างให้ใช้ nvx-stack-builder-staging
 npm run deploy
 printenv OPENAI_API_KEY | npx wrangler secret put OPENAI_API_KEY

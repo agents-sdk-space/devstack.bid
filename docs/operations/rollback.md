@@ -8,7 +8,18 @@
 - **secret และ vars ผูกกับเวอร์ชัน** rollback จึงคืนทั้งโค้ดและ binding ของเวอร์ชันนั้น ถ้าเพิ่งหมุน key แล้ว rollback ไปเวอร์ชันก่อนหมุน Worker จะใช้ key เก่า (ซึ่งอาจถูก revoke แล้ว) — ให้ตั้ง secret ใหม่หลัง rollback ถ้าจำเป็น
 - rollback เป็นการกระทำกับ production ต้องได้รับอนุมัติจากมนุษย์ (ยกเว้นมีนโยบายฉุกเฉินที่เจ้าของกำหนดไว้ล่วงหน้า)
 
-## เป้าหมาย rollback ที่บันทึกไว้ (TEST deploy v0.3.0)
+## เป้าหมาย rollback ที่บันทึกไว้
+
+**TEST deploy v0.5.0 (ปัจจุบัน):** https://nvx-stack-builder.space6.workers.dev, บัญชี `2d92bd5b25768fa9093d6adc0a8887fc`
+
+| เวอร์ชัน | id | หมายเหตุ |
+|---|---|---|
+| ปัจจุบัน | `d369f2b6-863a-4e44-8f9e-b5551e18361a` | โค้ด v0.5.0 + secret `OPENAI_API_KEY` |
+| ก่อนหน้า | `107ab78e-2cdd-4159-95e7-e8fcb89130aa` | โค้ดเดียวกัน ก่อนตั้ง secret (AI agent จะใช้ offline planner) |
+
+บัญชีนี้ไม่มีเวอร์ชันเก่ากว่านี้ ถ้าต้องกลับไปใช้ดีไซน์ v0.3.0 ให้ใช้ deploy เดิมที่ยังเปิดอยู่ (ด้านล่าง) หรือ build tag `v0.3.0` แล้ว deploy ใหม่ (ต้องได้รับอนุมัติ)
+
+**TEST deploy v0.3.0 (เดิม ไม่ถูกแก้ไข):** https://nvx-stack-builder.agen-sdk-work.workers.dev, บัญชี `f70d35188a3c56b9781538c73a86e04e`
 
 | เวอร์ชัน | id | หมายเหตุ |
 |---|---|---|
@@ -20,7 +31,7 @@
 ## ขั้นตอน
 
 ```bash
-export CLOUDFLARE_ACCOUNT_ID=f70d35188a3c56b9781538c73a86e04e
+export CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc   # v0.5.0; ใช้ f70d35188a3c56b9781538c73a86e04e สำหรับ deploy v0.3.0 เดิม
 # 1) ดูรายการเวอร์ชัน
 npx wrangler deployments list --name nvx-stack-builder
 # 2) rollback ไปเวอร์ชันที่ต้องการ พร้อมเหตุผล
@@ -34,7 +45,7 @@ npx wrangler rollback <version-id> --name nvx-stack-builder -m "reason: <อธ�
 
 - rollback บน Cloudflare ไม่เปลี่ยน git ให้เปิด branch แก้ไข หรือ `git revert <commit>` บน branch แล้ว deploy ใหม่ตามขั้นตอนปกติ
 - ห้าม `git reset --hard` หรือ force-push บน branch ที่แชร์ โดยไม่ได้รับอนุมัติ
-- tag ที่ deploy แล้ว (`v0.3.0`) ใช้ build ซ้ำได้: `git checkout v0.3.0 && npm ci && npm run deploy`
+- tag ที่ deploy แล้ว (`v0.5.0`, `v0.3.0`) ใช้ build ซ้ำได้ เช่น `git checkout v0.3.0 && npm ci && npm run deploy`
 
 ## Checklist หลัง rollback
 
