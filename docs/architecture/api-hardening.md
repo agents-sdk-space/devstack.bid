@@ -34,7 +34,7 @@
 ใส่ทุก route ผ่าน `headers()` ใน [`next.config.ts`](../../next.config.ts) และ mirror ให้ static assets ใน [`public/_headers`](../../public/_headers):
 
 - **CSP**: `default-src 'self'`; `script-src 'self' 'unsafe-inline'` (+`'unsafe-eval'` เฉพาะ dev); `connect-src 'self'`; `object-src 'none'`; `frame-ancestors 'none'`; `base-uri 'self'`; `form-action 'self'` — ต้องยอม `'unsafe-inline'` เพราะหน้าถูก prerender (ใส่ nonce ต่อคำขอไม่ได้) และมีสคริปต์ pre-paint ของธีม
-- `Strict-Transport-Security: max-age=31536000; includeSubDomains` (production เท่านั้น)
+- `Strict-Transport-Security: max-age=31536000` (production เท่านั้น ไม่มี `includeSubDomains`/`preload` ตั้งแต่ v0.5.1 เพราะแอปอยู่บน apex ของ zone devstack.bid ดู [custom-domain.md](../operations/custom-domain.md))
 - `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (ปิดกล้อง ไมค์ ตำแหน่ง ฯลฯ), `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Resource-Policy: same-origin`
 - `poweredByHeader: false`
 - `/_next/static/*` ได้ `Cache-Control: public, max-age=31536000, immutable`

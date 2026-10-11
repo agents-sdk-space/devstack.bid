@@ -11,7 +11,7 @@ endpoint เดียวของเซิร์ฟเวอร์ โค้ด:
 ```
 
 ```bash
-curl -s https://nvx-stack-builder.space6.workers.dev/api/plan
+curl -s https://devstack.bid/api/plan
 ```
 
 ## `POST /api/plan`
@@ -80,7 +80,7 @@ curl -s https://nvx-stack-builder.space6.workers.dev/api/plan
 ### ตัวอย่าง curl
 
 ```bash
-BASE=http://localhost:8787   # หรือ https://nvx-stack-builder.space6.workers.dev
+BASE=http://localhost:8787   # หรือ https://devstack.bid
 
 # offline planner (ไม่เสียเงิน)
 curl -s -X POST $BASE/api/plan -H 'content-type: application/json' \

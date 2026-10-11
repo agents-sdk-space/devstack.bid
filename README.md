@@ -4,6 +4,8 @@
 >
 > เปลี่ยนลำดับคำสั่งของนักพัฒนาให้เป็น **Stack Template** ที่เรียงลำดับแล้วและรันได้จริง — พร้อม AI agent ที่ช่วยวางแผนสร้างแอปทั้งระบบ
 
+**Live:** https://devstack.bid
+
 Built by **NVX DEVELOPER BOTH** · Open source under the [MIT License](./LICENSE).
 
 [English](#english) · [ภาษาไทย](#ภาษาไทย) · **Documentation / เอกสาร: [docs/README.md](./docs/README.md)** · AI agents: [AGENTS.md](./AGENTS.md)
@@ -116,7 +118,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full checklist.
 ### Deploy
 
 - **Vercel**: import the GitHub repo → framework "Next.js" → add `OPENAI_API_KEY` (optional) and `OPENAI_MODEL` → Deploy.
-- **Cloudflare Workers** (configured): `npm run preview` / `npm run deploy` via `@opennextjs/cloudflare`. Full guide: [docs/DEPLOY.md](docs/DEPLOY.md). Test deployment (v0.5.0): https://nvx-stack-builder.space6.workers.dev
+- **Cloudflare Workers** (configured): `npm run preview` / `npm run deploy` via `@opennextjs/cloudflare`. Full guide: [docs/DEPLOY.md](docs/DEPLOY.md). Live: https://devstack.bid
 - **Any Node host / Docker**: `npm ci && npm run build && npm start`.
 
 ---

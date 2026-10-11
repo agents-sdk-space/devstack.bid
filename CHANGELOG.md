@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-11
+
+### Added
+
+- **Production domain.** https://devstack.bid (apex) and `www.devstack.bid` are Workers Custom Domains of `nvx-stack-builder` (account `2d92…87fc`).
+  - Cloudflare created proxied `AAAA 100::` records for both.
+  - Certificates from Google Trust Services were issued immediately.
+  - `routes` with `custom_domain: true` in `wrangler.jsonc` keep both hostnames on every deploy.
+- `www.devstack.bid` redirects to the apex (308, path and query kept) via `redirects()` in `next.config.ts`, with a test.
+
+### Changed
+
+- `metadataBase` / `NEXT_PUBLIC_SITE_URL` default is now `https://devstack.bid`, so `og:image` and `twitter:image` are absolute URLs on the domain.
+- HSTS is now `max-age=31536000` without `includeSubDomains`, in `security-headers.ts` and `public/_headers`. On the zone apex, `includeSubDomains` would force HTTPS on every future subdomain of devstack.bid. A test covers this.
+
+### Deployed
+
+- 2026-10-11 09:15 ICT, version `671b6b3b-1074-40cb-84b0-0df2681b69ce`; previous `d369f2b6-863a-4e44-8f9e-b5551e18361a` (v0.5.0).
+- Live smoke test on https://devstack.bid passed:
+  - pages, 404s, headers, www redirect
+  - OG image URL absolute and fetchable
+  - a Thai AI prompt returned `source: "openai"`
+  - 429 + `Retry-After: 60`
+  - mascot animation
+- workers.dev fallback is now https://nvx-stack-builder.examplessdk.workers.dev. The account's workers.dev subdomain was renamed from `space6` (not by this deploy), so the v0.5.0 URL no longer resolves.
+
 ## [0.5.0] - 2026-10-11
 
 Release of the `feat/terminal-theme` branch: merge commit `61445c5`. v0.4 was never released separately because the v0.5 design replaces it.
@@ -146,7 +172,8 @@ Test deployment: https://nvx-stack-builder.agen-sdk-work.workers.dev (workers.de
 - Vitest unit tests (21), `npm run export` CLI for contributors, MIT license, README (TH+EN),
   CONTRIBUTING, CODE_OF_CONDUCT, `.env.example`.
 
-[Unreleased]: https://github.com/OWNER/nvx-stack-builder/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/OWNER/nvx-stack-builder/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/OWNER/nvx-stack-builder/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/OWNER/nvx-stack-builder/compare/v0.3.0...v0.5.0
 [0.3.0]: https://github.com/OWNER/nvx-stack-builder/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/OWNER/nvx-stack-builder/compare/v0.1.0...v0.2.0

@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import nextConfig from "../next.config";
 import { redactSecrets } from "@/lib/ai/openai";
 import { KNOWN_TEMPLATE_IDS } from "@/data/template-ids";
 import { TEMPLATES } from "@/data/templates";
@@ -71,6 +74,18 @@ describe("redactSecrets", () => {
   });
 });
 
+describe("canonical host", () => {
+  it("redirects www.devstack.bid permanently to the apex, keeping the path", async () => {
+    const rules = await nextConfig.redirects!();
+    expect(rules).toContainEqual({
+      source: "/:path*",
+      has: [{ type: "host", value: "www.devstack.bid" }],
+      destination: "https://devstack.bid/:path*",
+      permanent: true,
+    });
+  });
+});
+
 describe("security headers", () => {
   const prod = Object.fromEntries(securityHeaders(false).map((h) => [h.key, h.value]));
   it("sets the hardening headers in production", () => {
@@ -78,6 +93,13 @@ describe("security headers", () => {
       expect(prod[k], k).toBeTruthy();
     }
     expect(prod["X-Content-Type-Options"]).toBe("nosniff");
+  });
+  it("HSTS is scoped to the host only (served on the zone apex devstack.bid)", () => {
+    expect(prod["Strict-Transport-Security"]).toBe("max-age=31536000");
+    expect(prod["Strict-Transport-Security"]).not.toMatch(/includeSubDomains|preload/);
+    const assets = readFileSync(join(__dirname, "../public/_headers"), "utf8");
+    expect(assets).toContain("Strict-Transport-Security: max-age=31536000\n");
+    expect(securityHeaders(true).some((h) => h.key === "Strict-Transport-Security")).toBe(false);
   });
   it("CSP forbids framing, plugins and foreign connections; eval only in dev", () => {
     const csp = contentSecurityPolicy(false);

@@ -11,7 +11,7 @@ const plexMono = IBM_Plex_Mono({ variable: "--font-plex-mono", subsets: ["latin"
 const plexThai = IBM_Plex_Sans_Thai({ variable: "--font-thai", subsets: ["thai"], weight: ["400", "500", "600", "700"], display: "swap" });
 
 // Absolute base for Open Graph / Twitter image URLs. Override at build time with NEXT_PUBLIC_SITE_URL.
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://nvx-stack-builder.space6.workers.dev";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://devstack.bid";
 const DESCRIPTION =
   "Turn npm, nvm, npx, pip and PyPI command sequences into ordered, runnable Stack Templates. AI agent scaffolds dashboards, internal tools, collaborative workspaces, games and AI apps. Thai + English.";
 

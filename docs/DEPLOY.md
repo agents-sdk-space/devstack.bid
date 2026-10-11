@@ -1,6 +1,12 @@
 # Deploying NVX Stack Builder to Cloudflare Workers
 
-> **Status (2026-10-11, v0.5.0):** the current TEST deployment is live at **https://nvx-stack-builder.space6.workers.dev** (Worker `nvx-stack-builder`, account `2d92bd5b25768fa9093d6adc0a8887fc` "Examplessdk@gmail.com's Account", workers.dev subdomain `space6`, no routes or custom domains). Deployed 2026-10-11 08:47 ICT from commit `f995d24` (released as tag `v0.5.0`). Verified live:
+> **Production (2026-10-11, v0.5.1):** live at **https://devstack.bid** (apex). It is a Workers Custom Domain of Worker `nvx-stack-builder` in account `2d92bd5b25768fa9093d6adc0a8887fc`; `www.devstack.bid` is also attached and returns 308 to the apex.
+> - Deployed 2026-10-11 09:15 ICT. Current version `671b6b3b-1074-40cb-84b0-0df2681b69ce`; previous `d369f2b6-863a-4e44-8f9e-b5551e18361a` (v0.5.0), then `107ab78e-2cdd-4159-95e7-e8fcb89130aa`.
+> - workers.dev fallback: https://nvx-stack-builder.examplessdk.workers.dev. The account's subdomain was renamed from `space6` to `examplessdk` on 2026-10-11, so the old `space6` URL no longer resolves.
+> - HSTS is now `max-age=31536000`, without `includeSubDomains`/`preload`.
+> - Details, created records and token permissions: [operations/custom-domain.md](operations/custom-domain.md).
+>
+> **v0.5.0 (2026-10-11), history:** first deployed at https://nvx-stack-builder.space6.workers.dev; that URL was retired by the subdomain rename (Worker `nvx-stack-builder`, account `2d92bd5b25768fa9093d6adc0a8887fc` "Examplessdk@gmail.com's Account", workers.dev subdomain `space6`, no routes or custom domains). Deployed 2026-10-11 08:47 ICT from commit `f995d24` (released as tag `v0.5.0`). Verified live:
 > - all pages 200 (including the 10 template pages); `/templates/unknown` and `/definitely-missing` return a real 404
 > - security headers on pages, and `Cache-Control` on `/brand/*`
 > - manifest, favicon, icons and the OG image are served
@@ -8,7 +14,7 @@
 > - the mascot animates and goes static under reduced motion
 > - `/api/plan`: 415/413/400; a Thai prompt returns `source: "openai"` (gpt-6.1-sol); after 20–21 POSTs/min it returns 429 with `Retry-After: 60`
 >
-> Rollback targets in that account: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (current: code + `OPENAI_API_KEY` secret); `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (same code before the secret was set, so the AI agent falls back to the offline planner). That account has no earlier versions. The only other Worker in the account, `odd-violet-5e66`, was not touched.
+> v0.5.0 versions: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (code + `OPENAI_API_KEY` secret, the rollback target before v0.5.1); `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (same code before the secret was set, so the AI agent falls back to the offline planner). That account has no earlier versions. The only other Worker in the account, `odd-violet-5e66`, was not touched.
 >
 > **Previous test deployment (unchanged, still live):** https://nvx-stack-builder.agen-sdk-work.workers.dev (account `f70d35188a3c56b9781538c73a86e04e`, v0.3.0, version `0fb9ecd4-d788-468c-8843-559545c357e3`, earlier `9b9b678a-f0b4-4727-96d7-e5f81fc00391`). It is left untouched on purpose and still serves the v0.3.0 design.
 
@@ -64,7 +70,7 @@ Users can still paste their own OpenAI key in the UI. It travels only in the `x-
 
 ```bash
 export CLOUDFLARE_API_TOKEN=...          # only the token string, nothing else
-export CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc   # current test account (space6.workers.dev)
+export CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc   # production account (devstack.bid, examplessdk.workers.dev)
 # previous test account (v0.3.0, agen-sdk-work.workers.dev): f70d35188a3c56b9781538c73a86e04e
 
 # 1) make sure the worker name is free (should say it does not exist)
@@ -110,7 +116,7 @@ Steps, when the owner approves:
    "routes": [{ "pattern": "stack.agents-sdk.space", "custom_domain": true }]
    ```
    then `npm run deploy`, or use Dashboard → Worker → Domains & Routes → Add Custom Domain.
-5. HSTS: the app sends `Strict-Transport-Security: max-age=31536000; includeSubDomains`. On the apex this applies to **all subdomains**, so make sure all of them serve HTTPS. Don't add `preload` until you're sure.
+5. HSTS: since v0.5.1 the app sends `Strict-Transport-Security: max-age=31536000` (no `includeSubDomains`), because it now runs on the devstack.bid apex. The older value `max-age=31536000; includeSubDomains` would have applied as described next. On the apex this applies to **all subdomains**, so make sure all of them serve HTTPS. Don't add `preload` until you're sure.
 6. Optionally set `workers_dev: false` once the domain works.
 
 ### 7. Token permissions
@@ -131,7 +137,9 @@ Minimum for the test deploy (account-scoped token, resources must include accoun
 
 ## ภาษาไทย
 
-> **สถานะ (11 ต.ค. 2026, v0.5.0):** deploy ทดสอบล่าสุดอยู่ที่ **https://nvx-stack-builder.space6.workers.dev** (Worker `nvx-stack-builder` บัญชี `2d92bd5b25768fa9093d6adc0a8887fc` "Examplessdk@gmail.com's Account" subdomain `space6` ใช้ workers.dev เท่านั้น) deploy เมื่อ 11 ต.ค. 2026 08:47 (ICT) จาก commit `f995d24` (tag `v0.5.0`) ตรวจบนเว็บจริงผ่านทุกข้อ: ทุกหน้าได้ 200, 404 จริง, security headers, manifest/favicon/OG image, ไม่มี horizontal scroll ทั้งไทยและอังกฤษ, prompt ภาษาไทยได้ `source: "openai"`, rate limit ตอบ 429 พร้อม `Retry-After: 60` เวอร์ชันสำหรับ rollback: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (ปัจจุบัน) และ `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (โค้ดเดียวกันแต่ยังไม่ตั้ง secret) Worker เดิม `odd-violet-5e66` ในบัญชีนั้นไม่ถูกแตะ
+> **Production (11 ต.ค. 2026, v0.5.1):** เสิร์ฟที่ **https://devstack.bid** (apex) ผ่าน Workers Custom Domain ของ Worker `nvx-stack-builder` และ `www.devstack.bid` redirect 308 ไป apex เวอร์ชันปัจจุบัน `671b6b3b-1074-40cb-84b0-0df2681b69ce` (ก่อนหน้า `d369f2b6-863a-4e44-8f9e-b5551e18361a`) workers.dev สำรองที่ https://nvx-stack-builder.examplessdk.workers.dev (บัญชีเปลี่ยน subdomain จาก `space6` เป็น `examplessdk`) HSTS เหลือ `max-age=31536000` ไม่มี `includeSubDomains` รายละเอียดดู [operations/custom-domain.md](operations/custom-domain.md)
+>
+> **สถานะ v0.5.0 (11 ต.ค. 2026):** deploy ครั้งแรกที่ **https://nvx-stack-builder.space6.workers.dev** (URL นี้ใช้ไม่ได้แล้ว) (Worker `nvx-stack-builder` บัญชี `2d92bd5b25768fa9093d6adc0a8887fc` "Examplessdk@gmail.com's Account" subdomain `space6` ใช้ workers.dev เท่านั้น) deploy เมื่อ 11 ต.ค. 2026 08:47 (ICT) จาก commit `f995d24` (tag `v0.5.0`) ตรวจบนเว็บจริงผ่านทุกข้อ: ทุกหน้าได้ 200, 404 จริง, security headers, manifest/favicon/OG image, ไม่มี horizontal scroll ทั้งไทยและอังกฤษ, prompt ภาษาไทยได้ `source: "openai"`, rate limit ตอบ 429 พร้อม `Retry-After: 60` เวอร์ชันสำหรับ rollback: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (ปัจจุบัน) และ `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (โค้ดเดียวกันแต่ยังไม่ตั้ง secret) Worker เดิม `odd-violet-5e66` ในบัญชีนั้นไม่ถูกแตะ
 >
 > deploy ทดสอบเดิม (v0.3.0) ที่ https://nvx-stack-builder.agen-sdk-work.workers.dev บัญชี `f70d35188a3c56b9781538c73a86e04e` ยังอยู่และไม่ถูกแก้ไข (เวอร์ชัน `0fb9ecd4-d788-468c-8843-559545c357e3`)
 
@@ -157,7 +165,7 @@ npm run preview    # รันใน Workers runtime ที่ http://localhost:
 ### 4. Deploy (workers.dev เท่านั้น)
 ```bash
 export CLOUDFLARE_API_TOKEN=...      # ใส่เฉพาะตัว token
-export CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc   # บัญชีทดสอบปัจจุบัน (space6) · บัญชีเดิม v0.3.0: f70d35188a3c56b9781538c73a86e04e
+export CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc   # บัญชี production (devstack.bid) · บัญชีเดิม v0.3.0: f70d35188a3c56b9781538c73a86e04e
 npx wrangler deployments list --name nvx-stack-builder   # ตรวจว่าชื่อยังว่าง ถ้าไม่ว่างให้ใช้ nvx-stack-builder-staging
 npm run deploy
 printenv OPENAI_API_KEY | npx wrangler secret put OPENAI_API_KEY
@@ -175,7 +183,7 @@ npx wrangler rollback <version-id> --name nvx-stack-builder
 2. เพิ่มสิทธิ์ token: Zone Read, Workers Routes Edit, DNS Edit บน zone `dfb531c381f8e6dd75082a6fe964f71b`
 3. ถ้าจะใช้ apex ต้องถอด route หรือ custom domain ของ `agents-sdk-space` ก่อน และพิจารณาลบ record `AAAA 100::` (proxied) ที่เป็น placeholder ของ route เดิม
 4. เพิ่ม `"routes": [{ "pattern": "stack.agents-sdk.space", "custom_domain": true }]` แล้ว `npm run deploy`
-5. ระวัง HSTS `includeSubDomains`: ทุก subdomain ต้องรองรับ HTTPS
+5. HSTS: ตั้งแต่ v0.5.1 ไม่ส่ง `includeSubDomains` เพราะแอปอยู่บน apex ถ้าจะเพิ่มกลับ ทุก subdomain ต้องรองรับ HTTPS ก่อน
 
 ### 7. สิทธิ์ของ token ที่ต้องใช้
 token ต้องมีบัญชี `9d56815c97f330febf9d6a0bb7f234d1` อยู่ใน resources และมีสิทธิ์ Account › **Workers Scripts: Edit** กับ Account › **Account Settings: Read** (ไม่บังคับ: Workers Observability Edit, Workers Tail Read)

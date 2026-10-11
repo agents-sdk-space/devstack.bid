@@ -1,12 +1,17 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  // NEW worker — workers.dev only. Do not add "routes" or custom domains here until the
-  // domain step in docs/DEPLOY.md is explicitly approved.
+  // Production: Workers Custom Domains devstack.bid (apex) + www.devstack.bid (redirects to apex in
+  // next.config.ts), approved by the owner on 2026-10-11. workers.dev stays enabled as a fallback.
+  // Do not add other routes/domains without approval.
   "name": "nvx-stack-builder",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-10-06",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "workers_dev": true,
+  "routes": [
+    { "pattern": "devstack.bid", "custom_domain": true },
+    { "pattern": "www.devstack.bid", "custom_domain": true }
+  ],
   "preview_urls": false,
   "assets": {
     "directory": ".open-next/assets",

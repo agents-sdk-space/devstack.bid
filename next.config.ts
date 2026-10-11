@@ -27,6 +27,17 @@ const nextConfig: NextConfig = {
       fallback: [],
     };
   },
+  async redirects() {
+    // Canonical host: www.devstack.bid -> devstack.bid (both are Workers Custom Domains of this Worker).
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.devstack.bid" }],
+        destination: "https://devstack.bid/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders(isDev) }];
   },

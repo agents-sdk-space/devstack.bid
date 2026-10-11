@@ -1,8 +1,8 @@
 {
   "$comment": "Machine-readable map of NVX Stack Builder for AI agents. Verified by `npm run docs:check` (templateIds must equal src/data/template-ids.ts; every keyFiles path must exist). Human docs: docs/agents/AGENT-PLAYBOOK.md",
   "name": "nvx-stack-builder",
-  "version": "0.5.0",
-  "branchState": "main = v0.5.0 (merge 61445c5 of feat/terminal-theme: Apple-inspired black theme, docs site, animated brand mascot)",
+  "version": "0.5.1",
+  "branchState": "main = v0.5.1 (custom domain devstack.bid on top of v0.5.0)",
   "stack": {
     "framework": "Next.js 16.4 App Router",
     "language": "TypeScript",
@@ -263,7 +263,7 @@
     {
       "name": "NEXT_PUBLIC_SITE_URL",
       "secret": false,
-      "default": "https://nvx-stack-builder.space6.workers.dev",
+      "default": "https://devstack.bid",
       "notes": "build-time metadataBase for og:image / twitter:image"
     }
   ],
@@ -291,26 +291,51 @@
     }
   ],
   "deployTarget": {
-    "environment": "test",
+    "environment": "production",
     "worker": "nvx-stack-builder",
-    "url": "https://nvx-stack-builder.space6.workers.dev",
+    "url": "https://devstack.bid",
+    "customDomains": [
+      {
+        "hostname": "devstack.bid",
+        "id": "8a5d7eb2f2cfa18393ac30447b9f6c65f5f83a3f",
+        "certId": "f16d512e-25fd-4b1f-8cc8-e1b91d33ee43"
+      },
+      {
+        "hostname": "www.devstack.bid",
+        "id": "b58b3b3a650e9363bb329b327445d2a12a2f446a",
+        "certId": "960b36e2-0c90-442a-910b-b40abe83927d",
+        "behaviour": "308 redirect to https://devstack.bid (next.config.ts)"
+      }
+    ],
+    "zone": {
+      "name": "devstack.bid",
+      "id": "f5ceb4b6eae9aad8aafccf24c350ae1e",
+      "dnsRecords": [
+        "AAAA devstack.bid 100:: proxied (managed by custom domain)",
+        "AAAA www.devstack.bid 100:: proxied (managed by custom domain)"
+      ]
+    },
+    "workersDevUrl": "https://nvx-stack-builder.examplessdk.workers.dev",
+    "workersDevSubdomain": "examplessdk",
     "accountId": "2d92bd5b25768fa9093d6adc0a8887fc",
     "accountName": "Examplessdk@gmail.com's Account",
-    "workersDevSubdomain": "space6",
-    "deployedVersion": "v0.5.0",
-    "deployedFromCommit": "f995d24",
-    "currentVersionId": "d369f2b6-863a-4e44-8f9e-b5551e18361a",
-    "previousVersionId": "107ab78e-2cdd-4159-95e7-e8fcb89130aa",
-    "routes": "none (workers.dev only)",
+    "deployedVersion": "v0.5.1",
+    "currentVersionId": "671b6b3b-1074-40cb-84b0-0df2681b69ce",
+    "previousVersionId": "d369f2b6-863a-4e44-8f9e-b5551e18361a",
+    "olderVersionIds": [
+      "107ab78e-2cdd-4159-95e7-e8fcb89130aa"
+    ],
+    "hsts": "max-age=31536000 (no includeSubDomains/preload)",
     "otherWorkersInAccount": [
       "odd-violet-5e66 (not ours, never modify)"
-    ]
+    ],
+    "tokenNotes": "Attaching custom domains needs one token with Account Workers Scripts:Edit + zone access; CLOUDFLARE_API_TOKEN_DEVSTACK lacks Workers Scripts, CLOUDFLARE_API_TOKEN_EXAMPLESSDK worked."
   },
   "invariants": [
     "Commands are text only; the server never executes them",
     "Never print or commit secrets (.dev.vars, .env.local, API keys, Cloudflare tokens)",
     "Deploy, push, merge to main, tags, domains/routes/DNS, and deleting or modifying Cloudflare resources require explicit human approval",
-    "Never touch other Workers in the account or the zone agents-sdk.space",
+    "Never touch other Workers, other DNS records, or the zone agents-sdk.space; devstack.bid custom domains are approved for nvx-stack-builder only",
     "Keep the existing page structure/layout; restyle only via tokens and classes unless approved",
     "Both themes pass WCAG AA contrast tests; no emoji in src/; all UI text bilingual",
     "Docs updated with code; npm run docs:check passes"
@@ -322,6 +347,12 @@
     "deploy": "docs/DEPLOY.md"
   },
   "previousDeployments": [
+    {
+      "environment": "test",
+      "url": "https://nvx-stack-builder.space6.workers.dev",
+      "deployedVersion": "v0.5.0",
+      "status": "URL retired: account workers.dev subdomain renamed space6 -> examplessdk"
+    },
     {
       "environment": "test",
       "worker": "nvx-stack-builder",

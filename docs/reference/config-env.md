@@ -13,7 +13,7 @@
 | `PLAN_LIMIT_PER_MIN` | var | 1–6000 | 20 | — | limit ของ general limiter แบบ in-memory (ใช้นอก Workers หรือเมื่อ binding ล้ม) |
 | `PLAN_AI_LIMIT_PER_MIN` | var | 1–600 | 5 | — | limit ของ AI limiter แบบ in-memory |
 
-| `NEXT_PUBLIC_SITE_URL` | build-time (public) | URL เต็ม | `https://nvx-stack-builder.space6.workers.dev` | — | `metadataBase` ใน [`src/app/layout.tsx`](../../src/app/layout.tsx) ใช้สร้าง URL เต็มของ `og:image` / `twitter:image` ถูกฝังตอน build (ไม่ใช่ secret) ถ้า deploy ไปโดเมนอื่นให้ตั้งก่อน `npm run cf:build` |
+| `NEXT_PUBLIC_SITE_URL` | build-time (public) | URL เต็ม | `https://devstack.bid` | — | `metadataBase` ใน [`src/app/layout.tsx`](../../src/app/layout.tsx) ใช้สร้าง URL เต็มของ `og:image` / `twitter:image` ถูกฝังตอน build (ไม่ใช่ secret) ถ้า deploy ไปโดเมนอื่นให้ตั้งก่อน `npm run cf:build` |
 
 ค่าว่าง (`""`) ถือว่าไม่ได้ตั้ง
 
@@ -35,7 +35,7 @@
 | ชื่อ | ใช้กับ | หมายเหตุ |
 |---|---|---|
 | `CLOUDFLARE_API_TOKEN` | wrangler (deploy, secret, rollback) | token เท่านั้น ห้ามพิมพ์/commit สิทธิ์ขั้นต่ำ Workers Scripts: Edit + Account Settings: Read |
-| `CLOUDFLARE_ACCOUNT_ID` | wrangler | บัญชีทดสอบปัจจุบัน `2d92bd5b25768fa9093d6adc0a8887fc` (space6, v0.5.0); บัญชีเดิม `f70d35188a3c56b9781538c73a86e04e` (v0.3.0) |
+| `CLOUDFLARE_ACCOUNT_ID` | wrangler | บัญชี production `2d92bd5b25768fa9093d6adc0a8887fc` (devstack.bid, workers.dev `examplessdk`); บัญชีเดิม `f70d35188a3c56b9781538c73a86e04e` (v0.3.0) |
 | `NODE_ENV` | Next.js | `development` เปิด CSP แบบ dev (`unsafe-eval`, `ws:`) และไม่ส่ง HSTS |
 
 ## ไฟล์ตัวอย่าง

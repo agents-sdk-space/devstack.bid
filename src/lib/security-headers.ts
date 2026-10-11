@@ -23,6 +23,8 @@ export function contentSecurityPolicy(dev = false): string {
   ].join("; ");
 }
 
+export const HSTS = "max-age=31536000";
+
 export function securityHeaders(dev = false): { key: string; value: string }[] {
   const headers = [
     { key: "Content-Security-Policy", value: contentSecurityPolicy(dev) },
@@ -37,6 +39,9 @@ export function securityHeaders(dev = false): { key: string; value: string }[] {
     { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
   ];
   // HSTS only makes sense over HTTPS; browsers ignore it on http://localhost anyway.
-  if (!dev) headers.push({ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" });
+  // No includeSubDomains/preload: the app is served on the zone apex (devstack.bid), where
+  // includeSubDomains would force HTTPS on every future subdomain of the zone. Add it back only
+  // once all subdomains are known to serve HTTPS (see docs/operations/custom-domain.md).
+  if (!dev) headers.push({ key: "Strict-Transport-Security", value: HSTS });
   return headers;
 }

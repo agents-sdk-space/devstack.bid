@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # AGENTS.md — operating NVX Stack Builder
 
-NVX Stack Builder is a Next.js 16.4 app (App Router, React 19, TypeScript, Tailwind v4) that turns developer setup commands into ordered, de-duplicated, bilingual (TH/EN) **Stack Templates**. Users pick a template or ask the AI planner, then reorder, edit, share and download `setup.sh` / `setup.ps1` / a starter zip. It is deployed as a Cloudflare Worker through `@opennextjs/cloudflare` (test: https://nvx-stack-builder.space6.workers.dev).
+NVX Stack Builder is a Next.js 16.4 app (App Router, React 19, TypeScript, Tailwind v4) that turns developer setup commands into ordered, de-duplicated, bilingual (TH/EN) **Stack Templates**. Users pick a template or ask the AI planner, then reorder, edit, share and download `setup.sh` / `setup.ps1` / a starter zip. It is deployed as a Cloudflare Worker through `@opennextjs/cloudflare` (production: https://devstack.bid; workers.dev fallback https://nvx-stack-builder.examplessdk.workers.dev).
 
 Full playbook (TH + EN): [docs/agents/AGENT-PLAYBOOK.md](docs/agents/AGENT-PLAYBOOK.md). Machine-readable map: [docs/agents/platform-manifest.json](docs/agents/platform-manifest.json). Docs index: [docs/README.md](docs/README.md).
 
@@ -37,7 +37,7 @@ Full playbook (TH + EN): [docs/agents/AGENT-PLAYBOOK.md](docs/agents/AGENT-PLAYB
    - Never print or commit `OPENAI_API_KEY`, Cloudflare tokens, `.dev.vars` or `.env.local`.
    - Set secrets via stdin: `printenv OPENAI_API_KEY | npx wrangler secret put OPENAI_API_KEY`.
 3. **Human confirmation is required before any of these:** deploy, `git push`, merge to `main`, tagging a release, binding domains or routes, changing DNS, or deleting or modifying any Cloudflare resource. Approval for one of these does not cover the others.
-   - Only the Worker `nvx-stack-builder` on workers.dev is ours.
+   - Only the Worker `nvx-stack-builder` (workers.dev plus the approved custom domains `devstack.bid` and `www.devstack.bid`) is ours.
    - Never touch other Workers in the account (e.g. `agents-sdk-space`, `agent-starter`, `mcp-worker`) or the zone `agents-sdk.space`.
 4. **Keep the design and page structure.** Restyling through tokens and classes is fine. Adding, removing or reordering sections or layout needs the owner's permission.
 5. **Accessibility stays green.**
@@ -67,7 +67,7 @@ npm run export -- <templateId> --out /tmp/x   # write setup.sh/ps1 for a templat
   - Output shape: change `src/lib/ai/schema.ts` and `rawPlanSchema` in `src/lib/ai/plan.ts` together.
 - **Deploy a test build (approval required).** Follow `docs/operations/deploy-cloudflare.md`, record the version id, then run the smoke tests.
 - **Roll back (approval required).** Run `npx wrangler rollback <version-id> --name nvx-stack-builder -m "<reason>"` with the right `CLOUDFLARE_ACCOUNT_ID`.
-  - Current test deploy (v0.5.0): https://nvx-stack-builder.space6.workers.dev, account `2d92bd5b25768fa9093d6adc0a8887fc`. Version ids: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (current), `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (same code, no secret).
+  - Production (v0.5.1): https://devstack.bid (+ www, 308 to the apex), account `2d92bd5b25768fa9093d6adc0a8887fc`. Version ids: `671b6b3b-1074-40cb-84b0-0df2681b69ce` (current), `d369f2b6-863a-4e44-8f9e-b5551e18361a` (v0.5.0), `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (v0.5.0 without the secret). Rolling back a version does not detach the custom domains.
   - Previous test deploy (v0.3.0, left untouched): account `f70d35188a3c56b9781538c73a86e04e`, version `0fb9ecd4-d788-468c-8843-559545c357e3`.
 
 ## Verification checklist before you report done

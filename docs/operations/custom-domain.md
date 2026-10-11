@@ -1,41 +1,60 @@
-# ผูกโดเมน (แผน agents-sdk.space) · Binding a custom domain
+# โดเมนจริง devstack.bid · Custom domain
 
-> **สถานะ: ยังไม่ได้ทำ เป็นแผนเท่านั้น** ห้ามดำเนินการใด ๆ ในหน้านี้โดยไม่ได้รับอนุมัติชัดเจนจากเจ้าของ zone รายละเอียดต้นฉบับอยู่ใน [DEPLOY.md](../DEPLOY.md) หัวข้อ 6
+> **สถานะ (11 ต.ค. 2026, v0.5.1): ใช้งานแล้ว** แอปเสิร์ฟที่ **https://devstack.bid** (apex) ผ่าน Workers Custom Domain ของ Worker `nvx-stack-builder` บัญชี `2d92bd5b25768fa9093d6adc0a8887fc` ส่วน `www.devstack.bid` เป็น custom domain ของ Worker เดียวกันและ redirect แบบ 308 ไปที่ apex ได้รับอนุมัติจากเจ้าของโดเมนแล้ว รายละเอียดการ deploy อยู่ใน [DEPLOY.md](../DEPLOY.md)
 
-## สถานการณ์ปัจจุบัน
+## สิ่งที่สร้างไว้
 
-- Worker ทดสอบเสิร์ฟที่ `nvx-stack-builder.space6.workers.dev` (v0.5.0) และ `nvx-stack-builder.agen-sdk-work.workers.dev` (v0.3.0 เดิม) เท่านั้น (`workers_dev: true`, ไม่มี `routes`)
-- zone `agents-sdk.space` (id `dfb531c381f8e6dd75082a6fe964f71b`) มี apex record `AAAA 100::` แบบ proxied ซึ่งเป็นรูปแบบที่ใช้กับ Worker routes และ Worker ที่มีอยู่ **`agents-sdk-space`** น่าจะเสิร์ฟ apex อยู่ — **ห้ามแตะ** zone นี้, DNS, routes หรือ Worker นั้น
-- zone อยู่ในบัญชี `9d56815c97f330febf9d6a0bb7f234d1` ซึ่ง token ปัจจุบันเข้าไม่ถึง (token ปัจจุบันจำกัดที่บัญชี `f70d…e04e`)
-
-## ทางเลือก
-
-| ทางเลือก | ข้อดี | ความเสี่ยง |
+| รายการ | ค่า | หมายเหตุ |
 |---|---|---|
-| **subdomain** เช่น `stack.agents-sdk.space` (แนะนำสำหรับครั้งแรก) | ไม่ชนกับของเดิม ย้อนกลับง่าย | ต้อง deploy Worker ในบัญชีเดียวกับ zone |
-| ยึด apex `agents-sdk.space` | URL สั้น | ต้องถอด route/custom domain ของ `agents-sdk-space` ก่อน กระทบระบบเดิม |
+| zone | `devstack.bid` (id `f5ceb4b6eae9aad8aafccf24c350ae1e`) | ก่อนเริ่มไม่มี DNS record เลย |
+| Custom Domain | `devstack.bid` → `nvx-stack-builder` (id `8a5d7eb2f2cfa18393ac30447b9f6c65f5f83a3f`) | ใบรับรอง `f16d512e-25fd-4b1f-8cc8-e1b91d33ee43` (Google Trust Services, SAN `devstack.bid`, `*.devstack.bid`, หมดอายุ 9 ม.ค. 2027 ต่ออายุอัตโนมัติ) |
+| Custom Domain | `www.devstack.bid` → `nvx-stack-builder` (id `b58b3b3a650e9363bb329b327445d2a12a2f446a`) | ใบรับรอง `960b36e2-0c90-442a-910b-b40abe83927d` |
+| DNS (สร้างอัตโนมัติ) | `AAAA devstack.bid 100::` proxied, `AAAA www.devstack.bid 100::` proxied | **อย่าแก้หรือลบเอง** Cloudflare ผูก record เหล่านี้กับ custom domain |
+| config | `routes` ใน [`wrangler.jsonc`](../../wrangler.jsonc): `{ "pattern": "devstack.bid", "custom_domain": true }` และ `www.devstack.bid` | ทำให้ `npm run deploy` ครั้งต่อไปยืนยันโดเมนเดิมเสมอ |
+| redirect | `redirects()` ใน [`next.config.ts`](../../next.config.ts): host `www.devstack.bid` → `https://devstack.bid/:path*` (308, คง path และ query) | ให้มี URL หลักเดียว (canonical) ดีต่อ SEO และ cookie |
+| metadata | `metadataBase` = `https://devstack.bid` (ค่าเริ่มต้นของ `NEXT_PUBLIC_SITE_URL` ใน [`src/app/layout.tsx`](../../src/app/layout.tsx)) | `og:image` / `twitter:image` เป็น URL เต็มบน devstack.bid |
 
-## ขั้นตอน (เมื่อได้รับอนุมัติ)
+workers.dev ยังเปิดอยู่เป็นทางสำรอง (`workers_dev: true`) ที่ `https://nvx-stack-builder.examplessdk.workers.dev` บัญชีนี้เปลี่ยนชื่อ subdomain จาก `space6` เป็น `examplessdk` ระหว่างวันที่ 11 ต.ค. URL `space6` เดิมจึงใช้ไม่ได้แล้ว
 
-1. ตกลงทางเลือกกับเจ้าของ (subdomain หรือ apex) และบัญชีที่จะ deploy
-2. ขอ token ที่รวมบัญชี `9d56…34d1` และสิทธิ์ **Zone: Read**, **Workers Routes: Edit**, **DNS: Edit** สำหรับ zone นั้น (เพิ่มจาก Workers Scripts: Edit, Account Settings: Read)
-3. ถ้ายึด apex: ถอด route/custom domain ของ `agents-sdk-space` ก่อน (Dashboard → Workers → agents-sdk-space → Settings → Domains & Routes) ลบ record `AAAA 100::` เฉพาะเมื่อไม่มี route ใดใช้แล้ว เพราะ custom domain จะสร้าง DNS record เองและชนกับ record ชื่อเดียวกัน
-4. เพิ่มใน `wrangler.jsonc`:
-   ```jsonc
-   "routes": [{ "pattern": "stack.agents-sdk.space", "custom_domain": true }]
-   ```
-   แล้ว `npm run deploy` (หรือเพิ่มผ่าน Dashboard → Worker → Domains & Routes → Add Custom Domain)
-5. ตรวจ smoke test บนโดเมนใหม่ ([deploy-cloudflare.md](./deploy-cloudflare.md))
-6. (ไม่บังคับ) ตั้ง `workers_dev: false` เมื่อโดเมนใช้งานได้แล้ว
+## ทำไมเลือก Workers Custom Domain (ไม่ใช่ route)
 
-## ข้อควรระวังเรื่อง HSTS
+- Custom Domain สร้าง DNS record และใบรับรองให้อัตโนมัติ ไม่ต้องมี origin server
+- route (`devstack.bid/*`) ต้องมี DNS record แบบ proxied อยู่ก่อน และเหมาะกับการแทรก Worker หน้า origin ที่มีอยู่แล้ว ซึ่งไม่ใช่กรณีนี้
+- ลบ custom domain ได้ในคำสั่งเดียว DNS record ที่สร้างให้ก็ถูกลบตามไปด้วย
 
-แอปส่ง `Strict-Transport-Security: max-age=31536000; includeSubDomains` ถ้าเสิร์ฟบน **apex** เบราว์เซอร์จะบังคับ HTTPS ให้ **ทุก subdomain** ของ `agents-sdk.space` เป็นเวลาหนึ่งปี ต้องแน่ใจว่าทุก subdomain รองรับ HTTPS ก่อน และ **อย่าเพิ่ม `preload`** จนกว่าจะมั่นใจ ถ้าใช้ subdomain ผลกระทบจำกัดอยู่ที่ subdomain นั้นและลูกของมัน
+## สิทธิ์ของ token ที่ต้องใช้
 
-## Rollback ของโดเมน
+การผูก custom domain (`PUT /accounts/{id}/workers/domains` หรือ `routes` + `wrangler deploy`) ต้องทำด้วย token **ตัวเดียว** ที่มีทั้ง:
 
-ลบ `routes` ออกจาก `wrangler.jsonc` แล้ว deploy ใหม่ หรือลบ custom domain ใน Dashboard ถ้ายึด apex มาจาก `agents-sdk-space` ต้องคืน route ให้ Worker เดิมด้วย — วางแผนขั้นนี้ไว้ก่อนเริ่มเสมอ
+- Account › **Workers Scripts: Edit** (ต้องเข้าถึง Worker ปลายทาง)
+- สิทธิ์ระดับ zone ของ `devstack.bid` อย่างน้อย **Zone: Read** (ในการ deploy ครั้งนี้ token ที่มี Workers Scripts: Edit + Zone: Read ทำงานได้)
 
-## สิ่งที่ AI agent ต้องทำเมื่อถูกขอให้ผูกโดเมน
+ผลการตรวจ token เมื่อ 11 ต.ค.: token `CLOUDFLARE_API_TOKEN_DEVSTACK` อยู่บัญชีเดียวกัน อ่าน zone และ DNS ได้ แต่ **ไม่มีสิทธิ์ Workers Scripts เลย** (list scripts ได้ผลว่าง และ `/workers/scripts/nvx-stack-builder/settings` ตอบ "No access to the specified resource", `/workers/domains` ตอบ Authentication error) จึงผูกโดเมนกับ Worker ไม่ได้ การผูกจึงใช้ token `CLOUDFLARE_API_TOKEN_EXAMPLESSDK` (Workers Scripts: Edit + Zone: Read) ส่วน token DEVSTACK ใช้แค่อ่าน DNS เพื่อยืนยันผล ถ้าต้องการให้ token เดียวทำได้ทั้งหมด ให้เพิ่ม **Account › Workers Scripts: Edit** ให้ token DEVSTACK
 
-หยุดและขออนุมัติพร้อมแผนนี้ ระบุ zone, hostname, บัญชี, สิทธิ์ token ที่ต้องใช้ และผลกระทบต่อ Worker เดิม ห้ามดำเนินการเองแม้ token จะมีสิทธิ์
+## HSTS
+
+ตั้งแต่ v0.5.1 แอปส่ง `Strict-Transport-Security: max-age=31536000` **โดยไม่มี `includeSubDomains` และ `preload`** ทั้งใน [`src/lib/security-headers.ts`](../../src/lib/security-headers.ts) และ [`public/_headers`](../../public/_headers)
+
+เหตุผล: แอปอยู่บน apex ของ zone ถ้าส่ง `includeSubDomains` เบราว์เซอร์จะบังคับ HTTPS ให้ **ทุก subdomain ในอนาคต** ของ devstack.bid เป็นเวลาหนึ่งปี ถ้าวันหนึ่งเพิ่ม subdomain ที่ยังไม่มี HTTPS (เช่น mail หรือบริการภายนอก) ผู้ใช้จะเข้าไม่ได้ และ `preload` ถอนออกยากมาก
+
+ข้อควรรู้: เวอร์ชันก่อนหน้า (`d369f2b6…`) ส่ง `includeSubDomains` อยู่ไม่กี่นาทีหลังผูกโดเมน (ผูกโดเมนราว 09:13 และ deploy v0.5.1 เมื่อ 09:15 ICT) ในช่วงนั้นมีเพียงเบราว์เซอร์ทดสอบอัตโนมัติที่เข้าเว็บ ผลกระทบจึงแทบไม่มี เมื่อแน่ใจว่าทุก subdomain รองรับ HTTPS แล้วค่อยเพิ่ม `includeSubDomains` (และพิจารณา `preload`) ทีหลัง
+
+## Cloudflare Web Analytics กับ CSP
+
+zone นี้เปิด Web Analytics แบบติดตั้งอัตโนมัติ Cloudflare จึงแทรก `https://static.cloudflareinsights.com/beacon.min.js` ลงใน HTML ที่ส่งให้เบราว์เซอร์ แต่ CSP ของแอป (`script-src 'self' 'unsafe-inline'`) บล็อกสคริปต์นั้นไว้ ผลคือมี console error ทุกหน้าและไม่มีข้อมูล analytics (แอปทำงานปกติ) เลือกได้ 2 ทาง (ต้องให้เจ้าของตัดสินใจ):
+
+1. ปิด automatic setup ของ Web Analytics สำหรับ devstack.bid ใน Dashboard (ไม่ต้องแก้โค้ด และ CSP ยังเข้มเท่าเดิม)
+2. อนุญาตใน CSP: เพิ่ม `https://static.cloudflareinsights.com` ใน `script-src` และ `https://cloudflareinsights.com` ใน `connect-src` (มีสคริปต์ภายนอกเพิ่ม 1 ตัว)
+
+## Rollback ของโดเมน (ต้องได้รับอนุมัติ)
+
+- ถอดโดเมน: ลบ `routes` ใน `wrangler.jsonc` แล้วลบ custom domain ด้วย `DELETE /accounts/{id}/workers/domains/{domain_id}` หรือใน Dashboard → Worker → Settings → Domains & Routes (DNS record ที่สร้างให้จะถูกลบตาม) workers.dev ยังใช้ได้
+- rollback เวอร์ชัน Worker **ไม่ถอดโดเมน** โดเมนผูกกับ Worker ไม่ได้ผูกกับเวอร์ชัน ถ้าย้อนไป `d369f2b6…` โดเมนยังเสิร์ฟอยู่แต่จะกลับไปส่ง HSTS `includeSubDomains` และ metadata ที่ชี้ workers.dev (ดู [rollback.md](./rollback.md))
+
+## zone อื่น: agents-sdk.space (ห้ามแตะ)
+
+zone `agents-sdk.space` (id `dfb531c381f8e6dd75082a6fe964f71b`, บัญชี `9d56815c97f330febf9d6a0bb7f234d1`) เป็นของระบบอื่น มี Worker `agents-sdk-space` เสิร์ฟอยู่ **ห้ามแตะ** DNS, routes หรือ custom domain ของ zone นี้ แผนเดิมที่จะผูกโดเมนนี้ถูกยกเลิก เพราะเจ้าของเลือก devstack.bid แทน
+
+## สิ่งที่ AI agent ต้องทำเมื่อถูกขอให้เพิ่มหรือเปลี่ยนโดเมน
+
+หยุดและขออนุมัติพร้อมแผน ระบุ zone, hostname, บัญชี, สิทธิ์ token ที่ต้องใช้ และผลกระทบต่อ Worker หรือ DNS เดิม ตรวจก่อนว่า zone ไม่มี record ชื่อเดียวกัน (custom domain จะชน) ห้ามแก้ Worker หรือ record อื่น และห้ามพิมพ์ token
