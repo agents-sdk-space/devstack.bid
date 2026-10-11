@@ -13,6 +13,8 @@
 | `PLAN_LIMIT_PER_MIN` | var | 1–6000 | 20 | — | limit ของ general limiter แบบ in-memory (ใช้นอก Workers หรือเมื่อ binding ล้ม) |
 | `PLAN_AI_LIMIT_PER_MIN` | var | 1–600 | 5 | — | limit ของ AI limiter แบบ in-memory |
 
+| `NEXT_PUBLIC_SITE_URL` | build-time (public) | URL เต็ม | `https://nvx-stack-builder.space6.workers.dev` | — | `metadataBase` ใน [`src/app/layout.tsx`](../../src/app/layout.tsx) ใช้สร้าง URL เต็มของ `og:image` / `twitter:image` ถูกฝังตอน build (ไม่ใช่ secret) ถ้า deploy ไปโดเมนอื่นให้ตั้งก่อน `npm run cf:build` |
+
 ค่าว่าง (`""`) ถือว่าไม่ได้ตั้ง
 
 ## Cloudflare bindings (ใน [`wrangler.jsonc`](../../wrangler.jsonc))

@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (brand logo and animated mascot)
+
+- **Logo:** the pink blob character replaces the blue "NVX" square in the header, next to the unchanged "Stack Builder" wordmark.
+  - The supplied artwork already had a transparent background. Cleanup removed stray alpha pixels and anti-aliased the edges; it was checked on black.
+  - Master copy: `assets/brand/nvx-logo-master.png`.
+- **Animated mascot (`src/components/brand/mascot.tsx`):** an eyeless body image plus SVG glossy capsule eyes.
+  - Pure CSS idle float and breathing, with occasional single and double blinks.
+  - On the home hero (112px, 84px on mobile, in the empty corner of the code window): a squishy bounce on hover/click, and eyes that follow a mouse cursor.
+  - Header (28px): float and blink only.
+  - Fully static under `prefers-reduced-motion`.
+  - No new dependencies.
+  - New `/design#mascot` section and `tests/mascot.test.tsx`.
+- **Brand assets** (`scripts/gen-brand-assets.py`, reproducible):
+  - Logo: 32/64/96px PNG and WebP.
+  - Favicon (16/32/48) and `icon.png`; apple-touch-icon 180.
+  - Web manifest (`src/app/manifest.ts`) with 192, 512 and maskable 512 icons.
+  - Open Graph/Twitter card 1200×630 (black, logo and title). Large PNGs are palette-quantised (about 8x smaller).
+- **Metadata:** `metadataBase` (override with `NEXT_PUBLIC_SITE_URL`), `og:*` and `twitter:card` (summary_large_image); `/brand/*` cache headers.
+- **Brand pink `#fb0fab`** (median of saturated logo pixels): new decorative tokens `--nvx-brand-pink` / `--nvx-brand-glow`, used only for the mascot glow and the OG accent bar.
+  - The blue primary/link system, layout and contrast tests are unchanged.
+  - `--nvx-brand-from/to` (old mark gradient) were removed.
+
 ### Added (documentation)
 
 - Documentation site in `docs/` (Thai with English technical terms): user guide, concepts, architecture with mermaid diagrams, operations (linking `docs/DEPLOY.md`), contributing, reference (API `/api/plan`, template schema, config/env, npm scripts, file map) and an accurate subsystem history with commit references (`docs/history/SUBSYSTEM-HISTORY.md`).

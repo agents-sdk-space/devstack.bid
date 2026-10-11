@@ -28,6 +28,8 @@ flowchart TB
 | [`src/components/ui/button-classes.ts`](../../src/components/ui/button-classes.ts) | `buttonClasses()` variant × size (ใช้ร่วมกับ Link ผ่าน `asChild`) |
 | [`src/components/brand/tool-icon.tsx`](../../src/components/brand/tool-icon.tsx) | `ToolIcon`, `ToolTile`, `templateTool`, `tagTool`, `commandTool`, `addonTool` |
 | [`src/components/brand/brand-icons.data.ts`](../../src/components/brand/brand-icons.data.ts) | path SVG 31 โลโก้ สร้างโดย [`scripts/gen-brand-icons.mjs`](../../scripts/gen-brand-icons.mjs) |
+| [`src/components/brand/mascot.tsx`](../../src/components/brand/mascot.tsx) | มาสคอต `Mascot`: ภาพตัว + ตา SVG, ตามองตามเมาส์, squish; CSS อยู่ใน `globals.css` (`.nvx-mascot*`) |
+| [`scripts/gen-brand-assets.py`](../../scripts/gen-brand-assets.py) | สร้างโลโก้ทุกขนาด, favicon, app icon, OG image และภาพตัวมาสคอตที่ลบตาออก จาก [`assets/brand/nvx-logo-master.png`](../../assets/brand/nvx-logo-master.png) |
 | [`src/lib/design-tokens.ts`](../../src/lib/design-tokens.ts) | manifest ของ token (ชื่อ คำอธิบายสองภาษา) สำหรับ `/design` และ test |
 | [`src/components/design-system.tsx`](../../src/components/design-system.tsx) | style guide `/design` |
 
@@ -37,6 +39,7 @@ flowchart TB
 - **cmdk** สำหรับ command palette, **dnd-kit** สำหรับลากจัดลำดับพร้อมคีย์บอร์ดและประกาศสำหรับ screen reader สองภาษา
 - **ธีมผ่าน class `.dark`** ที่เซิร์ฟเวอร์เรนเดอร์ไว้ก่อน → ไม่มี flash, ไม่ต้องรอ JS
 - **โลโก้แบบ generate** แทนการ import simple-icons ทั้งแพ็กเกจ (ใหญ่มาก) เพื่อให้ Worker bundle เล็ก simple-icons เป็น devDependency เท่านั้น
+- **มาสคอตแบบเลเยอร์** (ภาพตัว + ตา SVG) แทน Lottie หรือไลบรารีแอนิเมชัน: ไม่เพิ่ม dependency ใช้แค่ transform จึงไม่เกิด layout/paint ซ้ำ ภาพตัวขนาด 2–22 KB และตาวาดด้วยพิกัดเดียวกับสคริปต์ที่ลบตาออก (test ตรวจว่าตรงกัน)
 - **ไม่มีอีโมจิ** ใน `src/` (test บังคับ) เพราะแสดงผลไม่เหมือนกันในแต่ละ OS และดูไม่เป็นเครื่องมือมืออาชีพ
 
 ## Accessibility invariants
@@ -44,6 +47,7 @@ flowchart TB
 - คู่สีข้อความผ่าน WCAG AA (4.5:1) ทั้งสองธีม, non-text (ปุ่ม primary, ring) ผ่าน 3:1 — 32 คู่ใน `tests/tokens.test.ts`
 - ปุ่มไอคอนอย่างเดียวต้องมี `aria-label`; ไอคอนตกแต่งต้อง `aria-hidden`
 - โฟกัสมองเห็นได้เสมอ (`focus-ring`), toast ประกาศแบบ polite (error แบบ assertive)
+- แอนิเมชันมาสคอตหยุดทั้งหมดเมื่อ `prefers-reduced-motion: reduce` และเป็น `aria-hidden` เว้นแต่ส่ง `label`
 - ทุกหน้าไม่มี horizontal scroll ที่ 390px ทั้งไทยและอังกฤษ (ตรวจด้วย Playwright ทุกครั้งที่ปรับดีไซน์)
 
 ## ประวัติ

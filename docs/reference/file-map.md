@@ -15,7 +15,9 @@
 | [`.env.example`](../../.env.example), [`.dev.vars.example`](../../.dev.vars.example) | ตัวอย่าง env |
 | [`AGENTS.md`](../../AGENTS.md) | กติกาสำหรับ AI agent |
 | [`README.md`](../../README.md), [`CHANGELOG.md`](../../CHANGELOG.md), [`CONTRIBUTING.md`](../../CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](../../CODE_OF_CONDUCT.md), [`LICENSE`](../../LICENSE), [`NOTICE`](../../NOTICE) | เอกสารโครงการ, สัญญาอนุญาต (MIT), เครื่องหมายการค้า |
-| [`public/_headers`](../../public/_headers) | headers ของ static assets บน Workers |
+| [`public/_headers`](../../public/_headers) | headers ของ static assets บน Workers (รวม cache ของ `/brand/*`) |
+| [`public/brand/`](../../public/brand/), [`public/icon-192.png`](../../public/icon-192.png), [`public/icon-512.png`](../../public/icon-512.png), [`public/icon-maskable-512.png`](../../public/icon-maskable-512.png) | โลโก้ ภาพตัวมาสคอต และไอคอนของ web manifest (สร้างด้วยสคริปต์ ห้ามแก้มือ) |
+| [`assets/brand/nvx-logo-master.png`](../../assets/brand/nvx-logo-master.png), [`assets/brand/nvx-mascot-body.png`](../../assets/brand/nvx-mascot-body.png) | ต้นฉบับโลโก้พื้นใส 1024px และภาพตัวที่ลบตาออก |
 | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) | CI: lint, typecheck, test, docs:check |
 
 ## `src/app` — routes
@@ -29,6 +31,8 @@
 | [`src/app/builder/page.tsx`](../../src/app/builder/page.tsx) | `/builder` |
 | [`src/app/design/page.tsx`](../../src/app/design/page.tsx) | `/design` style guide |
 | [`src/app/not-found.tsx`](../../src/app/not-found.tsx) | หน้า 404 |
+| [`src/app/manifest.ts`](../../src/app/manifest.ts) | web app manifest (`/manifest.webmanifest`) |
+| [`src/app/favicon.ico`](../../src/app/favicon.ico), [`src/app/icon.png`](../../src/app/icon.png), [`src/app/apple-icon.png`](../../src/app/apple-icon.png), [`src/app/opengraph-image.png`](../../src/app/opengraph-image.png) | favicon 16/32/48, icon 32, apple-touch-icon 180, OG card 1200×630 (Next.js file conventions) |
 | [`src/app/api/plan/route.ts`](../../src/app/api/plan/route.ts) | API `/api/plan` |
 | [`src/app/tokens.css`](../../src/app/tokens.css), [`src/app/globals.css`](../../src/app/globals.css) | design tokens และ Tailwind theme |
 
@@ -47,6 +51,7 @@
 | [`prefs.tsx`](../../src/components/prefs.tsx), [`providers.tsx`](../../src/components/providers.tsx) | ภาษา/ธีม, providers (toast, tooltip) |
 | [`os-toggle.tsx`](../../src/components/os-toggle.tsx), [`copy-button.tsx`](../../src/components/copy-button.tsx) | สลับ POSIX/Windows, ปุ่มคัดลอก |
 | [`design-system.tsx`](../../src/components/design-system.tsx) | เนื้อหา `/design` |
+| [`brand/mascot.tsx`](../../src/components/brand/mascot.tsx) | มาสคอตแบบเคลื่อนไหว (header + hero + `/design`) |
 | [`brand/tool-icon.tsx`](../../src/components/brand/tool-icon.tsx), [`brand/brand-icons.data.ts`](../../src/components/brand/brand-icons.data.ts) | โลโก้เครื่องมือ |
 | [`ui/index.ts`](../../src/components/ui/index.ts) | ไลบรารีคอมโพเนนต์ NVX UI (badge, button, card, checkbox, code-block, dialog, empty-state, field, kbd, segmented, skeleton, stepper, tabs, toast, tooltip, icons, cn, copy) |
 
@@ -80,10 +85,11 @@
 | ไฟล์ | หน้าที่ |
 |---|---|
 | [`scripts/export-template.ts`](../../scripts/export-template.ts) | CLI export |
-| [`scripts/gen-brand-icons.mjs`](../../scripts/gen-brand-icons.mjs) | สร้างข้อมูลโลโก้ |
+| [`scripts/gen-brand-icons.mjs`](../../scripts/gen-brand-icons.mjs) | สร้างข้อมูลโลโก้เครื่องมือ |
+| [`scripts/gen-brand-assets.py`](../../scripts/gen-brand-assets.py) | สร้าง asset ของแบรนด์ NVX (Pillow + numpy) |
 | [`scripts/patch-opennext.mjs`](../../scripts/patch-opennext.mjs) | patch adapter |
 | [`scripts/docs-check.mjs`](../../scripts/docs-check.mjs), [`scripts/docs-pdf.mjs`](../../scripts/docs-pdf.mjs) | เครื่องมือเอกสาร |
-| [`tests/composer.test.ts`](../../tests/composer.test.ts), [`tests/scripts-share-ai.test.ts`](../../tests/scripts-share-ai.test.ts), [`tests/production.test.ts`](../../tests/production.test.ts), [`tests/tokens.test.ts`](../../tests/tokens.test.ts), [`tests/ui-components.test.tsx`](../../tests/ui-components.test.tsx), [`tests/tool-icons.test.tsx`](../../tests/tool-icons.test.tsx), [`tests/docs-check.test.ts`](../../tests/docs-check.test.ts), [`tests/setup.ts`](../../tests/setup.ts) | ชุด test ([testing.md](../contributing/testing.md)) |
+| [`tests/composer.test.ts`](../../tests/composer.test.ts), [`tests/scripts-share-ai.test.ts`](../../tests/scripts-share-ai.test.ts), [`tests/production.test.ts`](../../tests/production.test.ts), [`tests/tokens.test.ts`](../../tests/tokens.test.ts), [`tests/ui-components.test.tsx`](../../tests/ui-components.test.tsx), [`tests/tool-icons.test.tsx`](../../tests/tool-icons.test.tsx), [`tests/docs-check.test.ts`](../../tests/docs-check.test.ts), [`tests/mascot.test.tsx`](../../tests/mascot.test.tsx), [`tests/setup.ts`](../../tests/setup.ts) | ชุด test ([testing.md](../contributing/testing.md)) |
 
 ## `docs/`
 

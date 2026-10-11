@@ -1,5 +1,6 @@
 import { Blocks, LibraryBig, ShieldCheck, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { Mascot } from "@/components/brand/mascot";
 import { T } from "@/components/prefs";
 import { TemplateCard } from "@/components/template-card";
 import { Badge, buttonClasses, Card } from "@/components/ui";
@@ -57,7 +58,7 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <Card className="overflow-hidden border-code-border bg-code-bg p-0 shadow-lg" aria-label="Example command sequence">
+          <Card className="relative overflow-hidden border-code-border bg-code-bg p-0 shadow-lg" aria-label="Example command sequence">
             <div className="relative flex items-center gap-2 border-b border-code-border bg-white/[0.04] px-4 py-3">
               <span className="h-3 w-3 rounded-full bg-[var(--nvx-chrome-close)]" aria-hidden />
               <span className="h-3 w-3 rounded-full bg-[var(--nvx-chrome-min)]" aria-hidden />
@@ -77,6 +78,8 @@ export default function Home() {
                 <span className="term-cursor" />
               </div>
             </pre>
+            {/* Decorative mascot resting in the empty bottom-right corner of the code window. */}
+            <Mascot size={112} interactive className="hero-mascot absolute bottom-3 right-3 max-sm:h-[84px]! max-sm:w-[84px]! sm:bottom-4 sm:right-6" />
           </Card>
         </div>
       </section>

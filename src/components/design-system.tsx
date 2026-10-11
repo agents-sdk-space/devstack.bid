@@ -40,6 +40,7 @@ import {
   useToast,
 } from "@/components/ui";
 import { ArrowUp, Blocks, Copy, Download, Languages, LayoutGrid, Link2, Moon, RotateCw, SearchX, ShieldCheck, Sparkles, Sun, Trash2, TriangleAlert } from "lucide-react";
+import { Mascot } from "./brand/mascot";
 import { ToolTile } from "./brand/tool-icon";
 import { useLang } from "./prefs";
 
@@ -64,6 +65,7 @@ const SECTIONS: { id: string; title: Bi; group: "tokens" | "components" }[] = [
   { id: "empty", title: { en: "EmptyState", th: "สถานะว่าง" }, group: "components" },
   { id: "skeleton", title: { en: "Skeleton & Spinner", th: "โครงร่างระหว่างโหลด" }, group: "components" },
   { id: "icons", title: { en: "Icons & tool tiles", th: "ไอคอนและไทล์เครื่องมือ" }, group: "components" },
+  { id: "mascot", title: { en: "Brand mascot", th: "มาสคอตของแบรนด์" }, group: "components" },
 ];
 
 function Section({ id, title, description, usage, children }: { id: string; title: Bi; description: Bi; usage?: string; children: ReactNode }) {
@@ -682,6 +684,29 @@ export function DesignSystem() {
               {[Sparkles, LayoutGrid, Blocks, ShieldCheck, Languages, Sun, Moon, Copy, Download, Link2, Trash2, SearchX].map((Icon, i) => (
                 <Icon key={i} className="h-5 w-5" strokeWidth={1.75} aria-hidden />
               ))}
+            </Demo>
+          </Section>
+
+          <Section
+            id="mascot"
+            title={SECTIONS[18].title}
+            description={{
+              en: "The pink blob is the NVX logo and a living character: it floats and breathes, blinks now and then, follows the cursor with its eyes (mouse only) and squishes when hovered or clicked. Everything stops under reduced motion. Its pink (--nvx-brand-pink #fb0fab) is decorative only, used for the mascot glow and the OG card. Buttons, links and focus stay blue.",
+              th: "ก้อนสีชมพูคือโลโก้ NVX และเป็นตัวละครที่มีชีวิต: ลอยขึ้นลงและหายใจ กะพริบตาเป็นระยะ กลอกตามองตามเคอร์เซอร์ (เฉพาะเมาส์) และเด้งยุบเมื่อชี้หรือคลิก ทุกอย่างหยุดนิ่งเมื่อผู้ใช้ตั้ง reduced motion สีชมพู (--nvx-brand-pink #fb0fab) ใช้ตกแต่งเท่านั้น เช่น แสงเรืองรอบมาสคอตและภาพ OG ส่วนปุ่ม ลิงก์ และวงโฟกัสยังเป็นสีฟ้า",
+            }}
+            usage={`import { Mascot } from "@/components/brand/mascot";\n<Mascot size={28} />                 // header: float + blink only, decorative\n<Mascot size={112} interactive />    // hero: + eyes follow cursor, squish on hover/click\n<Mascot size={64} label="NVX" />     // role="img" with an accessible name`}
+          >
+            <Demo className="items-end gap-8">
+              {[28, 48, 112].map((size) => (
+                <span key={size} className="flex flex-col items-center gap-2">
+                  <Mascot size={size} interactive={size > 48} />
+                  <span className="font-mono text-[10px] text-subtle">{size}px{size > 48 ? " · interactive" : ""}</span>
+                </span>
+              ))}
+              <span className="flex flex-col items-center gap-2">
+                <span className="h-10 w-10 rounded-full" style={{ background: "var(--nvx-brand-pink)" }} aria-hidden />
+                <span className="font-mono text-[10px] text-subtle">brand-pink #fb0fab</span>
+              </span>
             </Demo>
           </Section>
         </div>

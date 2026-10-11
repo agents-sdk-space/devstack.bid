@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Blocks, House, Languages, LayoutGrid, Menu, Moon, Palette, Sun } from "lucide-react";
 import { Button, cn, Dialog, DialogContent, DialogTrigger, SearchIcon, Tooltip } from "@/components/ui";
 import { CommandPalette, PaletteTrigger } from "./command-palette";
+import { Mascot } from "./brand/mascot";
 import { useDarkMode, useLang } from "./prefs";
 
 const NAV = [
@@ -36,12 +37,7 @@ export function Header() {
       </a>
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4">
         <Link href="/" className="focus-ring flex items-center gap-2 rounded-md font-semibold tracking-tight" aria-label="NVX Stack Builder home">
-          <span
-            aria-hidden
-            className="grid h-7 w-7 place-items-center rounded-[8px] bg-gradient-to-b from-[var(--nvx-brand-from)] to-[var(--nvx-brand-to)] text-[10px] font-bold tracking-normal text-white shadow-sm"
-          >
-            NVX
-          </span>
+          <Mascot size={28} />
           <span className="hidden text-[15px] sm:inline">Stack Builder</span>
         </Link>
 

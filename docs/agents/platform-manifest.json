@@ -90,14 +90,18 @@
     },
     {
       "id": "ui-framework",
-      "summary": "Design tokens, NVX UI components, tool logos, /design style guide",
+      "summary": "Design tokens, NVX UI components, tool logos, /design style guide; animated brand mascot and generated brand assets (favicon, app icons, OG image)",
       "keyFiles": [
         "src/app/tokens.css",
         "src/app/globals.css",
         "src/lib/design-tokens.ts",
         "src/components/ui/index.ts",
         "src/components/brand/tool-icon.tsx",
-        "src/components/design-system.tsx"
+        "src/components/design-system.tsx",
+        "src/components/brand/mascot.tsx",
+        "scripts/gen-brand-assets.py",
+        "assets/brand/nvx-logo-master.png",
+        "src/app/manifest.ts"
       ],
       "docs": "docs/architecture/ui-framework.md"
     },

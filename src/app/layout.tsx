@@ -10,15 +10,30 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "sw
 const plexMono = IBM_Plex_Mono({ variable: "--font-plex-mono", subsets: ["latin"], weight: ["400", "500", "600"], display: "swap" });
 const plexThai = IBM_Plex_Sans_Thai({ variable: "--font-thai", subsets: ["thai"], weight: ["400", "500", "600", "700"], display: "swap" });
 
+// Absolute base for Open Graph / Twitter image URLs. Override at build time with NEXT_PUBLIC_SITE_URL.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://nvx-stack-builder.space6.workers.dev";
+const DESCRIPTION =
+  "Turn npm, nvm, npx, pip and PyPI command sequences into ordered, runnable Stack Templates. AI agent scaffolds dashboards, internal tools, collaborative workspaces, games and AI apps. Thai + English.";
+
+// favicon.ico, icon.png, apple-icon.png, opengraph-image.png and manifest.ts in this folder are
+// picked up by Next.js file conventions (see scripts/gen-brand-assets.py).
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "NVX Stack Builder — runnable Stack Templates for Node.js & Python",
     template: "%s · NVX Stack Builder",
   },
-  description:
-    "Turn npm, nvm, npx, pip and PyPI command sequences into ordered, runnable Stack Templates. AI agent scaffolds dashboards, internal tools, collaborative workspaces, games and AI apps. Thai + English.",
+  description: DESCRIPTION,
   applicationName: "NVX Stack Builder",
   keywords: ["npm", "nvm", "npx", "pip", "PyPI", "Next.js", "Python", "scaffold", "stack template", "AI agent"],
+  openGraph: {
+    type: "website",
+    siteName: "NVX Stack Builder",
+    title: "NVX Stack Builder",
+    description: DESCRIPTION,
+    url: "/",
+  },
+  twitter: { card: "summary_large_image", title: "NVX Stack Builder", description: DESCRIPTION },
 };
 
 export const viewport: Viewport = {

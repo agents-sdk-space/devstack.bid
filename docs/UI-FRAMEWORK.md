@@ -23,7 +23,7 @@ All values live in `src/app/tokens.css` as `--nvx-*` variables. `.dark` override
 |---|---|---|
 | Surfaces | `bg` (#000), `surface`, `surface-2`, `surface-3`, `raised` (selected segment/tab), `border`, `border-strong` | `bg-bg`, `bg-surface`, `bg-surface-2`, `border-border`, `border-border-strong` |
 | Text | `fg`, `muted`, `subtle` | `text-fg`, `text-muted`, `text-subtle` |
-| Brand | `primary` `#0071e3`, `primary-hover`, `primary-fg`, `primary-soft`, `primary-soft-fg`, `link` (`#2997ff` dark / `#0066cc` light), `accent`, `ring`, `brand-from`/`brand-to` | `bg-primary text-primary-fg` for filled CTAs, **`text-link` for blue text** (never `text-primary`: `#0071e3` is not AA on black), `ring-ring` |
+| Brand | `primary` `#0071e3`, `primary-hover`, `primary-fg`, `primary-soft`, `primary-soft-fg`, `link` (`#2997ff` dark / `#0066cc` light), `accent`, `ring`, `brand-pink` `#fb0fab` + `brand-glow` (mascot only, decorative) | `bg-primary text-primary-fg` for filled CTAs, **`text-link` for blue text** (never `text-primary`: `#0071e3` is not AA on black), `ring-ring` |
 | Status | `success`/`warning`/`danger`/`info` + `-soft` + `-fg` (`danger-hover`) | `bg-success-soft text-success-fg`, `bg-danger` … |
 | Code | `code-bg`, `code-fg`, `code-prompt` (terminal green), `code-muted`, `code-border`, `chrome-close/min/zoom` (traffic lights) — always dark | `bg-code-bg text-code-fg text-code-prompt` |
 | Decoration | `glow-1`, `glow-2`, `tile-top`, `tile-bottom`, `tile-edge`, `tile-sheen` | `.hero-glow` (soft blue/purple radial glows), `.tool-tile` (app-icon tile), `.nav-glass` (translucent header) |
@@ -74,6 +74,8 @@ Import everything from the barrel: `import { Button, Card, useToast } from "@/co
 | `Skeleton`, `Spinner` | `skeleton.tsx` | `className`; Spinner `label` | Wrap skeletons in `role="status"` with an sr-only label. |
 | `Kbd`, `SearchIcon`, `cn`, `copyText` | `kbd.tsx`, `icons.tsx`, `cn.ts`, `copy.ts` | | Helpers. |
 
+**Brand mascot** (`src/components/brand/mascot.tsx`, `<Mascot size interactive? label? />`): the pink blob logo as a living character. It is an eyeless body image (`public/brand/mascot-body-*`) with two glossy capsule eyes drawn in SVG on the same 1024 grid. CSS animations (`.nvx-mascot*` in `globals.css`): idle float + breathing, a single and a double blink per cycle, and a squish on hover/click (`interactive`). With `interactive`, the eyes follow a mouse pointer (`(hover: hover) and (pointer: fine)` only, throttled with requestAnimationFrame). The mascot is fully static under `prefers-reduced-motion` and decorative (`aria-hidden`) unless you pass `label`. The header uses 28px (float + blink); the home hero uses 112px (84px on mobile) in the empty corner of the code window. The pink is **never** used for text, buttons, links or focus: the interactive system stays blue. Assets, favicon, app icons and the OG card come from `scripts/gen-brand-assets.py`.
+
 App-level composites built from these: `Header` (desktop nav, mobile sheet, theme/lang), `CommandPalette` (cmdk inside `Dialog`, **Ctrl/⌘ + K**), `SortableSteps` (dnd-kit), `StepCard`, `TemplateCard`, `AgentPanel`, `Builder` (4-stage wizard).
 
 ## 3. Adding a component
@@ -109,7 +111,7 @@ NVX UI คือระบบดีไซน์ของ NVX Stack Builder ปร
 ค่าทั้งหมดอยู่ใน `src/app/tokens.css` เป็นตัวแปร `--nvx-*` โดย `.dark` เขียนทับเฉพาะค่าที่ต่างกัน ส่วน `globals.css` แมปเข้าธีม Tailwind เพื่อให้เขียน **utility เชิงความหมาย** แทนสีดิบ
 
 - **พื้นผิว/ข้อความ:** `bg-bg`, `bg-surface`, `bg-surface-2/3`, `border-border(-strong)`, `text-fg`, `text-muted`, `text-subtle`
-- **แบรนด์:** `bg-primary text-primary-fg` (ปุ่มหลักสีฟ้า `#0071e3`), `text-link` สำหรับข้อความ/ลิงก์สีฟ้า (`#2997ff` ธีมดำ / `#0066cc` ธีมสว่าง — ห้ามใช้ `text-primary` กับข้อความ เพราะไม่ผ่าน AA บนพื้นดำ), `bg-primary-soft text-primary-soft-fg`, `accent`, `ring`
+- **แบรนด์:** `bg-primary text-primary-fg` (ปุ่มหลักสีฟ้า `#0071e3`), `text-link` สำหรับข้อความ/ลิงก์สีฟ้า (`#2997ff` ธีมดำ / `#0066cc` ธีมสว่าง — ห้ามใช้ `text-primary` กับข้อความ เพราะไม่ผ่าน AA บนพื้นดำ), `bg-primary-soft text-primary-soft-fg`, `accent`, `ring`; `--nvx-brand-pink` / `--nvx-brand-glow` ใช้กับมาสคอตเท่านั้น
 - **สถานะ:** `success` / `warning` / `danger` / `info` พร้อม `-soft` (พื้น) และ `-fg` (ข้อความบนพื้น)
 - **ธีม v0.5 (อ้างอิง developer.apple.com):** ค่าเริ่มต้นคือธีมดำสำหรับทุกคน (ไม่สนใจค่าสว่าง/มืดของระบบ) พื้นดำสนิท พื้นผิวสีเทาแยกด้วยน้ำหนักสีและเส้นขอบบาง หัวข้อตัวใหญ่หนา เว้นระยะกว้าง มุมโค้ง 12–22px ปุ่มทรงแคปซูล สีฟ้าใช้อย่างจำกัด และโลโก้เครื่องมือจริงเป็นไทล์แบบไอคอนแอป ธีมสว่าง (พื้น `#f5f5f7`) ยังเลือกได้จากปุ่มสลับ
 - **โค้ด:** `bg-code-bg text-code-fg text-code-prompt` (มืดเสมอ มีไฟสามสีแบบ macOS และ prompt `$` สีเขียว)
@@ -137,6 +139,8 @@ NVX UI คือระบบดีไซน์ของ NVX Stack Builder ปร
 - **Stepper** — `aria-current="step"`, ขั้นที่เสร็จแสดง ✓, คลิกได้, แบบกะทัดรัดบนมือถือ
 - **EmptyState** — อธิบายสถานะว่าง/ข้อผิดพลาดพร้อมปุ่มถัดไป (`tone="danger"` = `role="alert"`)
 - **Skeleton / Spinner**, **Kbd**, **SearchIcon**
+
+**มาสคอตแบรนด์** (`src/components/brand/mascot.tsx`): โลโก้ก้อนสีชมพูที่ขยับได้ ประกอบด้วยภาพตัวที่ลบตาออก และตาแคปซูลมันวาวสองข้างวาดด้วย SVG ทำให้กะพริบตาและกลอกตาได้ แอนิเมชันเป็น CSS ล้วน: ลอยและหายใจ กะพริบตาแบบครั้งเดียวและสองครั้งต่อรอบ และเด้งยุบเมื่อชี้หรือคลิก (`interactive`) ตามองตามเมาส์เฉพาะอุปกรณ์ที่มี pointer ละเอียด หยุดนิ่งทั้งหมดเมื่อผู้ใช้ตั้ง `prefers-reduced-motion` ใน header ใช้ขนาด 28px (ลอยและกะพริบเท่านั้น) ส่วน hero หน้าแรกใช้ 112px (มือถือ 84px) วางในมุมว่างของหน้าต่างโค้ด สี `brand-pink` `#fb0fab` ใช้ตกแต่งเท่านั้น ห้ามใช้กับข้อความ ปุ่ม หรือลิงก์
 
 คอมโพเนนต์ระดับแอป: `Header` (เมนูเดสก์ท็อป/มือถือ), `CommandPalette` (**Ctrl/⌘ + K**), `SortableSteps` (ลากวางด้วย dnd-kit + คีย์บอร์ด), `StepCard`, `TemplateCard`, `AgentPanel`, `Builder` (วิซาร์ด 4 ขั้น)
 

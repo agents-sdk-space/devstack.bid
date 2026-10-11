@@ -59,9 +59,10 @@
   --nvx-chrome-close: #ff5f57;
   --nvx-chrome-min: #febc2e;
   --nvx-chrome-zoom: #28c840;
-  /* Brand mark gradient */
-  --nvx-brand-from: #2997ff;
-  --nvx-brand-to: #5e5ce6;
+  /* Brand mascot accent (measured from the logo). Decorative only: never for text or UI states;
+     the interactive colour system stays blue (primary / link). */
+  --nvx-brand-pink: #fb0fab;
+  --nvx-brand-glow: rgb(251 15 171 / 0.35);
   /* App-icon tiles */
   --nvx-tile-top: #ffffff;
   --nvx-tile-bottom: #f2f2f5;
