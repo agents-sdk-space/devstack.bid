@@ -1,4 +1,20 @@
+<div align="center">
+
+<img src="./artifacts/devstack-banner.svg" alt="DEVSTACK · devstack.bid: build full-stack apps with AI agents" width="100%"/>
+
+<br/>
+
+[![Live](https://img.shields.io/badge/Live-devstack.bid-4da3ff?style=for-the-badge&logo=cloudflare&logoColor=white)](https://devstack.bid)
+[![Docs](https://img.shields.io/badge/Docs-devstack.bid%2Fdocs-0a1520?style=for-the-badge&logo=readthedocs&logoColor=8fc4ff)](https://devstack.bid/docs)
+[![License: MIT](https://img.shields.io/badge/License-MIT-0a1520?style=for-the-badge)](./LICENSE)
+
+</div>
+
 # DevStack · devstack.bid
+
+> 🚧 **Branch `feat/studio` · v0.8.0-rc.2 (preview, not deployed yet).** This branch merges the Studio workspace into DevStack. devstack.bid still runs v0.7.0 from `main`, so the `/studio/` link below works only after this branch ships. You can run it locally with `npm run preview`.
+>
+> 🚧 **Branch `feat/studio` · v0.8.0-rc.2 (ยังไม่ deploy)** branch นี้รวม Studio เข้ากับ DevStack ตอนนี้ devstack.bid ยังเป็น v0.7.0 จาก `main` ลิงก์ `/studio/` ด้านล่างจะใช้ได้หลัง branch นี้ขึ้นระบบจริง ระหว่างนี้รันในเครื่องได้ด้วย `npm run preview`
 
 An open developer platform from the NVX community. You can turn setup commands into runnable **Stack Templates**, chat with free AI models, run an AI agent with a sandbox, bring your own OpenAI key to the **Sandbox Factory**, or build a full-stack app in your browser with the **Studio**. The whole site is Thai + English.
 
