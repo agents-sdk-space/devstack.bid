@@ -12,7 +12,7 @@
     "pretest": "node scripts/build-docs.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "pretypecheck": "node scripts/build-docs.mjs",
+    "pretypecheck": "node scripts/build-docs.mjs && next typegen",
     "typecheck": "tsc --noEmit",
     "export": "tsx scripts/export-template.ts",
     "cf:build": "opennextjs-cloudflare build",
