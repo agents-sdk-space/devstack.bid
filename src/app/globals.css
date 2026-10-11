@@ -5,8 +5,10 @@
 
 /* Map design tokens into the Tailwind theme → bg-surface, text-muted, border-border, shadow-md … */
 @theme inline {
-  --font-sans: var(--font-geist-sans), var(--font-thai), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Headings + body: Inter (an SF-like grotesk) with IBM Plex Sans Thai for Thai glyphs.
+     Monospace (IBM Plex Mono) is reserved for code, commands and small technical labels. */
+  --font-sans: var(--font-inter), var(--font-thai), -apple-system, BlinkMacSystemFont, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), var(--font-thai), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-bg: var(--nvx-bg);
   --color-surface: var(--nvx-surface);
@@ -39,15 +41,27 @@
   --color-ring: var(--nvx-ring);
   --color-code-bg: var(--nvx-code-bg);
   --color-code-fg: var(--nvx-code-fg);
+  --color-code-prompt: var(--nvx-code-prompt);
+  --color-code-muted: var(--nvx-code-muted);
+  --color-code-border: var(--nvx-code-border);
+  --color-link: var(--nvx-link);
+  --color-raised: var(--nvx-raised);
   --color-overlay: var(--nvx-overlay);
 
   /* Spacing: one 4px base unit → p-1 = 4px, p-4 = 16px, gap-6 = 24px (Tailwind default, pinned here). */
   --spacing: 0.25rem;
 
-  --radius-sm: 0.375rem;
-  --radius-md: 0.625rem;
-  --radius-lg: 0.875rem;
-  --radius-xl: 1.25rem;
+  /* Apple-like continuous corners: controls 10px, cards 18px, large tiles 22px; buttons are pills. */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
+  --radius-2xl: 22px;
+
+  /* Confident, tight headline tracking (Inter at display sizes). */
+  --tracking-tight: -0.022em;
+  --tracking-tighter: -0.03em;
 
   --shadow-sm: var(--nvx-shadow-sm);
   --shadow-md: var(--nvx-shadow-md);
@@ -56,9 +70,9 @@
   --ease-standard: var(--nvx-ease-standard);
   --ease-emphasized: var(--nvx-ease-emphasized);
 
-  --text-display: 3.25rem;
-  --text-display--line-height: 1.08;
-  --text-display--letter-spacing: -0.025em;
+  --text-display: 4rem;
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.035em;
 
   --animate-fade-in: nvx-fade-in var(--nvx-duration-base) var(--nvx-ease-standard);
   --animate-pop-in: nvx-pop-in var(--nvx-duration-base) var(--nvx-ease-emphasized);
@@ -78,6 +92,10 @@
 @keyframes nvx-sheet-in {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
+}
+@keyframes nvx-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
 }
 @keyframes nvx-slide-in {
   from { opacity: 0; transform: translateY(8px); }
@@ -118,10 +136,65 @@ body {
   outline-offset: 2px;
 }
 
+::selection {
+  background: var(--nvx-primary);
+  color: var(--nvx-primary-fg);
+}
+
+/* Thai headlines need more room than tight Latin display type. */
+html[data-lang="th"] :is(h1, h2, h3) {
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+kbd,
+code,
+pre,
+samp {
+  font-family: var(--font-mono);
+}
+
+/* Blue text links, underline on hover (Apple Developer style). */
+@utility link {
+  color: var(--nvx-link);
+  text-underline-offset: 3px;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* Hero: soft blue/purple glow from the top instead of a flat block. */
 .hero-glow {
   background:
-    radial-gradient(60% 50% at 20% 0%, rgb(99 102 241 / 0.22), transparent 70%),
-    radial-gradient(50% 40% at 90% 10%, rgb(16 185 129 / 0.16), transparent 70%);
+    radial-gradient(60% 55% at 50% -10%, var(--nvx-glow-1), transparent 70%),
+    radial-gradient(40% 40% at 90% 0%, var(--nvx-glow-2), transparent 70%);
+}
+
+/* App-icon tile for tool marks (see src/components/brand/tool-icon.tsx). */
+.tool-tile {
+  background: linear-gradient(180deg, var(--nvx-tile-top), var(--nvx-tile-bottom));
+  box-shadow:
+    inset 0 0 0 1px var(--nvx-tile-edge),
+    inset 0 1px 0 0 var(--nvx-tile-sheen),
+    0 1px 2px rgb(0 0 0 / 0.25);
+}
+
+/* Blinking block cursor: used only in the hero code window (static under reduced motion). */
+.term-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  margin-left: 0.15em;
+  vertical-align: -0.2em;
+  background: var(--nvx-code-prompt);
+  animation: nvx-blink 1.1s steps(1, end) infinite;
+}
+
+/* Translucent nav bar like Apple's global nav. */
+.nav-glass {
+  background: color-mix(in srgb, var(--nvx-bg) 78%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -133,4 +206,97 @@ body {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+  .term-cursor {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * NVX mascot (src/components/brand/mascot.tsx): idle float + breathing, blinking, squish on
+ * hover/click and cursor-following eyes. Transform/opacity only (compositor-friendly).
+ * Everything is static under prefers-reduced-motion.
+ * ------------------------------------------------------------------------------------------- */
+@layer components {
+  .nvx-mascot {
+    --nvx-look-x: 0;
+    --nvx-look-y: 0;
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nvx-mascot-float,
+  .nvx-mascot-body {
+    position: absolute;
+    inset: 0;
+    display: block;
+  }
+  .nvx-mascot img,
+  .nvx-mascot-eyes {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .dark .nvx-mascot img {
+    filter: drop-shadow(0 0 calc(var(--nvx-mascot-glow, 6) * 1px) var(--nvx-brand-glow));
+  }
+  .nvx-mascot-eye {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .nvx-mascot-look {
+    transform: translate(calc(var(--nvx-look-x) * 1px), calc(var(--nvx-look-y) * 1px));
+    transition: transform 260ms var(--nvx-ease-out, ease-out);
+  }
+  .nvx-mascot--interactive {
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .nvx-mascot-float {
+      animation: nvx-mascot-float 4.8s ease-in-out infinite;
+    }
+    .nvx-mascot-body {
+      transform-origin: 50% 92%;
+      animation: nvx-mascot-breathe 4.8s ease-in-out infinite;
+    }
+    .nvx-mascot-eye {
+      animation: nvx-mascot-blink 5.6s infinite;
+    }
+    .nvx-mascot--interactive .nvx-mascot-eye {
+      animation-duration: 4.3s;
+    }
+    .nvx-mascot.is-squish .nvx-mascot-body {
+      animation: nvx-mascot-squish 620ms cubic-bezier(0.3, 1.6, 0.5, 1);
+    }
+  }
+  .hero-mascot {
+    --nvx-mascot-glow: 14;
+  }
+}
+
+@keyframes nvx-mascot-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6%); }
+}
+@keyframes nvx-mascot-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.025, 0.975); }
+}
+/* Two quick blinks per cycle (one single, one double) so it feels alive rather than metronomic. */
+@keyframes nvx-mascot-blink {
+  0%, 44%, 49%, 88%, 91.5%, 95%, 100% { transform: scaleY(1); }
+  46.5% { transform: scaleY(0.08); }
+  89.75% { transform: scaleY(0.08); }
+  93.25% { transform: scaleY(0.12); }
+}
+@keyframes nvx-mascot-squish {
+  0% { transform: scale(1, 1); }
+  25% { transform: scale(1.14, 0.86); }
+  50% { transform: scale(0.92, 1.1); }
+  75% { transform: scale(1.04, 0.97); }
+  100% { transform: scale(1, 1); }
 }

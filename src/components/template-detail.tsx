@@ -7,6 +7,7 @@ import { composeSteps, configForTemplate } from "@/lib/composer";
 import { CATEGORY_LABELS } from "@/lib/i18n";
 import { buildContext, resolveText } from "@/lib/placeholders";
 import { Badge, buttonClasses, Card, CardContent, CardTitle } from "@/components/ui";
+import { templateTool, ToolIcon, ToolTile } from "./brand/tool-icon";
 import { OsToggle } from "./os-toggle";
 import { useLang } from "./prefs";
 import { StepCard } from "./step-card";
@@ -24,7 +25,7 @@ export function TemplateDetail({ id }: { id: string }) {
       <nav aria-label="Breadcrumb" className="text-sm text-subtle">
         <ol className="flex items-center gap-1.5">
           <li>
-            <Link href="/templates" className="focus-ring rounded text-primary hover:underline">
+            <Link href="/templates" className="focus-ring rounded text-link hover:underline">
               {t("nav.templates")}
             </Link>
           </li>
@@ -36,23 +37,25 @@ export function TemplateDetail({ id }: { id: string }) {
       </nav>
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <ToolTile id={templateTool(template)} size="lg" className="mr-2" />
             <Badge variant="primary">{CATEGORY_LABELS[template.category][lang]}</Badge>
             {template.runtimes.map((r) => (
               <Badge key={r} variant="info">
+                <ToolIcon id={r === "node" ? "node" : "python"} className="text-[12px]" />
                 {r === "node" ? "Node.js" : "Python"}
               </Badge>
             ))}
           </div>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-fg sm:text-4xl">{template.name[lang]}</h1>
-          <p className="mt-2 max-w-2xl text-muted">{template.summary[lang]}</p>
+          <h1 className="mt-4 text-4xl font-bold tracking-tighter text-fg sm:text-5xl">{template.name[lang]}</h1>
+          <p className="mt-3 max-w-2xl text-lg text-muted">{template.summary[lang]}</p>
         </div>
         <Link href={`/builder#t=${template.id}`} className={buttonClasses("primary", "lg")}>
           {t("catalog.build")} →
         </Link>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_300px]">
+      <div className="mt-8 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <section aria-labelledby="steps-h">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <h2 id="steps-h" className="text-xl font-semibold text-fg">
@@ -90,7 +93,7 @@ export function TemplateDetail({ id }: { id: string }) {
               <ul className="mt-2 space-y-1 text-sm">
                 {template.docs.map((d) => (
                   <li key={d.url}>
-                    <a href={d.url} target="_blank" rel="noreferrer noopener" className="focus-ring rounded text-primary hover:underline">
+                    <a href={d.url} target="_blank" rel="noreferrer noopener" className="focus-ring rounded text-link hover:underline">
                       {d.label} <span aria-hidden>↗</span>
                     </a>
                   </li>

@@ -1,0 +1,22 @@
+NVX Stack Builder
+Copyright (c) the NVX Stack Builder contributors. Licensed under the terms in LICENSE.
+
+Third-party marks and icons
+---------------------------
+Tool and brand logos shown in the app (for example Node.js, npm, pnpm, Yarn,
+Python, PyPI, uv, Next.js, React, Vite, Express, FastAPI, Streamlit,
+TypeScript, JavaScript, Tailwind CSS, Docker, GitHub Actions, Vitest, ESLint,
+pytest, Ruff, Testing Library, Prettier, pandas, Plotly, Git, GNU Bash,
+Pydantic, Socket.IO) are trademarks of their respective owners. They are used
+only to identify the corresponding tools. Their use does not imply
+endorsement by, or affiliation with, those owners.
+
+The SVG path data comes from Simple Icons (https://simpleicons.org),
+released under CC0 1.0 Universal. Only the icons the app uses are copied into
+src/components/brand/brand-icons.data.ts by scripts/gen-brand-icons.mjs.
+Simple Icons doesn't include an OpenAI logo, so AI features use a generic
+"sparkles" icon from lucide instead.
+
+UI icons: Lucide (https://lucide.dev), ISC License.
+Fonts: Inter (SIL Open Font License 1.1), IBM Plex Mono and IBM Plex Sans Thai
+(SIL Open Font License 1.1), served via next/font.

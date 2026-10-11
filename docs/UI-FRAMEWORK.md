@@ -2,10 +2,12 @@
 
 > 🇹🇭 ภาษาไทยอยู่ด้านล่าง · Thai version below — [ไปที่ภาษาไทย](#ภาษาไทย)
 
-NVX UI is the design system behind NVX Stack Builder: **design tokens** (CSS variables → Tailwind theme), a small **component library** in `src/components/ui`, and a **living style guide** at [`/design`](http://localhost:3000/design) that renders every token and component variant in Thai and English, light and dark.
+NVX UI is the design system behind NVX Stack Builder: **design tokens** (CSS variables → Tailwind theme), a small **component library** in `src/components/ui`, and a **living style guide** at [`/design`](http://localhost:3000/design) that renders every token and component variant in Thai and English, in both themes.
+
+**v0.5 Apple-inspired developer theme.** The look references [developer.apple.com](https://developer.apple.com/) and is black-first: pure-black canvas, grey surfaces separated by tone and hairline borders, big bold tightly tracked sans headlines, generous spacing, 12–22px radii, pill buttons, a restrained blue accent (filled `primary` CTA plus `link` text), and real tool logos as app-icon tiles. It's the default for everyone, whatever the OS colour preference. A light variant (Apple's `#f5f5f7` canvas) stays available from the theme toggle. The terminal flavour is now limited to code windows: `$` prompts, macOS traffic lights, a blinking cursor in the hero.
 
 ```
-src/app/tokens.css          ← token values (light :root + .dark overrides)
+src/app/tokens.css          ← token values (.dark = default black theme, :root = light variant)
 src/app/globals.css         ← maps tokens into Tailwind (@theme inline), motion utilities, keyframes
 src/lib/design-tokens.ts    ← token manifest (names, descriptions) used by /design and tests
 src/components/ui/          ← components (import from "@/components/ui")
@@ -19,23 +21,35 @@ All values live in `src/app/tokens.css` as `--nvx-*` variables. `.dark` override
 
 | Group | Tokens (`--nvx-…`) | Tailwind utilities |
 |---|---|---|
-| Surfaces | `bg`, `surface`, `surface-2`, `surface-3`, `border`, `border-strong` | `bg-bg`, `bg-surface`, `bg-surface-2`, `border-border`, `border-border-strong` |
+| Surfaces | `bg` (#000), `surface`, `surface-2`, `surface-3`, `raised` (selected segment/tab), `border`, `border-strong` | `bg-bg`, `bg-surface`, `bg-surface-2`, `border-border`, `border-border-strong` |
 | Text | `fg`, `muted`, `subtle` | `text-fg`, `text-muted`, `text-subtle` |
-| Brand | `primary`, `primary-hover`, `primary-fg`, `primary-soft`, `primary-soft-fg`, `accent`, `ring` | `bg-primary`, `hover:bg-primary-hover`, `text-primary-fg`, `bg-primary-soft`, `ring-ring` |
+| Brand | `primary` `#0071e3`, `primary-hover`, `primary-fg`, `primary-soft`, `primary-soft-fg`, `link` (`#2997ff` dark / `#0066cc` light), `accent`, `ring`, `brand-pink` `#fb0fab` + `brand-glow` (mascot only, decorative) | `bg-primary text-primary-fg` for filled CTAs, **`text-link` for blue text** (never `text-primary`: `#0071e3` is not AA on black), `ring-ring` |
 | Status | `success`/`warning`/`danger`/`info` + `-soft` + `-fg` (`danger-hover`) | `bg-success-soft text-success-fg`, `bg-danger` … |
-| Code | `code-bg`, `code-fg` (always dark) | `bg-code-bg text-code-fg` |
+| Code | `code-bg`, `code-fg`, `code-prompt` (terminal green), `code-muted`, `code-border`, `chrome-close/min/zoom` (traffic lights) — always dark | `bg-code-bg text-code-fg text-code-prompt` |
+| Decoration | `glow-1`, `glow-2`, `tile-top`, `tile-bottom`, `tile-edge`, `tile-sheen` | `.hero-glow` (soft blue/purple radial glows), `.tool-tile` (app-icon tile), `.nav-glass` (translucent header) |
 | Overlay | `overlay` | `bg-overlay` |
-| Radius | sm .375rem · md .625rem · lg .875rem · xl 1.25rem | `rounded-md` (controls), `rounded-xl` (cards), `rounded-full` (pills) |
+| Radius | xs 4px · sm 6px · md 10px · lg 12px · xl 18px · 2xl 22px · full | `rounded-md` (inputs, badges), `rounded-xl` (cards, code windows), `rounded-full` (buttons, chips, switches) |
 | Spacing | 4px base unit (`--spacing: 0.25rem`) | `p-1` = 4px, `gap-4` = 16px — prefer 2/3/4/6/8 |
-| Shadow | `shadow-sm` (resting), `shadow-md` (hover), `shadow-lg` (dialogs/toasts) | `shadow-sm` … |
+| Shadow | dark: surfaces separate by tone + hairline, `shadow-md` soft drop on hover, `shadow-lg` dialogs/toasts; light: soft Apple-style shadows | `shadow-sm` … |
 | Motion | `duration-fast` 120ms, `duration-base` 200ms, `duration-slow` 320ms, `ease-standard`, `ease-emphasized` | `motion-fast`, `motion-base`, `animate-fade-in`, `animate-pop-in`, `animate-slide-in`, `animate-sheet-in` |
 | Focus | — | `focus-ring` utility (2px `ring` outline on `:focus-visible`) |
 
-**Typography.** One stack: `Geist` (Latin) → `IBM Plex Sans Thai` (Thai glyphs) → system; `Geist Mono` for code. Scale: `text-display` 52px (hero), `text-4xl` (h1), `text-2xl` (h2), `text-xl` (stage titles), `text-base` (body/card titles), `text-sm` (UI), `text-xs` (captions/badges). Thai needs line-height ≥ 1.5 — don't use `leading-none`/`leading-tight` on Thai body text.
+**Typography.** `font-sans` = **Inter** (SF-like) → **IBM Plex Sans Thai** → system UI, for headlines, body, nav and buttons. `font-mono` = **IBM Plex Mono** → Plex Sans Thai, **only** for `code`/`pre`/`kbd`/`samp`, commands and small tags (badge `sm`). Headlines are bold with tight tracking (`tracking-tighter` −0.03em); Thai headings automatically get `letter-spacing: 0` and line-height 1.3. Scale: `text-display` 64px (hero, 44px on mobile), `text-4xl`/`sm:text-5xl` (page h1), `text-3xl`/`sm:text-[40px]` (section h2), `text-xl` (stage titles), `text-base`/17px (body), `text-sm` (UI), `text-xs` (captions/badges). Thai needs line-height ≥ 1.5 for body — don't use `leading-none`/`leading-tight` on Thai body text. Links use the `link` utility (`text-link`, underline on hover).
 
-**Dark mode** is the `.dark` class on `<html>` (set before paint by an inline script, persisted in `localStorage["nvx-theme"]`). Because components only use semantic tokens, nothing in a component should ever need a `dark:` variant — if you reach for one, add/adjust a token instead.
+**Theme.** The black theme is the `.dark` class on `<html>`. It's rendered by the server and is the **default**. The inline pre-paint script only removes it when `localStorage["nvx-theme"] === "light"` (the toggle), and the OS `prefers-color-scheme` is deliberately ignored. Because components only use semantic tokens, nothing in a component should ever need a `dark:` variant — if you reach for one, add/adjust a token instead.
 
-**Reduced motion.** Under `prefers-reduced-motion: reduce` all durations become 0.01ms and animations are disabled.
+**Reduced motion.** Under `prefers-reduced-motion: reduce` all durations become 0.01ms and animations are disabled. The hero cursor stays visible but stops blinking.
+
+**Icons.** No emoji anywhere in the UI.
+
+- **Tool logos** (Node.js, npm, pnpm, Yarn, Python, PyPI, uv, Next.js, React, Vite, Express, FastAPI, Streamlit, TypeScript, Tailwind, Docker, GitHub Actions, Vitest, ESLint, pytest, Ruff, …) come from [simple-icons](https://simpleicons.org) (CC0 data). `scripts/gen-brand-icons.mjs` copies only the icons we use into `src/components/brand/brand-icons.data.ts` (run `node scripts/gen-brand-icons.mjs` after adding an id) so the bundle stays small. Logos are trademarks of their owners, used only to identify the tools (see `NOTICE`). OpenAI isn't in simple-icons, so AI features use a generic `ai` tile (lucide Sparkles).
+- `src/components/brand/tool-icon.tsx`:
+  - `<ToolTile id size="sm|md|lg" />` is an app-icon tile (28/40/56px, radius 8/11/15px) with the logo in its official colour. Use it on template cards, template detail, builder pick-lists and step cards.
+  - `<ToolIcon id colored? />` is an inline 1em mark, `currentColor` by default (tags, badges, segmented options).
+  - Helpers: `templateTool(t)`, `tagTool(tag)`, `commandTool(commands)` (first known CLI → logo, else `terminal`), `addonTool(id, runtimes)`.
+- **UI icons** are [lucide-react](https://lucide.dev) line icons (`h-4 w-4`, `aria-hidden`; icon-only buttons keep an `aria-label`).
+
+**Code windows (the remaining terminal touch).** `CodeBlock` and the hero card use `code-bg`, macOS traffic lights (`chrome-*` tokens), a `$` prompt in `code-prompt` green, and `term-cursor` (blinking block cursor, `aria-hidden`, static under reduced motion). The v0.4 `term-prompt`/`term-section`/`term-dos`/`term-bracket`/scanline classes were removed.
 
 ## 2. Components
 
@@ -59,6 +73,8 @@ Import everything from the barrel: `import { Button, Card, useToast } from "@/co
 | `EmptyState` | `empty-state.tsx` | `icon`, `title`, `description`, `action`, `tone` neutral·danger, `headingAs` | Danger tone = `role="alert"` for recoverable errors. |
 | `Skeleton`, `Spinner` | `skeleton.tsx` | `className`; Spinner `label` | Wrap skeletons in `role="status"` with an sr-only label. |
 | `Kbd`, `SearchIcon`, `cn`, `copyText` | `kbd.tsx`, `icons.tsx`, `cn.ts`, `copy.ts` | | Helpers. |
+
+**Brand mascot** (`src/components/brand/mascot.tsx`, `<Mascot size interactive? label? />`): the pink blob logo as a living character. It is an eyeless body image (`public/brand/mascot-body-*`) with two glossy capsule eyes drawn in SVG on the same 1024 grid. CSS animations (`.nvx-mascot*` in `globals.css`): idle float + breathing, a single and a double blink per cycle, and a squish on hover/click (`interactive`). With `interactive`, the eyes follow a mouse pointer (`(hover: hover) and (pointer: fine)` only, throttled with requestAnimationFrame). The mascot is fully static under `prefers-reduced-motion` and decorative (`aria-hidden`) unless you pass `label`. The header uses 28px (float + blink); the home hero uses 112px (84px on mobile) in the empty corner of the code window. The pink is **never** used for text, buttons, links or focus: the interactive system stays blue. Assets, favicon, app icons and the OG card come from `scripts/gen-brand-assets.py`.
 
 App-level composites built from these: `Header` (desktop nav, mobile sheet, theme/lang), `CommandPalette` (cmdk inside `Dialog`, **Ctrl/⌘ + K**), `SortableSteps` (dnd-kit), `StepCard`, `TemplateCard`, `AgentPanel`, `Builder` (4-stage wizard).
 
@@ -95,16 +111,19 @@ NVX UI คือระบบดีไซน์ของ NVX Stack Builder ปร
 ค่าทั้งหมดอยู่ใน `src/app/tokens.css` เป็นตัวแปร `--nvx-*` โดย `.dark` เขียนทับเฉพาะค่าที่ต่างกัน ส่วน `globals.css` แมปเข้าธีม Tailwind เพื่อให้เขียน **utility เชิงความหมาย** แทนสีดิบ
 
 - **พื้นผิว/ข้อความ:** `bg-bg`, `bg-surface`, `bg-surface-2/3`, `border-border(-strong)`, `text-fg`, `text-muted`, `text-subtle`
-- **แบรนด์:** `bg-primary`, `hover:bg-primary-hover`, `text-primary-fg`, `bg-primary-soft text-primary-soft-fg`, `accent`, `ring`
+- **แบรนด์:** `bg-primary text-primary-fg` (ปุ่มหลักสีฟ้า `#0071e3`), `text-link` สำหรับข้อความ/ลิงก์สีฟ้า (`#2997ff` ธีมดำ / `#0066cc` ธีมสว่าง — ห้ามใช้ `text-primary` กับข้อความ เพราะไม่ผ่าน AA บนพื้นดำ), `bg-primary-soft text-primary-soft-fg`, `accent`, `ring`; `--nvx-brand-pink` / `--nvx-brand-glow` ใช้กับมาสคอตเท่านั้น
 - **สถานะ:** `success` / `warning` / `danger` / `info` พร้อม `-soft` (พื้น) และ `-fg` (ข้อความบนพื้น)
-- **โค้ด:** `bg-code-bg text-code-fg` (มืดเสมอ)
-- **มุมโค้ง:** sm .375rem · md .625rem (ปุ่ม/ช่องกรอก) · lg · xl 1.25rem (การ์ด) · full (ป้าย)
+- **ธีม v0.5 (อ้างอิง developer.apple.com):** ค่าเริ่มต้นคือธีมดำสำหรับทุกคน (ไม่สนใจค่าสว่าง/มืดของระบบ) พื้นดำสนิท พื้นผิวสีเทาแยกด้วยน้ำหนักสีและเส้นขอบบาง หัวข้อตัวใหญ่หนา เว้นระยะกว้าง มุมโค้ง 12–22px ปุ่มทรงแคปซูล สีฟ้าใช้อย่างจำกัด และโลโก้เครื่องมือจริงเป็นไทล์แบบไอคอนแอป ธีมสว่าง (พื้น `#f5f5f7`) ยังเลือกได้จากปุ่มสลับ
+- **โค้ด:** `bg-code-bg text-code-fg text-code-prompt` (มืดเสมอ มีไฟสามสีแบบ macOS และ prompt `$` สีเขียว)
+- **มุมโค้ง:** xs 4px · sm 6px · md 10px (ช่องกรอก ป้าย) · lg 12px · xl 18px (การ์ด หน้าต่างโค้ด) · 2xl 22px · `rounded-full` (ปุ่ม ชิป สวิตช์)
 - **ระยะห่าง:** หน่วยฐาน 4px (`p-1` = 4px) ใช้ 2/3/4/6/8 เป็นหลัก
-- **เงา:** `shadow-sm` (ปกติ) · `shadow-md` (hover) · `shadow-lg` (หน้าต่าง/toast)
+- **เงา:** ธีมดำแยกพื้นผิวด้วยน้ำหนักสีและเส้นขอบ · `shadow-md` เงานุ่มเมื่อชี้ · `shadow-lg` หน้าต่าง/toast · ธีมสว่างใช้เงานุ่มแบบ Apple
 - **การเคลื่อนไหว:** 120 / 200 / 320ms, `ease-standard`, `ease-emphasized` และ utility `motion-fast`, `motion-base`, `animate-*`
-- **ตัวอักษร:** Geist (ละติน) → IBM Plex Sans Thai (ไทย) → ฟอนต์ระบบ และ Geist Mono สำหรับโค้ด สเกล: `text-display` 52px, `text-4xl` (h1), `text-2xl` (h2), `text-xl`, `text-base`, `text-sm`, `text-xs` — ภาษาไทยต้องใช้ระยะบรรทัด ≥ 1.5
-- **โหมดมืด:** คลาส `.dark` บน `<html>` (ตั้งก่อนเรนเดอร์ เก็บใน localStorage) คอมโพเนนต์ไม่ควรต้องใช้ `dark:` เลย — ถ้าจำเป็น ให้เพิ่ม/ปรับโทเคนแทน
-- **ลดการเคลื่อนไหว:** เมื่อผู้ใช้ตั้ง `prefers-reduced-motion` ระยะเวลาทั้งหมดเป็น 0.01ms
+- **ตัวอักษร:** Inter (แนวเดียวกับ SF) สำหรับหัวข้อ เนื้อหา เมนู และปุ่ม, IBM Plex Sans Thai สำหรับอักษรไทย (หัวข้อภาษาไทยใช้ระยะตัวอักษร 0 และบรรทัด 1.3 อัตโนมัติ), IBM Plex Mono ใช้**เฉพาะ**โค้ด คำสั่ง และป้ายเล็ก สเกล: `text-display` 64px (มือถือ 44px), `text-4xl`/`sm:text-5xl` (h1), `text-3xl`/`sm:text-[40px]` (h2), `text-xl`, `text-base`, `text-sm`, `text-xs` — เนื้อหาภาษาไทยต้องใช้ระยะบรรทัด ≥ 1.5
+- **ธีม:** คลาส `.dark` บน `<html>` ถูกเรนเดอร์จากเซิร์ฟเวอร์เป็นค่าเริ่มต้น และจะถูกถอดออกเฉพาะเมื่อผู้ใช้เลือกธีมสว่าง (`localStorage["nvx-theme"] = "light"`) คอมโพเนนต์ไม่ควรต้องใช้ `dark:` เลย — ถ้าจำเป็น ให้เพิ่ม/ปรับโทเคนแทน
+- **ลดการเคลื่อนไหว:** เมื่อผู้ใช้ตั้ง `prefers-reduced-motion` ระยะเวลาทั้งหมดเป็น 0.01ms และเคอร์เซอร์จะหยุดกะพริบ
+- **ไอคอน:** ไม่ใช้อีโมจิ โลโก้เครื่องมือ (Node.js, npm, Python, Next.js, React, Vite, FastAPI, Docker ฯลฯ) มาจาก simple-icons (ข้อมูล CC0) ผ่าน `scripts/gen-brand-icons.mjs` → `src/components/brand/brand-icons.data.ts` ใช้ `<ToolTile>` (ไทล์ไอคอนแอป สีทางการ) และ `<ToolIcon>` (โลโก้ในบรรทัด) จาก `src/components/brand/tool-icon.tsx` โลโก้เป็นเครื่องหมายการค้าของเจ้าของ ใช้เพื่อระบุเครื่องมือเท่านั้น (ดู `NOTICE`) OpenAI ไม่มีใน simple-icons จึงใช้ไทล์ `ai` ทั่วไปแทน ไอคอน UI อื่นใช้ lucide-react
+- **รายละเอียดเทอร์มินัลที่เหลือ:** เฉพาะหน้าต่างโค้ด — prompt `$`, ไฟสามสี และ `term-cursor` (เคอร์เซอร์กะพริบ หยุดนิ่งเมื่อลดการเคลื่อนไหว) คลาส `term-prompt`/`term-section`/`term-dos`/`term-bracket` และ scanline ถูกนำออกแล้ว
 
 ### 2. คอมโพเนนต์
 
@@ -120,6 +139,8 @@ NVX UI คือระบบดีไซน์ของ NVX Stack Builder ปร
 - **Stepper** — `aria-current="step"`, ขั้นที่เสร็จแสดง ✓, คลิกได้, แบบกะทัดรัดบนมือถือ
 - **EmptyState** — อธิบายสถานะว่าง/ข้อผิดพลาดพร้อมปุ่มถัดไป (`tone="danger"` = `role="alert"`)
 - **Skeleton / Spinner**, **Kbd**, **SearchIcon**
+
+**มาสคอตแบรนด์** (`src/components/brand/mascot.tsx`): โลโก้ก้อนสีชมพูที่ขยับได้ ประกอบด้วยภาพตัวที่ลบตาออก และตาแคปซูลมันวาวสองข้างวาดด้วย SVG ทำให้กะพริบตาและกลอกตาได้ แอนิเมชันเป็น CSS ล้วน: ลอยและหายใจ กะพริบตาแบบครั้งเดียวและสองครั้งต่อรอบ และเด้งยุบเมื่อชี้หรือคลิก (`interactive`) ตามองตามเมาส์เฉพาะอุปกรณ์ที่มี pointer ละเอียด หยุดนิ่งทั้งหมดเมื่อผู้ใช้ตั้ง `prefers-reduced-motion` ใน header ใช้ขนาด 28px (ลอยและกะพริบเท่านั้น) ส่วน hero หน้าแรกใช้ 112px (มือถือ 84px) วางในมุมว่างของหน้าต่างโค้ด สี `brand-pink` `#fb0fab` ใช้ตกแต่งเท่านั้น ห้ามใช้กับข้อความ ปุ่ม หรือลิงก์
 
 คอมโพเนนต์ระดับแอป: `Header` (เมนูเดสก์ท็อป/มือถือ), `CommandPalette` (**Ctrl/⌘ + K**), `SortableSteps` (ลากวางด้วย dnd-kit + คีย์บอร์ด), `StepCard`, `TemplateCard`, `AgentPanel`, `Builder` (วิซาร์ด 4 ขั้น)
 

@@ -38,6 +38,8 @@ import {
 import { AgentPanel } from "./agent-panel";
 import { CodeBlock } from "./copy-button";
 import { OsToggle } from "./os-toggle";
+import { ArrowDown, ArrowUp, Check, Copy, Download, FileArchive, FolderOpen, LayoutGrid, Link2, Plus, RotateCcw, Sparkles, Trash2 } from "lucide-react";
+import { addonTool, templateTool, ToolIcon, ToolTile } from "./brand/tool-icon";
 import { useLang } from "./prefs";
 import { SortableSteps } from "./sortable-steps";
 
@@ -255,8 +257,8 @@ export function Builder() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-fg">{t("builder.title")}</h1>
-          <p className="mt-1 max-w-2xl text-muted">{t("builder.subtitle")}</p>
+          <h1 className="text-4xl font-bold tracking-tighter text-fg sm:text-5xl">{t("builder.title")}</h1>
+          <p className="mt-3 max-w-2xl text-lg text-muted">{t("builder.subtitle")}</p>
         </div>
       </div>
 
@@ -267,23 +269,36 @@ export function Builder() {
       {/* Summary bar: always visible so users know what they're building. */}
       <section
         aria-label={t("summary.label")}
-        className="z-20 -mx-4 md:sticky md:top-14 flex flex-wrap items-center gap-2 border-y border-border bg-bg/90 px-4 py-2.5 backdrop-blur-md sm:mx-0 sm:rounded-lg sm:border"
+        className="z-20 -mx-4 md:sticky md:top-14 flex flex-wrap items-center gap-2 border-y border-border bg-bg px-4 py-2.5 sm:mx-0 sm:rounded-lg sm:border"
       >
         <span className="text-xs font-semibold uppercase tracking-wide text-subtle">{t("summary.label")}</span>
         <Badge variant="primary">{template.name[lang]}</Badge>
         <Badge className="font-mono">{config.projectName}</Badge>
-        {usesNode && <Badge variant="info">Node {config.node === "lts" ? "LTS" : config.node} · {config.jsPm}</Badge>}
-        {usesPython && <Badge variant="info">Python {config.python} · {config.pyPm}</Badge>}
+        {usesNode && (
+          <Badge variant="info">
+            <ToolIcon id="node" className="text-[12px]" />
+            Node {config.node === "lts" ? "LTS" : config.node} · <ToolIcon id={config.jsPm} className="text-[12px]" />
+            {config.jsPm}
+          </Badge>
+        )}
+        {usesPython && (
+          <Badge variant="info">
+            <ToolIcon id="python" className="text-[12px]" />
+            Python {config.python} · <ToolIcon id={config.pyPm === "uv" ? "uv" : "pypi"} className="text-[12px]" />
+            {config.pyPm}
+          </Badge>
+        )}
         {config.addons.map((a) => (
           <Badge key={a} variant="success" size="sm">
-            + {ADDON_LABELS[a][lang]}
+            <ToolIcon id={addonTool(a, template.runtimes)} className="text-[12px]" />
+            {ADDON_LABELS[a][lang]}
           </Badge>
         ))}
         <span className="ml-auto flex items-center gap-2 text-sm text-muted">
           {steps.length} {t("builder.stepCount")}
           <Tooltip content={t("builder.copyAll")}>
             <Button size="sm" variant="soft" onClick={() => copy(allCommands.join("\n"), t("toast.copied"), `${allCommands.length} commands`)} aria-label={t("builder.copyAll")}>
-              📋 <span className="hidden sm:inline">{t("step.copy")}</span>
+              <Copy className="h-3.5 w-3.5" aria-hidden /> <span className="hidden sm:inline">{t("step.copy")}</span>
             </Button>
           </Tooltip>
         </span>
@@ -295,8 +310,12 @@ export function Builder() {
             {stageTitle}
             <Tabs value={startTab} onValueChange={(v) => setStartTab(v as "ai" | "pick")}>
               <TabsList aria-label={t("stage.start")}>
-                <TabsTrigger value="ai">🤖 {t("start.ai")}</TabsTrigger>
-                <TabsTrigger value="pick">📚 {t("start.pick")}</TabsTrigger>
+                <TabsTrigger value="ai">
+                  <Sparkles className="h-4 w-4" aria-hidden /> {t("start.ai")}
+                </TabsTrigger>
+                <TabsTrigger value="pick">
+                  <LayoutGrid className="h-4 w-4" aria-hidden /> {t("start.pick")}
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="ai" className="mt-4">
                 <AgentPanel onLoad={loadPlan} />
@@ -311,7 +330,7 @@ export function Builder() {
                         <label
                           key={tpl.id}
                           className={cn(
-                            "motion-base relative flex cursor-pointer flex-col rounded-xl border bg-surface p-4 shadow-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
+                            "motion-base relative flex cursor-pointer flex-col rounded-xl border bg-surface p-5 shadow-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
                             selected ? "border-primary ring-1 ring-primary" : "border-border hover:border-border-strong"
                           )}
                         >
@@ -324,13 +343,18 @@ export function Builder() {
                               changeTemplate(tpl.id);
                             }}
                           />
-                          <span className="flex items-center justify-between gap-2">
-                            <Badge size="sm" variant="primary">
-                              {CATEGORY_LABELS[tpl.category][lang]}
-                            </Badge>
-                            {selected && <Badge size="sm" variant="success">✓ {t("start.current")}</Badge>}
+                          <span className="flex items-center gap-3">
+                            <ToolTile id={templateTool(tpl)} size="sm" />
+                            <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                              <Badge variant="primary">{CATEGORY_LABELS[tpl.category][lang]}</Badge>
+                              {selected && (
+                                <Badge variant="success">
+                                  <Check className="h-3 w-3" aria-hidden /> {t("start.current")}
+                                </Badge>
+                              )}
+                            </span>
                           </span>
-                          <span className="mt-2 font-semibold text-fg">{tpl.name[lang]}</span>
+                          <span className="mt-3 font-semibold tracking-tight text-fg">{tpl.name[lang]}</span>
                           <span className="mt-1 line-clamp-2 text-sm text-muted">{tpl.summary[lang]}</span>
                         </label>
                       );
@@ -387,7 +411,12 @@ export function Builder() {
                       return (
                         <Checkbox
                           key={id}
-                          label={ADDON_LABELS[id][lang]}
+                          label={
+                            <span className="inline-flex items-center gap-2">
+                              <ToolIcon id={addonTool(id, template.runtimes)} colored className="text-[15px]" />
+                              {ADDON_LABELS[id][lang]}
+                            </span>
+                          }
                           description={supported ? undefined : t("builder.unsupported")}
                           disabled={!supported}
                           checked={supported && config.addons.includes(id)}
@@ -401,7 +430,8 @@ export function Builder() {
               <div className="space-y-4">
                 <Card>
                   <CardContent className="space-y-4">
-                    <CardTitle as="h3">
+                    <CardTitle as="h3" className="flex items-center gap-2.5">
+                      <ToolTile id="node" size="sm" />
                       Node.js {!usesNode && <span className="text-xs font-normal text-subtle">{t("builder.notUsed")}</span>}
                     </CardTitle>
                     <Field label={t("builder.node")}>
@@ -419,9 +449,9 @@ export function Builder() {
                       value={config.jsPm}
                       disabled={!usesNode}
                       options={[
-                        { value: "npm", label: "npm" },
-                        { value: "pnpm", label: "pnpm" },
-                        { value: "yarn", label: "yarn" },
+                        { value: "npm", label: <><ToolIcon id="npm" colored className="text-[14px]" />npm</> },
+                        { value: "pnpm", label: <><ToolIcon id="pnpm" colored className="text-[14px]" />pnpm</> },
+                        { value: "yarn", label: <><ToolIcon id="yarn" colored className="text-[14px]" />yarn</> },
                       ]}
                       onChange={(v) => update({ jsPm: v })}
                     />
@@ -429,7 +459,8 @@ export function Builder() {
                 </Card>
                 <Card>
                   <CardContent className="space-y-4">
-                    <CardTitle as="h3">
+                    <CardTitle as="h3" className="flex items-center gap-2.5">
+                      <ToolTile id="python" size="sm" />
                       Python {!usesPython && <span className="text-xs font-normal text-subtle">{t("builder.notUsed")}</span>}
                     </CardTitle>
                     <Field label={t("builder.python")}>
@@ -446,8 +477,8 @@ export function Builder() {
                       value={config.pyPm}
                       disabled={!usesPython}
                       options={[
-                        { value: "pip", label: "pip + venv" },
-                        { value: "uv", label: "uv" },
+                        { value: "pip", label: <><ToolIcon id="pypi" colored className="text-[14px]" />pip + venv</> },
+                        { value: "uv", label: <><ToolIcon id="uv" colored className="text-[14px]" />uv</> },
                       ]}
                       onChange={(v) => update({ pyPm: v })}
                     />
@@ -466,7 +497,7 @@ export function Builder() {
                 <OsToggle os={os} onChange={setOs} />
                 {hasEdits && (
                   <Button variant="ghost" size="sm" onClick={resetEdits}>
-                    ↺ {t("builder.reset")}
+                    <RotateCcw className="h-3.5 w-3.5" aria-hidden /> {t("builder.reset")}
                   </Button>
                 )}
               </div>
@@ -475,10 +506,14 @@ export function Builder() {
 
             {steps.length === 0 ? (
               <EmptyState
-                icon="🗂️"
+                icon={<FolderOpen className="h-6 w-6" strokeWidth={1.75} />}
                 title={t("review.emptyTitle")}
                 description={t("review.emptyBody")}
-                action={<Button onClick={resetEdits}>↺ {t("builder.reset")}</Button>}
+                action={
+                  <Button onClick={resetEdits}>
+                    <RotateCcw className="h-4 w-4" aria-hidden /> {t("builder.reset")}
+                  </Button>
+                }
               />
             ) : (
               <SortableSteps
@@ -495,7 +530,7 @@ export function Builder() {
                         aria-label={`${t("step.up")}: ${step.title[lang]}`}
                         onClick={() => setEdits((e) => ({ ...e, order: moveStep(steps.map((s) => s.id), step.id, -1) }))}
                       >
-                        ↑
+                        <ArrowUp className="h-4 w-4" aria-hidden />
                       </Button>
                     </Tooltip>
                     <Tooltip content={t("step.down")}>
@@ -506,12 +541,12 @@ export function Builder() {
                         aria-label={`${t("step.down")}: ${step.title[lang]}`}
                         onClick={() => setEdits((e) => ({ ...e, order: moveStep(steps.map((s) => s.id), step.id, 1) }))}
                       >
-                        ↓
+                        <ArrowDown className="h-4 w-4" aria-hidden />
                       </Button>
                     </Tooltip>
                     <Tooltip content={t("step.remove")}>
                       <Button variant="ghost" size="icon" className="text-danger hover:bg-danger-soft hover:text-danger" aria-label={`${t("step.remove")}: ${step.title[lang]}`} onClick={() => removeStep(step)}>
-                        ✕
+                        <Trash2 className="h-4 w-4" aria-hidden />
                       </Button>
                     </Tooltip>
                   </>
@@ -527,7 +562,7 @@ export function Builder() {
                     {removedSteps.map((s) => (
                       <li key={s.id}>
                         <Button variant="secondary" size="sm" onClick={() => setEdits((e) => ({ ...e, removed: e.removed.filter((id) => id !== s.id) }))}>
-                          ↺ {t("builder.restore")}: {s.title[lang]}
+                          <RotateCcw className="h-3.5 w-3.5" aria-hidden /> {t("builder.restore")}: {s.title[lang]}
                         </Button>
                       </li>
                     ))}
@@ -568,7 +603,7 @@ export function Builder() {
                     </Field>
                   </div>
                   <Button type="submit" variant="secondary" disabled={!customCmd.trim()}>
-                    + {t("builder.add")}
+                    <Plus className="h-4 w-4" aria-hidden /> {t("builder.add")}
                   </Button>
                 </form>
               </CardContent>
@@ -591,7 +626,7 @@ export function Builder() {
                   {allCommands.length > 0 ? (
                     <CodeBlock code={allCommands.join("\n")} prompt title={os === "windows" ? "setup.ps1" : "setup.sh"} maxHeight="28rem" />
                   ) : (
-                    <EmptyState icon="🗂️" title={t("review.emptyTitle")} action={<Button onClick={() => setStage(2)}>{t("stage.review")}</Button>} />
+                    <EmptyState icon={<FolderOpen className="h-6 w-6" strokeWidth={1.75} />} title={t("review.emptyTitle")} action={<Button onClick={() => setStage(2)}>{t("stage.review")}</Button>} />
                   )}
                   <p className="text-xs text-subtle">{t("builder.scriptNote")}</p>
                 </CardContent>
@@ -602,20 +637,20 @@ export function Builder() {
                     <CardTitle>{t("export.files")}</CardTitle>
                     <div className="grid gap-2">
                       <Button className="justify-start" onClick={() => copy(allCommands.join("\n"), t("toast.copied"), `${allCommands.length} commands`)}>
-                        📋 {t("builder.copyAll")}
+                        <Copy className="h-4 w-4" aria-hidden /> {t("builder.copyAll")}
                       </Button>
                       <Button variant="secondary" className="justify-start" onClick={() => download("setup.sh", () => downloadText("setup.sh", toBash(steps, config, lang), "text/x-shellscript"))}>
-                        ⬇ setup.sh
+                        <Download className="h-4 w-4" aria-hidden /> setup.sh
                       </Button>
                       <Button variant="secondary" className="justify-start" onClick={() => download("setup.ps1", () => downloadText("setup.ps1", toPowerShell(steps, config, lang)))}>
-                        ⬇ setup.ps1
+                        <Download className="h-4 w-4" aria-hidden /> setup.ps1
                       </Button>
                       <Button
                         variant="secondary"
                         className="justify-start"
                         onClick={() => download("README.md", () => downloadText("README.md", toReadme(steps, config, lang, shareUrlFor(config, edits)), "text/markdown"))}
                       >
-                        ⬇ README.md
+                        <Download className="h-4 w-4" aria-hidden /> README.md
                       </Button>
                       <Button
                         variant="secondary"
@@ -626,7 +661,7 @@ export function Builder() {
                           )
                         }
                       >
-                        📦 {t("builder.zip")}
+                        <FileArchive className="h-4 w-4" aria-hidden /> {t("builder.zip")}
                       </Button>
                     </div>
                   </CardContent>
@@ -636,7 +671,7 @@ export function Builder() {
                     <CardTitle>{t("export.shareTitle")}</CardTitle>
                     <CardDescription>{t("export.shareBody")}</CardDescription>
                     <Button variant="outline" className="w-full" onClick={() => copy(shareUrlFor(config, edits), t("builder.shareCopied"))}>
-                      🔗 {t("builder.share")}
+                      <Link2 className="h-4 w-4" aria-hidden /> {t("builder.share")}
                     </Button>
                   </CardContent>
                 </Card>

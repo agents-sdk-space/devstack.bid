@@ -64,19 +64,37 @@ describe("design tokens", () => {
   const TEXT_PAIRS: [fg: string, bg: string, min: number][] = [
     ["fg", "bg", 4.5],
     ["fg", "surface", 4.5],
+    ["fg", "surface-2", 4.5],
     ["muted", "surface", 4.5],
     ["muted", "bg", 4.5],
     ["subtle", "surface", 4.5],
+    ["subtle", "bg", 4.5],
+    ["subtle", "surface-2", 4.5],
     ["primary-fg", "primary", 4.5],
+    ["primary-fg", "primary-hover", 4.5],
     ["primary-soft-fg", "primary-soft", 4.5],
+    ["primary-soft-fg", "surface", 4.5],
+    ["link", "surface", 4.5],
+    ["link", "bg", 4.5],
+    ["accent", "surface", 4.5],
     ["success-fg", "success-soft", 4.5],
     ["warning-fg", "warning-soft", 4.5],
     ["danger-fg", "danger-soft", 4.5],
     ["info-fg", "info-soft", 4.5],
+    ["success", "surface", 4.5],
+    ["warning", "surface", 4.5],
+    ["info", "surface", 4.5],
+    ["danger", "surface", 4.5],
     ["code-fg", "code-bg", 4.5],
-    ["primary", "surface", 4.5],
+    ["code-prompt", "code-bg", 4.5],
+    ["code-muted", "code-bg", 4.5],
+    // Non-text UI (WCAG 1.4.11): filled buttons, focus ring and input borders need 3:1.
+    ["primary", "surface", 3],
+    ["primary", "bg", 3],
     ["ring", "surface", 3],
+    ["ring", "bg", 3],
     ["border-strong", "surface", 1.4],
+    ["border-strong", "bg", 1.4],
   ];
 
   for (const [theme, vars] of Object.entries(themes)) {
@@ -86,4 +104,15 @@ describe("design tokens", () => {
       });
     }
   }
+});
+
+describe("default theme", () => {
+  const layout = readFileSync(new URL("../src/app/layout.tsx", import.meta.url), "utf8");
+  it("server-renders the terminal (dark) theme on <html>", () => {
+    expect(layout).toMatch(/className=\{`dark /);
+  });
+  it("pre-paint script only switches to light on an explicit saved choice (ignores OS preference)", () => {
+    expect(layout).toContain("var dark=t!=='light'");
+    expect(layout).not.toContain("prefers-color-scheme: dark)').matches");
+  });
 });

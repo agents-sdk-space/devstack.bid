@@ -39,6 +39,9 @@ import {
   Tooltip,
   useToast,
 } from "@/components/ui";
+import { ArrowUp, Blocks, Copy, Download, Languages, LayoutGrid, Link2, Moon, RotateCw, SearchX, ShieldCheck, Sparkles, Sun, Trash2, TriangleAlert } from "lucide-react";
+import { Mascot } from "./brand/mascot";
+import { ToolTile } from "./brand/tool-icon";
 import { useLang } from "./prefs";
 
 type Bi = { en: string; th: string };
@@ -61,6 +64,8 @@ const SECTIONS: { id: string; title: Bi; group: "tokens" | "components" }[] = [
   { id: "stepper", title: { en: "Stepper", th: "ตัวแสดงขั้นตอน" }, group: "components" },
   { id: "empty", title: { en: "EmptyState", th: "สถานะว่าง" }, group: "components" },
   { id: "skeleton", title: { en: "Skeleton & Spinner", th: "โครงร่างระหว่างโหลด" }, group: "components" },
+  { id: "icons", title: { en: "Icons & tool tiles", th: "ไอคอนและไทล์เครื่องมือ" }, group: "components" },
+  { id: "mascot", title: { en: "Brand mascot", th: "มาสคอตของแบรนด์" }, group: "components" },
 ];
 
 function Section({ id, title, description, usage, children }: { id: string; title: Bi; description: Bi; usage?: string; children: ReactNode }) {
@@ -74,7 +79,7 @@ function Section({ id, title, description, usage, children }: { id: string; titl
       <div className="mt-5">{children}</div>
       {usage && (
         <details className="mt-4">
-          <summary className="focus-ring inline-block cursor-pointer rounded text-sm font-medium text-primary">{lang === "th" ? "ตัวอย่างโค้ด" : "Usage"}</summary>
+          <summary className="focus-ring inline-block cursor-pointer rounded text-sm font-medium text-link">{lang === "th" ? "ตัวอย่างโค้ด" : "Usage"}</summary>
           <CodeBlock code={usage} title="tsx" className="mt-2" />
         </details>
       )}
@@ -104,12 +109,12 @@ export function DesignSystem() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
       <header className="max-w-3xl">
-        <Badge variant="primary">NVX UI · v0.2</Badge>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight text-fg">{L({ en: "Design system", th: "ระบบดีไซน์" })}</h1>
+        <Badge variant="primary">NVX UI · v0.5</Badge>
+        <h1 className="mt-4 text-4xl font-bold tracking-tighter text-fg sm:text-5xl">{L({ en: "Design system", th: "ระบบดีไซน์" })}</h1>
         <p className="mt-3 text-lg text-muted">
           {L({
-            en: "Living style guide for NVX Stack Builder: semantic design tokens (light + dark) and accessible, headless-based components. Everything below is rendered with the real components — switch theme or language in the header to see them adapt.",
-            th: "คู่มือสไตล์แบบมีชีวิตของ NVX Stack Builder: design token เชิงความหมาย (โหมดสว่าง + มืด) และคอมโพเนนต์ที่เข้าถึงได้ สร้างบน headless primitives ทุกอย่างด้านล่างเรนเดอร์ด้วยคอมโพเนนต์จริง ลองสลับธีมหรือภาษาที่ส่วนหัวเพื่อดูการปรับตัว",
+            en: "Living style guide for NVX Stack Builder: semantic design tokens (black-first theme referencing developer.apple.com, with a light theme on the toggle) and accessible, headless-based components. Everything below is rendered with the real components — switch theme or language in the header to see them adapt.",
+            th: "คู่มือสไตล์แบบมีชีวิตของ NVX Stack Builder: design token เชิงความหมาย (ธีมดำเป็นค่าเริ่มต้นโดยอ้างอิง developer.apple.com และมีธีมสว่างจากปุ่มสลับ) และคอมโพเนนต์ที่เข้าถึงได้ สร้างบน headless primitives ทุกอย่างด้านล่างเรนเดอร์ด้วยคอมโพเนนต์จริง ลองสลับธีมหรือภาษาที่ส่วนหัวเพื่อดูการปรับตัว",
           })}
         </p>
         <p className="mt-3 text-sm text-subtle">
@@ -175,10 +180,10 @@ export function DesignSystem() {
             id="typography"
             title={SECTIONS[1].title}
             description={{
-              en: "Geist for Latin, IBM Plex Sans Thai for Thai (automatic per-glyph fallback in one font stack), Geist Mono for code. Thai needs generous line-height — body text uses Tailwind's default 1.5.",
-              th: "Geist สำหรับอักษรละติน IBM Plex Sans Thai สำหรับภาษาไทย (สลับฟอนต์ตามตัวอักษรอัตโนมัติในฟอนต์สแต็กเดียว) และ Geist Mono สำหรับโค้ด ภาษาไทยต้องการระยะบรรทัดที่กว้าง ข้อความเนื้อหาใช้ค่าเริ่มต้น 1.5",
+              en: "Inter (an SF-like grotesk) for headlines and body; bold, tightly tracked display type for heroes and page titles. IBM Plex Sans Thai covers Thai glyphs (Thai headings use looser tracking and taller line-height). IBM Plex Mono is only for code, commands and small tags. The one terminal touch left is the code window: $ prompts and a blinking cursor in the hero (static under reduced motion).",
+              th: "Inter (ฟอนต์แนวเดียวกับ SF) สำหรับหัวข้อและเนื้อหา ตัวหัวข้อใหญ่หนาและชิดสำหรับ hero และหัวข้อหน้า IBM Plex Sans Thai สำหรับอักษรไทย (หัวข้อภาษาไทยใช้ระยะตัวอักษรปกติและบรรทัดสูงขึ้น) IBM Plex Mono ใช้เฉพาะโค้ด คำสั่ง และป้ายเล็ก รายละเอียดแบบเทอร์มินัลที่เหลืออยู่คือหน้าต่างโค้ด: prompt $ และเคอร์เซอร์กะพริบใน hero (หยุดนิ่งเมื่อลดการเคลื่อนไหว)",
             }}
-            usage={`<h1 className="text-4xl font-bold tracking-tight">…</h1>\n<p className="text-sm text-muted">…</p>\n<code className="font-mono">npm install</code>`}
+            usage={`<h1 className="text-5xl font-bold tracking-tighter">…</h1>\n<h2 className="text-3xl font-semibold tracking-tight">…</h2>\n<p className="text-lg text-muted">…</p>\n<a className="link">Learn more</a>\n<code className="font-mono">npm install</code>`}
           >
             <Card>
               <ul className="divide-y divide-border">
@@ -194,7 +199,16 @@ export function DesignSystem() {
               </ul>
               <CardFooter className="flex-col items-start gap-1 py-4">
                 <p className="font-sans text-fg">Sans · The quick brown fox · ภาษาไทยอ่านง่าย สบายตา ๑๒๓</p>
-                <p className="font-mono text-sm text-fg">Mono · npx create-next-app@latest --ts</p>
+                <p className="font-mono text-sm text-fg">Mono · npx create-next-app@latest --ts · ภาษาไทย</p>
+                <p className="text-sm">
+                  <a href="#typography" className="link">
+                    {L({ en: "Link style · underline on hover", th: "รูปแบบลิงก์ · ขีดเส้นใต้เมื่อชี้" })}
+                  </a>
+                </p>
+                <p className="rounded-md bg-code-bg px-2 py-1 font-mono text-sm text-code-fg">
+                  <span className="text-code-prompt">$</span> npm run dev
+                  <span aria-hidden className="term-cursor" />
+                </p>
               </CardFooter>
             </Card>
           </Section>
@@ -203,8 +217,8 @@ export function DesignSystem() {
             id="spacing"
             title={SECTIONS[2].title}
             description={{
-              en: "A 4px spacing unit (p-1 = 4px). Prefer 2, 3, 4, 6, 8 for UI gaps. Radius scales with the size of the element: md for controls, xl for cards, full for pills.",
-              th: "หน่วยระยะห่าง 4px (p-1 = 4px) ใช้ 2, 3, 4, 6, 8 เป็นหลัก มุมโค้งเพิ่มตามขนาด: md สำหรับปุ่ม/ช่องกรอก, xl สำหรับการ์ด, full สำหรับป้าย",
+              en: "A 4px spacing unit (p-1 = 4px). Prefer 2, 3, 4, 6, 8 for UI gaps, and generous section padding (py-20 to py-24). Apple-like corners: md 10px for inputs, xl 18px for cards, 2xl 22px for large tiles; buttons and chips are pills (rounded-full).",
+              th: "หน่วยระยะห่าง 4px (p-1 = 4px) ใช้ 2, 3, 4, 6, 8 สำหรับช่องว่างใน UI และเว้นระยะส่วนต่าง ๆ กว้าง (py-20 ถึง py-24) มุมโค้งแบบ Apple: md 10px สำหรับช่องกรอก, xl 18px สำหรับการ์ด, 2xl 22px สำหรับไทล์ใหญ่ ส่วนปุ่มและชิปเป็นทรงแคปซูล (rounded-full)",
             }}
           >
             <div className="grid gap-4 md:grid-cols-2">
@@ -233,8 +247,8 @@ export function DesignSystem() {
             id="elevation"
             title={SECTIONS[3].title}
             description={{
-              en: "Three shadow levels: sm (resting cards), md (hover), lg (dialogs, toasts). Motion uses three durations and two easings; all animation is disabled under prefers-reduced-motion.",
-              th: "เงาสามระดับ: sm (การ์ดปกติ) md (hover) lg (หน้าต่าง toast) การเคลื่อนไหวมีสามระยะเวลาและสอง easing และถูกปิดทั้งหมดเมื่อผู้ใช้ตั้ง prefers-reduced-motion",
+              en: "Black-first surfaces separate by tone and hairline borders rather than shadow: sm is none in dark, md is a soft drop on hover, lg for dialogs and toasts. Motion uses three durations and two easings, and all animation is disabled under prefers-reduced-motion.",
+              th: "พื้นผิวในธีมดำแยกกันด้วยน้ำหนักสีและเส้นขอบบาง ๆ แทนเงา: sm ไม่มีเงาในธีมดำ, md เป็นเงานุ่มเมื่อชี้, lg สำหรับหน้าต่างและ toast การเคลื่อนไหวมีสามระยะเวลาและสอง easing และถูกปิดทั้งหมดเมื่อผู้ใช้ตั้ง prefers-reduced-motion",
             }}
           >
             <div className="grid gap-4 md:grid-cols-2">
@@ -267,7 +281,7 @@ export function DesignSystem() {
               en: "Six variants × four sizes. One primary button per view. `loading` shows a spinner and sets aria-busy; `asChild` styles a Link; icon-only buttons need an aria-label.",
               th: "6 แบบ × 4 ขนาด ควรมีปุ่ม primary เพียงปุ่มเดียวต่อหน้าจอ `loading` แสดงสปินเนอร์และตั้ง aria-busy, `asChild` ใช้สไตล์กับ Link, ปุ่มไอคอนอย่างเดียวต้องมี aria-label",
             }}
-            usage={`<Button>Save</Button>\n<Button variant="secondary" size="sm">Cancel</Button>\n<Button loading>Planning…</Button>\n<Button variant="ghost" size="icon" aria-label="Remove">✕</Button>\n<Button asChild><Link href="/builder">Open</Link></Button>`}
+            usage={`<Button>Save</Button>\n<Button variant="secondary" size="sm">Cancel</Button>\n<Button loading>Planning…</Button>\n<Button variant="ghost" size="icon" aria-label="Remove"><Trash2 /></Button>\n<Button asChild><Link href="/builder">Open</Link></Button>`}
           >
             <div className="space-y-3">
               {BUTTON_SIZES.map((size) => (
@@ -284,7 +298,7 @@ export function DesignSystem() {
                 <Button loading>{L({ en: "Loading", th: "กำลังโหลด" })}</Button>
                 <Button disabled>{L({ en: "Disabled", th: "ปิดใช้งาน" })}</Button>
                 <Button variant="ghost" size="icon" aria-label={L({ en: "Remove", th: "ลบ" })}>
-                  ✕
+                  <Trash2 className="h-4 w-4" aria-hidden />
                 </Button>
                 <Button asChild variant="outline">
                   <Link href="/builder">asChild → /builder</Link>
@@ -426,8 +440,12 @@ export function DesignSystem() {
             <Demo className="block">
               <Tabs defaultValue="ai">
                 <TabsList aria-label="Demo tabs">
-                  <TabsTrigger value="ai">🤖 {L({ en: "Ask AI", th: "ถาม AI" })}</TabsTrigger>
-                  <TabsTrigger value="pick">📚 {L({ en: "Pick template", th: "เลือกเทมเพลต" })}</TabsTrigger>
+                  <TabsTrigger value="ai">
+                    <Sparkles className="h-4 w-4" aria-hidden /> {L({ en: "Ask AI", th: "ถาม AI" })}
+                  </TabsTrigger>
+                  <TabsTrigger value="pick">
+                    <LayoutGrid className="h-4 w-4" aria-hidden /> {L({ en: "Pick template", th: "เลือกเทมเพลต" })}
+                  </TabsTrigger>
                   <TabsTrigger value="off" disabled>
                     {L({ en: "Disabled", th: "ปิดใช้งาน" })}
                   </TabsTrigger>
@@ -488,8 +506,8 @@ export function DesignSystem() {
             id="toast"
             title={SECTIONS[11].title}
             description={{
-              en: "Non-blocking feedback for copy, download, add/remove. Announced politely (errors assertively), swipe or ✕ to dismiss, auto-hide after 3.5 s and paused on hover/focus.",
-              th: "การแจ้งผลแบบไม่ขัดจังหวะ สำหรับคัดลอก ดาวน์โหลด เพิ่ม/ลบ ประกาศให้โปรแกรมอ่านหน้าจอ ปัดหรือกด ✕ เพื่อปิด หายเองใน 3.5 วินาที และหยุดชั่วคราวเมื่อชี้/โฟกัส",
+              en: "Non-blocking feedback for copy, download, add/remove. Announced politely (errors assertively), swipe or use the close button to dismiss, auto-hide after 3.5 s and paused on hover/focus.",
+              th: "การแจ้งผลแบบไม่ขัดจังหวะ สำหรับคัดลอก ดาวน์โหลด เพิ่ม/ลบ ประกาศให้โปรแกรมอ่านหน้าจอ ปัดหรือกดปุ่มปิด หายเองใน 3.5 วินาที และหยุดชั่วคราวเมื่อชี้/โฟกัส",
             }}
             usage={`const toast = useToast();\ntoast({ title: "Copied", description: "12 commands", variant: "success" });`}
           >
@@ -519,16 +537,18 @@ export function DesignSystem() {
               en: "Tooltips supplement — never replace — an accessible name. They open on hover and keyboard focus. Kbd renders keyboard shortcuts.",
               th: "Tooltip ใช้เสริม ไม่ใช่แทนชื่อที่เข้าถึงได้ เปิดเมื่อชี้หรือโฟกัสด้วยคีย์บอร์ด Kbd ใช้แสดงปุ่มลัด",
             }}
-            usage={`<Tooltip content="Move up"><Button size="icon" aria-label="Move up">↑</Button></Tooltip>\n<Kbd>Ctrl</Kbd> <Kbd>K</Kbd>`}
+            usage={`<Tooltip content="Move up"><Button size="icon" aria-label="Move up"><ArrowUp /></Button></Tooltip>\n<Kbd>Ctrl</Kbd> <Kbd>K</Kbd>`}
           >
             <Demo>
               <Tooltip content={L({ en: "Move up", th: "เลื่อนขึ้น" })}>
                 <Button variant="secondary" size="icon" aria-label={L({ en: "Move up", th: "เลื่อนขึ้น" })}>
-                  ↑
+                  <ArrowUp className="h-4 w-4" aria-hidden />
                 </Button>
               </Tooltip>
               <Tooltip content={L({ en: "Copy all commands", th: "คัดลอกคำสั่งทั้งหมด" })} side="bottom">
-                <Button variant="secondary">📋 {L({ en: "Hover or focus me", th: "ชี้หรือโฟกัสที่นี่" })}</Button>
+                <Button variant="secondary">
+                  <Copy className="h-4 w-4" aria-hidden /> {L({ en: "Hover or focus me", th: "ชี้หรือโฟกัสที่นี่" })}
+                </Button>
               </Tooltip>
               <span className="text-sm text-muted">
                 {L({ en: "Command palette:", th: "พาเลตต์คำสั่ง:" })} <Kbd>Ctrl</Kbd> <Kbd>K</Kbd> / <Kbd>⌘</Kbd> <Kbd>K</Kbd>
@@ -561,8 +581,8 @@ export function DesignSystem() {
             id="stepper"
             title={SECTIONS[14].title}
             description={{
-              en: "Shows progress through a multi-step flow. The current step has aria-current=\"step\"; completed steps show ✓. Clickable when onStepChange is set. Vertical on mobile.",
-              th: "แสดงความคืบหน้าของขั้นตอนหลายขั้น ขั้นปัจจุบันมี aria-current=\"step\" ขั้นที่เสร็จแสดง ✓ คลิกได้เมื่อกำหนด onStepChange และเป็นแนวตั้งบนมือถือ",
+              en: "Shows progress through a multi-step flow. The current step has aria-current=\"step\"; completed steps show a check icon. Clickable when onStepChange is set. Vertical on mobile.",
+              th: "แสดงความคืบหน้าของขั้นตอนหลายขั้น ขั้นปัจจุบันมี aria-current=\"step\" ขั้นที่เสร็จแสดงไอคอนเครื่องหมายถูก คลิกได้เมื่อกำหนด onStepChange และเป็นแนวตั้งบนมือถือ",
             }}
             usage={`<Stepper current={step} onStepChange={setStep}\n  items={[{ id: "start", label: "Start" }, { id: "configure", label: "Configure" }]} />`}
           >
@@ -596,20 +616,24 @@ export function DesignSystem() {
               en: "Explains why there's nothing to show and offers the next action. The danger tone is used for recoverable errors (role=alert).",
               th: "อธิบายว่าทำไมไม่มีข้อมูลและเสนอการกระทำถัดไป โทน danger ใช้กับข้อผิดพลาดที่แก้ได้ (role=alert)",
             }}
-            usage={`<EmptyState icon="🔍" title="No templates match" action={<Button>Clear filters</Button>} />\n<EmptyState tone="danger" title="Couldn't plan" description={error} action={…} />`}
+            usage={`<EmptyState icon={<SearchX />} title="No templates match" action={<Button>Clear filters</Button>} />\n<EmptyState tone="danger" title="Couldn't plan" description={error} action={…} />`}
           >
             <div className="grid gap-4 md:grid-cols-2">
               <EmptyState
-                icon="🔍"
+                icon={<SearchX className="h-6 w-6" strokeWidth={1.75} />}
                 title={L({ en: "No templates match your search.", th: "ไม่พบเทมเพลตที่ตรงกับคำค้น" })}
                 action={<Button variant="secondary">{L({ en: "Clear filters", th: "ล้างตัวกรอง" })}</Button>}
               />
               <EmptyState
                 tone="danger"
-                icon="⚠️"
+                icon={<TriangleAlert className="h-6 w-6" strokeWidth={1.75} />}
                 title={L({ en: "The agent couldn't make a plan", th: "AI agent วางแผนไม่สำเร็จ" })}
                 description={L({ en: "Rate limit reached. Try again in a few minutes.", th: "ใช้งานเกินกำหนด กรุณาลองใหม่ในอีกไม่กี่นาที" })}
-                action={<Button>↻ {L({ en: "Try again", th: "ลองอีกครั้ง" })}</Button>}
+                action={
+                  <Button>
+                    <RotateCw className="h-4 w-4" aria-hidden /> {L({ en: "Try again", th: "ลองอีกครั้ง" })}
+                  </Button>
+                }
               />
             </div>
           </Section>
@@ -627,8 +651,8 @@ export function DesignSystem() {
               <div role="status" className="space-y-3">
                 <span className="sr-only">{L({ en: "Loading…", th: "กำลังโหลด…" })}</span>
                 <div className="flex gap-2">
-                  <Skeleton className="h-6 w-28 rounded-full" />
-                  <Skeleton className="h-6 w-36 rounded-full" />
+                  <Skeleton className="h-6 w-28 rounded-sm" />
+                  <Skeleton className="h-6 w-36 rounded-sm" />
                 </div>
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-4/6" />
@@ -636,6 +660,53 @@ export function DesignSystem() {
               <div className="mt-4 flex items-center gap-3 text-sm text-muted">
                 <Spinner className="h-5 w-5" label={L({ en: "Loading", th: "กำลังโหลด" })} /> Spinner
               </div>
+            </Demo>
+          </Section>
+
+          <Section
+            id="icons"
+            title={SECTIONS[17].title}
+            description={{
+              en: "Recognisable tools, recognisable marks. Tool logos come from simple-icons (CC0 data; logos are trademarks of their owners, used only to identify the tools) and render as app-icon tiles, the way Apple Developer shows Xcode and Swift. Everything else uses lucide line icons at 1.75–2px stroke. No emoji.",
+              th: "เครื่องมือที่คนรู้จักควรมีโลโก้ที่จำได้ โลโก้เครื่องมือมาจาก simple-icons (ข้อมูล CC0 โลโก้เป็นเครื่องหมายการค้าของเจ้าของ ใช้เพื่อระบุเครื่องมือเท่านั้น) แสดงเป็นไทล์แบบไอคอนแอป เหมือนที่ Apple Developer แสดง Xcode และ Swift ส่วนไอคอนอื่นใช้ lucide แบบเส้น 1.75–2px และไม่ใช้อีโมจิ",
+            }}
+            usage={`import { ToolTile, ToolIcon } from "@/components/brand/tool-icon";\n<ToolTile id="next" size="lg" />      // app-icon tile, official colour\n<ToolIcon id="npm" className="text-sm" /> // inline mark, currentColor\nimport { Sparkles } from "lucide-react";\n<Sparkles className="h-4 w-4" aria-hidden />`}
+          >
+            <Demo className="flex-wrap gap-3">
+              {(["node", "npm", "pnpm", "yarn", "nvm", "python", "pypi", "uv", "next", "react", "vite", "express", "fastapi", "streamlit", "typescript", "tailwind", "docker", "githubactions", "vitest", "ruff", "ai"] as const).map((id) => (
+                <span key={id} className="flex w-16 flex-col items-center gap-1.5 text-center">
+                  <ToolTile id={id} size="lg" />
+                  <span className="font-mono text-[10px] text-subtle">{id}</span>
+                </span>
+              ))}
+            </Demo>
+            <Demo className="mt-3 flex-wrap gap-4 text-muted">
+              {[Sparkles, LayoutGrid, Blocks, ShieldCheck, Languages, Sun, Moon, Copy, Download, Link2, Trash2, SearchX].map((Icon, i) => (
+                <Icon key={i} className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+              ))}
+            </Demo>
+          </Section>
+
+          <Section
+            id="mascot"
+            title={SECTIONS[18].title}
+            description={{
+              en: "The pink blob is the NVX logo and a living character: it floats and breathes, blinks now and then, follows the cursor with its eyes (mouse only) and squishes when hovered or clicked. Everything stops under reduced motion. Its pink (--nvx-brand-pink #fb0fab) is decorative only, used for the mascot glow and the OG card. Buttons, links and focus stay blue.",
+              th: "ก้อนสีชมพูคือโลโก้ NVX และเป็นตัวละครที่มีชีวิต: ลอยขึ้นลงและหายใจ กะพริบตาเป็นระยะ กลอกตามองตามเคอร์เซอร์ (เฉพาะเมาส์) และเด้งยุบเมื่อชี้หรือคลิก ทุกอย่างหยุดนิ่งเมื่อผู้ใช้ตั้ง reduced motion สีชมพู (--nvx-brand-pink #fb0fab) ใช้ตกแต่งเท่านั้น เช่น แสงเรืองรอบมาสคอตและภาพ OG ส่วนปุ่ม ลิงก์ และวงโฟกัสยังเป็นสีฟ้า",
+            }}
+            usage={`import { Mascot } from "@/components/brand/mascot";\n<Mascot size={28} />                 // header: float + blink only, decorative\n<Mascot size={112} interactive />    // hero: + eyes follow cursor, squish on hover/click\n<Mascot size={64} label="NVX" />     // role="img" with an accessible name`}
+          >
+            <Demo className="items-end gap-8">
+              {[28, 48, 112].map((size) => (
+                <span key={size} className="flex flex-col items-center gap-2">
+                  <Mascot size={size} interactive={size > 48} />
+                  <span className="font-mono text-[10px] text-subtle">{size}px{size > 48 ? " · interactive" : ""}</span>
+                </span>
+              ))}
+              <span className="flex flex-col items-center gap-2">
+                <span className="h-10 w-10 rounded-full" style={{ background: "var(--nvx-brand-pink)" }} aria-hidden />
+                <span className="font-mono text-[10px] text-subtle">brand-pink #fb0fab</span>
+              </span>
             </Demo>
           </Section>
         </div>

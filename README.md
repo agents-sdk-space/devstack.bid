@@ -6,7 +6,7 @@
 
 Built by **NVX DEVELOPER BOTH** · Open source under the [MIT License](./LICENSE).
 
-[English](#english) · [ภาษาไทย](#ภาษาไทย)
+[English](#english) · [ภาษาไทย](#ภาษาไทย) · **Documentation / เอกสาร: [docs/README.md](./docs/README.md)** · AI agents: [AGENTS.md](./AGENTS.md)
 
 ![Home](./screenshots/v0.2/home-light.png)
 
@@ -96,6 +96,7 @@ src/
     share.ts              URL-hash share encoding (validated)
     sanitize.ts           untrusted-content sanitiser
     ai/                   OpenAI client, JSON schema, plan validation, fallback planner
+docs/                     full documentation site (start at docs/README.md); docs/agents/ for AI agents
 docs/UI-FRAMEWORK.md      design system guide (TH + EN)
 tests/                    Vitest unit + component tests (Testing Library, jsdom)
 scripts/export-template.ts  CLI exporter for contributors
@@ -189,6 +190,10 @@ Production: `npm run build` แล้ว `npm start`
 ---
 
 ## Screenshots
+
+**v0.5 (Apple-inspired black theme, preview):** see `./screenshots/v0.5/` (`preview-*`).
+
+> Tool logos (via [Simple Icons](https://simpleicons.org), CC0) are trademarks of their respective owners and are used only to identify the tools. See [NOTICE](./NOTICE). · โลโก้เครื่องมือเป็นเครื่องหมายการค้าของเจ้าของ ใช้เพื่อระบุเครื่องมือเท่านั้น
 
 v0.2 (NVX UI). Older v0.1 screenshots remain in `./screenshots/`.
 

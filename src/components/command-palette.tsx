@@ -7,6 +7,8 @@ import { TEMPLATES } from "@/data/templates";
 import { CATEGORY_LABELS } from "@/lib/i18n";
 import { Dialog, DialogContent, Kbd, SearchIcon } from "@/components/ui";
 import { useDarkMode, useLang } from "./prefs";
+import { Blocks, House, Languages, LayoutGrid, Palette, SunMoon } from "lucide-react";
+import { templateTool, ToolTile } from "./brand/tool-icon";
 
 const groupHeading =
   "[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wide [&_[cmdk-group-heading]]:text-subtle";
@@ -52,14 +54,14 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
             <Command.Group heading={t("palette.pages")}>
               {(
                 [
-                  ["/", "🏠", t("nav.home")],
-                  ["/templates", "📚", t("nav.templates")],
-                  ["/builder", "🧩", t("nav.builder")],
-                  ["/design", "🎨", t("nav.design")],
+                  ["/", House, t("nav.home")],
+                  ["/templates", LayoutGrid, t("nav.templates")],
+                  ["/builder", Blocks, t("nav.builder")],
+                  ["/design", Palette, t("nav.design")],
                 ] as const
-              ).map(([href, icon, label]) => (
+              ).map(([href, Icon, label]) => (
                 <Command.Item key={href} value={`page ${label} ${href}`} onSelect={() => run(() => router.push(href))} className={itemClass}>
-                  <span aria-hidden>{icon}</span>
+                  <Icon className="h-4 w-4 text-subtle" aria-hidden />
                   {label}
                   <span className="ml-auto font-mono text-xs text-subtle">{href}</span>
                 </Command.Item>
@@ -73,7 +75,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
                   onSelect={() => run(() => router.push(`/templates/${tpl.id}`))}
                   className={itemClass}
                 >
-                  <span aria-hidden>📄</span>
+                  <ToolTile id={templateTool(tpl)} size="sm" />
                   <span className="min-w-0 truncate">{tpl.name[lang]}</span>
                   <span className="ml-auto shrink-0 text-xs text-subtle">{CATEGORY_LABELS[tpl.category][lang]}</span>
                 </Command.Item>
@@ -87,7 +89,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
                   onSelect={() => run(() => router.push(`/builder#t=${tpl.id}`))}
                   className={itemClass}
                 >
-                  <span aria-hidden>🧩</span>
+                  <Blocks className="h-4 w-4 text-subtle" aria-hidden />
                   <span className="min-w-0 truncate">
                     {t("catalog.build")}: {tpl.name[lang]}
                   </span>
@@ -96,11 +98,11 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
             </Command.Group>
             <Command.Group heading={t("palette.actions")}>
               <Command.Item value="action theme dark light mode โหมดมืด" onSelect={() => run(toggle)} className={itemClass}>
-                <span aria-hidden>🌓</span>
+                <SunMoon className="h-4 w-4 text-subtle" aria-hidden />
                 {t("toggle.theme")}
               </Command.Item>
               <Command.Item value="action language thai english ภาษา" onSelect={() => run(() => setLang(lang === "en" ? "th" : "en"))} className={itemClass}>
-                <span aria-hidden>🌐</span>
+                <Languages className="h-4 w-4 text-subtle" aria-hidden />
                 {t("toggle.langLabel")}
               </Command.Item>
             </Command.Group>

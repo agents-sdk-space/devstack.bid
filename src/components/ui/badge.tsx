@@ -22,8 +22,9 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full font-medium whitespace-nowrap",
-        size === "sm" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-0.5 text-xs",
+        "inline-flex items-center gap-1 rounded-md whitespace-nowrap",
+        // Small badges carry tool/tag names: monospace for a technical feel. Regular ones are UI labels.
+        size === "sm" ? "px-2 py-0.5 font-mono text-[11px]" : "px-2 py-0.5 text-xs font-semibold",
         VARIANTS[variant],
         className
       )}

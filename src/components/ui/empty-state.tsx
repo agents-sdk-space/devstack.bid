@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { cn } from "./cn";
+import { Sparkles } from "lucide-react";
 
 export function EmptyState({
-  icon = "✨",
+  icon = <Sparkles className="h-6 w-6" strokeWidth={1.75} />,
   title,
   description,
   action,
@@ -28,7 +29,7 @@ export function EmptyState({
         className
       )}
     >
-      <div aria-hidden className={cn("grid h-12 w-12 place-items-center rounded-full text-2xl", tone === "danger" ? "bg-surface" : "bg-surface-2")}>
+      <div aria-hidden className={cn("grid h-12 w-12 tool-tile place-items-center rounded-[14px] text-2xl text-accent", tone === "danger" ? "bg-surface" : "bg-surface-2")}>
         {icon}
       </div>
       <Heading className={cn("mt-4 text-base font-semibold text-fg", Heading === "h1" && "text-2xl", tone === "danger" && "text-danger-fg")}>{title}</Heading>

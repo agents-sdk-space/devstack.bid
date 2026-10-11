@@ -40,7 +40,7 @@ export function useLang() {
 }
 
 export function useDarkMode() {
-  const dark = useSyncExternalStore(subscribe, getDark, () => false);
+  const dark = useSyncExternalStore(subscribe, getDark, () => true); // server: dark is the default theme
   const toggle = useCallback(() => {
     const next = !getDark();
     document.documentElement.classList.toggle("dark", next);

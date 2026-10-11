@@ -3,6 +3,7 @@
 import * as ToastPrimitive from "@radix-ui/react-toast";
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { cn } from "./cn";
+import { Bell, Check, Info, TriangleAlert, type LucideIcon } from "lucide-react";
 
 export type ToastVariant = "default" | "success" | "error" | "info";
 export interface ToastOptions {
@@ -17,7 +18,7 @@ interface ToastItem extends ToastOptions {
 
 const ToastContext = createContext<((t: ToastOptions) => void) | null>(null);
 
-const ICON: Record<ToastVariant, string> = { default: "•", success: "✓", error: "!", info: "i" };
+const ICON: Record<ToastVariant, LucideIcon> = { default: Bell, success: Check, error: TriangleAlert, info: Info };
 const TONE: Record<ToastVariant, string> = {
   default: "bg-surface-3 text-fg",
   success: "bg-success-soft text-success-fg",
@@ -49,7 +50,10 @@ export function ToastProvider({ children, closeLabel = "Dismiss" }: { children: 
               className="flex items-start gap-3 rounded-lg border border-border bg-surface p-3.5 pr-10 text-fg shadow-lg data-[state=open]:animate-slide-in data-[swipe=end]:opacity-0"
             >
               <span aria-hidden className={cn("grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold", TONE[variant])}>
-                {ICON[variant]}
+                {(() => {
+                  const Icon = ICON[variant];
+                  return <Icon className="h-3.5 w-3.5" strokeWidth={2.5} />;
+                })()}
               </span>
               <div className="min-w-0">
                 <ToastPrimitive.Title className="text-sm font-semibold">{t.title}</ToastPrimitive.Title>

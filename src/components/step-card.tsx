@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { ResolvedStep } from "@/lib/types";
 import { Badge, type BadgeVariant, Card, cn } from "@/components/ui";
 import { CodeBlock } from "./copy-button";
+import { commandTool, ToolTile } from "./brand/tool-icon";
 import { useLang } from "./prefs";
 
 const SOURCE_VARIANT: Record<ResolvedStep["source"], BadgeVariant> = {
@@ -45,9 +46,10 @@ export function StepCard({
       <Card className={cn("p-4 sm:p-5", dragging && "shadow-lg ring-2 ring-primary")}>
         <div className="flex flex-wrap items-start gap-3">
           {handle}
-          <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-primary-fg">
+          <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-3 text-sm font-semibold text-fg">
             {index + 1}
           </span>
+          <ToolTile id={commandTool(step.commands)} size="sm" className="mt-0.5" />
           <div className="min-w-0 flex-1">
             <h3 id={`step-${step.id}`} className="font-semibold leading-snug text-fg">
               <span className="sr-only">{index + 1}. </span>

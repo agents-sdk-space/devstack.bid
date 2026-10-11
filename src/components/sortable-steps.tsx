@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  closestCenter,
+  closestCorners,
   DndContext,
   KeyboardSensor,
   PointerSensor,
@@ -47,6 +47,11 @@ function SortableStep({
           ref={setActivatorNodeRef}
           {...attributes}
           {...listeners}
+          // Before dnd-kit lifts the card by keyboard, bring the whole card into view. Otherwise
+          // its activation scroll leaves stale rects and the first ↑/↓ can skip a slot.
+          onKeyDownCapture={(e) => {
+            if (!isDragging && (e.key === " " || e.key === "Enter")) e.currentTarget.closest("li")?.scrollIntoView({ block: "nearest" });
+          }}
           aria-label={dragLabel}
           className="focus-ring motion-fast -ml-1 grid h-8 w-6 shrink-0 cursor-grab touch-none place-items-center rounded text-subtle hover:bg-surface-2 hover:text-fg active:cursor-grabbing"
         >
@@ -82,7 +87,7 @@ export function SortableSteps({
   const { lang, t } = useLang();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates, scrollBehavior: "auto" })
   );
   const ids = steps.map((s) => s.id);
   const title = (id: string | number) => steps.find((s) => s.id === id)?.title[lang] ?? String(id);
@@ -108,10 +113,11 @@ export function SortableSteps({
     onReorder(arrayMove(ids, ids.indexOf(String(active.id)), ids.indexOf(String(over.id))));
   }
 
+  // closestCorners: step cards have very different heights, so compare corners, not centres.
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={closestCorners}
       onDragEnd={onDragEnd}
       accessibility={{ announcements, screenReaderInstructions: { draggable: t("review.dragHint") } }}
     >
