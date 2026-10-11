@@ -67,7 +67,7 @@ npm run export -- <templateId> --out /tmp/x   # write setup.sh/ps1 for a templat
   - Output shape: change `src/lib/ai/schema.ts` and `rawPlanSchema` in `src/lib/ai/plan.ts` together.
 - **Deploy a test build (approval required).** Follow `docs/operations/deploy-cloudflare.md`, record the version id, then run the smoke tests.
 - **Roll back (approval required).** Run `npx wrangler rollback <version-id> --name nvx-stack-builder -m "<reason>"` with the right `CLOUDFLARE_ACCOUNT_ID`.
-  - Production (v0.5.1): https://devstack.bid (+ www, 308 to the apex), account `2d92bd5b25768fa9093d6adc0a8887fc`. Version ids: `671b6b3b-1074-40cb-84b0-0df2681b69ce` (current), `d369f2b6-863a-4e44-8f9e-b5551e18361a` (v0.5.0), `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (v0.5.0 without the secret). Rolling back a version does not detach the custom domains.
+  - Production (v0.6.0): https://devstack.bid (+ www, 308 to the apex), account `2d92bd5b25768fa9093d6adc0a8887fc`. Version ids: `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (current, v0.6.0), `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1), `d369f2b6-863a-4e44-8f9e-b5551e18361a` (v0.5.0), `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (v0.5.0 without the secret). Rolling back a version does not detach the custom domains.
   - Previous test deploy (v0.3.0, left untouched): account `f70d35188a3c56b9781538c73a86e04e`, version `0fb9ecd4-d788-468c-8843-559545c357e3`.
 
 ## Verification checklist before you report done

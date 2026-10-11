@@ -1,7 +1,7 @@
 # Deploying NVX Stack Builder to Cloudflare Workers
 
-> **Production (2026-10-11, v0.5.1):** live at **https://devstack.bid** (apex). It is a Workers Custom Domain of Worker `nvx-stack-builder` in account `2d92bd5b25768fa9093d6adc0a8887fc`; `www.devstack.bid` is also attached and returns 308 to the apex.
-> - Deployed 2026-10-11 09:15 ICT. Current version `671b6b3b-1074-40cb-84b0-0df2681b69ce`; previous `d369f2b6-863a-4e44-8f9e-b5551e18361a` (v0.5.0), then `107ab78e-2cdd-4159-95e7-e8fcb89130aa`.
+> **Production (2026-10-11, v0.6.0):** live at **https://devstack.bid** (apex). It is a Workers Custom Domain of Worker `nvx-stack-builder` in account `2d92bd5b25768fa9093d6adc0a8887fc`; `www.devstack.bid` is also attached and returns 308 to the apex.
+> - v0.6.0 deployed 2026-10-11 11:18 ICT (in-app docs at `/docs`, `/llms.txt`, DevStack signature). Current version `7ddd9404-a31f-4e31-8460-82b3b90c7d0e`; previous `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1, rollback target), then `d369f2b6-863a-4e44-8f9e-b5551e18361a` (v0.5.0) and `107ab78e-2cdd-4159-95e7-e8fcb89130aa`.
 > - workers.dev fallback: https://nvx-stack-builder.examplessdk.workers.dev. The account's subdomain was renamed from `space6` to `examplessdk` on 2026-10-11, so the old `space6` URL no longer resolves.
 > - HSTS is now `max-age=31536000`, without `includeSubDomains`/`preload`.
 > - Details, created records and token permissions: [operations/custom-domain.md](operations/custom-domain.md).
@@ -137,7 +137,7 @@ Minimum for the test deploy (account-scoped token, resources must include accoun
 
 ## ภาษาไทย
 
-> **Production (11 ต.ค. 2026, v0.5.1):** เสิร์ฟที่ **https://devstack.bid** (apex) ผ่าน Workers Custom Domain ของ Worker `nvx-stack-builder` และ `www.devstack.bid` redirect 308 ไป apex เวอร์ชันปัจจุบัน `671b6b3b-1074-40cb-84b0-0df2681b69ce` (ก่อนหน้า `d369f2b6-863a-4e44-8f9e-b5551e18361a`) workers.dev สำรองที่ https://nvx-stack-builder.examplessdk.workers.dev (บัญชีเปลี่ยน subdomain จาก `space6` เป็น `examplessdk`) HSTS เหลือ `max-age=31536000` ไม่มี `includeSubDomains` รายละเอียดดู [operations/custom-domain.md](operations/custom-domain.md)
+> **Production (11 ต.ค. 2026, v0.6.0):** เสิร์ฟที่ **https://devstack.bid** (apex) ผ่าน Workers Custom Domain ของ Worker `nvx-stack-builder` และ `www.devstack.bid` redirect 308 ไป apex เวอร์ชันปัจจุบัน `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (v0.6.0, deploy 11:18 ICT; ก่อนหน้า `671b6b3b-1074-40cb-84b0-0df2681b69ce` v0.5.1 ใช้ rollback ได้ แล้ว `d369f2b6-863a-4e44-8f9e-b5551e18361a`) workers.dev สำรองที่ https://nvx-stack-builder.examplessdk.workers.dev (บัญชีเปลี่ยน subdomain จาก `space6` เป็น `examplessdk`) HSTS เหลือ `max-age=31536000` ไม่มี `includeSubDomains` รายละเอียดดู [operations/custom-domain.md](operations/custom-domain.md)
 >
 > **สถานะ v0.5.0 (11 ต.ค. 2026):** deploy ครั้งแรกที่ **https://nvx-stack-builder.space6.workers.dev** (URL นี้ใช้ไม่ได้แล้ว) (Worker `nvx-stack-builder` บัญชี `2d92bd5b25768fa9093d6adc0a8887fc` "Examplessdk@gmail.com's Account" subdomain `space6` ใช้ workers.dev เท่านั้น) deploy เมื่อ 11 ต.ค. 2026 08:47 (ICT) จาก commit `f995d24` (tag `v0.5.0`) ตรวจบนเว็บจริงผ่านทุกข้อ: ทุกหน้าได้ 200, 404 จริง, security headers, manifest/favicon/OG image, ไม่มี horizontal scroll ทั้งไทยและอังกฤษ, prompt ภาษาไทยได้ `source: "openai"`, rate limit ตอบ 429 พร้อม `Retry-After: 60` เวอร์ชันสำหรับ rollback: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (ปัจจุบัน) และ `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (โค้ดเดียวกันแต่ยังไม่ตั้ง secret) Worker เดิม `odd-violet-5e66` ในบัญชีนั้นไม่ถูกแตะ
 >

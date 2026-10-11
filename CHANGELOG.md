@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-11
+
 ### Added
 
-- **In-app docs at `/docs`** (branch `feat/docs-site`, not deployed yet).
+- **In-app docs at `/docs`**.
   - Every `docs/**/*.md` is compiled at build time by `scripts/build-docs.mjs`; Workers need no fs at runtime.
   - Pipeline: remark-gfm, then sanitized HTML, then heading anchors, highlighted code with copy buttons, and Mermaid pre-rendered to SVG (`npm run docs:diagrams`).
   - Material 3–style layout on the black theme: navigation drawer by section, mobile drawer, on-page TOC, breadcrumbs, prev/next.
@@ -25,6 +27,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Pointer-tracking outline glow, hover text glow, cursor pulse, tap glow on touch. Static under reduced motion.
   - `nvxdev` commands are kept as hidden placeholders (`published: false`, `// MARK: nvxdev`).
 - Docs voice: landing page and user guide rewritten in a Thai community voice ("เรา", from the DevStack team); new page `docs/architecture/docs-site.md`.
+
+### Deployed
+
+- 2026-10-11 11:18 ICT, version `7ddd9404-a31f-4e31-8460-82b3b90c7d0e`; previous `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1, rollback target).
+- Live check on https://devstack.bid passed:
+  - all pages, `/docs` and doc pages return 200; unknown doc slugs return a real 404
+  - all 43 raw `.md` routes are byte-identical to the source (`text/markdown`), and so is the manifest
+  - `/llms.txt` lists 43 raw URLs; `/llms-full.txt` is 336 KB
+  - headers OK; www returns 308
+  - AI in Thai returns `source: "openai"`
+  - signature in the footer; touch glow works
+  - Screenshots: `screenshots/v0.6/live-*`.
 
 ## [0.5.1] - 2026-10-11
 
@@ -191,7 +205,8 @@ Test deployment: https://nvx-stack-builder.agen-sdk-work.workers.dev (workers.de
 - Vitest unit tests (21), `npm run export` CLI for contributors, MIT license, README (TH+EN),
   CONTRIBUTING, CODE_OF_CONDUCT, `.env.example`.
 
-[Unreleased]: https://github.com/OWNER/nvx-stack-builder/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/OWNER/nvx-stack-builder/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/OWNER/nvx-stack-builder/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/OWNER/nvx-stack-builder/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/OWNER/nvx-stack-builder/compare/v0.3.0...v0.5.0
 [0.3.0]: https://github.com/OWNER/nvx-stack-builder/compare/v0.2.0...v0.3.0

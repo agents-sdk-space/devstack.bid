@@ -70,3 +70,18 @@ Workers มี free tier; ค่าใช้จ่ายหลักคือ Op
 - **ข้อสังเกต:**
   - prompt ที่ซับซ้อนกว่า 1 ครั้งเกิน `OPENAI_TIMEOUT_MS` (75 วินาที) จึงได้ offline planner ซึ่งเป็นพฤติกรรมที่ออกแบบไว้
   - Cloudflare Web Analytics แทรก beacon ที่ CSP บล็อก ดู [custom-domain.md](./custom-domain.md)
+
+## บันทึก deploy v0.6.0: docs ในแอป + signature (11 ต.ค. 2026)
+
+- **ที่มา:** merge `feat/docs-site` เข้า `main` แล้ว bump เป็น 0.6.0; lint, typecheck, tests, docs:check และ cf:build ผ่านทั้งหมดก่อน deploy
+- **deploy:** ใช้ token EXAMPLESSDK; ได้ version `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (11:18 ICT) ขนาด upload 9467.97 KiB (gzip 1810.44 KiB); custom domain devstack.bid + www ยังอยู่ครบ
+- **ตรวจบนเว็บจริง:**
+  - ทุกหน้า รวม `/docs` และหน้าย่อย ได้ 200; slug ที่ไม่มีได้ 404 จริง
+  - raw `.md` ทั้ง 43 ไฟล์ตรงกับต้นฉบับทุก byte (`text/markdown`, ACAO `*`); manifest ก็ตรง
+  - `/llms.txt` มีลิงก์ 43 รายการ; `/llms-full.txt` ขนาด 336 KB
+  - headers ครบ; www ตอบ 308
+  - AI ภาษาไทยได้ `source: "openai"`
+  - signature อยู่ใน footer ทุกหน้า; touch glow ทำงาน
+  - ภาพหน้าจออยู่ที่ `screenshots/v0.6/live-*`
+- **ข้อสังเกต:** console มี error จาก CSP บล็อก `static.cloudflareinsights.com/beacon.min.js` (Web Analytics ที่ Cloudflare ฉีดเข้ามา) ไม่มีผลกับการทำงาน; จะเปิดใน CSP หรือปิด Web Analytics ต้องให้ผู้ใช้ตัดสินใจ
+- **rollback:** `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1)

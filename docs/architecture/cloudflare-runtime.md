@@ -38,4 +38,4 @@
 
 ## สถานะ deploy ล่าสุด
 
-Production (v0.5.1) ที่ `https://devstack.bid` และ `www.devstack.bid` (Workers Custom Domains, redirect www → apex) บัญชี `2d92bd5b25768fa9093d6adc0a8887fc` เวอร์ชันปัจจุบัน `671b6b3b-1074-40cb-84b0-0df2681b69ce` (ก่อนหน้า `d369f2b6-863a-4e44-8f9e-b5551e18361a`) workers.dev สำรอง `https://nvx-stack-builder.examplessdk.workers.dev` ส่วน deploy เดิม (v0.3.0) ที่ `https://nvx-stack-builder.agen-sdk-work.workers.dev` บัญชี `f70d35188a3c56b9781538c73a86e04e` ยังเปิดอยู่และไม่ถูกแก้ไข
+Production (v0.6.0) ที่ `https://devstack.bid` และ `www.devstack.bid` (Workers Custom Domains, redirect www → apex) บัญชี `2d92bd5b25768fa9093d6adc0a8887fc` เวอร์ชันปัจจุบัน `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (ก่อนหน้า `671b6b3b-1074-40cb-84b0-0df2681b69ce` v0.5.1) workers.dev สำรอง `https://nvx-stack-builder.examplessdk.workers.dev` ส่วน deploy เดิม (v0.3.0) ที่ `https://nvx-stack-builder.agen-sdk-work.workers.dev` บัญชี `f70d35188a3c56b9781538c73a86e04e` ยังเปิดอยู่และไม่ถูกแก้ไข

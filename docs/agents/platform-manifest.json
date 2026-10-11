@@ -1,8 +1,8 @@
 {
   "$comment": "Machine-readable map of NVX Stack Builder for AI agents. Verified by `npm run docs:check` (templateIds must equal src/data/template-ids.ts; every keyFiles path must exist). Human docs: docs/agents/AGENT-PLAYBOOK.md",
   "name": "nvx-stack-builder",
-  "version": "0.5.1",
-  "branchState": "main = v0.5.1 (custom domain devstack.bid). feat/docs-site = in-app docs at /docs (not merged, not deployed)",
+  "version": "0.6.0",
+  "branchState": "main = v0.6.0 (in-app docs at /docs, llms.txt, DevStack signature; deployed to devstack.bid). feat/docs-site merged.",
   "stack": {
     "framework": "Next.js 16.4 App Router",
     "language": "TypeScript",
@@ -374,10 +374,11 @@
     "workersDevSubdomain": "examplessdk",
     "accountId": "2d92bd5b25768fa9093d6adc0a8887fc",
     "accountName": "Examplessdk@gmail.com's Account",
-    "deployedVersion": "v0.5.1",
-    "currentVersionId": "671b6b3b-1074-40cb-84b0-0df2681b69ce",
-    "previousVersionId": "d369f2b6-863a-4e44-8f9e-b5551e18361a",
+    "deployedVersion": "v0.6.0",
+    "currentVersionId": "7ddd9404-a31f-4e31-8460-82b3b90c7d0e",
+    "previousVersionId": "671b6b3b-1074-40cb-84b0-0df2681b69ce",
     "olderVersionIds": [
+      "d369f2b6-863a-4e44-8f9e-b5551e18361a",
       "107ab78e-2cdd-4159-95e7-e8fcb89130aa"
     ],
     "hsts": "max-age=31536000 (no includeSubDomains/preload)",
