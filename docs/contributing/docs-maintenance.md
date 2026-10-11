@@ -8,7 +8,7 @@
 
 1. **ความยาวขั้นต่ำ** ทุกไฟล์ `docs/**/*.md` ต้องมีเนื้อหาอย่างน้อย **500 ตัวอักษร** นับหลังตัด code block, URL ของลิงก์, สัญลักษณ์ Markdown และช่องว่างซ้ำ (กันหน้าที่มีแต่โค้ดหรือหัวข้อ)
 2. **ลิงก์สัมพัทธ์** ทุก `[text](path)` ที่ไม่ใช่ `http(s):`, `mailto:` หรือ `#anchor` ต้องชี้ไฟล์/โฟลเดอร์ที่มีอยู่จริง (ตัด `#anchor` ออกก่อน) ใน `docs/`, `README.md`, `AGENTS.md`
-3. **path ใน backtick** เช่น `` `src/lib/composer.ts` `` ที่ขึ้นต้นด้วย `src/`, `scripts/`, `tests/`, `docs/`, `public/` ต้องมีอยู่จริง (ข้าม path ที่มี `<`, `*`, `{`, `[` หรือ `...` เพราะเป็นรูปแบบ ไม่ใช่ไฟล์จริง)
+3. **path ใน backtick** เช่น `` `src/lib/composer.ts` `` ที่ขึ้นต้นด้วย `src/`, `scripts/`, `tests/`, `docs/`, `public/` ต้องมีอยู่จริง (ข้าม path ที่มี `<`, `*`, `{`, `[` หรือ `...` เพราะเป็นรูปแบบ ไม่ใช่ไฟล์จริง) และข้าม path ที่เป็นผลลัพธ์ของการ build ซึ่งระบุไว้ใน `.gitignore` ที่ root เช่น `public/studio/` เพราะ checkout ใหม่ (เช่นใน CI) จะยังไม่มีไฟล์เหล่านี้
 4. **template id** ทุกตัวใน [`src/data/template-ids.ts`](../../src/data/template-ids.ts) ต้องปรากฏใน `docs/reference/template-schema.md` และ `docs/user-guide/templates.md`
 5. **env var** ทุกตัวใน schema ของ [`src/lib/server/env.ts`](../../src/lib/server/env.ts), `vars` ใน `wrangler.jsonc`, `.env.example`, `.dev.vars.example` ชื่อ rate-limit binding และ binding ของ D1/R2 (`d1_databases`, `r2_buckets`) ต้องปรากฏใน `docs/reference/config-env.md`
 6. **npm scripts** ทุกตัวใน `package.json` ต้องปรากฏใน `docs/reference/npm-scripts.md`

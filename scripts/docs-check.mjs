@@ -4,7 +4,8 @@
  * Rules (documented in docs/contributing/docs-maintenance.md):
  *  1. every docs/**\/*.md (except docs/dist) has >= MIN_CHARS content characters
  *  2. relative markdown links in docs/, README.md and AGENTS.md resolve
- *  3. backticked repo paths (src/, scripts/, tests/, docs/, public/) exist
+ *  3. backticked repo paths (src/, scripts/, tests/, docs/, public/) exist, unless they are
+ *     build output listed in the root .gitignore (absent on a clean checkout by design)
  *  4. every template id appears in the template reference and user guide
  *  5. every env var / rate-limit / D1 / R2 binding appears in docs/reference/config-env.md
  *  6. every npm script appears in docs/reference/npm-scripts.md
@@ -28,6 +29,23 @@ function walk(dir, out = []) {
     } else if (e.name.endsWith(".md")) out.push(p);
   }
   return out.sort();
+}
+
+/** Literal (non-glob, non-negated) entries of the root .gitignore, without leading/trailing slashes. */
+export function ignoredPrefixes(root) {
+  const gi = fs.existsSync(path.join(root, ".gitignore")) ? fs.readFileSync(path.join(root, ".gitignore"), "utf8") : "";
+  return gi
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith("#") && !l.startsWith("!") && !/[*?[\]]/.test(l))
+    .map((l) => l.replace(/^\/+|\/+$/g, ""))
+    .filter(Boolean);
+}
+
+/** True when a repo path is (inside) a git-ignored build output, e.g. public/studio/. */
+export function isIgnoredOutput(p, prefixes) {
+  const n = p.replace(/^\.?\/+|\/+$/g, "");
+  return prefixes.some((e) => n === e || n.startsWith(e + "/"));
 }
 
 const read = (p) => (fs.existsSync(p) ? fs.readFileSync(p, "utf8") : null);
@@ -128,6 +146,7 @@ export function runDocsCheck(root) {
   }
 
   // 2 + 3. links and backtick paths
+  const ignored = ignoredPrefixes(root);
   const linkFiles = [...docFiles, ...["README.md", "AGENTS.md"].map((f) => path.join(root, f)).filter(fs.existsSync)];
   for (const f of linkFiles) {
     const md = read(f);
@@ -139,7 +158,7 @@ export function runDocsCheck(root) {
     }
     if (f.startsWith(path.join(root, "docs"))) {
       for (const p of backtickPaths(md)) {
-        if (!fs.existsSync(path.join(root, p))) errors.push(`${rel(f)}: path \`${p}\` does not exist`);
+        if (!fs.existsSync(path.join(root, p)) && !isIgnoredOutput(p, ignored)) errors.push(`${rel(f)}: path \`${p}\` does not exist`);
       }
     }
   }
