@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { planFallback } from "@/lib/ai/fallback";
+import { callHfPlanner, HfError } from "@/lib/ai/hf";
 import { callOpenAIPlanner, OpenAIError, redactSecrets } from "@/lib/ai/openai";
 import { sanitizeAiPlan } from "@/lib/ai/plan";
 import { serverEnv } from "@/lib/server/env";
@@ -11,6 +12,9 @@ import type { Lang } from "@/lib/types";
 /**
  * POST /api/plan  { prompt: string, lang?: "en" | "th", mode?: "auto" | "fallback" }
  * Optional header  x-openai-key: a user's own key, used for this request only (never stored or logged).
+ *
+ * Provider order: user's own OpenAI key (header) → Hugging Face (HF_TOKEN, HF_MODEL, default
+ * DeepSeek-V3) → operator OpenAI key only when OPENAI_FALLBACK=true → offline planner.
  *
  * Returns an AgentPlan. Commands are returned as text only — nothing is executed on the server.
  *
@@ -39,7 +43,13 @@ function log(level: "warn" | "error", event: string, req: Request, fields: Recor
 export async function GET() {
   await connection();
   const env = serverEnv();
-  return json({ serverKeyConfigured: Boolean(env.OPENAI_API_KEY), model: env.OPENAI_MODEL });
+  const hf = Boolean(env.HF_TOKEN);
+  const openaiServer = Boolean(env.OPENAI_API_KEY) && env.OPENAI_FALLBACK === "true";
+  return json({
+    serverKeyConfigured: hf || openaiServer,
+    provider: hf ? "huggingface" : openaiServer ? "openai" : "offline",
+    model: hf ? env.HF_MODEL : env.OPENAI_MODEL,
+  });
 }
 
 export async function POST(req: Request) {
@@ -72,10 +82,10 @@ export async function POST(req: Request) {
 
   const headerKey = (req.headers.get("x-openai-key") ?? "").trim();
   const userKey = /^[\w-]{20,400}$/.test(headerKey) ? headerKey : "";
-  const apiKey = userKey || env.OPENAI_API_KEY || "";
-  if (!apiKey) return json(planFallback(prompt, lang, "no OpenAI API key configured"));
+  const serverOpenAI = env.OPENAI_FALLBACK === "true" ? env.OPENAI_API_KEY ?? "" : "";
+  if (!userKey && !env.HF_TOKEN && !serverOpenAI) return json(planFallback(prompt, lang, "no AI provider configured"));
 
-  // Protect the operator's key (and bill) from abuse; users bringing their own key skip this limit.
+  // Protect the operator's tokens (HF credits / OpenAI bill); users bringing their own key skip this limit.
   if (!userKey) {
     const ai = await checkRateLimit("NVX_PLAN_AI_LIMITER", ip, env.PLAN_AI_LIMIT_PER_MIN);
     if (!ai.ok) {
@@ -84,23 +94,26 @@ export async function POST(req: Request) {
     }
   }
 
-  try {
-    const { data, model } = await withTimeout(
-      callOpenAIPlanner({ prompt, lang, apiKey, signal: req.signal }),
-      env.OPENAI_TIMEOUT_MS + 5_000,
-      "AI request timed out"
-    );
-    return json(sanitizeAiPlan(data, lang, model));
-  } catch (err) {
-    const reason =
-      err instanceof OpenAIError || err instanceof HttpError
-        ? redactSecrets(err.message, apiKey, env.OPENAI_API_KEY)
-        : redactSecrets(`invalid AI output: ${(err as Error)?.message ?? "unknown"}`, apiKey, env.OPENAI_API_KEY).slice(0, 200);
-    log("warn", "ai_fallback", req, {
-      reason,
-      status: err instanceof OpenAIError ? err.status : undefined,
-      keySource: userKey ? "user" : "server",
-    });
-    return json(planFallback(prompt, lang, reason));
+  const reasons: string[] = [];
+  const reasonOf = (err: unknown, ...secrets: (string | undefined)[]) =>
+    err instanceof OpenAIError || err instanceof HfError || err instanceof HttpError
+      ? redactSecrets(err.message, ...secrets)
+      : redactSecrets(`invalid AI output: ${(err as Error)?.message ?? "unknown"}`, ...secrets).slice(0, 200);
+
+  const attempts: { provider: "openai-user" | "huggingface" | "openai-server"; run: () => Promise<{ data: unknown; model: string }>; timeout: number }[] = [];
+  if (userKey) attempts.push({ provider: "openai-user", run: () => callOpenAIPlanner({ prompt, lang, apiKey: userKey, signal: req.signal }), timeout: env.OPENAI_TIMEOUT_MS + 5_000 });
+  if (env.HF_TOKEN) attempts.push({ provider: "huggingface", run: () => callHfPlanner({ prompt, lang, token: env.HF_TOKEN!, signal: req.signal }), timeout: env.HF_TIMEOUT_MS + 5_000 });
+  if (serverOpenAI && !userKey) attempts.push({ provider: "openai-server", run: () => callOpenAIPlanner({ prompt, lang, apiKey: serverOpenAI, signal: req.signal }), timeout: env.OPENAI_TIMEOUT_MS + 5_000 });
+
+  for (const a of attempts) {
+    try {
+      const { data, model } = await withTimeout(a.run(), a.timeout, "AI request timed out");
+      return json(sanitizeAiPlan(data, lang, model));
+    } catch (err) {
+      const reason = reasonOf(err, userKey, env.OPENAI_API_KEY, env.HF_TOKEN);
+      reasons.push(`${a.provider}: ${reason}`);
+      log("warn", "ai_provider_failed", req, { provider: a.provider, reason, status: err instanceof OpenAIError || err instanceof HfError ? err.status : undefined });
+    }
   }
+  return json(planFallback(prompt, lang, reasons.join(" | ").slice(0, 300)));
 }

@@ -65,7 +65,7 @@ export default function Home() {
               <span className="h-3 w-3 rounded-full bg-[var(--nvx-chrome-zoom)]" aria-hidden />
               <span className="absolute left-1/2 -translate-x-1/2 font-mono text-xs text-code-muted">setup.sh — zsh</span>
             </div>
-            <pre className="overflow-x-auto bg-code-bg p-5 font-mono text-[13px] leading-7 text-code-fg">
+            <pre tabIndex={0} aria-label="Example setup commands" className="focus-ring overflow-x-auto bg-code-bg p-5 font-mono text-[13px] leading-7 text-code-fg">
               {SAMPLE.split("\n").map((line, i) => (
                 <div key={i}>
                   <span className="select-none text-code-muted">{String(i + 1).padStart(2, " ")} </span>

@@ -30,7 +30,7 @@ export function redactSecrets(text: string, ...secrets: (string | undefined)[]):
     .replace(/\b(cfat|cfut)_[A-Za-z0-9]{8,}/g, "$1_***");
 }
 
-function instructions(lang: Lang): string {
+export function instructions(lang: Lang): string {
   const catalog = TEMPLATES.map(
     (t) => `- ${t.id}: ${t.name.en} — ${t.summary.en} [runtimes: ${t.runtimes.join(", ")}; add-ons: ${t.supportedAddons.join(", ")}]`
   ).join("\n");

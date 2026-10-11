@@ -9,7 +9,12 @@
 | [`package.json`](../../package.json) | dependencies, npm scripts ([npm-scripts.md](./npm-scripts.md)) |
 | [`next.config.ts`](../../next.config.ts) | Cache Components, security headers, real-404 rewrite, dev bindings |
 | [`wrangler.jsonc`](../../wrangler.jsonc) | Worker config, vars, rate limits, D1 binding `DB` |
-| [`migrations/0001_schema_meta.sql`](../../migrations/0001_schema_meta.sql), [`migrations/0002_chat_history.sql`](../../migrations/0002_chat_history.sql) | D1 migrations ของ `nvx-db` ([d1-schema.md](./d1-schema.md)) |
+| [`migrations/0001_schema_meta.sql`](../../migrations/0001_schema_meta.sql), [`migrations/0002_chat_history.sql`](../../migrations/0002_chat_history.sql), [`0003_chat_runtime.sql`](../../migrations/0003_chat_runtime.sql), [`0004_factory.sql`](../../migrations/0004_factory.sql), [`0005_channels.sql`](../../migrations/0005_channels.sql) | D1 migrations ของ `nvx-db` ([d1-schema.md](./d1-schema.md)) |
+| [`agents/orchestrator/`](../../agents/orchestrator/agent.json) | นิยาม agent (`agent.json`) และแอป Python อ้างอิง (OpenAI Agents API, self-hosted executor) |
+| [`src/app/chat/page.tsx`](../../src/app/chat/page.tsx), [`src/app/chat/dev/page.tsx`](../../src/app/chat/dev/page.tsx), [`src/app/factory/page.tsx`](../../src/app/factory/page.tsx) | หน้า User Chat, Dev Chat, Sandbox Factory |
+| [`src/components/chat/`](../../src/components/chat/chat-app.tsx), [`src/components/factory/factory-app.tsx`](../../src/components/factory/factory-app.tsx) | UI แชต, แผง Sandbox, Markdown renderer, ฟอร์ม Factory |
+| [`src/lib/chat/turn-route.ts`](../../src/lib/chat/turn-route.ts), [`plain-turn.ts`](../../src/lib/chat/plain-turn.ts), [`turn.ts`](../../src/lib/chat/turn.ts), [`limits.ts`](../../src/lib/chat/limits.ts), [`store.ts`](../../src/lib/chat/store.ts) | handler ของแชต, provider chain, agent runner, โควตา, D1 |
+| [`src/lib/ai/workers-ai.ts`](../../src/lib/ai/workers-ai.ts), [`src/lib/ai/hf.ts`](../../src/lib/ai/hf.ts) | client ของ Workers AI และ Hugging Face router |
 | [`open-next.config.ts`](../../open-next.config.ts) | OpenNext: static-assets incremental cache |
 | [`cloudflare-env.d.ts`](../../cloudflare-env.d.ts) | ชนิดของ Cloudflare bindings |
 | [`tsconfig.json`](../../tsconfig.json), [`eslint.config.mjs`](../../eslint.config.mjs), [`vitest.config.mts`](../../vitest.config.mts) | TypeScript, ESLint, Vitest |

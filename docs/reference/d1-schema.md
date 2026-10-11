@@ -85,6 +85,14 @@ Index: `attachments_message_idx` (`message_id`) และ unique index ของ
 
 Index: unique index ของ `key_hash`, `api_clients_active_created_idx` (`created_at DESC`, เฉพาะแถวที่ `revoked_at IS NULL`)
 
+## Migration 0003–0005 (แชต)
+
+- **0003** `conversations.agent_session_id`, `messages.meta` (JSON), ตาราง `usage_counters` (`scope`, `bucket`, `count`, `updated_at`; PK `(scope, bucket)`) และ `attachment_blobs` (`attachment_id` → `attachments.id`, `data` BLOB ≤ 1,500,000 ไบต์)
+- **0004** `conversations.source` (`'chat'|'factory'`, default `'chat'`), `conversations.environment` (`none|openai_hosted|self_hosted`), index `conversations_user_source_updated`
+- **0005** `conversations.channel` (`'user'|'dev'`, default `'user'`; แถวที่มี `agent_session_id` หรือ `source='factory'` ถูกตั้งเป็น `'dev'`), index `conversations_user_channel_updated`, `schema_version = 5`
+
+bucket ของ `usage_counters`: `d:YYYYMMDD` = วันตามเวลาไทย (UTC+7), `h:YYYYMMDDHH` = ชั่วโมง UTC
+
 ## ตารางของระบบ
 
 `d1_migrations` สร้างโดย wrangler เพื่อจำว่า migration ไหน apply ไปแล้ว ห้ามแก้ด้วยมือ

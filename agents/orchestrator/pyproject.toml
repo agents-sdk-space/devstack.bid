@@ -1,0 +1,19 @@
+[project]
+name = "devstack-orchestrator"
+version = "0.1.0"
+description = "Reference app: the 'Image and Research Orchestrator' agent on the OpenAI Agents API (DevStack)"
+requires-python = ">=3.11"
+dependencies = [
+  "openai>=3.28,<4",
+  "httpx>=0.27",
+]
+
+[project.scripts]
+orchestrator = "orchestrator.run:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["orchestrator"]

@@ -1,4 +1,5 @@
 import "server-only";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { rateLimit as memoryRateLimit } from "@/lib/rate-limit";
 
 /**
@@ -14,12 +15,13 @@ interface RateLimitBinding {
   limit(options: { key: string }): Promise<{ success: boolean }>;
 }
 
-export type LimiterName = "NVX_PLAN_AI_LIMITER" | "NVX_PLAN_LIMITER";
+export type LimiterName = "NVX_PLAN_AI_LIMITER" | "NVX_PLAN_LIMITER" | "NVX_CHAT_LIMITER" | "NVX_FACTORY_LIMITER";
 
 async function binding(name: LimiterName): Promise<RateLimitBinding | null> {
   try {
-    const { getCloudflareContext } = await import("@opennextjs/cloudflare");
-    const env = getCloudflareContext().env as unknown as Record<string, unknown>;
+    // Static import: a dynamic import() of this module fails with "Cannot perform I/O on behalf of
+    // a different request" after the first request in an isolate (seen in wrangler preview).
+    const env = (await getCloudflareContext({ async: true })).env as unknown as Record<string, unknown>;
     const b = env[name] as RateLimitBinding | undefined;
     return b && typeof b.limit === "function" ? b : null;
   } catch {
