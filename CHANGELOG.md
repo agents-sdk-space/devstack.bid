@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **In-app docs at `/docs`** (branch `feat/docs-site`, not deployed yet).
+  - Every `docs/**/*.md` is compiled at build time by `scripts/build-docs.mjs`; Workers need no fs at runtime.
+  - Pipeline: remark-gfm, then sanitized HTML, then heading anchors, highlighted code with copy buttons, and Mermaid pre-rendered to SVG (`npm run docs:diagrams`).
+  - Material 3–style layout on the black theme: navigation drawer by section, mobile drawer, on-page TOC, breadcrumbs, prev/next.
+  - Client-side search that works with Thai.
+  - Space Grotesk (docs headings and UI only).
+- Every page has "Copy Markdown" (exact source), "View raw" at `/docs/<slug>.md` (`text/markdown`), and "Edit on GitHub" once `NEXT_PUBLIC_REPO_URL` is set.
+- `/llms.txt` and `/llms-full.txt` for AI agents.
+- Real 404 for unknown doc slugs.
+- "Docs" entry in the desktop nav, the hamburger menu and the command palette (which also lists every doc page).
+- **DevStack signature** (`src/components/brand/terminal-signature.tsx`).
+  - Appears in the footer of every page, on the docs landing and at `/design#signature`.
+  - Terminal window with JS / curl / npm / PyPI tiles; the prompt types real commands.
+  - Pointer-tracking outline glow, hover text glow, cursor pulse, tap glow on touch. Static under reduced motion.
+  - `nvxdev` commands are kept as hidden placeholders (`published: false`, `// MARK: nvxdev`).
+- Docs voice: landing page and user guide rewritten in a Thai community voice ("เรา", from the DevStack team); new page `docs/architecture/docs-site.md`.
+
 ## [0.5.1] - 2026-10-11
 
 ### Added

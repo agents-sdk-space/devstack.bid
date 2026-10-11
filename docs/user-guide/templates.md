@@ -1,6 +1,6 @@
 # การใช้ Stack Template · Using templates
 
-Stack Template คือ "สูตร" ตั้งค่าโปรเจกต์ที่คัดสรรแล้ว แต่ละเทมเพลตถูกเขียนเป็นไฟล์ข้อมูล TypeScript ใน [`src/data/templates/`](../../src/data/templates/index.ts) (ไม่ใช่โค้ดที่ซ่อนอยู่ในคอมโพเนนต์) จึงตรวจทาน ทดสอบ และเพิ่มใหม่ได้ง่าย แนวคิดเต็มอยู่ที่ [concepts/stack-template.md](../concepts/stack-template.md)
+Stack Template คือ "สูตร" ตั้งค่าโปรเจกต์ที่เราคัดสรรและทดสอบมาแล้ว เราเขียนแต่ละเทมเพลตเป็นไฟล์ข้อมูล TypeScript ใน [`src/data/templates/`](../../src/data/templates/index.ts) แทนการซ่อนไว้ในคอมโพเนนต์ ทุกคนในชุมชนจึงเปิดอ่าน ตรวจทาน ทดสอบ และเสนอเทมเพลตใหม่ได้ง่าย หน้านี้จะพาไปรู้จักทั้ง 10 แบบที่เรามีตอนนี้ และวิธีเลือกให้เหมาะกับงานของคุณ แนวคิดเต็มอยู่ที่ [concepts/stack-template.md](../concepts/stack-template.md)
 
 ## เทมเพลตทั้ง 10 แบบ (ณ v0.5)
 
@@ -17,7 +17,7 @@ Stack Template คือ "สูตร" ตั้งค่าโปรเจก�
 | `react-admin-tool` | Internal Tool (React Admin) | Node | typescript, eslint, testing, docker, ci | typescript |
 | `nextjs-ai-chat` | Next.js AI Chat App | Node | typescript, tailwind, eslint, testing, docker, ci | typescript, tailwind, eslint |
 
-ตารางนี้ตรวจกับโค้ดอัตโนมัติด้วย `npm run docs:check` (ทุก template id ต้องปรากฏในเอกสาร) ถ้าเพิ่มเทมเพลตใหม่แล้วไม่อัปเดตเอกสาร CI จะล้ม
+เราไม่อยากให้ตารางนี้ล้าสมัย จึงให้ `npm run docs:check` ตรวจกับโค้ดอัตโนมัติ (ทุก template id ต้องปรากฏในเอกสาร) ถ้ามีคนเพิ่มเทมเพลตใหม่แล้วลืมอัปเดตเอกสาร CI จะล้มทันที
 
 ## หน้า catalog (`/templates`)
 
@@ -27,9 +27,9 @@ Stack Template คือ "สูตร" ตั้งค่าโปรเจก�
 
 ## หน้ารายละเอียดเทมเพลต (`/templates/<id>`)
 
-แสดงทุกขั้นตอนตามลำดับที่ composer สร้างจากค่าเริ่มต้น (ค่าเริ่มต้น: npm, Node LTS, Python 3.12 และ add-on เริ่มต้นของเทมเพลต) แต่ละขั้นมี:
+หน้านี้แสดงทุกขั้นตอนตามลำดับที่ composer สร้างจากค่าเริ่มต้น (ค่าเริ่มต้น: npm, Node LTS, Python 3.12 และ add-on เริ่มต้นของเทมเพลต) แต่ละขั้นมี:
 
-- **ชื่อและคำอธิบาย** ว่าทำไมต้องทำขั้นนี้ ไม่ใช่แค่ทำอะไร
+- **ชื่อและคำอธิบาย** เราตั้งใจเขียนว่าทำไมต้องทำขั้นนี้ ไม่ใช่แค่ทำอะไร
 - **คำสั่ง** สลับดูแบบ macOS/Linux หรือ Windows PowerShell ได้ (ปุ่มด้านบนรายการ)
 - **OS notes** ข้อควรระวังเฉพาะระบบ เช่น nvm-windows
 - **Expected result** และ **Verify** คำสั่งพิสูจน์ว่าขั้นนั้นสำเร็จ
@@ -37,7 +37,7 @@ Stack Template คือ "สูตร" ตั้งค่าโปรเจก�
 
 แถบด้านข้างมี file tree โดยประมาณ ขั้นตอนถัดไป (next steps) และลิงก์เอกสารทางการ id ที่ไม่มีอยู่จะได้ HTTP 404 จริง (ตั้งแต่ v0.3.0, commit `b88a5c5`)
 
-## คำแนะนำในการเลือก
+## เราแนะนำให้เลือกแบบนี้
 
 - ต้องการ UI + API ใน repo เดียว → `nextjs-dashboard` หรือ `nextjs-ai-chat`
 - API ล้วน → `express-api` (Node) หรือ `fastapi-ai` (Python)

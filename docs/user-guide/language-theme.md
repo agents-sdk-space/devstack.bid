@@ -1,6 +1,6 @@
 # ภาษา ธีม และการนำทาง · Language, theme & navigation
 
-แอปรองรับภาษาไทยและอังกฤษเต็มรูปแบบ มีธีมดำ (ค่าเริ่มต้น) และธีมสว่าง และมี command palette สำหรับผู้ที่ชอบใช้คีย์บอร์ด หน้านี้อธิบายวิธีใช้และเหตุผลของการออกแบบ
+DevStack เริ่มจากชุมชนนักพัฒนาไทย เราจึงทำให้ NVX Stack Builder รองรับภาษาไทยและอังกฤษเต็มรูปแบบตั้งแต่วันแรก มีธีมดำ (ค่าเริ่มต้น) และธีมสว่าง มี command palette สำหรับคนที่ชอบใช้คีย์บอร์ด และมีหน้าเอกสารที่คุณกำลังอ่านอยู่นี้ หน้านี้เล่าวิธีใช้และเหตุผลของการออกแบบ
 
 ## ภาษา (TH / EN)
 
@@ -20,13 +20,20 @@
 ## Command palette
 
 - กด **Ctrl + K** (Windows/Linux) หรือ **⌘ + K** (macOS) หรือคลิกช่อง "Search or jump to…"
-- พิมพ์เพื่อค้นหา: หน้าต่าง ๆ (Home, Templates, Builder, Design system), เทมเพลตทุกตัว (เปิดหน้ารายละเอียดหรือเปิดในตัวสร้าง) และ action สลับธีม/ภาษา
+- พิมพ์เพื่อค้นหา: หน้าต่าง ๆ (Home, Templates, Builder, Docs, Design system), เทมเพลตทุกตัว (เปิดหน้ารายละเอียดหรือเปิดในตัวสร้าง), ทุกหน้าในเอกสาร (กลุ่ม "Docs / เอกสาร") และ action สลับธีม/ภาษา
 - ↑↓ เลื่อน, Enter เปิด, Esc ปิด
 
 ## การนำทางบนมือถือ
 
-บนจอเล็ก เมนูจะยุบเป็นปุ่ม hamburger ที่เปิด sheet ด้านข้าง ทุกหน้าถูกทดสอบที่ความกว้าง 390px ว่าไม่มี horizontal scroll ทั้งภาษาไทยและอังกฤษ
+บนจอเล็ก เมนูจะยุบเป็นปุ่ม hamburger ที่เปิด sheet ด้านข้าง ในนั้นมีลิงก์ **เอกสาร (Docs)** ด้วย เราทดสอบทุกหน้าที่ความกว้าง 390px ว่าไม่มี horizontal scroll ทั้งภาษาไทยและอังกฤษ
+
+## หน้าเอกสาร (`/docs`)
+
+- เปิดได้จากเมนูด้านบน (**เอกสาร / Docs**), เมนู hamburger บนมือถือ หรือ command palette
+- เดสก์ท็อปมี navigation drawer ด้านซ้ายแบ่งตามหมวด และ "ในหน้านี้" ด้านขวา บนมือถือกดปุ่มเมนูในแถบเอกสารเพื่อเปิด drawer
+- กด `/` เพื่อไปที่ช่องค้นหาในเอกสาร ค้นได้ทั้งไทยและอังกฤษ
+- ทุกหน้ามี **คัดลอก Markdown**, **ดูไฟล์ดิบ** (`.md`) และปุ่มคัดลอกบนทุกบล็อกโค้ด รายละเอียดเบื้องหลังอยู่ที่ [docs-site.md](../architecture/docs-site.md)
 
 ## อ้างอิง
 
-[`src/components/prefs.tsx`](../../src/components/prefs.tsx), [`src/app/layout.tsx`](../../src/app/layout.tsx), [`src/components/header.tsx`](../../src/components/header.tsx), [`src/components/command-palette.tsx`](../../src/components/command-palette.tsx)
+[`src/components/prefs.tsx`](../../src/components/prefs.tsx), [`src/app/layout.tsx`](../../src/app/layout.tsx), [`src/components/header.tsx`](../../src/components/header.tsx), [`src/components/command-palette.tsx`](../../src/components/command-palette.tsx), [`src/components/docs/docs-shell.tsx`](../../src/components/docs/docs-shell.tsx)

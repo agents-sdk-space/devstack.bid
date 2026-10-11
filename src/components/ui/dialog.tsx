@@ -10,7 +10,7 @@ export const DialogClose = DialogPrimitive.Close;
 
 /**
  * Accessible modal: focus trap, Escape to close, scroll lock, labelled by title/description.
- * `side="right"` renders a sheet (used for mobile navigation).
+ * `side="right"` renders a sheet (used for mobile navigation); `side="left"` a navigation drawer (docs).
  */
 export function DialogContent({
   title,
@@ -24,7 +24,7 @@ export function DialogContent({
 }: ComponentProps<typeof DialogPrimitive.Content> & {
   title: ReactNode;
   description?: ReactNode;
-  side?: "center" | "right";
+  side?: "center" | "right" | "left";
   hideTitle?: boolean;
   closeLabel?: string;
 }) {
@@ -36,7 +36,9 @@ export function DialogContent({
           "fixed z-50 border border-border bg-surface text-fg shadow-lg focus:outline-none",
           side === "center"
             ? "left-1/2 top-1/2 max-h-[85vh] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl p-6 data-[state=open]:animate-pop-in"
-            : "inset-y-0 right-0 h-full w-[min(20rem,85vw)] overflow-y-auto rounded-l-xl p-5 data-[state=open]:animate-sheet-in",
+            : side === "right"
+              ? "inset-y-0 right-0 h-full w-[min(20rem,85vw)] overflow-y-auto rounded-l-xl p-5 data-[state=open]:animate-sheet-in"
+              : "inset-y-0 left-0 h-full w-[min(22.5rem,88vw)] overflow-y-auto rounded-r-2xl p-4 data-[state=open]:animate-drawer-in",
           className
         )}
         {...props}

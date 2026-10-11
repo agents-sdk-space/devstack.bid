@@ -3,16 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Blocks, House, Languages, LayoutGrid, Menu, Moon, Palette, Sun } from "lucide-react";
+import { Blocks, BookOpen, House, Languages, LayoutGrid, Menu, Moon, Palette, Sun } from "lucide-react";
 import { Button, cn, Dialog, DialogContent, DialogTrigger, SearchIcon, Tooltip } from "@/components/ui";
 import { CommandPalette, PaletteTrigger } from "./command-palette";
 import { Mascot } from "./brand/mascot";
+import { TerminalSignature } from "./brand/terminal-signature";
 import { useDarkMode, useLang } from "./prefs";
 
 const NAV = [
   { href: "/", key: "nav.home", Icon: House },
   { href: "/templates", key: "nav.templates", Icon: LayoutGrid },
   { href: "/builder", key: "nav.builder", Icon: Blocks },
+  { href: "/docs", key: "nav.docs", Icon: BookOpen },
   { href: "/design", key: "nav.design", Icon: Palette },
 ] as const;
 
@@ -131,6 +133,13 @@ export function Footer() {
   const { t } = useLang();
   return (
     <footer className="mt-20 border-t border-border bg-surface py-10 text-center text-xs leading-relaxed text-subtle">
+      {/* DevStack signature: on every page, above the existing footer line. */}
+      <div className="mx-auto mb-6 flex max-w-3xl flex-col items-center gap-3 px-4">
+        <TerminalSignature className="w-52 sm:w-60" />
+        <p className="font-mono text-[11px] tracking-wide text-muted">
+          DevStack · <a href="https://devstack.bid" className="link">devstack.bid</a>
+        </p>
+      </div>
       <p className="mx-auto max-w-3xl px-4">{t("footer.text")}</p>
     </footer>
   );

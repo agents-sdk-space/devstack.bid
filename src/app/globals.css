@@ -78,6 +78,7 @@
   --animate-pop-in: nvx-pop-in var(--nvx-duration-base) var(--nvx-ease-emphasized);
   --animate-slide-in: nvx-slide-in var(--nvx-duration-slow) var(--nvx-ease-standard);
   --animate-sheet-in: nvx-sheet-in var(--nvx-duration-slow) var(--nvx-ease-emphasized);
+  --animate-drawer-in: nvx-drawer-in var(--nvx-duration-slow) var(--nvx-ease-emphasized);
 }
 
 @keyframes nvx-fade-in {
@@ -91,6 +92,10 @@
 }
 @keyframes nvx-sheet-in {
   from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes nvx-drawer-in {
+  from { transform: translateX(-100%); }
   to { transform: translateX(0); }
 }
 @keyframes nvx-blink {
@@ -299,4 +304,523 @@ samp {
   50% { transform: scale(0.92, 1.1); }
   75% { transform: scale(1.04, 0.97); }
   100% { transform: scale(1, 1); }
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * In-app docs (/docs, src/components/docs/*). Material 3 patterns (navigation drawer, state
+ * layers, tonal containers, large rounded shapes) adapted to the NVX black theme. Everything is
+ * scoped under .docs-root / .docs-* so no other page changes.
+ * Fonts: Space Grotesk (--font-space, loaded only by src/app/docs/layout.tsx) for headings and UI
+ * chrome; Thai glyphs fall back to IBM Plex Sans Thai; code stays IBM Plex Mono.
+ * ------------------------------------------------------------------------------------------- */
+@layer components {
+  .docs-root {
+    --docs-font: var(--font-space), var(--font-thai), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  }
+  .docs-ui,
+  .docs-display,
+  .docs-prose :is(h2, h3, h4) {
+    font-family: var(--docs-font);
+  }
+  .docs-display {
+    letter-spacing: -0.02em;
+    line-height: 1.12;
+  }
+  html[data-lang="th"] .docs-display,
+  .docs-display:lang(th) {
+    letter-spacing: 0;
+  }
+
+  /* M3 state layer: an on-surface overlay at 8% hover / 10% focus / 12% pressed. */
+  .docs-state {
+    position: relative;
+    isolation: isolate;
+  }
+  .docs-state::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--nvx-fg);
+    opacity: 0;
+    transition: opacity var(--nvx-duration-fast, 120ms) var(--nvx-ease-standard);
+    pointer-events: none;
+  }
+  .docs-state:hover::before {
+    opacity: 0.08;
+  }
+  .docs-state:focus-visible::before {
+    opacity: 0.1;
+  }
+  .docs-state:active::before {
+    opacity: 0.12;
+  }
+  /* Active drawer item = M3 "secondary container". */
+  .docs-active {
+    background: var(--nvx-primary-soft);
+    color: var(--nvx-primary-soft-fg);
+  }
+  .docs-card {
+    background: var(--nvx-surface);
+  }
+  .docs-hero {
+    background:
+      radial-gradient(70% 90% at 0% 0%, var(--nvx-glow-1), transparent 70%),
+      radial-gradient(50% 70% at 100% 0%, var(--nvx-glow-2), transparent 70%),
+      var(--nvx-surface);
+  }
+
+  /* Rendered Markdown */
+  .docs-prose {
+    font-size: 15.5px;
+    line-height: 1.8;
+    color: var(--nvx-fg);
+    overflow-wrap: anywhere;
+  }
+  .docs-prose > * + * {
+    margin-top: 1rem;
+  }
+  .docs-prose :is(h2, h3, h4) {
+    position: relative;
+    scroll-margin-top: 7.5rem;
+    font-weight: 600;
+    color: var(--nvx-fg);
+    letter-spacing: -0.01em;
+  }
+  html[data-lang="th"] .docs-prose :is(h2, h3, h4) {
+    letter-spacing: 0;
+  }
+  .docs-prose h2 {
+    margin-top: 2.75rem;
+    padding-top: 0.25rem;
+    font-size: 1.6rem;
+    line-height: 1.3;
+  }
+  .docs-prose h3 {
+    margin-top: 2rem;
+    font-size: 1.22rem;
+    line-height: 1.4;
+  }
+  .docs-prose h4 {
+    margin-top: 1.5rem;
+    font-size: 1.05rem;
+  }
+  .docs-anchor {
+    margin-left: 0.4em;
+    color: var(--nvx-subtle);
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity 120ms;
+  }
+  .docs-prose :is(h2, h3, h4):hover .docs-anchor,
+  .docs-anchor:focus-visible {
+    opacity: 1;
+  }
+  .docs-prose a:not(.docs-anchor) {
+    color: var(--nvx-link);
+    text-underline-offset: 3px;
+  }
+  .docs-prose a:not(.docs-anchor):hover {
+    text-decoration: underline;
+  }
+  .docs-prose strong {
+    font-weight: 600;
+  }
+  .docs-prose :is(ul, ol) {
+    padding-left: 1.4rem;
+  }
+  .docs-prose ul {
+    list-style: disc;
+  }
+  .docs-prose ol {
+    list-style: decimal;
+  }
+  .docs-prose li + li,
+  .docs-prose li > :is(ul, ol) {
+    margin-top: 0.35rem;
+  }
+  .docs-prose li::marker {
+    color: var(--nvx-subtle);
+  }
+  .docs-prose :not(pre) > code {
+    border-radius: 6px;
+    background: var(--nvx-surface-2);
+    padding: 0.12em 0.4em;
+    font-size: 0.86em;
+    color: var(--nvx-fg);
+  }
+  .docs-repo-ref {
+    color: var(--nvx-fg);
+  }
+  /* Blockquote as a tonal "info" container. */
+  .docs-prose blockquote {
+    border-radius: 20px;
+    border: 1px solid var(--nvx-border);
+    background: var(--nvx-surface);
+    padding: 0.9rem 1.15rem;
+    color: var(--nvx-muted);
+  }
+  .docs-prose blockquote > * + * {
+    margin-top: 0.6rem;
+  }
+  .docs-prose hr {
+    margin: 2.5rem 0;
+    border-color: var(--nvx-border);
+  }
+  .docs-prose img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .docs-table {
+    overflow-x: auto;
+    border-radius: 20px;
+    border: 1px solid var(--nvx-border);
+    background: var(--nvx-surface);
+  }
+  .docs-table:focus-visible {
+    outline: 2px solid var(--nvx-ring);
+    outline-offset: 2px;
+  }
+  .docs-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .docs-table :is(th, td) {
+    padding: 0.6rem 0.9rem;
+    text-align: left;
+    vertical-align: top;
+    border-top: 1px solid var(--nvx-border);
+    min-width: 7rem;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+  .docs-table thead th {
+    border-top: 0;
+    background: var(--nvx-surface-2);
+    font-family: var(--docs-font);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .docs-table code {
+    white-space: nowrap;
+  }
+
+  .docs-code {
+    overflow: hidden;
+    border-radius: 20px;
+    border: 1px solid var(--nvx-code-border);
+    background: var(--nvx-code-bg);
+    color: var(--nvx-code-fg);
+  }
+  .docs-code-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--nvx-code-border);
+    background: rgb(255 255 255 / 0.04);
+    padding: 0.35rem 0.5rem 0.35rem 1rem;
+  }
+  .docs-code-lang {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: lowercase;
+    color: var(--nvx-code-muted);
+  }
+  .docs-copy {
+    position: relative;
+    isolation: isolate;
+    border-radius: 9999px;
+    padding: 0.2rem 0.8rem;
+    font-family: var(--docs-font);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--nvx-code-fg);
+    cursor: pointer;
+  }
+  .docs-copy::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: #fff;
+    opacity: 0.06;
+    transition: opacity 120ms;
+  }
+  .docs-copy:hover::before {
+    opacity: 0.14;
+  }
+  .docs-copy:focus-visible {
+    outline: 2px solid var(--nvx-ring);
+    outline-offset: 1px;
+  }
+  .docs-copy[data-copied] {
+    color: var(--nvx-code-prompt);
+  }
+  .docs-code pre,
+  .docs-diagram pre {
+    overflow-x: auto;
+    padding: 0.9rem 1rem 1rem;
+    font-size: 13px;
+    line-height: 1.65;
+    overflow-wrap: normal;
+  }
+  .docs-code pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+  .docs-diagram {
+    overflow: hidden;
+    border-radius: 20px;
+    border: 1px solid var(--nvx-border);
+    background: #000;
+  }
+  .docs-diagram-scroll {
+    overflow-x: auto;
+    padding: 1rem;
+  }
+  .docs-diagram-scroll:focus-visible {
+    outline: 2px solid var(--nvx-ring);
+    outline-offset: -2px;
+  }
+  .docs-diagram img {
+    display: block;
+    max-width: none;
+    height: auto;
+  }
+  .docs-diagram details {
+    border-top: 1px solid var(--nvx-border);
+    color: #f5f5f7;
+  }
+  .docs-diagram summary {
+    cursor: pointer;
+    padding: 0.6rem 1rem;
+    font-family: var(--docs-font);
+    font-size: 13px;
+    color: #c7c7cc;
+  }
+
+  /* Syntax colours (Xcode dark-like). Code windows are always dark in both themes. */
+  .docs-code .hljs-comment,
+  .docs-code .hljs-quote {
+    color: #7f8c98;
+    font-style: italic;
+  }
+  .docs-code :is(.hljs-keyword, .hljs-selector-tag, .hljs-built_in, .hljs-literal) {
+    color: #ff7ab2;
+  }
+  .docs-code :is(.hljs-string, .hljs-regexp, .hljs-addition) {
+    color: #fc6a5d;
+  }
+  .docs-code :is(.hljs-number, .hljs-symbol) {
+    color: #d9c97c;
+  }
+  .docs-code :is(.hljs-title, .hljs-section, .hljs-function .hljs-title) {
+    color: #67b7a4;
+  }
+  .docs-code :is(.hljs-attr, .hljs-attribute, .hljs-variable, .hljs-template-variable, .hljs-property) {
+    color: #5dd8ff;
+  }
+  .docs-code :is(.hljs-meta, .hljs-type, .hljs-params) {
+    color: #d0a8ff;
+  }
+  .docs-code .hljs-deletion {
+    color: #ff8170;
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * DevStack signature (src/components/brand/terminal-signature.tsx). Sized in container-query
+ * units (cqw) so it scales crisply. --sig-x/--sig-y/--sig-o are set from the pointer; the outline
+ * light is a radial gradient masked to the border ring. Static under prefers-reduced-motion.
+ * ------------------------------------------------------------------------------------------- */
+@layer components {
+  .sig-wrap {
+    container-type: inline-size;
+    width: 100%;
+    isolation: isolate;
+  }
+  .sig {
+    --sig-line: #fff;
+    --sig-glow: var(--nvx-brand-pink);
+    --sig-b: max(2px, 1.15cqw);
+    --sig-x: 50%;
+    --sig-y: 0%;
+    --sig-o: 0;
+    position: relative;
+    aspect-ratio: 1.37;
+    display: flex;
+    flex-direction: column;
+    border: var(--sig-b) solid var(--sig-line);
+    border-radius: 4.2cqw;
+    background: #000;
+    color: #fff;
+    /* thin dark keyline so the white outline also reads on the light theme */
+    box-shadow: 0 0 0 max(1px, 0.25cqw) #000;
+    font-family: var(--font-mono);
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+  /* Pointer light on the outline ring + soft bloom outside it. */
+  .sig::before,
+  .sig::after {
+    content: "";
+    position: absolute;
+    inset: calc(-1 * var(--sig-b));
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: var(--sig-o);
+    transition: opacity 260ms var(--nvx-ease-standard);
+    background: radial-gradient(circle at var(--sig-x) var(--sig-y), #fff 0, var(--sig-glow) 14cqw, transparent 38cqw);
+  }
+  .sig::after {
+    padding: var(--sig-b);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  }
+  .sig::before {
+    inset: calc(-1 * var(--sig-b) - 2.4cqw);
+    border-radius: 6cqw;
+    filter: blur(3cqw);
+    z-index: -1;
+    opacity: calc(var(--sig-o) * 0.75);
+  }
+  .sig-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 12.5%;
+    padding: 0 3cqw 0 2.6cqw;
+    border-bottom: max(1px, 0.55cqw) solid var(--sig-line);
+  }
+  .sig-dots {
+    display: flex;
+    gap: 1.6cqw;
+  }
+  .sig-dots i {
+    width: 2.6cqw;
+    height: 2.6cqw;
+    border-radius: 9999px;
+    border: max(1px, 0.5cqw) solid var(--sig-line);
+  }
+  .sig-glyph {
+    font-size: 4cqw;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .sig-body {
+    display: grid;
+    grid-template-columns: 16% 1fr;
+    flex: 1;
+    min-height: 0;
+  }
+  .sig-side {
+    display: grid;
+    grid-template-rows: repeat(4, 1fr);
+    border-right: max(1px, 0.55cqw) solid var(--sig-line);
+  }
+  .sig-tile {
+    display: grid;
+    place-items: center;
+    color: #fff;
+    transition: color 200ms, background-color 200ms, filter 200ms;
+  }
+  .sig-tile + .sig-tile {
+    border-top: max(1px, 0.45cqw) solid var(--sig-line);
+  }
+  .sig-tile[data-active] {
+    background: rgb(255 255 255 / 0.07);
+    filter: drop-shadow(0 0 1.2cqw var(--sig-glow));
+  }
+  .sig-mark {
+    width: 7.5cqw;
+    height: 7.5cqw;
+  }
+  .sig-curl {
+    font-size: 2.9cqw;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+  .sig-pypi {
+    display: grid;
+    justify-items: center;
+    gap: 0.4cqw;
+    font-family: var(--font-sans);
+    font-size: 2.6cqw;
+    line-height: 1;
+  }
+  .sig-pypi .sig-mark {
+    width: 5.8cqw;
+    height: 5.8cqw;
+  }
+  .sig-pane {
+    margin: 0.8cqw 0.8cqw 0.8cqw 0.8cqw;
+    border: max(1px, 0.35cqw) solid rgb(255 255 255 / 0.55);
+    border-radius: 2.6cqw 2.6cqw 3cqw 2.6cqw;
+    padding: 2.4cqw 2.6cqw;
+    overflow: hidden;
+  }
+  .sig-prompt {
+    font-size: 3.1cqw;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    transition: text-shadow 220ms;
+  }
+  .sig-caret {
+    font-weight: 700;
+  }
+  .sig-cursor {
+    display: inline-block;
+    width: 1.5cqw;
+    height: 3.6cqw;
+    margin-left: 0.5cqw;
+    vertical-align: -0.6cqw;
+    background: #fff;
+    box-shadow: 0 0 0 transparent;
+  }
+  .sig[data-live="true"] .sig-cursor {
+    animation: nvx-sig-pulse 1.6s ease-in-out infinite;
+  }
+  /* Text glow on hover / touch. */
+  .sig:hover .sig-prompt,
+  .sig[data-touched] .sig-prompt,
+  .sig:hover .sig-glyph {
+    text-shadow: 0 0 1cqw rgb(255 255 255 / 0.85), 0 0 3cqw var(--sig-glow);
+  }
+  .sig:hover .sig-tile {
+    filter: drop-shadow(0 0 0.8cqw rgb(255 255 255 / 0.55));
+  }
+  .sig:hover .sig-tile[data-active] {
+    filter: drop-shadow(0 0 1.4cqw var(--sig-glow));
+  }
+  .sig:hover .sig-cursor {
+    box-shadow: 0 0 1.5cqw var(--sig-glow), 0 0 0.6cqw #fff;
+  }
+  @keyframes nvx-sig-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0.4cqw rgb(255 255 255 / 0.6); }
+    50% { opacity: 0.45; box-shadow: 0 0 1.6cqw var(--nvx-brand-pink); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sig::before,
+    .sig::after {
+      display: none;
+    }
+    .sig-cursor {
+      animation: none !important;
+    }
+    .sig-tile,
+    .sig-prompt {
+      transition: none;
+    }
+  }
 }

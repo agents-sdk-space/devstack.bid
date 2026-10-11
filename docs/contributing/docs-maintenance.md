@@ -16,6 +16,15 @@
 
 ผลลัพธ์: พิมพ์ทุกปัญหาแล้ว exit code 1 ถ้ามีปัญหา, 0 ถ้าผ่าน ใช้ `npm run docs:check -- --report` เพื่อพิมพ์จำนวนตัวอักษรของทุกหน้า
 
+## เอกสารในแอป (`/docs`) อัปเดตเอง
+
+ไฟล์ทุกไฟล์ใน `docs/` ถูกคอมไพล์เป็นหน้า `/docs/<slug>` ทุกครั้งที่ build (`scripts/build-docs.mjs`, ดู [docs-site.md](../architecture/docs-site.md)) จึงไม่มีอะไรต้อง sync ด้วยมือ สิ่งที่ต้องทำเพิ่มมีแค่:
+
+- **เพิ่มหน้าใหม่** ใส่ชื่อไฟล์ใน `SECTIONS` ของ `scripts/build-docs.mjs` เพื่อกำหนดลำดับใน drawer (ถ้าไม่ใส่ หน้าจะไปอยู่ท้ายหมวดของโฟลเดอร์นั้นตามตัวอักษร) และเพิ่มลิงก์ใน `docs/README.md`
+- **แก้ diagram Mermaid** รัน `PLAYWRIGHT_DIR=/tmp/pw npm run docs:diagrams` แล้ว commit ไฟล์ SVG ใหม่ใน `public/docs-assets/diagrams/`
+- หัวข้อ `#` แรกของไฟล์คือชื่อหน้า ส่วนชื่อสั้นใน drawer คือข้อความก่อน " · " หรือ " — " และย่อหน้าแรกคือคำอธิบาย (meta description และ llms.txt)
+- ลิงก์ระหว่างไฟล์ให้ใช้ path สัมพัทธ์ไปไฟล์ `.md` ตามปกติ ระบบแปลงเป็น URL ของ `/docs` ให้เอง
+
 ## Checklist สำหรับทุก PR (คัดลอกไปใส่คำอธิบาย PR)
 
 ```markdown
@@ -25,6 +34,7 @@
 - [ ] เพิ่ม/เปลี่ยน env var หรือ binding → config-env.md, env-secrets.md, .env.example / .dev.vars.example, DEPLOY.md
 - [ ] เปลี่ยน /api/plan (request, response, status code, limit) → api-plan.md, ai-planner.md, api-hardening.md
 - [ ] เพิ่ม npm script → npm-scripts.md
+- [ ] เพิ่มหน้าเอกสาร → `SECTIONS` ใน scripts/build-docs.mjs + docs/README.md; แก้ Mermaid → `npm run docs:diagrams`
 - [ ] เพิ่ม/ย้ายไฟล์สำคัญ → file-map.md, platform-manifest.json
 - [ ] เปลี่ยน token/คอมโพเนนต์/ดีไซน์ → UI-FRAMEWORK.md, /design, design-system.md
 - [ ] เปลี่ยนพฤติกรรมที่ผู้ใช้เห็น → user-guide/ ที่เกี่ยวข้อง
