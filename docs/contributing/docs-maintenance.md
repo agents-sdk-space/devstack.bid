@@ -66,4 +66,4 @@
 
 ## CI
 
-workflow [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) รัน lint, typecheck, test และ docs:check ทุก push/PR (ยังไม่มีการ push repo นี้ขึ้น GitHub ในขณะนี้ ไฟล์จึงพร้อมใช้เมื่อ push)
+workflow [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) รัน lint, typecheck, test และ docs:check ทุก push/PR. workflow [`.github/workflows/jekyll-gh-pages.yml`](../../.github/workflows/jekyll-gh-pages.yml) build GitHub Pages. องค์กรกำหนดให้ทุก action ปักเป็น commit SHA เต็ม (นโยบาย `sha_pinning_required`) แท็กแบบ `actions/checkout@v4` ทำให้เช็คล้มและคอมมิตบน `main` ขึ้นกากบาทแดง. deploy Pages รันเฉพาะ push ที่ `main`
