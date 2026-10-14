@@ -55,7 +55,7 @@ npx wrangler d1 export nvx-db --remote --output backup.sql       # export เป
 ผลตรวจเมื่อ 11 ต.ค. 2026: `GET /accounts/<id>/r2/buckets` ตอบ error `10042` "Please enable R2 through the Cloudflare Dashboard"
 
 1. เจ้าของบัญชีเปิด R2 ใน Cloudflare dashboard (R2 Object Storage) ขั้นนี้ต้องยอมรับเงื่อนไขและการคิดเงิน มี free tier แต่ส่วนเกินจะถูกเรียกเก็บ
-2. ให้ token ที่ใช้มีสิทธิ์ **Account › Workers R2 Storage: Edit** (token label redacted ตอนนี้สร้าง D1 ได้ แต่ยังไม่ได้ทดสอบสิทธิ์ R2)
+2. ให้ token ที่ใช้มีสิทธิ์ **Account › Workers R2 Storage: Edit** (deployment token currently creates D1; R2 permissions have not been tested)
 3. สร้าง bucket: `npx wrangler r2 bucket create nvx-assets`
 4. เพิ่ม binding ใน `wrangler.jsonc`: `"r2_buckets": [{ "binding": "ASSETS_BUCKET", "bucket_name": "nvx-assets" }]` แล้วรัน `npm run cf:typegen` และเพิ่ม `ASSETS_BUCKET` ในตาราง binding ของ [config-env.md](../reference/config-env.md)
 5. bucket ต้อง private (ไม่เปิด public URL หรือ r2.dev) ไฟล์เสิร์ฟผ่าน Worker ที่ตรวจสิทธิ์แล้วเท่านั้น

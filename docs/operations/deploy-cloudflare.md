@@ -58,7 +58,7 @@ Workers มี free tier; ค่าใช้จ่ายหลักคือ Op
 
 ## บันทึก deploy v0.5.1: โดเมน devstack.bid (11 ต.ค. 2026)
 
-- **ตรวจ token:** token label redacted อยู่บัญชีเดียวกันแต่ไม่มีสิทธิ์ Workers Scripts จึงใช้ token label redacted (Workers Scripts: Edit + Zone: Read) ผูกโดเมนผ่าน `PUT /accounts/{id}/workers/domains` ได้ทั้ง `devstack.bid` และ `www.devstack.bid` และ Cloudflare สร้าง `AAAA 100::` แบบ proxied ให้เอง
+- **ตรวจ token:** The DNS-only token belongs to the same account but lacks Workers Scripts permission, so deployment used a token with Workers Scripts: Edit and Zone: Read. Cloudflare then attached both `devstack.bid` and `www.devstack.bid` and created the proxied `AAAA 100::` records.
 - **โค้ด:** `routes` (custom_domain) ใน `wrangler.jsonc`, redirect www → apex ใน `next.config.ts`, `metadataBase` = devstack.bid, HSTS ไม่มี includeSubDomains แล้ว deploy ได้ version `[deployment ID redacted]` (09:15 ICT)
 - **ใบรับรอง:** ออกทันที (Google Trust Services, SAN `devstack.bid` + `*.devstack.bid`)
 - **smoke test บนโดเมน:**
@@ -74,7 +74,7 @@ Workers มี free tier; ค่าใช้จ่ายหลักคือ Op
 ## บันทึก deploy v0.6.0: docs ในแอป + signature (11 ต.ค. 2026)
 
 - **ที่มา:** merge `feat/docs-site` เข้า `main` แล้ว bump เป็น 0.6.0; lint, typecheck, tests, docs:check และ cf:build ผ่านทั้งหมดก่อน deploy
-- **deploy:** ใช้ token label redacted; ได้ version `[deployment ID redacted]` (11:18 ICT) ขนาด upload 9467.97 KiB (gzip 1810.44 KiB); custom domain devstack.bid + www ยังอยู่ครบ
+- **deploy:** ใช้ deployment token; ได้ version `[deployment ID redacted]` (11:18 ICT) ขนาด upload 9467.97 KiB (gzip 1810.44 KiB); custom domain devstack.bid + www ยังอยู่ครบ
 - **ตรวจบนเว็บจริง:**
   - ทุกหน้า รวม `/docs` และหน้าย่อย ได้ 200; slug ที่ไม่มีได้ 404 จริง
   - raw `.md` ทั้ง 43 ไฟล์ตรงกับต้นฉบับทุก byte (`text/markdown`, ACAO `*`); manifest ก็ตรง

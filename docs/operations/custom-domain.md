@@ -29,7 +29,7 @@ workers.dev ยังเปิดอยู่เป็นทางสำรอ�
 - Account › **Workers Scripts: Edit** (ต้องเข้าถึง Worker ปลายทาง)
 - สิทธิ์ระดับ zone ของ `devstack.bid` อย่างน้อย **Zone: Read** (ในการ deploy ครั้งนี้ token ที่มี Workers Scripts: Edit + Zone: Read ทำงานได้)
 
-ผลการตรวจ token เมื่อ 11 ต.ค.: token `CLOUDFLARE_API_TOKEN` อยู่บัญชีเดียวกัน อ่าน zone และ DNS ได้ แต่ **ไม่มีสิทธิ์ Workers Scripts เลย** (list scripts ได้ผลว่าง และ `/workers/scripts/nvx-stack-builder/settings` ตอบ "No access to the specified resource", `/workers/domains` ตอบ Authentication error) จึงผูกโดเมนกับ Worker ไม่ได้ การผูกจึงใช้ token `CLOUDFLARE_API_TOKEN` (Workers Scripts: Edit + Zone: Read) ส่วน token label redacted ใช้แค่อ่าน DNS เพื่อยืนยันผล ถ้าต้องการให้ token เดียวทำได้ทั้งหมด ให้เพิ่ม **Account › Workers Scripts: Edit** ให้ token label redacted
+ผลการตรวจ token เมื่อ 11 ต.ค.: token `CLOUDFLARE_API_TOKEN` อยู่บัญชีเดียวกัน อ่าน zone และ DNS ได้ แต่ **ไม่มีสิทธิ์ Workers Scripts เลย** (list scripts ได้ผลว่าง และ `/workers/scripts/nvx-stack-builder/settings` ตอบ "No access to the specified resource", `/workers/domains` ตอบ Authentication error) จึงผูกโดเมนกับ Worker ไม่ได้ การผูกจึงใช้ token `CLOUDFLARE_API_TOKEN` (Workers Scripts: Edit + Zone: Read) ส่วน token ที่อ่าน DNS ได้ใช้แค่ยืนยันผล ถ้าต้องการให้ token เดียวทำได้ทั้งหมด ให้เพิ่ม **Account › Workers Scripts: Edit** ให้ deployment token
 
 ## HSTS
 

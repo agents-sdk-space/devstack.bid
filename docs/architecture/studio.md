@@ -1,10 +1,10 @@
-# Studio architecture (token label redacted merge)
+# Studio architecture (DEVSTACK merge)
 
-Studio (`/studio`) คือแอป token label redacted v0.2.0 ของทีม (Vite + React) ที่เรารวมเข้ากับ devstack.bid ใน v0.8.0-rc หน้านี้อธิบายว่าเราต่อมันเข้ากับ Worker เดิมอย่างไร ทำไมเลือกวิธีนี้ และอะไรที่ต้องระวัง
+Studio (`/studio`) คือแอป DEVSTACK v0.2.0 ของทีม (Vite + React) ที่เรารวมเข้ากับ devstack.bid ใน v0.8.0-rc หน้านี้อธิบายว่าเราต่อมันเข้ากับ Worker เดิมอย่างไร ทำไมเลือกวิธีนี้ และอะไรที่ต้องระวัง
 
 ## ทำไมเป็น sub-app ไม่ใช่หน้า Next.js
 
-token label redacted เป็น SPA ที่ต้องการ 3 อย่างที่ Next.js App Router ของเราไม่มี: Web Worker ของ Monaco, ไฟล์ WASM ของ PGlite (~10 MB) ที่โหลดผ่าน `new URL(..., import.meta.url)` และ header เฉพาะของตัวเอง (CSP ที่ยอมให้ compile WASM, COOP/COEP และหน้า preview ที่มี CSP แยก) ถ้ายัดเข้าไปใน Next.js เราต้องแปลง bundler จาก Vite เป็น Turbopack และเสี่ยงให้ header เหล่านี้ไหลไปถึงหน้าอื่น เราจึงเลือก:
+DEVSTACK เป็น SPA ที่ต้องการ 3 อย่างที่ Next.js App Router ของเราไม่มี: Web Worker ของ Monaco, ไฟล์ WASM ของ PGlite (~10 MB) ที่โหลดผ่าน `new URL(..., import.meta.url)` และ header เฉพาะของตัวเอง (CSP ที่ยอมให้ compile WASM, COOP/COEP และหน้า preview ที่มี CSP แยก) ถ้ายัดเข้าไปใน Next.js เราต้องแปลง bundler จาก Vite เป็น Turbopack และเสี่ยงให้ header เหล่านี้ไหลไปถึงหน้าอื่น เราจึงเลือก:
 
 - โค้ดอยู่ใน `studio/` (มี `package.json` และ lockfile ของตัวเอง) dependency หนัก ๆ (Monaco, PGlite, Sucrase, xterm, Vite 8) ไม่ปนกับ tree ของ Next.js
 - `scripts/build-studio.mjs` (รันใน `prebuild`) build เป็นไฟล์ static ลง `public/studio/` แล้ว OpenNext คัดลอกเข้า `.open-next/assets` ตามปกติ
@@ -40,7 +40,7 @@ CSP ของ Studio ต่างจากของเว็บหลักส�
 
 ## Static preview (แทน WebContainers)
 
-token label redacted เดิมรัน Node.js + `npm install` + Vite dev server ใน WebContainers ของ StackBlitz ซึ่งเป็น runtime ปิดและต้องมี license เชิงพาณิชย์สำหรับการใช้งาน production บางแบบ เราเอาออกทั้งหมด (v0.8.0-rc.2) แล้วใช้ preview แบบ static ที่เป็น open source ทั้งหมด:
+DEVSTACK เดิมรัน Node.js + `npm install` + Vite dev server ใน WebContainers ของ StackBlitz ซึ่งเป็น runtime ปิดและต้องมี license เชิงพาณิชย์สำหรับการใช้งาน production บางแบบ เราเอาออกทั้งหมด (v0.8.0-rc.2) แล้วใช้ preview แบบ static ที่เป็น open source ทั้งหมด:
 
 1. `studio/src/sandbox/staticBundler.ts` แปลงทุกไฟล์ `.js/.jsx/.ts/.tsx` ใน `src/` ด้วย [Sucrase](https://github.com/alangpierce/sucrase) (MIT, JSX automatic runtime + ESM → CommonJS) เก็บ `.css` ไว้ inject และแปลงไฟล์ใน `public/` เป็น data URL (แทน string `"/assets/x.png"` ในโค้ด) ใช้ entry จาก `<script type="module">` ใน `index.html`
 2. `studio/src/preview/vendor.ts` คือ runtime (React 19 + ReactDOM) build เป็น IIFE ด้วย `vite.preview.config.ts` ออกมาเป็นไฟล์ `vendor.js` ในโฟลเดอร์ preview (ไฟล์ที่ได้จากการ build ราว 220 KB) Studio โหลดครั้งเดียว
@@ -52,7 +52,7 @@ token label redacted เดิมรัน Node.js + `npm install` + Vite dev se
 
 ## LLM และภาพ: ใช้ผู้ให้บริการของเราแทน `LLM_API_KEY`
 
-token label redacted เดิมมี proxy ของตัวเอง (`handleApiRequest()`) ที่ต้องใช้ `LLM_API_KEY` ของผู้ให้บริการแบบ OpenAI-compatible เราตัดส่วนนั้นออก (รวมถึง Node server, Vercel functions และ Cloudflare Pages functions) แล้วให้ client เรียก `src/lib/studio/route.ts` แทน โดยคง wire contract เดิม (`studio/src/shared/apiTypes.ts` ใช้ร่วมกันทั้งสองฝั่ง):
+DEVSTACK เดิมมี proxy ของตัวเอง (`handleApiRequest()`) ที่ต้องใช้ `LLM_API_KEY` ของผู้ให้บริการแบบ OpenAI-compatible เราตัดส่วนนั้นออก (รวมถึง Node server, Vercel functions และ Cloudflare Pages functions) แล้วให้ client เรียก `src/lib/studio/route.ts` แทน โดยคง wire contract เดิม (`studio/src/shared/apiTypes.ts` ใช้ร่วมกันทั้งสองฝั่ง):
 
 - `POST /api/studio/llm/chat` `{ messages, json?, maxTokens? }` → `{ content, model }` เรียก Workers AI (`STUDIO_MODEL`, Qwen 2.5 Coder 32B) ก่อน ถ้าล้มหรือได้คำตอบว่างจะไป Hugging Face (`HF_MODEL`, DeepSeek V3) ตั้ง `STUDIO_PROVIDER=hf` เพื่อสลับลำดับ ถ้า `json: true` เราเติมคำสั่งให้ตอบ JSON อย่างเดียว (client มี `extractJsonObject` รองรับคำตอบที่มี fence อยู่แล้ว)
 - `POST /api/studio/image` `{ prompt }` → `{ dataUrl, model }` ใช้ FLUX (`WAI_IMAGE_MODEL`) แล้ว client บีบอัดเป็น PNG ใน Web Worker
@@ -64,7 +64,7 @@ token label redacted เดิมมี proxy ของตัวเอง (`hand
 
 ## Design system
 
-Studio ใช้ token ชุดเดียวกับเว็บ: `scripts/sync-studio-brand.mjs` คัดลอก `src/app/tokens.css`, ส่วน mascot และ signature ของ `src/app/globals.css`, และ component `src/components/brand/mascot.tsx`, `terminal-signature.tsx` ไปไว้ที่ `studio/src/brand/` (ห้ามแก้ตรงนั้น `tests/studio.test.ts` จะล้มถ้าไม่ sync) ชื่อ utility เดิมของ token label redacted (`bg-devstack-*`) ถูก map เข้า token ของเราใน `studio/src/index.css`: พื้นดำ, surface graphite, ฟ้า `#2997ff` เป็น accent, ปุ่มหลักสีฟ้า `#0071e3` แบบ pill, ชมพู `#fb0fab` สำหรับ glow ฟอนต์ Inter + IBM Plex Sans Thai + IBM Plex Mono ภาษาของ UI ใช้ key `nvx-lang` ใน localStorage ร่วมกับเว็บ
+Studio ใช้ token ชุดเดียวกับเว็บ: `scripts/sync-studio-brand.mjs` คัดลอก `src/app/tokens.css`, ส่วน mascot และ signature ของ `src/app/globals.css`, และ component `src/components/brand/mascot.tsx`, `terminal-signature.tsx` ไปไว้ที่ `studio/src/brand/` (ห้ามแก้ตรงนั้น `tests/studio.test.ts` จะล้มถ้าไม่ sync) ชื่อ utility เดิมของ DEVSTACK (`bg-devstack-*`) ถูก map เข้า token ของเราใน `studio/src/index.css`: พื้นดำ, surface graphite, ฟ้า `#2997ff` เป็น accent, ปุ่มหลักสีฟ้า `#0071e3` แบบ pill, ชมพู `#fb0fab` สำหรับ glow ฟอนต์ Inter + IBM Plex Sans Thai + IBM Plex Mono ภาษาของ UI ใช้ key `nvx-lang` ใน localStorage ร่วมกับเว็บ
 
 ## ขนาดและประสิทธิภาพ
 
@@ -78,4 +78,4 @@ Studio ใช้ token ชุดเดียวกับเว็บ: `scripts/s
 
 ## In English
 
-We merged token label redacted as a static sub-app instead of porting it into the App Router: `studio/` keeps its own Vite build and lockfile, `scripts/build-studio.mjs` writes it to `public/studio/`, and the same Worker serves it from static assets with COOP/COEP and a Studio-specific CSP scoped to `/studio/*` in `public/_headers`. The live preview is fully open source: Sucrase compiles the project in the browser and a sandboxed, network-less iframe (`/studio/preview/`, its own CSP) runs it with a vendored React runtime; the PGlite SQL bridge is unchanged. WebContainers (npm install, Node, shell) were removed in 0.8.0-rc.2. The original key-based proxy was replaced by Next.js route handlers (`/api/studio/*`) that reuse our Workers AI binding, the Hugging Face fallback, the signed `nvx_chat_uid` cookie, D1 quotas and a new `NVX_STUDIO_LIMITER`. The rest of the site keeps its headers and gets no COEP. User guide: [Studio](../user-guide/studio.md).
+We merged DEVSTACK as a static sub-app instead of porting it into the App Router: `studio/` keeps its own Vite build and lockfile, `scripts/build-studio.mjs` writes it to `public/studio/`, and the same Worker serves it from static assets with COOP/COEP and a Studio-specific CSP scoped to `/studio/*` in `public/_headers`. The live preview is fully open source: Sucrase compiles the project in the browser and a sandboxed, network-less iframe (`/studio/preview/`, its own CSP) runs it with a vendored React runtime; the PGlite SQL bridge is unchanged. WebContainers (npm install, Node, shell) were removed in 0.8.0-rc.2. The original key-based proxy was replaced by Next.js route handlers (`/api/studio/*`) that reuse our Workers AI binding, the Hugging Face fallback, the signed `nvx_chat_uid` cookie, D1 quotas and a new `NVX_STUDIO_LIMITER`. The rest of the site keeps its headers and gets no COEP. User guide: [Studio](../user-guide/studio.md).
