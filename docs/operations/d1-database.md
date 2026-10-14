@@ -6,7 +6,7 @@
 
 | ทรัพยากร | ค่า | สถานะ |
 |---|---|---|
-| D1 database | `nvx-db`, id `3ee9bbab-06b5-49da-b175-5f7162ad5086`, region WNAM | สร้าง 11 ต.ค. 2026; migration `0001` และ `0002` apply บน remote แล้ว |
+| D1 database | `nvx-db`, id `3ee9bbab-06b5-49da-b175-5f7162ad5086`, region WNAM | สร้าง 11 ต.ค. 2026; migration `0001`–`0007` apply บน remote แล้ว (`schema_version` = 7, ตรวจ 14 ต.ค. 2026) |
 | Binding ใน Worker | `DB` (ชนิด `D1Database` ใน `cloudflare-env.d.ts`) | อยู่ใน `wrangler.jsonc`; ยังไม่มีโค้ดใช้ |
 | R2 bucket | `nvx-assets`, binding `ASSETS_BUCKET` | **ยังไม่ได้สร้าง**: บัญชียังไม่เปิด R2 |
 
@@ -38,7 +38,9 @@ npx wrangler d1 execute nvx-db --remote --command "select * from schema_meta"
 4. อัปเดต [reference/d1-schema.md](../reference/d1-schema.md) และ [architecture/chat-data-model.md](../architecture/chat-data-model.md) แล้วรัน `npm run docs:check`
 5. ขออนุมัติ แล้วรัน `npm run db:migrate:remote` **ก่อน** deploy โค้ดที่ใช้ schema ใหม่
 
-`0006_github_auth.sql` และ `0007_password_auth.sql` ยังไม่ถูก apply บน remote จากงานนี้ การเข้าสู่ระบบบน production ใช้ได้หลังได้รับอนุมัติให้ migrate
+`0006_github_auth.sql` และ `0007_password_auth.sql` ถูก apply บน remote `nvx-db` แล้วเมื่อ 14 ต.ค. 2026 หลังได้รับอนุมัติ `d1_migrations` มีแถว `0001` ถึง `0007` และ `schema_meta.schema_version` เป็น `7` ตาราง `github_credentials` กับ `password_credentials` มีอยู่บนฐานจริง การล็อกอินรหัสผ่านของอีเมลที่ไม่มีบัญชีตอบ `303` ไป `/login?auth=invalid&provider=password` (ก่อนมีตาราง คำสั่ง SQL พังแล้วตอบ `auth=error`)
+
+เมื่อ 14 ต.ค. 2026 secret `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` และ `AI_GATEWAY_API_KEY` ถูกตั้งบน Worker `nvx-stack-builder` แล้ว (เวอร์ชัน `d4c19335-3b9b-4003-9cd9-a744eab5afd4`) `GET /api/auth/github` และ `GET /api/auth/google` ตอบ 302 ไปผู้ให้บริการ `CURSOR_APP_ID` ยังไม่ได้ตั้ง จึงปุ่ม Cursor ยังพาไป `/login?auth=missing&provider=cursor` callback ที่ต้องลงทะเบียนคือ `https://devstack.bid/api/auth/github/callback`, `https://devstack.bid/api/auth/google/callback` และ `https://devstack.bid/api/auth/cursor/callback`
 
 ## สำรองและกู้คืน
 

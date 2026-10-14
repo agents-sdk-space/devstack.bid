@@ -10,12 +10,15 @@
 
 ## เป้าหมาย rollback ที่บันทึกไว้
 
-**Production v0.6.0 (ปัจจุบัน):** https://devstack.bid (+ `www.devstack.bid`), workers.dev สำรอง https://nvx-stack-builder.examplessdk.workers.dev, บัญชี `2d92bd5b25768fa9093d6adc0a8887fc`
+**Production (ปัจจุบัน):** https://devstack.bid (+ `www.devstack.bid`), workers.dev สำรอง https://nvx-stack-builder.examplessdk.workers.dev, บัญชี `2d92bd5b25768fa9093d6adc0a8887fc`
 
 | เวอร์ชัน | id | หมายเหตุ |
 |---|---|---|
-| ปัจจุบัน | `450890b7-5432-4795-afbc-1c7ebd241bff` | v0.6.0 + D1 binding `DB` (branch `feat/d1-chat-schema`, ยังไม่มีโค้ดใช้ D1) |
-| ก่อนหน้า (rollback แรก) | `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` | v0.6.0 (tag `v0.6.0`): docs ในแอป `/docs`, raw `.md`, `/llms.txt`, signature |
+| ปัจจุบัน | `d4c19335-3b9b-4003-9cd9-a744eab5afd4` | 2026-10-14: โค้ดชุดเข้าสู่ระบบเดิม พร้อม secret GitHub, Google และ AI Gateway |
+| ก่อนหน้า (rollback แรก) | `f3257677-8d0e-4f59-80da-35d8141d3bf8` | โค้ดเดียวกันก่อนตั้ง secret ชุดนี้ การย้อนมาที่นี่จะเอา secret OAuth ออก |
+| ก่อนหน้า | `05fbb6ee-eb43-4386-a273-7f3277c415be` | v0.7.0 ก่อนชุดเข้าสู่ระบบ |
+| ก่อนหน้า | `450890b7-5432-4795-afbc-1c7ebd241bff` | v0.6.0 + D1 binding `DB` |
+| ก่อนหน้า | `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` | v0.6.0 (tag `v0.6.0`): docs ในแอป `/docs`, raw `.md`, `/llms.txt`, signature |
 | ก่อนหน้า | `671b6b3b-1074-40cb-84b0-0df2681b69ce` | v0.5.1: metadata ชี้ devstack.bid, HSTS ไม่มี includeSubDomains, redirect www → apex |
 | ก่อนหน้านั้น | `d369f2b6-863a-4e44-8f9e-b5551e18361a` | v0.5.0 + secret (ถ้าย้อนมา: HSTS กลับเป็น includeSubDomains และ OG ชี้ space6 ซึ่งใช้ไม่ได้แล้ว) |
 | เก่ากว่า | `107ab78e-2cdd-4159-95e7-e8fcb89130aa` | v0.5.0 ก่อนตั้ง secret (AI agent จะใช้ offline planner) |

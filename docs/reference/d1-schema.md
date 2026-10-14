@@ -12,7 +12,7 @@ Reference ของทุกตารางในฐานข้อมูล D1 
 | `value` | TEXT | ไม่ | — | |
 | `updated_at` | INTEGER | ไม่ | now (ms) | |
 
-ไฟล์ migration ตั้ง `schema_version` ไปจนถึง `8` ค่าบนฐานจริงคือเลขของ migration ที่ apply แล้ว (remote ต้องได้รับอนุมัติก่อน apply migration ใหม่)
+ไฟล์ migration ตั้ง `schema_version` ไปจนถึง `8` บน remote `nvx-db` มีการบันทึกว่า apply `0001`–`0007` แล้วเมื่อ 14 ต.ค. 2026 และ apply `0008_mcp_clients` ก่อน deploy MCP ในวันเดียวกัน
 
 ## `users`
 
@@ -118,9 +118,9 @@ Migration `0008_mcp_clients` เพิ่ม `user_id` ที่ผูกกั�
 - **0003** `conversations.agent_session_id`, `messages.meta` (JSON), ตาราง `usage_counters` (`scope`, `bucket`, `count`, `updated_at`; PK `(scope, bucket)`) และ `attachment_blobs` (`attachment_id` → `attachments.id`, `data` BLOB ≤ 1,500,000 ไบต์)
 - **0004** `conversations.source` (`'chat'|'factory'`, default `'chat'`), `conversations.environment` (`none|openai_hosted|self_hosted`), index `conversations_user_source_updated`
 - **0005** `conversations.channel` (`'user'|'dev'`, default `'user'`; แถวที่มี `agent_session_id` หรือ `source='factory'` ถูกตั้งเป็น `'dev'`), index `conversations_user_channel_updated`, `schema_version = 5`
-- **0006** `users.login`, `users.avatar_url`, ตาราง `github_credentials` (`user_id` PK → `users.id`, `token_enc` คือ ciphertext AES-GCM ของ OAuth token, `scope`, `updated_at`), `schema_version = 6` ยังไม่ได้ apply บน remote จนกว่าจะได้รับอนุมัติ
-- **0007** ตาราง `password_credentials` (แฮช PBKDF2 ของบัญชี DevStack), `schema_version = 7` ยังไม่ได้ apply บน remote จนกว่าจะได้รับอนุมัติ
-- **0008** `api_clients.user_id` foreign key ไป `users.id` และ active-owner index สำหรับจัดการ key ที่หน้า MCP settings; remote ต้อง apply ก่อนเปิด key management จริง
+- **0006** `users.login`, `users.avatar_url`, ตาราง `github_credentials` (`user_id` PK → `users.id`, `token_enc` คือ ciphertext AES-GCM ของ OAuth token, `scope`, `updated_at`), `schema_version = 6` apply บน remote แล้วเมื่อ 14 ต.ค. 2026
+- **0007** ตาราง `password_credentials` (แฮช PBKDF2 ของบัญชี DevStack), `schema_version = 7` apply บน remote แล้วเมื่อ 14 ต.ค. 2026
+- **0008** `api_clients.user_id` foreign key ไป `users.id` และ active-owner index สำหรับจัดการ key ที่หน้า MCP settings apply บน remote แล้วก่อน deploy MCP เมื่อ 14 ต.ค. 2026
 
 bucket ของ `usage_counters`: `d:YYYYMMDD` = วันตามเวลาไทย (UTC+7), `h:YYYYMMDDHH` = ชั่วโมง UTC
 
