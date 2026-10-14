@@ -150,6 +150,90 @@ export async function saveInlineImage(db: D1Like, messageId: string, bytes: Uint
   return id;
 }
 
+export interface AccountView {
+  login: string;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
+export async function findUserByAuth(db: D1Like, provider: string, subject: string): Promise<{ id: string } | null> {
+  return db.prepare("SELECT id FROM users WHERE auth_provider = ?1 AND auth_subject = ?2").bind(provider, subject).first<{ id: string }>();
+}
+
+export async function getAccount(db: D1Like, id: string): Promise<AccountView | null> {
+  const row = await db
+    .prepare("SELECT login, display_name, avatar_url, auth_provider FROM users WHERE id = ?1")
+    .bind(id)
+    .first<{ login: string | null; display_name: string | null; avatar_url: string | null; auth_provider: string | null }>();
+  if (!row?.login || row.auth_provider !== "github") return null;
+  return { login: row.login, name: row.display_name, avatarUrl: row.avatar_url };
+}
+
+export interface GithubProfileRow {
+  provider: "github";
+  subject: string;
+  login: string;
+  name: string | null;
+  email: string | null;
+  avatarUrl: string | null;
+}
+
+export interface AccountPlanRow {
+  userId: string;
+  promoteAnon: boolean;
+  create: boolean;
+  moveFrom: string | null;
+}
+
+/** Attach a GitHub identity and store the encrypted token. Moves anonymous chats when asked. */
+export async function saveGithubAccount(db: D1Like, plan: AccountPlanRow, profile: GithubProfileRow, tokenEnc: string, scope: string): Promise<void> {
+  const email = profile.email?.slice(0, 200) ?? null;
+  const avatar = profile.avatarUrl?.slice(0, 500) ?? null;
+  const stmts: D1Stmt[] = [];
+  if (plan.create || plan.promoteAnon) {
+    stmts.push(
+      db
+        .prepare(
+          `INSERT INTO users (id, auth_provider, auth_subject, email, display_name, login, avatar_url)
+           VALUES (?1, 'github', ?2, ?3, ?4, ?5, ?6)
+           ON CONFLICT (id) DO UPDATE SET
+             auth_provider = 'github',
+             auth_subject = excluded.auth_subject,
+             email = excluded.email,
+             display_name = excluded.display_name,
+             login = excluded.login,
+             avatar_url = excluded.avatar_url`
+        )
+        .bind(plan.userId, profile.subject, email, profile.name, profile.login, avatar)
+    );
+  } else {
+    stmts.push(
+      db
+        .prepare("UPDATE users SET email = ?2, display_name = ?3, login = ?4, avatar_url = ?5 WHERE id = ?1 AND auth_provider = 'github'")
+        .bind(plan.userId, email, profile.name, profile.login, avatar)
+    );
+  }
+  if (plan.moveFrom) stmts.push(db.prepare("UPDATE conversations SET user_id = ?2 WHERE user_id = ?1").bind(plan.moveFrom, plan.userId));
+  stmts.push(
+    db
+      .prepare(
+        `INSERT INTO github_credentials (user_id, token_enc, scope) VALUES (?1, ?2, ?3)
+         ON CONFLICT (user_id) DO UPDATE SET token_enc = excluded.token_enc, scope = excluded.scope, updated_at = unixepoch('subsec') * 1000`
+      )
+      .bind(plan.userId, tokenEnc, scope)
+  );
+  await db.batch(stmts);
+}
+
+export async function githubTokenEnc(db: D1Like, userId: string): Promise<string | null> {
+  const row = await db.prepare("SELECT token_enc FROM github_credentials WHERE user_id = ?1").bind(userId).first<{ token_enc: string }>();
+  return row?.token_enc ?? null;
+}
+
+export async function deleteGithubCredential(db: D1Like, userId: string): Promise<void> {
+  await db.prepare("DELETE FROM github_credentials WHERE user_id = ?1").bind(userId).run();
+}
+
 /** Load an inline image only if it belongs to one of the caller's conversations. */
 export async function loadInlineImage(db: D1Like, uid: string, attachmentId: string): Promise<{ data: ArrayBuffer | Uint8Array | number[]; mime: string } | null> {
   return db

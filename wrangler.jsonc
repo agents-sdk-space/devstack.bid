@@ -116,5 +116,6 @@
     "head_sampling_rate": 1
   },
   "upload_source_maps": true
-  // Secrets (set with `wrangler secret put`, never committed): OPENAI_API_KEY, CHAT_COOKIE_SECRET, HF_TOKEN
+  // Secrets (set with `wrangler secret put`, never committed): OPENAI_API_KEY, CHAT_COOKIE_SECRET, HF_TOKEN,
+  // GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, AI_GATEWAY_API_KEY
 }

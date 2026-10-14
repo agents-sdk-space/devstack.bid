@@ -50,6 +50,32 @@ const schema = z.object({
   HF_PLAN_MAX_TOKENS: intIn(512, 16_000, 6_000),
   /** "true" lets the planner/plain chat fall back to the operator's OpenAI key when HF fails. Default off: the server key is reserved for the Orchestrator agent. */
   OPENAI_FALLBACK: z.enum(["true", "false"]).catch("false").default("false"),
+  /** GitHub OAuth App. Both are required before /api/auth/github redirects to GitHub. */
+  GITHUB_CLIENT_ID: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9.]{8,80}$/)
+    .optional()
+    .catch(undefined),
+  GITHUB_CLIENT_SECRET: z
+    .string()
+    .trim()
+    .regex(/^[\w-]{16,200}$/)
+    .optional()
+    .catch(undefined),
+  /** Vercel AI Gateway key for the model picker on /chat. Requests use provider/model ids. */
+  AI_GATEWAY_API_KEY: z
+    .string()
+    .trim()
+    .regex(/^[\w-]{16,400}$/)
+    .optional()
+    .catch(undefined),
+  AI_GATEWAY_BASE_URL: z
+    .string()
+    .trim()
+    .regex(/^https:\/\/[\w.-]+(\/[\w./-]*)?$/)
+    .catch("https://ai-gateway.vercel.sh/v1")
+    .default("https://ai-gateway.vercel.sh/v1"),
 });
 
 export type ServerEnv = z.infer<typeof schema>;
@@ -61,9 +87,9 @@ export function serverEnv(source: Record<string, string | undefined> = process.e
   if (cached && KEYS.every((k) => cached!.source[k] === source[k])) return cached.env;
   const raw = Object.fromEntries(KEYS.map((k) => [k, source[k] === "" ? undefined : source[k]]));
   const env = schema.parse(raw);
-  const invalid = KEYS.filter((k) => raw[k] !== undefined && k !== "OPENAI_API_KEY" && k !== "HF_TOKEN" && String(env[k]) !== String(raw[k]).trim());
-  if (raw.HF_TOKEN !== undefined && !env.HF_TOKEN) invalid.push("HF_TOKEN");
-  if (raw.OPENAI_API_KEY !== undefined && !env.OPENAI_API_KEY) invalid.push("OPENAI_API_KEY");
+  const secrets = new Set<keyof ServerEnv>(["OPENAI_API_KEY", "HF_TOKEN", "GITHUB_CLIENT_SECRET", "AI_GATEWAY_API_KEY"]);
+  const invalid: string[] = KEYS.filter((k) => raw[k] !== undefined && !secrets.has(k) && String(env[k]) !== String(raw[k]).trim());
+  for (const k of secrets) if (raw[k] !== undefined && !env[k]) invalid.push(k);
   if (invalid.length) console.warn(`[env] ignoring invalid values for: ${invalid.join(", ")} (using defaults)`);
   cached = { env, source: Object.fromEntries(KEYS.map((k) => [k, source[k]])) };
   return env;

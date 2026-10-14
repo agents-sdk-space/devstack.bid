@@ -1,15 +1,17 @@
 "use client";
 
-import { AlertTriangle, ArrowUp, BookOpenText, Box, Code2, FlaskConical, History, ImageIcon, MessageSquarePlus, Paperclip, Square, TerminalSquare, Trash2, Users } from "lucide-react";
+import { AlertTriangle, ArrowUp, BookOpenText, Box, Code2, FlaskConical, GitBranch, History, ImageIcon, MessageSquarePlus, Paperclip, Square, TerminalSquare, Trash2, Users } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { Badge, Button, cn, Dialog, DialogContent, Kbd, Spinner, Tooltip } from "@/components/ui";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
+import { Badge, Button, buttonClasses, cn, Dialog, DialogContent, Kbd, Spinner, Tooltip } from "@/components/ui";
 import type { Activity, UiEvent } from "@/lib/chat/events";
+import type { DictKey } from "@/lib/i18n";
 import { Mascot } from "../brand/mascot";
 import { useLang } from "../prefs";
+import { GithubPublish } from "./github-publish";
 import { MarkdownView } from "./markdown-view";
 import { SandboxPanel, StatusDot } from "./sandbox-panel";
-import type { ChatInfo, ChatMessage, ChatMode, ConversationSummary, Quota, SandboxStatus } from "./types";
+import type { ChatInfo, ChatMessage, ChatMode, ChatModelOption, ConversationSummary, Quota, SandboxStatus } from "./types";
 
 const MODE_STORE = "nvx-chat-mode";
 
@@ -40,7 +42,7 @@ const DEV_STARTERS: { en: string; th: string; Icon: typeof ImageIcon; mode: Chat
   },
 ];
 
-const DEFAULT_USER_MODELS: { mode: ChatMode; provider: string; model: string; available: boolean }[] = [
+const DEFAULT_USER_MODELS: ChatModelOption[] = [
   { mode: "general", provider: "workers-ai", model: "@cf/google/gemma-4-26b-a4b-it", available: true },
   { mode: "thai", provider: "workers-ai", model: "@cf/aisingapore/gemma-sea-lion-v4-27b-it", available: true },
   { mode: "code", provider: "workers-ai", model: "@cf/qwen/qwen2.5-coder-32b-instruct", available: true },
@@ -79,6 +81,21 @@ interface LimitNotice {
   title: string;
   message: string;
   retryAfter?: number;
+}
+
+function authQuery(): string | null {
+  return new URLSearchParams(window.location.search).get("auth");
+}
+
+function providerMark(provider: string): string {
+  if (provider === "vercel") return "Vercel";
+  if (provider === "huggingface") return "HF";
+  return "CF";
+}
+
+function modelLabel(m: ChatModelOption, lang: "en" | "th", t: (key: DictKey) => string): string {
+  if (m.label) return m.label[lang];
+  return t(`chat.mode.${m.mode}` as DictKey);
 }
 
 function fromStored(m: {
@@ -151,15 +168,32 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
   const [status, setStatus] = useState<SandboxStatus>("idle");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<LimitNotice | null>(null);
+  const [dropAuthNotice, setDropAuthNotice] = useState(false);
+  const authFlag = useSyncExternalStore(() => () => undefined, authQuery, () => null);
   const [remaining, setRemaining] = useState<Quota | undefined>();
   const [mode, setModeState] = useState<ChatMode>(dev ? "agent" : "general");
+  const [gatewayModel, setGatewayModel] = useState<string | null>(null);
   const setMode = useCallback((m: ChatMode) => {
     setModeState(m);
-    if (m === "image" || m === "agent") return;
+    if (m === "image" || m === "agent" || m === "gateway") return;
     try {
       localStorage.setItem(MODE_STORE, m);
     } catch {}
   }, []);
+  const selectModel = useCallback(
+    (m: ChatModelOption) => {
+      setModeState(m.mode);
+      if (m.mode === "gateway") {
+        setGatewayModel(m.model);
+        try {
+          localStorage.setItem(MODE_STORE, `gateway:${m.model}`);
+        } catch {}
+        return;
+      }
+      setMode(m.mode);
+    },
+    [setMode]
+  );
   const [historyOpen, setHistoryOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<"chat" | "sandbox">("chat");
   const abortRef = useRef<AbortController | null>(null);
@@ -191,8 +225,16 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
         setConversations(data.conversations ?? []);
         setRemaining(data.quota);
         try {
-          const saved = localStorage.getItem(MODE_STORE) as ChatMode | null;
-          if (!dev && saved && saved !== "image" && data.models?.some((m) => m.mode === saved && m.available)) setModeState(saved);
+          const saved = localStorage.getItem(MODE_STORE);
+          if (!dev && saved?.startsWith("gateway:")) {
+            const id = saved.slice("gateway:".length);
+            if (data.models?.some((m) => m.mode === "gateway" && m.model === id && m.available)) {
+              setModeState("gateway");
+              setGatewayModel(id);
+            }
+          } else if (!dev && saved && saved !== "image" && data.models?.some((m) => m.mode === saved && m.available)) {
+            setModeState(saved as ChatMode);
+          }
         } catch {}
       })
       .catch(() => undefined);
@@ -251,6 +293,7 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
       if (modeOverride && !dev && modeOverride !== "image") setMode(modeOverride);
       const message = text.trim();
       if (!message || busy || !info?.enabled) return;
+      setDropAuthNotice(true);
       if (message.length > info.limits.maxInputChars) return;
       setNotice(null);
       setInput("");
@@ -270,7 +313,12 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
         const res = await fetch(byok ? "/api/factory/turn" : dev ? "/api/chat/dev/turn" : "/api/chat/turn", {
           method: "POST",
           headers: { "content-type": "application/json", ...(byok ? { "x-openai-key": byok.getKey() } : {}) },
-          body: JSON.stringify({ message, conversationId: activeId ?? undefined, mode: useMode }),
+          body: JSON.stringify({
+            message,
+            conversationId: activeId ?? undefined,
+            mode: useMode,
+            ...(useMode === "gateway" && gatewayModel ? { model: gatewayModel } : {}),
+          }),
           signal: ctrl.signal,
         });
         if (!res.ok || !res.headers.get("content-type")?.includes("text/event-stream")) {
@@ -344,7 +392,7 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
         setStatus("idle");
       }
     },
-    [busy, info, activeId, t, byok, dev, mode, setMode]
+    [busy, info, activeId, t, byok, dev, mode, setMode, gatewayModel]
   );
 
   const stop = () => abortRef.current?.abort();
@@ -376,14 +424,60 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
     />
   );
 
+  const logout = () => {
+    void fetch("/api/auth/logout", { method: "POST" }).finally(() => window.location.reload());
+  };
+
+  const authNotice: LimitNotice | null = dropAuthNotice
+    ? null
+    : authFlag === "missing"
+      ? { title: t("auth.missingTitle"), message: t("auth.missing") }
+      : authFlag === "error"
+        ? { title: t("auth.errorTitle"), message: t("auth.error") }
+        : authFlag === "denied"
+          ? { title: t("auth.deniedTitle"), message: t("auth.denied") }
+          : null;
+  const banner = notice ?? authNotice;
+
   const history = (
     <nav aria-label={t("chat.history")} className="flex min-h-0 flex-1 flex-col">
+      {info?.account ? (
+        <div className="mb-3 flex items-center gap-2">
+          {info.account.avatarUrl ? (
+            // GitHub avatar; the login text next to it is the accessible name.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={info.account.avatarUrl} alt="" width={28} height={28} className="h-7 w-7 rounded-full" />
+          ) : (
+            <GitBranch className="h-4 w-4 shrink-0" aria-hidden />
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px] font-medium text-fg">{info.account.login}</p>
+            <p className="truncate text-[11px] text-subtle">{t("auth.signedIn")}</p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={logout}>
+            {t("auth.logout")}
+          </Button>
+        </div>
+      ) : (
+        <a
+          href="/api/auth/github?next=/chat"
+          className={buttonClasses("secondary", "sm", "mb-3 w-full justify-start")}
+          onClick={(e) => {
+            if (info?.github?.configured === false) {
+              e.preventDefault();
+              setNotice({ title: t("auth.missingTitle"), message: t("auth.missing") });
+            }
+          }}
+        >
+          <GitBranch className="h-3.5 w-3.5" aria-hidden /> {t("auth.login")}
+        </a>
+      )}
       <Button variant="secondary" size="sm" className="mb-3 w-full justify-start" onClick={newChat} disabled={busy}>
         <MessageSquarePlus className="h-4 w-4" aria-hidden /> {t("chat.new")}
       </Button>
       <h2 className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-subtle">{t("chat.history")}</h2>
       {conversations.length === 0 ? (
-        <p className="px-1 text-xs leading-relaxed text-muted">{t("chat.historyEmpty")}</p>
+        <p className="px-1 text-xs leading-relaxed text-muted">{info?.account ? t("auth.historyEmpty") : t("chat.historyEmpty")}</p>
       ) : (
         <ul className="-mx-1 min-h-0 flex-1 space-y-0.5 overflow-y-auto">
           {conversations.map((c) => (
@@ -413,7 +507,7 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
           ))}
         </ul>
       )}
-      <p className="mt-3 border-t border-border px-1 pt-3 text-[11px] leading-relaxed text-subtle">{t("chat.privacy")}</p>
+      <p className="mt-3 border-t border-border px-1 pt-3 text-[11px] leading-relaxed text-subtle">{info?.account ? t("auth.privacy") : t("chat.privacy")}</p>
     </nav>
   );
 
@@ -546,6 +640,7 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
                             <span>{m.error.message || t("agent.error")}</span>
                           </div>
                         )}
+                        {!dev && !byok && m.content && !m.pending && <GithubPublish text={m.content} signedIn={Boolean(info?.account)} />}
                         {m.activities.length > 0 && (
                           <button
                             type="button"
@@ -571,13 +666,13 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
           </div>
 
           <div className="border-t border-border bg-surface px-3 py-3 sm:px-4">
-            {notice && (
+            {banner && (
               <div role="alert" className="mx-auto mb-2 flex max-w-3xl gap-2 rounded-xl border border-warning/40 bg-warning-soft px-3 py-2 text-[13px] text-warning-fg">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 <div>
-                  <p className="font-semibold">{notice.title}</p>
-                  <p>{notice.message}</p>
-                  {notice.retryAfter ? <p className="text-xs opacity-80">{t("chat.retryIn").replace("{m}", String(Math.max(1, Math.ceil(notice.retryAfter / 60))))}</p> : null}
+                  <p className="font-semibold">{banner.title}</p>
+                  <p>{banner.message}</p>
+                  {banner.retryAfter ? <p className="text-xs opacity-80">{t("chat.retryIn").replace("{m}", String(Math.max(1, Math.ceil(banner.retryAfter / 60))))}</p> : null}
                 </div>
               </div>
             )}
@@ -588,25 +683,29 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
             )}
             {!dev && (
               <div role="radiogroup" aria-label={t("chat.modelPicker")} className="mx-auto mb-2 flex max-w-3xl flex-wrap items-center gap-1.5">
-                {(info?.models ?? DEFAULT_USER_MODELS).map((m) => (
-                  <Tooltip key={m.mode} content={`${m.provider === "huggingface" ? "Hugging Face" : "Cloudflare Workers AI"} · ${m.model}`}>
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={mode === m.mode}
-                      disabled={!m.available || busy}
-                      onClick={() => setMode(m.mode)}
-                      className={cn(
-                        "focus-ring motion-fast inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] disabled:opacity-40",
-                        mode === m.mode ? "border-primary bg-primary-soft/40 text-fg" : "border-border text-muted hover:text-fg"
-                      )}
-                    >
-                      {m.mode === "image" && <ImageIcon className="h-3.5 w-3.5" aria-hidden />}
-                      {t(`chat.mode.${m.mode}` as const)}
-                      <span className="font-mono text-[10.5px] text-subtle">{m.provider === "huggingface" ? "HF" : "CF"}</span>
-                    </button>
-                  </Tooltip>
-                ))}
+                {(info?.models ?? DEFAULT_USER_MODELS).map((m) => {
+                  const selected = m.mode === "gateway" ? mode === "gateway" && gatewayModel === m.model : mode === m.mode;
+                  const vendor = m.provider === "vercel" ? "Vercel AI Gateway" : m.provider === "huggingface" ? "Hugging Face" : "Cloudflare Workers AI";
+                  return (
+                    <Tooltip key={`${m.mode}:${m.model}`} content={`${vendor} · ${m.model}`}>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        disabled={!m.available || busy}
+                        onClick={() => selectModel(m)}
+                        className={cn(
+                          "focus-ring motion-fast inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] disabled:opacity-40",
+                          selected ? "border-primary bg-primary-soft/40 text-fg" : "border-border text-muted hover:text-fg"
+                        )}
+                      >
+                        {m.mode === "image" && <ImageIcon className="h-3.5 w-3.5" aria-hidden />}
+                        {modelLabel(m, lang, t)}
+                        <span className="font-mono text-[10.5px] text-subtle">{providerMark(m.provider)}</span>
+                      </button>
+                    </Tooltip>
+                  );
+                })}
               </div>
             )}
             <form

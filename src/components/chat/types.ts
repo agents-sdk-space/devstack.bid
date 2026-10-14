@@ -35,13 +35,27 @@ export interface ConversationSummary {
   title: string | null;
   updatedAt: number;
 }
+export interface ChatAccount {
+  login: string;
+  name: string | null;
+  avatarUrl: string | null;
+}
+export interface ChatModelOption {
+  mode: ChatMode;
+  provider: string;
+  model: string;
+  available: boolean;
+  label?: { en: string; th: string };
+}
 export interface ChatInfo {
   enabled: boolean;
   unavailable?: { code: string; message: string };
   agent: string;
   template?: "orchestrator" | "blank";
   limits: { maxInputChars: number; messagesPerDay: number; imagesPerDay: number; agentPerDay: number; maxAttachmentBytes: number; model: string; environment: string };
-  models?: { mode: ChatMode; provider: string; model: string; available: boolean }[];
+  models?: ChatModelOption[];
+  github?: { configured: boolean };
+  account?: ChatAccount | null;
   quota?: Quota;
   conversations: ConversationSummary[];
 }

@@ -172,6 +172,25 @@
         "wrangler.jsonc"
       ],
       "docs": "docs/architecture/chat-data-model.md"
+    },
+    {
+      "id": "github-auth",
+      "summary": "GitHub OAuth sign-in stores an encrypted token and keeps chat history on the account. Users pick a Vercel AI Gateway model and can commit one chat code block through the GitHub Contents API. The server never runs that file.",
+      "keyFiles": [
+        "src/lib/auth/github-policy.ts",
+        "src/lib/auth/token-box.ts",
+        "src/lib/auth/github-api.ts",
+        "src/lib/ai/gateway-models.ts",
+        "src/lib/ai/gateway.ts",
+        "src/app/api/auth/github/route.ts",
+        "src/app/api/auth/github/callback/route.ts",
+        "src/app/api/auth/logout/route.ts",
+        "src/app/api/github/repos/route.ts",
+        "src/app/api/github/contents/route.ts",
+        "src/components/chat/github-publish.tsx",
+        "migrations/0006_github_auth.sql"
+      ],
+      "docs": "docs/user-guide/chat.md"
     }
   ],
   "templateIds": [
@@ -326,6 +345,31 @@
       "secret": false,
       "default": "https://devstack.bid",
       "notes": "build-time metadataBase for og:image / twitter:image"
+    },
+    {
+      "name": "GITHUB_CLIENT_ID",
+      "secret": true,
+      "default": null,
+      "set": "wrangler secret put (stdin) / .dev.vars",
+      "notes": "GitHub OAuth app id; callback {origin}/api/auth/github/callback"
+    },
+    {
+      "name": "GITHUB_CLIENT_SECRET",
+      "secret": true,
+      "default": null,
+      "set": "wrangler secret put (stdin) / .dev.vars"
+    },
+    {
+      "name": "AI_GATEWAY_API_KEY",
+      "secret": true,
+      "default": null,
+      "set": "wrangler secret put (stdin) / .dev.vars",
+      "notes": "Vercel AI Gateway key for the /chat model picker"
+    },
+    {
+      "name": "AI_GATEWAY_BASE_URL",
+      "secret": false,
+      "default": "https://ai-gateway.vercel.sh/v1"
     },
     {
       "name": "NEXT_PUBLIC_REPO_URL",

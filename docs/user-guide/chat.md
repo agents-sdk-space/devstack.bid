@@ -13,8 +13,27 @@
 | โค้ด · Qwen Coder (CF) | `@cf/qwen/qwen2.5-coder-32b-instruct` | เขียน/อธิบาย/แก้โค้ด |
 | เก่งขึ้น · DeepSeek V3 (HF) | `deepseek-ai/DeepSeek-V3` ผ่าน Hugging Face | งานที่ต้องคิดหลายขั้น |
 | สร้างภาพ · FLUX (CF) | `@cf/black-forest-labs/flux-1-schnell` | ภาพจากคำบรรยาย (1024px, 4 steps) |
+| เกตเวย์ · GPT-5 mini | `openai/gpt-5-mini` | คำถามทั่วไปผ่าน Vercel AI Gateway |
+| เกตเวย์ · GPT-5 Codex | `openai/gpt-5-codex` | เขียนโค้ด |
+| เกตเวย์ · Claude Haiku 4.5 | `anthropic/claude-haiku-4.5` | ตอบเร็ว |
+| เกตเวย์ · Gemini 2.5 Flash | `google/gemini-2.5-flash` | คำถามทั่วไป |
+| เกตเวย์ · Qwen3 Coder | `alibaba/qwen3-coder` | เขียนโค้ด |
+| เกตเวย์ · DeepSeek V4 Flash | `deepseek/deepseek-v4-flash` | งานที่ต้องคิดหลายขั้น |
 
-CF = Cloudflare Workers AI, HF = Hugging Face ถ้าโมเดลที่เลือกล่มหรือตอบไม่ได้ เราสลับไปอีกค่ายให้อัตโนมัติ (Workers AI → DeepSeek V3, DeepSeek V3 → Gemma 4) และบันทึกไว้ว่าข้อความนั้นตอบด้วยโมเดลไหน
+CF = Cloudflare Workers AI, HF = Hugging Face, Vercel = [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) ปุ่มเกตเวย์กดได้เมื่อเซิร์ฟเวอร์มี `AI_GATEWAY_API_KEY` รายการ id มาจาก `GET https://ai-gateway.vercel.sh/v1/models` (ตรวจ 14 ต.ค. 2026) ถ้าโมเดลที่เลือกล่มหรือตอบไม่ได้ เราสลับไปอีกค่ายให้อัตโนมัติ (Workers AI ↔ DeepSeek V3, เกตเวย์ → Gemma 4 หรือ DeepSeek V3) และบันทึกไว้ว่าข้อความนั้นตอบด้วยโมเดลไหน
+
+## เข้าสู่ระบบด้วย GitHub
+
+ปุ่ม **เข้าสู่ระบบด้วย GitHub** อยู่บนแถบประวัติแชต GitHub จะขอสิทธิ์อ่านโปรไฟล์ อีเมล และเขียนไฟล์ใน repo ที่คุณ push ได้ (`read:user`, `user:email`, `repo`)
+
+- แชตที่สร้างไว้บนเบราว์เซอร์นี้ก่อนเข้าสู่ระบบจะย้ายไปอยู่กับบัญชี GitHub
+- เปิดเบราว์เซอร์อื่นแล้วเข้าสู่ระบบบัญชีเดิม จะเห็นประวัติชุดเดียวกัน
+- ออกจากระบบจะลบ token ที่เราเข้ารหัสเก็บไว้ แชตยังอยู่ที่บัญชี และจะกลับมาเมื่อเข้าสู่ระบบอีกครั้ง
+- เซิร์ฟเวอร์ต้องมี OAuth App ที่ callback เป็น `https://devstack.bid/api/auth/github/callback` (เครื่องตัวเองใช้ origin ของ dev server) ถ้ายังไม่ตั้ง `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` ปุ่มจะบอกว่ายังเปิดใช้ไม่ได้
+
+## ส่งโค้ดขึ้น GitHub
+
+เมื่อคำตอบมีบล็อกโค้ด จะมีปุ่ม **ส่งขึ้น GitHub** (หรือลิงก์ให้เข้าสู่ระบบก่อน) เลือก repo, พาธ, สาขา แล้ว commit ไฟล์เดียวผ่าน GitHub API เซิร์ฟเวอร์ไม่รันโค้ดนั้น ถ้าอยากกำหนดพาธจากในคำตอบ ให้ขึ้นบรรทัดแรกในบล็อกด้วย `// file: src/app.ts` หรือ `# file: src/hello.py`
 
 ## โควตาฟรี
 
@@ -31,7 +50,7 @@ CF = Cloudflare Workers AI, HF = Hugging Face ถ้าโมเดลที่�
 
 ## ประวัติและความเป็นส่วนตัว
 
-แชตของคุณเก็บใน D1 ผูกกับ cookie ของเบราว์เซอร์นี้ เปิดดูย้อนหลังได้จากแถบซ้าย (มือถือกดปุ่ม "ประวัติแชต") ลบได้ทีละแชต ถ้าลบ cookie เราจะผูกแชตเดิมกับคุณไม่ได้อีก อย่าพิมพ์รหัสผ่านหรือข้อมูลส่วนตัวที่อ่อนไหวลงในแชต
+แชตของคุณเก็บใน D1 ถ้ายังไม่เข้าสู่ระบบ มันผูกกับ cookie ของเบราว์เซอร์นี้ ถ้าเข้าสู่ระบบด้วย GitHub มันผูกกับบัญชีนั้นแทน เปิดดูย้อนหลังได้จากแถบซ้าย (มือถือกดปุ่ม "ประวัติแชต") ลบได้ทีละแชต อย่าพิมพ์รหัสผ่านหรือข้อมูลส่วนตัวที่อ่อนไหวลงในแชต เราไม่เก็บ GitHub token แบบอ่านได้: ที่อยู่ในฐานข้อมูลเป็น ciphertext AES-GCM
 
 ## อยากได้มากกว่านี้
 

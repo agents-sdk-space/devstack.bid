@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { CHAT_COOKIE, readCookie, verifyUid } from "@/lib/chat/identity";
+import { resolveActor } from "@/lib/chat/identity";
 import { chatEnv, chatRuntime, json, unavailable } from "@/lib/chat/runtime";
 import { archiveConversation, getConversation, listMessages, renameConversation } from "@/lib/chat/store";
 import { readJsonBody, HttpError } from "@/lib/server/http";
@@ -13,9 +13,9 @@ async function context(req: Request, id: string) {
   const why = unavailable(env, db);
   if (why) return { error: json({ error: why.message, code: why.code }, 503) };
   if (!ID.test(id)) return { error: json({ error: "Not found" }, 404) };
-  const uid = await verifyUid(readCookie(req.headers.get("cookie"), CHAT_COOKIE), env.CHAT_COOKIE_SECRET!);
-  if (!uid) return { error: json({ error: "Not found" }, 404) };
-  return { db: db!, uid };
+  const actor = await resolveActor(req, env.CHAT_COOKIE_SECRET!);
+  if (!actor.uid) return { error: json({ error: "Not found" }, 404) };
+  return { db: db!, uid: actor.uid };
 }
 
 /** GET /api/chat/conversations/:id -> messages (owner only; others get 404). */
