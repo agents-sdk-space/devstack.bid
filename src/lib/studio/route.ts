@@ -170,7 +170,7 @@ export async function handleStudioImage(req: Request): Promise<Response> {
       const body = validateImageBody(parsed);
       if (typeof body === "string") return err(body, 400, "invalid");
       if (!ctx.ai || env.FREE_DAILY_IMAGES === 0) return err("Image generation is unavailable. / สร้างภาพไม่ได้ในตอนนี้", 503, "unavailable");
-      return json(await generateImage(ctx.ai, env.WAI_IMAGE_MODEL, body.prompt));
+      return json(await generateImage(ctx.ai, env.WAI_IMAGE_MODEL, body.prompt, env.CF_AI_GATEWAY_ID));
     },
     (ip, uid) => imageRules(ip, uid, quotaConfig(env), "user")
   );

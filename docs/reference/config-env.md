@@ -50,6 +50,7 @@
 | `WAI_CODE_MODEL` | var | `@cf/qwen/qwen2.5-coder-32b-instruct` | เหมือนกัน | โหมดโค้ด |
 | `WAI_IMAGE_MODEL` | var | `@cf/black-forest-labs/flux-1-schnell` | เหมือนกัน | สร้างภาพ (4 steps) |
 | `WAI_MAX_TOKENS` | var | 1500 | `1500` | เพดาน output ของ Workers AI |
+| `CF_AI_GATEWAY_ID` | var | `""` | `""` | ว่าง = เรียก Workers AI ตรง ใส่ id ของ Cloudflare AI Gateway (หรือ `default`) เพื่อส่งคำขอของ `/chat` และ `/studio` ผ่าน gateway ได้ log, analytics และ rate limit ระบบตั้ง `skipCache` เสมอ จึงไม่แคชคำตอบ ต้องได้รับอนุมัติก่อนเปิดใช้ (Cloudflare AI Gateway id; empty means direct Workers AI calls) |
 | `CHAT_MODEL` | var | `gpt-6.1-sol` | `gpt-6.1-sol` | Dev Chat: โมเดลของ Orchestrator agent |
 | `CHAT_AGENT_ID` | var | `""` | `""` | ว่าง = ใช้ config inline จาก [`agents/orchestrator/agent.json`](../../agents/orchestrator/agent.json) |
 | `CHAT_REASONING_EFFORT` | var | `low` | `low` | reasoning effort ของ agent |

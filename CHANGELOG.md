@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Optional Cloudflare AI Gateway for Workers AI.** New var `CF_AI_GATEWAY_ID` (empty by default, so nothing changes until it is set) sends `/chat` and `/studio` Workers AI calls, text and images, through that gateway for logs, analytics and rate limits. Replies are never cached (`skipCache: true`). Streaming is unchanged: the existing SSE path keeps streaming deltas. See `docs/reference/config-env.md`.
 - **Cline support for the MCP server.** `/settings/mcp` shows a copy-ready `cline_mcp_settings.json` entry (with `"type": "streamableHttp"`, which Cline requires for a remote server) right after a key is created. `docs/integrations/mcp.md` has a Thai and English Cline section, and `/.well-known/mcp` lists a `clients.cline` hint. The snippet leaves `autoApprove` empty so Cline asks before tools that use quota or commit to GitHub. No new endpoint or scope; the `/mcp` server is unchanged.
 - **Learn page** at `/learn`: a launch presentation of the whole system, credited to the creator devstack.sdk@gmail.com and Cursor. The homepage **Ask the AI agent** button opens it. Every page header (and the Studio nav) can **Setup Cursor** — create a project or ask a question through `https://cursor.com/link/prompt`, which the person confirms in Cursor before it runs.
 

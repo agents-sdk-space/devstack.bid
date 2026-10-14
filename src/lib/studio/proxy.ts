@@ -109,7 +109,7 @@ export async function complete(d: CompleteDeps, body: ChatRequestBody): Promise<
     let text = "";
     try {
       if (p.kind === "wai") {
-        for await (const ev of waiChatStream(d.ai!, p.model, messages, maxTokens)) if ("delta" in ev) text += ev.delta;
+        for await (const ev of waiChatStream(d.ai!, p.model, messages, maxTokens, d.env.CF_AI_GATEWAY_ID)) if ("delta" in ev) text += ev.delta;
       } else {
         for await (const ev of hfChatStream({ messages, token: d.hfToken!, model: p.model, maxTokens: Math.min(maxTokens, d.hfMaxTokensCeiling ?? maxTokens), signal: d.signal })) {
           if ("delta" in ev) text += ev.delta;
@@ -125,8 +125,8 @@ export async function complete(d: CompleteDeps, body: ChatRequestBody): Promise<
 }
 
 /** FLUX on Workers AI -> data URL (the Studio re-encodes it to PNG in a worker before writing public/assets). */
-export async function generateImage(ai: AiBinding, model: string, prompt: string): Promise<{ dataUrl: string; model: string }> {
-  const img = await waiImage(ai, model, prompt, 4);
+export async function generateImage(ai: AiBinding, model: string, prompt: string, gatewayId?: string): Promise<{ dataUrl: string; model: string }> {
+  const img = await waiImage(ai, model, prompt, 4, gatewayId);
   let bin = "";
   for (let i = 0; i < img.bytes.length; i += 0x8000) bin += String.fromCharCode(...img.bytes.subarray(i, i + 0x8000));
   return { dataUrl: `data:${img.mime};base64,${btoa(bin)}`, model };

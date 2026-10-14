@@ -27,6 +27,8 @@ const schema = z.object({
   /** In-memory fallback for the per-minute burst limiter (NVX_STUDIO_LIMITER binding on Workers). */
   STUDIO_BURST_PER_MIN: intIn(1, 600, 20),
   STUDIO_TIMEOUT_MS: intIn(5_000, 180_000, 90_000),
+  /** Cloudflare AI Gateway id for Workers AI calls; same variable as /chat. Empty = no gateway. */
+  CF_AI_GATEWAY_ID: word(/^[A-Za-z0-9][\w-]{0,63}$/, ""),
 });
 
 export type StudioEnv = z.infer<typeof schema>;
