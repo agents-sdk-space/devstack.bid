@@ -2,7 +2,7 @@
   "$comment": "Machine-readable map of NVX Stack Builder for AI agents. Verified by `npm run docs:check` (templateIds must equal src/data/template-ids.ts; every keyFiles path must exist). Human docs: docs/agents/AGENT-PLAYBOOK.md",
   "name": "nvx-stack-builder",
   "version": "0.8.0-rc.2",
-  "branchState": "main includes Studio (/studio/, open-source static preview, v0.8.0-rc.2), the remote MCP server, sign-in, and the function index. This merge is not itself a production deploy.",
+  "branchState": "Production https://devstack.bid is Worker version bbc2369e-a302-4527-ad23-87f44bb144d1 (commit 838440a, 2026-10-14 21:11 ICT): Studio at /studio/, remote MCP, and sign-in. Rollback: e9fa394a-7c15-4aee-b3ae-064bdf85e7dd.",
   "stack": {
     "framework": "Next.js 16.4 App Router",
     "language": "TypeScript",

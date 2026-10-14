@@ -86,6 +86,14 @@ Workers มี free tier; ค่าใช้จ่ายหลักคือ Op
 - **ข้อสังเกต:** console มี error จาก CSP บล็อก `static.cloudflareinsights.com/beacon.min.js` (Web Analytics ที่ Cloudflare ฉีดเข้ามา) ไม่มีผลกับการทำงาน; จะเปิดใน CSP หรือปิด Web Analytics ต้องให้ผู้ใช้ตัดสินใจ
 - **rollback:** `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1)
 
+## บันทึก deploy: Studio + MCP บน production (14 ต.ค. 2026)
+
+- **บัญชี:** `2d92bd5b25768fa9093d6adc0a8887fc` (examplessdk@gmail.com) Worker `nvx-stack-builder` เท่านั้น ไม่แตะ `odd-violet-5e66` และไม่สร้าง DNS ใหม่
+- **โค้ด:** `838440a` บน `main` (Studio, MCP, บันทึกล็อกอิน)
+- **deploy:** `npm run deploy` ด้วยเซสชัน OAuth ได้ version `bbc2369e-a302-4527-ad23-87f44bb144d1` (21:11 ICT) โดเมน `devstack.bid` และ `www.devstack.bid` ยังอยู่ครบ ไม่ได้ตั้ง secret ใหม่
+- **ตรวจบนเว็บจริง:** ทุกหน้าเทมเพลต 10 แบบ, `/`, `/builder`, `/docs`, `/docs/platform`, `/docs/user-guide/studio`, `/chat`, `/factory`, `/login`, `/settings/mcp`, `/.well-known/mcp` และ `/api/studio/health` ได้ 200 `/studio/` ได้ 200 พร้อม COOP/COEP `/studio` ได้ 307 ไป `/studio/` `/templates/does-not-exist` ได้ 404 `www` ได้ 308 ไป apex `GET /mcp` ได้ 405 หน้าแรกมีคำสั่ง `nvm install --lts`, `create-next-app`, `npm install recharts` และ `npm run dev` `POST /api/plan` แบบ fallback เลือก `nextjs-dashboard` GitHub และ Google ยัง 302 ไปผู้ให้บริการ Cursor ยัง `auth=missing`
+- **rollback:** `e9fa394a-7c15-4aee-b3ae-064bdf85e7dd`
+
 ## บันทึก deploy: เข้าสู่ระบบสี่วิธีและเมนูฟังก์ชัน (14 ต.ค. 2026)
 
 - **บัญชี:** `2d92bd5b25768fa9093d6adc0a8887fc` (examplessdk@gmail.com) Worker `nvx-stack-builder` เท่านั้น ไม่แตะ `odd-violet-5e66`

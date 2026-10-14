@@ -35,9 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deployed
 
+- 2026-10-14 21:11 ICT: Cloudflare Worker `nvx-stack-builder`, version `bbc2369e-a302-4527-ad23-87f44bb144d1`, commit `838440a`. Studio at `/studio/`, the remote MCP server, and sign-in are on https://devstack.bid. All 10 template pages, `/docs/user-guide/studio`, and `/api/studio/health` returned 200. `/templates/does-not-exist` returned 404. `www` returned 308 to the apex. A fallback plan for a Thai Next.js dashboard prompt selected `nextjs-dashboard`. Rollback target: `e9fa394a-7c15-4aee-b3ae-064bdf85e7dd`.
 - 2026-10-14 15:44 ICT: Cloudflare Worker `nvx-stack-builder`, version `e9fa394a-7c15-4aee-b3ae-064bdf85e7dd`, commit `e866cc8`. The vulnerable development dependency path was removed. Applied remote D1 migration `0008_mcp_clients.sql`; live page, MCP discovery, initialize, 19-tool catalog, all five Thai safety topics and unauthenticated key endpoint checks passed. Rollback target: `450890b7-5432-4795-afbc-1c7ebd241bff`.
 
-## [0.8.0-rc.2] - 2026-10-11 (branch `merge/devstack-workspace`, local, not deployed)
+## [0.8.0-rc.2] - 2026-10-11 (branch `merge/devstack-workspace`; production deploy `bbc2369e-a302-4527-ad23-87f44bb144d1` on 2026-10-14)
 
 Open source only: we removed everything in the Studio that was not open source or could carry commercial or usage-based fees.
 
