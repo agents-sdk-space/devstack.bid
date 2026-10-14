@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MCP_SCOPES, hashMcpKey, mintMcpKey } from "@/lib/mcp/auth";
-import { handleMcpMessage, hasAllowedOrigin, MCP_TOOLS, parseMcpBody, readResource, PROTOCOL_VERSION } from "@/lib/mcp/server";
+import { callTool, handleMcpMessage, hasAllowedOrigin, MCP_TOOLS, parseMcpBody, readResource, PROTOCOL_VERSION } from "@/lib/mcp/server";
 
 describe("remote MCP interface", () => {
   it("advertises the same complete tool catalog served by tools/list", async () => {
@@ -9,6 +9,17 @@ describe("remote MCP interface", () => {
     expect(response.status).toBe(200);
     expect(body.result.tools.map((tool: { name: string }) => tool.name)).toEqual(MCP_TOOLS.map((tool) => tool.name));
     expect(body.result.tools.map((tool: { name: string }) => tool.name)).toContain("github_commit_file");
+  });
+
+  it("provides privacy-preserving Thai safety recommendations without personal input", async () => {
+    const guidance = await callTool(new Request("https://devstack.bid/mcp"), "get_safety_recommendations", { topic: "privacy", lang: "th" });
+    expect(guidance.structuredContent).toMatchObject({ topic: "privacy", title: "พื้นฐานความเป็นส่วนตัว" });
+    expect(JSON.stringify(guidance.structuredContent)).toContain("ไม่รับหรือเก็บรายละเอียดส่วนบุคคล");
+  });
+
+  it("rejects unsupported safety topics", async () => {
+    const guidance = await callTool(new Request("https://devstack.bid/mcp"), "get_safety_recommendations", { topic: "track-user" });
+    expect(guidance.isError).toBe(true);
   });
 
   it("negotiates a supported protocol version and reports the server capabilities", async () => {

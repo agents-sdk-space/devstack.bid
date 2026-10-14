@@ -24,6 +24,7 @@ DevStack เปิด MCP server ให้แพลตฟอร์มที่�
 | `list_templates`, `get_template` | Public | Browse the current stack catalog and read one complete template. |
 | `compose_stack`, `export_scripts`, `export_starter_bundle`, `create_share_link` | Public | Validate a configuration, optionally reorder/remove/add sanitized custom steps, return ordered steps, generate `setup.sh` / `setup.ps1`, return every file from the Builder ZIP as a path-to-text map, and create a Builder link. Scripts are not run by DevStack. |
 | `search_docs`, `read_doc`, `get_platform_info` | Public | Search or read Thai/English product and technical documentation. |
+| `get_safety_recommendations` | Public | Return general bilingual privacy, account/device security, scam-response, and personal-safety checklists. The tool accepts no personal details and cannot inspect devices or accounts. |
 | `plan_stack` | `plan:write` | Turn a project description into a proposed scaffold plan. Uses quota/provider behavior from `/api/plan`. |
 | `chat_send` | `chat:write` | Send a turn to User Chat, including image mode. The response may include image content blocks. Site chat quotas still apply. |
 | `dev_chat_send` | `dev:write` | Send a turn to the Image and Research Orchestrator; site daily limits and budget still apply. |
@@ -56,6 +57,10 @@ Add `x-openai-key` as a second secret header only if you use planner BYOK or Fac
 ## Security and availability
 
 Keys are shown once, stored as hashes, scope-checked on each call, and can be revoked immediately. Calls are limited to 60 per minute per key. Do not share a key between people or put a broad key in a public integration. The `github_commit_file` tool changes a repository; it is explicitly marked as a write operation. Other setup-script tools return plain text only. Cloudflare deployment must apply migration `0008_mcp_clients` before key management works in production; until then, the production endpoint cannot issue or authenticate these account keys.
+
+### Privacy and personal safety
+
+`get_safety_recommendations` returns a static checklist in Thai or English. It does not take free-text personal context, inspect a device, verify an account, or contact emergency services. Do not send passwords, OTPs, recovery codes, private/API keys, full addresses, or live location to an MCP client. For immediate danger, contact local emergency services; for suspected account compromise or financial fraud, use the affected provider's official recovery or support channel.
 
 ## ภาษาไทย: ขอบเขตและข้อจำกัด
 

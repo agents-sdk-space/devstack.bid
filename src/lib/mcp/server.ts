@@ -48,6 +48,30 @@ const editsSchema = {
   additionalProperties: false,
 };
 
+const safetyGuidance = {
+  privacy: {
+    en: { title: "Privacy basics", steps: ["Share only the information needed for the task; remove names, addresses, account numbers, and identifying screenshots.", "Use separate, narrowly scoped API keys for each client and revoke keys you no longer use.", "Check the destination and retention policy before sending prompts or files to another AI service.", "Use a password manager and unique passwords; enable passkeys or multi-factor authentication where available."], escalate: "If personal data was exposed, revoke affected credentials, contact the relevant service through its official site, and follow your local data protection authority's guidance." },
+    th: { title: "พื้นฐานความเป็นส่วนตัว", steps: ["ส่งเฉพาะข้อมูลที่จำเป็น ลบชื่อ ที่อยู่ เลขบัญชี และข้อมูลระบุตัวตนออกจากภาพก่อนแชร์", "แยก API key ตาม client ให้สิทธิ์เท่าที่ต้องใช้ และเพิกถอนคีย์ที่เลิกใช้", "ตรวจปลายทางและนโยบายเก็บข้อมูลก่อนส่ง prompt หรือไฟล์ไปยังบริการ AI อื่น", "ใช้ password manager ตั้งรหัสผ่านไม่ซ้ำ และเปิด passkey หรือ MFA เมื่อมีให้ใช้"], escalate: "หากข้อมูลส่วนบุคคลรั่ว ให้เพิกถอนข้อมูลรับรองที่เกี่ยวข้อง ติดต่อบริการผ่านเว็บไซต์ทางการ และดูแนวทางจากหน่วยงานคุ้มครองข้อมูลในพื้นที่ของคุณ" },
+  },
+  accounts: {
+    en: { title: "Account security", steps: ["Use a unique password stored in a reputable password manager.", "Turn on passkeys or multi-factor authentication; prefer an authenticator or security key over SMS when available.", "Review active sessions, recovery email/phone, connected apps, and recent sign-in alerts.", "Keep recovery codes offline in a secure place; never share them with support agents or AI tools."], escalate: "If you suspect takeover, use the service's official recovery page from a trusted device, revoke sessions and app tokens, then change reused passwords." },
+    th: { title: "ความปลอดภัยของบัญชี", steps: ["ใช้รหัสผ่านเฉพาะบัญชีนั้นและเก็บใน password manager ที่เชื่อถือได้", "เปิด passkey หรือ MFA; ถ้าเลือกได้ให้ใช้แอปยืนยันตัวตนหรือ security key แทน SMS", "ตรวจ session ที่เปิดอยู่ อีเมล/เบอร์กู้คืน แอปที่เชื่อมต่อ และแจ้งเตือนการเข้าสู่ระบบ", "เก็บ recovery code แบบออฟไลน์ในที่ปลอดภัย ห้ามส่งให้ฝ่ายสนับสนุนหรือ AI"], escalate: "หากสงสัยว่าบัญชีถูกยึด ให้ใช้หน้ากู้คืนทางการจากอุปกรณ์ที่เชื่อถือ เพิกถอน session และ app token แล้วเปลี่ยนรหัสผ่านที่นำไปใช้ซ้ำ" },
+  },
+  devices: {
+    en: { title: "Device security", steps: ["Install operating-system and browser security updates promptly.", "Use a screen lock and device encryption; set automatic locking for unattended devices.", "Install apps from official stores or verified publishers and review requested permissions.", "Avoid sensitive account activity on shared devices or untrusted Wi-Fi; use your mobile network if unsure."], escalate: "If a device is lost, use its official remote-lock or erase feature, change important account credentials, and contact your carrier if the SIM may be at risk." },
+    th: { title: "ความปลอดภัยของอุปกรณ์", steps: ["ติดตั้งอัปเดตความปลอดภัยของระบบปฏิบัติการและเบราว์เซอร์โดยเร็ว", "ตั้งล็อกหน้าจอและเข้ารหัสดิสก์ พร้อมล็อกอัตโนมัติเมื่อไม่ได้ใช้งาน", "ติดตั้งแอปจาก store ทางการหรือผู้เผยแพร่ที่ตรวจสอบแล้ว และทบทวนสิทธิ์ที่แอปขอ", "หลีกเลี่ยงการทำธุรกรรมสำคัญบนเครื่องสาธารณะหรือ Wi-Fi ที่ไม่น่าเชื่อถือ หากไม่แน่ใจให้ใช้เครือข่ายมือถือ"], escalate: "หากอุปกรณ์หาย ให้ใช้ระบบล็อกหรือลบข้อมูลจากระยะไกล เปลี่ยนข้อมูลเข้าสู่ระบบที่สำคัญ และติดต่อเครือข่ายมือถือหาก SIM อาจมีความเสี่ยง" },
+  },
+  scams: {
+    en: { title: "Scam and phishing response", steps: ["Pause before opening links, installing files, scanning QR codes, or sending money.", "Verify requests using a known official website or a separate trusted contact method; do not use contact details in the suspicious message.", "Never disclose passwords, one-time codes, recovery phrases, private keys, or API keys.", "Save relevant evidence without forwarding the suspicious link to others."], escalate: "If you already shared a secret, change or revoke it from the official service immediately. If money was sent, contact your bank or payment provider through its official channel as soon as possible." },
+    th: { title: "รับมือมิจฉาชีพและฟิชชิง", steps: ["หยุดตรวจสอบก่อนกดลิงก์ ติดตั้งไฟล์ สแกน QR หรือโอนเงิน", "ยืนยันคำขอผ่านเว็บไซต์ทางการที่พิมพ์เองหรือช่องทางติดต่อที่เชื่อถือ อย่าใช้ข้อมูลติดต่อจากข้อความน่าสงสัย", "ห้ามเปิดเผยรหัสผ่าน รหัสใช้ครั้งเดียว recovery phrase private key หรือ API key", "เก็บหลักฐานที่เกี่ยวข้องโดยไม่ส่งต่อลิงก์น่าสงสัยให้ผู้อื่น"], escalate: "หากส่งความลับไปแล้ว ให้เปลี่ยนหรือเพิกถอนผ่านบริการทางการทันที หากโอนเงินแล้วให้ติดต่อธนาคารหรือผู้ให้บริการชำระเงินผ่านช่องทางทางการโดยเร็ว" },
+  },
+  personal_safety: {
+    en: { title: "Personal safety", steps: ["Avoid posting real-time location, travel plans, home details, or identifying documents publicly.", "Review location sharing and audience settings on social and messaging apps; disable sharing you do not need.", "For an in-person meeting, choose a public place, tell a trusted person your plan, and arrange your own transport.", "If a situation feels unsafe, move toward a staffed public place and contact someone you trust."], escalate: "If there is immediate danger, contact local emergency services. This general checklist cannot assess your surroundings or replace professional help." },
+    th: { title: "ความปลอดภัยส่วนบุคคล", steps: ["หลีกเลี่ยงการโพสต์ตำแหน่งแบบเรียลไทม์ แผนเดินทาง รายละเอียดบ้าน หรือเอกสารระบุตัวตนต่อสาธารณะ", "ตรวจการแชร์ตำแหน่งและกลุ่มผู้ชมในแอปโซเชียล/แชต ปิดสิ่งที่ไม่จำเป็น", "หากนัดพบกัน ให้เลือกที่สาธารณะ บอกแผนกับคนที่ไว้ใจ และจัดการเดินทางกลับด้วยตนเอง", "ถ้ารู้สึกไม่ปลอดภัย ให้ไปยังพื้นที่สาธารณะที่มีเจ้าหน้าที่และติดต่อคนที่ไว้ใจ"], escalate: "หากมีอันตรายทันที ให้ติดต่อหน่วยฉุกเฉินในพื้นที่ คำแนะนำทั่วไปนี้ประเมินสภาพแวดล้อมแทนคุณหรือทดแทนความช่วยเหลือจากผู้เชี่ยวชาญไม่ได้" },
+  },
+} as const;
+type SafetyTopic = keyof typeof safetyGuidance;
+
 export const MCP_TOOLS: Tool[] = [
   { name: "list_templates", description: "List all runnable Node.js and Python stack templates available on DevStack.", inputSchema: object({}), annotations: { readOnlyHint: true } },
   { name: "get_template", description: "Read one stack template, including its ordered setup steps and supported add-ons.", inputSchema: object({ templateId: str("Template id from list_templates") }, ["templateId"]), annotations: { readOnlyHint: true } },
@@ -61,6 +85,7 @@ export const MCP_TOOLS: Tool[] = [
   { name: "search_docs", description: "Search DevStack's bilingual user guide and technical reference.", inputSchema: object({ query: str(), limit: { type: "integer", minimum: 1, maximum: 20 } }, ["query"]), annotations: { readOnlyHint: true } },
   { name: "read_doc", description: "Read a public DevStack documentation page as Markdown. Use a slug such as user-guide/getting-started.", inputSchema: object({ slug: str("Documentation slug; use empty string for the docs index") }, ["slug"]), annotations: { readOnlyHint: true } },
   { name: "get_platform_info", description: "Return the public platform description and documentation entry point.", inputSchema: object({}), annotations: { readOnlyHint: true } },
+  { name: "get_safety_recommendations", description: "Return general privacy, account, device, scam-response, or personal-safety steps. It accepts no personal details, does not inspect your device, and does not contact anyone.", inputSchema: object({ topic: { type: "string", enum: ["privacy", "accounts", "devices", "scams", "personal_safety"] }, lang: { type: "string", enum: ["en", "th"] } }, ["topic"]), annotations: { readOnlyHint: true } },
   { name: "plan_stack", description: "Generate a complete app scaffold plan through DevStack's AI planner. Requires plan:write. Optional x-openai-key header uses the caller's key for this request only.", inputSchema: object({ prompt: str(), lang: { type: "string", enum: ["en", "th"] }, mode: { type: "string", enum: ["auto", "fallback"] } }, ["prompt"]), requiredScope: "plan:write", annotations: { openWorldHint: true } },
   { name: "chat_send", description: "Send a message to DevStack User Chat, including general, Thai, code, strong, image, and allowlisted Gateway modes. Requires chat:write; consumes site quota.", inputSchema: object({ message: str(), conversationId: optionalString(), mode: { type: "string", enum: ["general", "thai", "code", "strong", "image", "gateway"] }, model: optionalString() }, ["message"]), requiredScope: "chat:write", annotations: { openWorldHint: true } },
   { name: "dev_chat_send", description: "Send a turn to the DevStack Image and Research Orchestrator. Requires dev:write and uses the site's protected daily budget.", inputSchema: object({ message: str(), conversationId: optionalString() }, ["message"]), requiredScope: "dev:write", annotations: { openWorldHint: true } },
@@ -233,6 +258,13 @@ export async function callTool(req: Request, name: string, rawArgs: unknown) {
       }
       case "get_platform_info":
         return result({ name: "NVX Stack Builder", url: SITE_URL, description: "Compose and export bilingual Node.js and Python setup plans; the server does not execute commands.", agentEntry: `${SITE_URL}/llms.txt`, templateCount: TEMPLATES.length, docs: `${SITE_URL}/docs/platform` });
+      case "get_safety_recommendations": {
+        const topic = typeof args.topic === "string" && Object.prototype.hasOwnProperty.call(safetyGuidance, args.topic) ? args.topic as SafetyTopic : null;
+        if (!topic) return toolError("invalid", "Choose a supported safety topic.");
+        const lang = args.lang === "th" ? "th" : "en";
+        const guide = safetyGuidance[topic][lang];
+        return result({ topic, ...guide, neverShare: lang === "th" ? ["รหัสผ่าน", "OTP / recovery code", "API key / private key", "ตำแหน่งปัจจุบันหรือที่อยู่เต็ม"] : ["passwords", "one-time or recovery codes", "API or private keys", "live location or full address"], privacy: lang === "th" ? "คำแนะนำนี้เป็นข้อมูลทั่วไป ไม่รับหรือเก็บรายละเอียดส่วนบุคคล และไม่ได้ตรวจอุปกรณ์หรือบัญชีของคุณ" : "This is general guidance. It does not ask for or store personal details and cannot inspect your device or accounts." });
+      }
       case "plan_stack": {
         const prompt = typeof args.prompt === "string" ? args.prompt.slice(0, 2000) : "";
         const input = { prompt, lang: args.lang === "th" ? "th" : "en", mode: args.mode === "fallback" ? "fallback" : "auto" };

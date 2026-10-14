@@ -81,6 +81,7 @@ export function McpKeys() {
           <p className="mt-1 text-sm text-subtle">{th ? "เชื่อมเครื่องมือของ DevStack กับ AI platform อื่น" : "Connect DevStack tools to other AI platforms."}</p>
         </div>
       </div>
+      <p className="mt-3 text-sm leading-relaxed text-subtle">{th ? "ความเป็นส่วนตัว: คีย์จะแสดงครั้งเดียวและจัดเก็บเป็นค่าแฮช เลือกสิทธิ์เท่าที่จำเป็น และเพิกถอนคีย์ได้ทันที ข้อความที่ส่งผ่านเครื่องมือแชตอาจถูกส่งต่อไปยังผู้ให้บริการ AI ตามโหมดที่เลือก อย่าส่งรหัสผ่าน OTP recovery code API key หรือข้อมูลตำแหน่งส่วนตัว" : "Privacy: keys are shown once, stored as hashes, scoped to the access you select, and can be revoked. Prompts sent through chat tools may be forwarded to the AI provider for the selected mode. Never send passwords, one-time or recovery codes, API keys, or private location details."}</p>
 
       {error && <p className="mt-5 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200" role="alert">{error}</p>}
 

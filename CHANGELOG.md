@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Remote MCP server** at `/mcp` with discovery metadata at `/.well-known/mcp`, offering public tools for templates, custom Builder edits, script/starter-bundle exports, sharing and docs, plus scoped planner, chat, Dev Chat, Factory, conversation-history and GitHub tools. MCP key management lives at `/settings/mcp`; keys are shown once, stored as hashes, rate-limited per key and revocable. See `docs/integrations/mcp.md`.
+- Added the public `get_safety_recommendations` MCP tool with Thai and English privacy, account/device security, scam-response, and personal-safety checklists. It takes no personal details and does not inspect devices or accounts.
 - D1 migration `0008_mcp_clients` ties issued MCP keys to signed-in accounts. It must be applied to the remote database before production key management can work.
 - **Function index** at `/docs/platform` (raw Markdown `/docs/platform.md`), linked from the header. It lists the product areas the way a docs index does, and points agents at `/llms.txt`.
 - **NVX DEVELOPER BOTH** is the Cursor agent that built this platform and looks after all of it. Roster: `docs/agents/cursor-caretakers.md` and `docs/agents/cursor-agents.json` (`agent.id` `nvx-developer`). Header item **Agents**. Area rows are a reading map for that one agent. It does not deploy or execute user commands on its own.

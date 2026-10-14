@@ -3,7 +3,7 @@ import { SITE_URL } from "@/lib/docs";
 export async function GET() {
   return Response.json({
     name: "NVX Stack Builder MCP",
-    description: "Tools for DevStack templates, setup planning, documentation, chat, sandbox sessions, and GitHub integration.",
+    description: "Tools for DevStack templates, setup planning, documentation, privacy and personal-safety recommendations, chat, sandbox sessions, and GitHub integration.",
     endpoint: `${SITE_URL}/mcp`,
     transport: "streamable-http",
     protocolVersions: ["2025-11-25", "2025-06-18", "2025-03-26"],
