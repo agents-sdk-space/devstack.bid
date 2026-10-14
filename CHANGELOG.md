@@ -9,10 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The homepage **Ask the AI agent** button opens `/learn`.
+- Header links for Dev Chat, Factory, Agents, Studio and Design stay in the menu until the window is wide enough that the bar does not scroll sideways. The command-palette control stays an icon until 1720px. **Setup Cursor** is an icon button in the bar; the menu and `/learn` show the full “create or ask” label.
 - Clarified the homepage headline in English and Thai to describe Stack Templates as ready to run.
 - Documented that `next dev` must be opened at `http://localhost:3000`. Next.js 16 blocks the dev HMR websocket from `127.0.0.1`, so `/builder` stays on its loading skeleton.
 
 ### Added
+
+- **Learn page** at `/learn`: a launch presentation of the whole system, credited to the creator devstack.sdk@gmail.com and Cursor. The homepage **Ask the AI agent** button opens it. Every page header (and the Studio nav) can **Setup Cursor** — create a project or ask a question through `https://cursor.com/link/prompt`, which the person confirms in Cursor before it runs.
 
 - **Remote MCP server** at `/mcp` with discovery metadata at `/.well-known/mcp`, offering public tools for templates, custom Builder edits, script/starter-bundle exports, sharing and docs, plus scoped planner, chat, Dev Chat, Factory, conversation-history and GitHub tools. MCP key management lives at `/settings/mcp`; keys are shown once, stored as hashes, rate-limited per key and revocable. See `docs/integrations/mcp.md`.
 - Added the public `get_safety_recommendations` MCP tool with Thai and English privacy, account/device security, scam-response, and personal-safety checklists. It takes no personal details and does not inspect devices or accounts.

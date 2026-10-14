@@ -50,6 +50,7 @@ export const STRINGS = {
   'nav.chat': { en: 'Chat', th: 'แชต' },
   'nav.docs': { en: 'Docs', th: 'เอกสาร' },
   'nav.guide': { en: 'Studio guide', th: 'คู่มือ Studio' },
+  'nav.learn': { en: 'Learn', th: 'เรียนรู้' },
   'brand.tagline': { en: 'Build full-stack apps with AI agents, in your browser', th: 'สร้างแอป full-stack ด้วย AI agent ในเบราว์เซอร์' },
   'lang.toggle': { en: 'ไทย', th: 'EN' },
   'lang.label': { en: 'Switch language to Thai', th: 'เปลี่ยนภาษาเป็นอังกฤษ' },

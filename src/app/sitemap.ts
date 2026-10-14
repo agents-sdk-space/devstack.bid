@@ -3,7 +3,7 @@ import { DOCS, pagePath, SITE_URL } from "@/lib/docs";
 import { TEMPLATE_IDS } from "@/data/templates";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const pages = ["/", "/templates", "/builder", "/chat", "/chat/dev", "/factory", "/studio/", "/docs", "/design", "/login"];
+  const pages = ["/", "/learn", "/templates", "/builder", "/chat", "/chat/dev", "/factory", "/studio/", "/docs", "/design", "/login"];
   return [
     ...pages.map((p) => ({ url: `${SITE_URL}${p === "/" ? "" : p}` })),
     ...TEMPLATE_IDS.map((id) => ({ url: `${SITE_URL}/templates/${id}` })),

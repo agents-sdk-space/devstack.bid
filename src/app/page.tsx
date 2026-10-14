@@ -50,7 +50,7 @@ export default function Home() {
               <T k="hero.subtitle" />
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
-              <Link href="/builder#agent" className={buttonClasses("primary", "lg")}>
+              <Link href="/learn" className={buttonClasses("primary", "lg")}>
                 <Sparkles className="h-[18px] w-[18px]" aria-hidden /> <T k="hero.ctaAgent" />
               </Link>
               <Link href="/templates" className={buttonClasses("secondary", "lg")}>

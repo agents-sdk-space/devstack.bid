@@ -24,6 +24,7 @@ function Chip({ label, value, tone }: { label: string; value: string; tone: 'ok'
 // to or from it must be a full page load.
 const NAV = [
   { href: '/', key: 'nav.home' },
+  { href: '/learn', key: 'nav.learn' },
   { href: '/chat', key: 'nav.chat' },
   { href: '/docs/user-guide/studio', key: 'nav.guide' },
 ] as const;

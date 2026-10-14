@@ -6,6 +6,7 @@ import { useState } from "react";
 import { AppWindow, Blocks, BookOpen, Bot, House, Languages, Layers, LayoutGrid, Menu, FlaskConical, MessagesSquare, Moon, Palette, SquareTerminal, Sun } from "lucide-react";
 import { Button, cn, Dialog, DialogContent, DialogTrigger, SearchIcon, Tooltip } from "@/components/ui";
 import { AccountButton } from "./account-button";
+import { SetupCursor } from "./setup-cursor";
 import { CommandPalette, PaletteTrigger } from "./command-palette";
 import { Mascot } from "./brand/mascot";
 import { TerminalSignature } from "./brand/terminal-signature";
@@ -84,7 +85,7 @@ export function Header() {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "focus-ring motion-fast whitespace-nowrap rounded-md px-3 py-1.5 text-[13px]",
-                  "wide" in item && item.wide && "hidden xl:inline-block",
+                  "wide" in item && item.wide && "hidden 2xl:inline-block",
                   active ? "font-medium text-fg" : "text-subtle hover:text-fg"
                 )}
               >
@@ -95,6 +96,7 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5">
+          <SetupCursor />
           <AccountButton next={pathname} />
           <PaletteTrigger onClick={() => setPaletteOpen(true)} />
           <Tooltip content={t("palette.open")}>
@@ -104,7 +106,7 @@ export function Header() {
           </Tooltip>
           <Button variant="ghost" size="sm" onClick={() => setLang(lang === "en" ? "th" : "en")} aria-label={t("toggle.langLabel")}>
             <Languages className="h-4 w-4" aria-hidden />
-            <span className="hidden sm:inline">{t("toggle.lang")}</span>
+            <span className="hidden min-[1600px]:inline">{t("toggle.lang")}</span>
           </Button>
           <Tooltip content={t("toggle.theme")}>
             <Button variant="ghost" size="icon" onClick={toggle} aria-label={t("toggle.theme")} aria-pressed={dark}>
@@ -113,13 +115,14 @@ export function Header() {
           </Tooltip>
           <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="xl:hidden" aria-label={t("nav.menu")}>
+              <Button variant="ghost" size="icon" className="2xl:hidden" aria-label={t("nav.menu")}>
                 <Menu className="h-5 w-5" aria-hidden />
               </Button>
             </DialogTrigger>
             <DialogContent side="right" title={t("nav.mainMenu")} closeLabel={t("nav.close")}>
-              <div className="mb-4">
+              <div className="mb-4 space-y-2">
                 <AccountButton next={pathname} full onNavigate={() => setMenuOpen(false)} />
+                <SetupCursor appearance="menu" />
               </div>
               <nav aria-label="Mobile">
                 <ul className="space-y-1">
@@ -174,6 +177,10 @@ export function Footer() {
         <TerminalSignature className="w-52 sm:w-60" />
         <p className="font-mono text-[11px] tracking-wide text-muted">
           DevStack · <a href="https://devstack.bid" className="link">devstack.bid</a>
+          {" · "}
+          <Link href="/learn" className="link">
+            {t("nav.learn")}
+          </Link>
         </p>
       </div>
       <p className="mx-auto max-w-3xl px-4">{t("footer.text")}</p>

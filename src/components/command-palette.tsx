@@ -7,7 +7,7 @@ import { TEMPLATES } from "@/data/templates";
 import { CATEGORY_LABELS } from "@/lib/i18n";
 import { Dialog, DialogContent, Kbd, SearchIcon } from "@/components/ui";
 import { useDarkMode, useLang } from "./prefs";
-import { AppWindow, Blocks, BookOpen, Bot, FileText, FlaskConical, House, Languages, Layers, LayoutGrid, MessagesSquare, Palette, SquareTerminal, SunMoon } from "lucide-react";
+import { AppWindow, Blocks, BookOpen, Bot, FileText, FlaskConical, GraduationCap, House, Languages, Layers, LayoutGrid, MessagesSquare, Palette, SquareTerminal, SunMoon } from "lucide-react";
 import docsNav from "@/generated/docs-nav.json";
 import { templateTool, ToolTile } from "./brand/tool-icon";
 
@@ -56,6 +56,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
               {(
                 [
                   ["/", House, t("nav.home")],
+                  ["/learn", GraduationCap, t("nav.learn")],
                   ["/templates", LayoutGrid, t("nav.templates")],
                   ["/builder", Blocks, t("nav.builder")],
                   ["/chat", MessagesSquare, t("nav.chat")],
@@ -156,8 +157,7 @@ export function PaletteTrigger({ onClick }: { onClick: () => void }) {
       className="focus-ring motion-fast hidden h-9 items-center gap-2 rounded-md border border-border bg-surface-2 px-3 text-sm text-muted hover:border-border-strong hover:text-fg md:inline-flex"
     >
       <SearchIcon />
-      <span className="hidden whitespace-nowrap 2xl:inline">{t("palette.open")}</span>
-      <span className="flex gap-0.5 2xl:ml-3">
+      <span className="hidden gap-0.5 min-[1720px]:ml-3 min-[1720px]:flex">
         <Kbd>{mac ? "⌘" : "Ctrl"}</Kbd>
         <Kbd>K</Kbd>
       </span>
