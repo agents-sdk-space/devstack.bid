@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deployed
 
-- 2026-10-14 15:31 ICT: Cloudflare Worker `nvx-stack-builder`, version `d196d1e5-e6e5-4e5e-98cb-22764ef8ad4e`, commit `d684720`. Includes the earlier production dependency fixes. Applied remote D1 migration `0008_mcp_clients.sql`; live page, MCP discovery, initialize, 19-tool catalog, all five Thai safety topics and unauthenticated key endpoint checks passed. Rollback target: `450890b7-5432-4795-afbc-1c7ebd241bff`.
+- 2026-10-14 15:44 ICT: Cloudflare Worker `nvx-stack-builder`, version `e9fa394a-7c15-4aee-b3ae-064bdf85e7dd`, commit `e866cc8`. The vulnerable development dependency path was removed. Applied remote D1 migration `0008_mcp_clients.sql`; live page, MCP discovery, initialize, 19-tool catalog, all five Thai safety topics and unauthenticated key endpoint checks passed. Rollback target: `450890b7-5432-4795-afbc-1c7ebd241bff`.
 
 ## [0.7.0] - 2026-10-11
 
