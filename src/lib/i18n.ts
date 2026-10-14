@@ -11,7 +11,7 @@ const dict = {
   "skip": { en: "Skip to content", th: "ข้ามไปยังเนื้อหา" },
 
   "hero.badge": { en: "Open source · MIT · by NVX DEVELOPER BOTH", th: "โอเพนซอร์ส · MIT · โดย NVX DEVELOPER BOTH" },
-  "hero.title": { en: "Turn dev commands into runnable Stack Templates", th: "เปลี่ยนคำสั่งนักพัฒนาให้เป็น Stack Template ที่รันได้จริง" },
+  "hero.title": { en: "Turn dev commands into ready-to-run Stack Templates", th: "เปลี่ยนคำสั่งนักพัฒนาให้เป็น Stack Template ที่พร้อมรัน" },
   "hero.subtitle": {
     en: "npm, nvm, npx, pip, PyPI, Node.js, JavaScript and Python — ordered, explained, verified. Describe your app to the AI agent and get a full scaffold plan you can copy, reorder, share or download as setup.sh / setup.ps1.",
     th: "npm, nvm, npx, pip, PyPI, Node.js, JavaScript และ Python — เรียงลำดับ อธิบาย และมีคำสั่งตรวจสอบ บอก AI agent ว่าอยากได้แอปแบบไหน แล้วรับแผนสร้างโปรเจกต์ครบชุด คัดลอก จัดลำดับ แชร์ หรือดาวน์โหลดเป็น setup.sh / setup.ps1 ได้",

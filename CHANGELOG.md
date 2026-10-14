@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Clarified the homepage headline in English and Thai to describe Stack Templates as ready to run.
+
 ### Added
 
 - **Function index** at `/docs/platform` (raw Markdown `/docs/platform.md`), linked from the header. It lists the product areas the way a docs index does, and points agents at `/llms.txt`.
