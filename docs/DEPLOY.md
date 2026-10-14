@@ -1,7 +1,8 @@
 # Deploying NVX Stack Builder to Cloudflare Workers
 
 > **Current production (2026-10-14):** live at **https://devstack.bid** (apex). Worker `nvx-stack-builder` in account `2d92bd5b25768fa9093d6adc0a8887fc`; `www.devstack.bid` is also attached and returns 308 to the apex.
-> - Latest code deploy: 2026-10-14 21:11 ICT from commit `838440a`; Cloudflare version `bbc2369e-a302-4527-ad23-87f44bb144d1`. This is Studio (`/studio/`), the remote MCP server, and the sign-in work together. Rollback target: `e9fa394a-7c15-4aee-b3ae-064bdf85e7dd`.
+> - Latest code deploy: 2026-10-14 22:18 ICT from merge commit `be6eb3f` (pull request #6); Cloudflare version `d29b83b8-1753-4a47-a0b5-a63ba79fa6a2`. This adds `/learn` and Setup Cursor. Rollback target: `bbc2369e-a302-4527-ad23-87f44bb144d1`.
+> - Previous code deploy: 2026-10-14 21:11 ICT from commit `838440a`; Cloudflare version `bbc2369e-a302-4527-ad23-87f44bb144d1`. This is Studio (`/studio/`), the remote MCP server, and the sign-in work together. Rollback target: `e9fa394a-7c15-4aee-b3ae-064bdf85e7dd`.
 > - Previous code deploy: 2026-10-14 15:44 ICT from commit `e866cc8`; Cloudflare version `e9fa394a-7c15-4aee-b3ae-064bdf85e7dd`. The vulnerable development dependency path was removed. D1 migration `0008_mcp_clients.sql` was applied to `nvx-db` before that deploy. Rollback target cited for that deploy: `450890b7-5432-4795-afbc-1c7ebd241bff`.
 > - Live checks on that deploy passed: MCP discovery, protocol initialization, 19 tools, Thai privacy-guidance tool response, settings page, and unauthenticated key API returns 401.
 > - Earlier the same day, version `d4c19335-3b9b-4003-9cd9-a744eab5afd4` set the GitHub, Google, and AI Gateway secrets. Worker secrets stay on later versions unless removed. Rolling back to `f3257677-8d0e-4f59-80da-35d8141d3bf8` drops those secrets. Code rollback before sign-in: `05fbb6ee-eb43-4386-a273-7f3277c415be`.

@@ -86,6 +86,14 @@ Workers มี free tier; ค่าใช้จ่ายหลักคือ Op
 - **ข้อสังเกต:** console มี error จาก CSP บล็อก `static.cloudflareinsights.com/beacon.min.js` (Web Analytics ที่ Cloudflare ฉีดเข้ามา) ไม่มีผลกับการทำงาน; จะเปิดใน CSP หรือปิด Web Analytics ต้องให้ผู้ใช้ตัดสินใจ
 - **rollback:** `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1)
 
+## บันทึก deploy: หน้า /learn และ Setup Cursor (14 ต.ค. 2026)
+
+- **บัญชี:** `2d92bd5b25768fa9093d6adc0a8887fc` (examplessdk@gmail.com) Worker `nvx-stack-builder` เท่านั้น ไม่แตะ Worker อื่นและไม่สร้าง DNS ใหม่
+- **โค้ด:** merge commit `be6eb3f` บน `main` (pull request #6)
+- **deploy:** `npm run deploy` ด้วยเซสชัน OAuth ได้ version `d29b83b8-1753-4a47-a0b5-a63ba79fa6a2` (22:18 ICT) โดเมน `devstack.bid` และ `www.devstack.bid` ยังอยู่ครบ ไม่ได้ตั้ง secret ใหม่
+- **ตรวจบนเว็บจริง:** `/`, `/learn`, `/templates`, `/templates/nextjs-dashboard`, `/builder`, `/design`, `/chat`, `/docs`, `/login`, `/docs/platform` ได้ 200 `/templates/does-not-exist` ได้ 404 `www.devstack.bid/learn` ได้ 308 ไป apex หน้า `/learn` มี `devstack.sdk@gmail.com` และลิงก์ `cursor.com/link/prompt` หน้าแรกชี้ไป `/learn` `POST /api/plan` แบบ fallback เลือก `nextjs-dashboard`
+- **rollback:** `bbc2369e-a302-4527-ad23-87f44bb144d1`
+
 ## บันทึก deploy: Studio + MCP บน production (14 ต.ค. 2026)
 
 - **บัญชี:** `2d92bd5b25768fa9093d6adc0a8887fc` (examplessdk@gmail.com) Worker `nvx-stack-builder` เท่านั้น ไม่แตะ `odd-violet-5e66` และไม่สร้าง DNS ใหม่
