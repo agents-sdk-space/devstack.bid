@@ -91,8 +91,16 @@ Workers มี free tier; ค่าใช้จ่ายหลักคือ Op
 - **บัญชี:** `2d92bd5b25768fa9093d6adc0a8887fc` (examplessdk@gmail.com) Worker `nvx-stack-builder` เท่านั้น ไม่แตะ `odd-violet-5e66`
 - **deploy:** `npm run deploy` ได้ version `f3257677-8d0e-4f59-80da-35d8141d3bf8` โดเมน `devstack.bid` และ `www.devstack.bid` ยังอยู่ครบ
 - **ตรวจบนเว็บจริง:** `/`, `/login`, `/docs/platform`, `/docs/agents/cursor-caretakers` ได้ 200; `/templates/unknown` ได้ 404; www `/login` ได้ 308 ไป apex
-- **เข้าสู่ระบบ:** migration `0006` และ `0007` apply บน remote แล้วเมื่อ 14 ต.ค. 2026 (`schema_version` = 7) รหัสผ่านของอีเมลที่ไม่มีบัญชีตอบ `303` `auth=invalid` ปุ่ม Cursor, Google, GitHub ยังพาไป `/login?auth=missing` เพราะยังไม่ได้ตั้ง `CURSOR_APP_ID`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` บน Worker นี้ ดู [d1-database.md](./d1-database.md)
+- **เข้าสู่ระบบ ณ ตอน deploy นี้:** migration `0006` และ `0007` apply บน remote แล้ว (`schema_version` = 7) รหัสผ่านของอีเมลที่ไม่มีบัญชีตอบ `303` `auth=invalid` ปุ่ม Cursor, Google, GitHub พาไป `/login?auth=missing` secret ของ GitHub กับ Google ถูกตั้งในบันทึกถัดไป
 - **rollback:** `05fbb6ee-eb43-4386-a273-7f3277c415be`
+
+## บันทึก secret: GitHub, Google และ AI Gateway (14 ต.ค. 2026)
+
+- **บัญชี:** `2d92bd5b25768fa9093d6adc0a8887fc` Worker `nvx-stack-builder` เท่านั้น
+- **วิธีตั้ง:** `wrangler secret put` ผ่าน stdin จากค่าที่ผู้ใช้กรอกในแบบฟอร์ม Runtime secret ไม่ได้พิมพ์ค่าลับ เซสชัน Wrangler OAuth ของ `examplessdk@gmail.com` เป็นตัวเขียน secret เพราะ `CLOUDFLARE_API_TOKEN` ที่กรอกมาถูก Cloudflare ปฏิเสธด้วยรหัส `9109`
+- **เวอร์ชันปัจจุบัน:** `d4c19335-3b9b-4003-9cd9-a744eab5afd4` secret ที่มีชื่อบน Worker คือ `AI_GATEWAY_API_KEY`, `CHAT_COOKIE_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `HF_TOKEN`, `OPENAI_API_KEY`
+- **ตรวจบนเว็บจริง:** `GET /api/auth/github` ตอบ 302 ไป `github.com/login/oauth/authorize` และ `GET /api/auth/google` ตอบ 302 ไป `accounts.google.com/o/oauth2/v2/auth` ไม่ได้ตาม query เพราะมี client id `GET /api/auth/cursor` ยังตอบ 302 ไป `/login?auth=missing&provider=cursor` เพราะไม่ได้กรอก `CURSOR_APP_ID`
+- **rollback:** `f3257677-8d0e-4f59-80da-35d8141d3bf8` คืนโค้ดเดิมและเอา secret GitHub, Google, AI Gateway ออก
 
 ## บันทึก deploy: เพิ่ม D1 binding (11 ต.ค. 2026)
 

@@ -14,8 +14,9 @@
 
 | เวอร์ชัน | id | หมายเหตุ |
 |---|---|---|
-| ปัจจุบัน | `f3257677-8d0e-4f59-80da-35d8141d3bf8` | 2026-10-14: เข้าสู่ระบบสี่วิธี, เมนูฟังก์ชัน, เอเจนต์ NVX DEVELOPER BOTH |
-| ก่อนหน้า (rollback แรก) | `05fbb6ee-eb43-4386-a273-7f3277c415be` | v0.7.0 ก่อนชุดเข้าสู่ระบบ |
+| ปัจจุบัน | `d4c19335-3b9b-4003-9cd9-a744eab5afd4` | 2026-10-14: โค้ดชุดเข้าสู่ระบบเดิม พร้อม secret GitHub, Google และ AI Gateway |
+| ก่อนหน้า (rollback แรก) | `f3257677-8d0e-4f59-80da-35d8141d3bf8` | โค้ดเดียวกันก่อนตั้ง secret ชุดนี้ การย้อนมาที่นี่จะเอา secret OAuth ออก |
+| ก่อนหน้า | `05fbb6ee-eb43-4386-a273-7f3277c415be` | v0.7.0 ก่อนชุดเข้าสู่ระบบ |
 | ก่อนหน้า | `450890b7-5432-4795-afbc-1c7ebd241bff` | v0.6.0 + D1 binding `DB` |
 | ก่อนหน้า | `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` | v0.6.0 (tag `v0.6.0`): docs ในแอป `/docs`, raw `.md`, `/llms.txt`, signature |
 | ก่อนหน้า | `671b6b3b-1074-40cb-84b0-0df2681b69ce` | v0.5.1: metadata ชี้ devstack.bid, HSTS ไม่มี includeSubDomains, redirect www → apex |
