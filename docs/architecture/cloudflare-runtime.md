@@ -1,6 +1,6 @@
 # Subsystem: Cloudflare Workers / OpenNext runtime
 
-ตั้งแต่ v0.3.0 (commit `f9ef054`) แอปถูก build เป็น Cloudflare Worker ด้วย [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) 1.20.x และ Wrangler 4 คู่มือ deploy ทีละขั้นอยู่ที่ [DEPLOY.md](../DEPLOY.md) และ [operations/deploy-cloudflare.md](../operations/deploy-cloudflare.md) หน้านี้อธิบายว่า runtime ประกอบกันอย่างไรและทำไม
+ตั้งแต่ v0.3.0 (commit `[commit redacted]`) แอปถูก build เป็น Cloudflare Worker ด้วย [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) 1.20.x และ Wrangler 4 คู่มือ deploy ทีละขั้นอยู่ที่ [DEPLOY.md](../DEPLOY.md) และ [operations/deploy-cloudflare.md](../operations/deploy-cloudflare.md) หน้านี้อธิบายว่า runtime ประกอบกันอย่างไรและทำไม
 
 ## ทำไม Cloudflare Workers + OpenNext
 
@@ -42,4 +42,4 @@ Worker มี binding `DB` ชี้ D1 `nvx-db` (ประกาศใน `d1_d
 
 ## สถานะ deploy ล่าสุด
 
-Production (v0.6.0) ที่ `https://devstack.bid` และ `www.devstack.bid` (Workers Custom Domains, redirect www → apex) บัญชี `2d92bd5b25768fa9093d6adc0a8887fc` เวอร์ชันปัจจุบัน `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (ก่อนหน้า `671b6b3b-1074-40cb-84b0-0df2681b69ce` v0.5.1) workers.dev สำรอง `https://nvx-stack-builder.examplessdk.workers.dev` ส่วน deploy เดิม (v0.3.0) ที่ `https://nvx-stack-builder.agen-sdk-work.workers.dev` บัญชี `f70d35188a3c56b9781538c73a86e04e` ยังเปิดอยู่และไม่ถูกแก้ไข
+Production (v0.6.0) ที่ `https://devstack.bid` และ `www.devstack.bid` (Workers Custom Domains, redirect www → apex) บัญชี `[account ID redacted]` เวอร์ชันปัจจุบัน `[deployment ID redacted]` (ก่อนหน้า `[deployment ID redacted]` v0.5.1) workers.dev สำรอง `workers.dev URL redacted` ส่วน deploy เดิม (v0.3.0) ที่ `workers.dev URL redacted` บัญชี `[account ID redacted]` ยังเปิดอยู่และไม่ถูกแก้ไข

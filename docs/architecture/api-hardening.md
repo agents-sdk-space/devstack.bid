@@ -1,6 +1,6 @@
 # Subsystem: API hardening — rate limiting, env, HTTP limits, security headers
 
-ชุดการป้องกันฝั่งเซิร์ฟเวอร์ที่เพิ่มใน v0.3.0 เพื่อเตรียม production (commit `97f14d9`, `b88a5c5`, `712eb8e`) เป้าหมายคือปกป้อง **บิล OpenAI ของผู้ดูแล**, ปกป้อง **ผู้ใช้** (headers, ไม่ log ข้อมูลส่วนตัว) และทำให้ระบบ **ไม่ล่มเพราะ config ผิด**
+ชุดการป้องกันฝั่งเซิร์ฟเวอร์ที่เพิ่มใน v0.3.0 เพื่อเตรียม production (commit `[commit redacted]`, `b88a5c5`, `712eb8e`) เป้าหมายคือปกป้อง **บิล OpenAI ของผู้ดูแล**, ปกป้อง **ผู้ใช้** (headers, ไม่ log ข้อมูลส่วนตัว) และทำให้ระบบ **ไม่ล่มเพราะ config ผิด**
 
 ## Env validation — [`src/lib/server/env.ts`](../../src/lib/server/env.ts)
 
@@ -13,7 +13,7 @@
 
 - `readJsonBody(req, 16 KB)`: Content-Type ต้องเป็น `application/json` (ไม่งั้น **415**), ปฏิเสธเร็วจาก `Content-Length` และ **อ่านแบบ stream แล้วยกเลิกทันทีเมื่อเกิน** (**413**) เพราะ `Content-Length` อาจโกหกหรือไม่มี, JSON เสีย → **400**
 - `withTimeout` → `HttpError(504)` ซึ่ง route แปลงเป็น fallback plan
-- `clientIp`: `cf-connecting-ip` → `x-forwarded-for` (ตัวแรก) → `x-real-ip` → `"local"`; IPv6 ถูกย่อเป็น **/64** (`ipv6Prefix64`) เพราะผู้ใช้หนึ่งรายมักคุมทั้ง /64 และหมุนที่อยู่หลบ limit ได้ (พบจริงตอนทดสอบ live ผ่าน WARP ที่ IPv6 เปลี่ยนทุก connection — commit `712eb8e`)
+- `clientIp`: `cf-connecting-ip` → `x-forwarded-for` (ตัวแรก) → `x-real-ip` → `"local"`; IPv6 ถูกย่อเป็น **/64** (`ipv6Prefix64`) เพราะผู้ใช้หนึ่งรายมักคุมทั้ง /64 และหมุนที่อยู่หลบ limit ได้ (พบจริงตอนทดสอบ live ผ่าน WARP ที่ IPv6 เปลี่ยนทุก connection — commit `[commit redacted]`)
 - `NO_STORE` header `Cache-Control: no-store` ในทุกคำตอบของ API
 
 ## Rate limiting — [`src/lib/server/rate-limit.ts`](../../src/lib/server/rate-limit.ts)

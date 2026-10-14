@@ -12,7 +12,7 @@
 ## ขั้นตอนโดยสรุป
 
 1. **ตรวจโค้ด**: `npm run lint && npm run typecheck && npm test && npm run docs:check && npm run cf:build`
-2. **ตั้งตัวแปร**: `CLOUDFLARE_API_TOKEN` (เฉพาะ token), `CLOUDFLARE_ACCOUNT_ID` (บัญชี production `2d92bd5b25768fa9093d6adc0a8887fc`, devstack.bid, workers.dev `examplessdk`; บัญชีเดิม v0.3.0 `f70d35188a3c56b9781538c73a86e04e`) ถ้าใช้ token หลายบัญชีบนเครื่องเดียว ให้ส่งเฉพาะคำสั่ง เช่น `CLOUDFLARE_API_TOKEN="$TOKEN_X" CLOUDFLARE_ACCOUNT_ID=<id> npx wrangler ...` แทนการ export ค้างไว้
+2. **ตั้งตัวแปร**: `CLOUDFLARE_API_TOKEN` (เฉพาะ token), `CLOUDFLARE_ACCOUNT_ID` (บัญชี production `[account ID redacted]`, devstack.bid, workers.dev `production subdomain redacted`; บัญชีเดิม v0.3.0 `[account ID redacted]`) ถ้าใช้ token หลายบัญชีบนเครื่องเดียว ให้ส่งเฉพาะคำสั่ง เช่น `CLOUDFLARE_API_TOKEN="$TOKEN_X" CLOUDFLARE_ACCOUNT_ID=<id> npx wrangler ...` แทนการ export ค้างไว้
 3. **ตรวจชื่อว่าง/เป็นของเรา**: `npx wrangler deployments list --name nvx-stack-builder` ถ้าชื่อถูกใช้โดย Worker อื่นที่ไม่ใช่ของเรา เปลี่ยน `name` และ `services[0].service` ใน `wrangler.jsonc` เป็น `nvx-stack-builder-staging`
 4. **Deploy**: `npm run deploy` (= build + `opennextjs-cloudflare deploy`) ครั้งแรกจะสร้าง Worker และ rate-limit bindings
 5. **Secret**: `printenv OPENAI_API_KEY | npx wrangler secret put OPENAI_API_KEY`
@@ -23,7 +23,7 @@
 ## Smoke test หลัง deploy
 
 ```bash
-BASE=https://devstack.bid   # production; สำรอง https://nvx-stack-builder.examplessdk.workers.dev; v0.3.0 เดิม: https://nvx-stack-builder.agen-sdk-work.workers.dev
+BASE=https://devstack.bid   # production; สำรอง workers.dev URL redacted v0.3.0 เดิม: workers.dev URL redacted
 for p in / /templates /templates/nextjs-dashboard /builder /design; do curl -s -o /dev/null -w "$p %{http_code}\n" $BASE$p; done
 curl -s -o /dev/null -w "404 check %{http_code}\n" $BASE/templates/does-not-exist     # ต้อง 404
 curl -sI $BASE/ | grep -iE 'strict-transport|content-security|x-frame'
@@ -51,15 +51,15 @@ Workers มี free tier; ค่าใช้จ่ายหลักคือ Op
 
 ## บันทึก deploy v0.5.0 (11 ต.ค. 2026)
 
-- **ตรวจบัญชีก่อน:** ใช้ GET แบบอ่านอย่างเดียว (`/accounts/<id>/workers/scripts` และ `/workers/subdomain`) เพราะ wrangler ไม่มีคำสั่ง list Worker ผลที่ได้: มี Worker เดิม 1 ตัว (`odd-violet-5e66`, ไม่แตะ), subdomain `space6` ลงทะเบียนไว้แล้ว และชื่อ `nvx-stack-builder` ยังว่าง จึงไม่ต้องใช้ `-staging`
-- **deploy:** `opennextjs-cloudflare deploy` จาก build ที่ผ่าน preview test แล้ว ได้ version `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (08:47 ICT) แล้วตั้ง secret ผ่าน stdin ได้ version `d369f2b6-863a-4e44-8f9e-b5551e18361a`
+- **ตรวจบัญชีก่อน:** ใช้ GET แบบอ่านอย่างเดียว (`/accounts/<id>/workers/scripts` และ `/workers/subdomain`) เพราะ wrangler ไม่มีคำสั่ง list Worker ผลที่ได้: มี Worker เดิม 1 ตัว (`other Worker name redacted`, ไม่แตะ), subdomain `previous subdomain redacted` ลงทะเบียนไว้แล้ว และชื่อ `nvx-stack-builder` ยังว่าง จึงไม่ต้องใช้ `-staging`
+- **deploy:** `opennextjs-cloudflare deploy` จาก build ที่ผ่าน preview test แล้ว ได้ version `[deployment ID redacted]` (08:47 ICT) แล้วตั้ง secret ผ่าน stdin ได้ version `[deployment ID redacted]`
 - **smoke test:** ผ่านทุกข้อ (หน้า, 404, headers, asset แบรนด์, AI ภาษาไทยได้ `source: "openai"`, 429 พร้อม `Retry-After: 60`) ภาพหน้าจอจากเว็บจริงอยู่ที่ `screenshots/v0.5/live-*`
 - **ข้อสังเกต:** ตัวนับ rate limit เป็นแบบ eventually consistent จึงอาจได้ 200 เกิน limit 1 ครั้ง และ request ที่เปิด connection ใหม่จาก box นี้อาจออกจาก IP คนละตัว ให้ทดสอบ rate limit บน connection เดียว (`curl --next`)
 
 ## บันทึก deploy v0.5.1: โดเมน devstack.bid (11 ต.ค. 2026)
 
-- **ตรวจ token:** token DEVSTACK อยู่บัญชีเดียวกันแต่ไม่มีสิทธิ์ Workers Scripts จึงใช้ token EXAMPLESSDK (Workers Scripts: Edit + Zone: Read) ผูกโดเมนผ่าน `PUT /accounts/{id}/workers/domains` ได้ทั้ง `devstack.bid` และ `www.devstack.bid` และ Cloudflare สร้าง `AAAA 100::` แบบ proxied ให้เอง
-- **โค้ด:** `routes` (custom_domain) ใน `wrangler.jsonc`, redirect www → apex ใน `next.config.ts`, `metadataBase` = devstack.bid, HSTS ไม่มี includeSubDomains แล้ว deploy ได้ version `671b6b3b-1074-40cb-84b0-0df2681b69ce` (09:15 ICT)
+- **ตรวจ token:** token label redacted อยู่บัญชีเดียวกันแต่ไม่มีสิทธิ์ Workers Scripts จึงใช้ token label redacted (Workers Scripts: Edit + Zone: Read) ผูกโดเมนผ่าน `PUT /accounts/{id}/workers/domains` ได้ทั้ง `devstack.bid` และ `www.devstack.bid` และ Cloudflare สร้าง `AAAA 100::` แบบ proxied ให้เอง
+- **โค้ด:** `routes` (custom_domain) ใน `wrangler.jsonc`, redirect www → apex ใน `next.config.ts`, `metadataBase` = devstack.bid, HSTS ไม่มี includeSubDomains แล้ว deploy ได้ version `[deployment ID redacted]` (09:15 ICT)
 - **ใบรับรอง:** ออกทันที (Google Trust Services, SAN `devstack.bid` + `*.devstack.bid`)
 - **smoke test บนโดเมน:**
   - ทุกหน้าได้ 200 และ 404 จริง; www ตอบ 308 พร้อมคง path/query
@@ -74,7 +74,7 @@ Workers มี free tier; ค่าใช้จ่ายหลักคือ Op
 ## บันทึก deploy v0.6.0: docs ในแอป + signature (11 ต.ค. 2026)
 
 - **ที่มา:** merge `feat/docs-site` เข้า `main` แล้ว bump เป็น 0.6.0; lint, typecheck, tests, docs:check และ cf:build ผ่านทั้งหมดก่อน deploy
-- **deploy:** ใช้ token EXAMPLESSDK; ได้ version `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (11:18 ICT) ขนาด upload 9467.97 KiB (gzip 1810.44 KiB); custom domain devstack.bid + www ยังอยู่ครบ
+- **deploy:** ใช้ token label redacted; ได้ version `[deployment ID redacted]` (11:18 ICT) ขนาด upload 9467.97 KiB (gzip 1810.44 KiB); custom domain devstack.bid + www ยังอยู่ครบ
 - **ตรวจบนเว็บจริง:**
   - ทุกหน้า รวม `/docs` และหน้าย่อย ได้ 200; slug ที่ไม่มีได้ 404 จริง
   - raw `.md` ทั้ง 43 ไฟล์ตรงกับต้นฉบับทุก byte (`text/markdown`, ACAO `*`); manifest ก็ตรง
@@ -84,16 +84,16 @@ Workers มี free tier; ค่าใช้จ่ายหลักคือ Op
   - signature อยู่ใน footer ทุกหน้า; touch glow ทำงาน
   - ภาพหน้าจออยู่ที่ `screenshots/v0.6/live-*`
 - **ข้อสังเกต:** console มี error จาก CSP บล็อก `static.cloudflareinsights.com/beacon.min.js` (Web Analytics ที่ Cloudflare ฉีดเข้ามา) ไม่มีผลกับการทำงาน; จะเปิดใน CSP หรือปิด Web Analytics ต้องให้ผู้ใช้ตัดสินใจ
-- **rollback:** `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1)
+- **rollback:** `[deployment ID redacted]` (v0.5.1)
 
 ## บันทึก deploy: เพิ่ม D1 binding (11 ต.ค. 2026)
 
-- สร้าง D1 `nvx-db` (`3ee9bbab-06b5-49da-b175-5f7162ad5086`, WNAM) แล้ว apply migration `0001` และ `0002` บน remote ([d1-database.md](./d1-database.md))
-- deploy จาก branch `feat/d1-chat-schema` หลังจาก lint, typecheck, tests, docs:check และ cf:build ผ่าน; ได้ version `450890b7-5432-4795-afbc-1c7ebd241bff`; binding `env.DB (nvx-db)`; custom domain ยังอยู่ครบ
+- สร้าง D1 `nvx-db` (`[deployment ID redacted]`, WNAM) แล้ว apply migration `0001` และ `0002` บน remote ([d1-database.md](./d1-database.md))
+- deploy จาก branch `feat/d1-chat-schema` หลังจาก lint, typecheck, tests, docs:check และ cf:build ผ่าน; ได้ version `[deployment ID redacted]`; binding `env.DB (nvx-db)`; custom domain ยังอยู่ครบ
 - ตรวจบนเว็บจริง:
   - ทุกหน้าได้ 200 และ 404 จริง
   - raw `.md` ทั้ง 46 ไฟล์ตรงกับต้นฉบับทุก byte
   - `GET /api/plan` ปกติ; www ตอบ 308
   - หน้า docs ใหม่และ ER diagram โหลดได้ ไม่มี console error นอกจาก beacon ของ Web Analytics
-- rollback: `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (v0.6.0)
+- rollback: `[deployment ID redacted]` (v0.6.0)
 

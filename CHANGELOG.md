@@ -36,16 +36,16 @@ Open source only: we removed everything in the Studio that was not open source o
 
 ### Added
 
-- **Studio** at `/studio/` (beta): the team's DEVSTACK v0.2.0 browser workspace, merged as a static sub-app of the same Worker.
+- **Studio** at `/studio/` (beta): the team's token label redacted v0.2.0 browser workspace, merged as a static sub-app of the same Worker.
   - Four agents (Core router, CodeAgent, DBAgent, DesignAgent) build a full-stack app from a prompt such as "build a todo app".
   - A WebContainers Node sandbox with a live preview and terminal, PGlite + native pgvector in the browser (Data Inspector, vector search), FLUX images written to `public/assets/` of the generated app, and a one-click export zip (source, SQL migration, Prisma schema, Vercel / Cloudflare Pages / Docker configs).
   - The source lives in `studio/` (Vite 8 + React 19, its own lockfile). `scripts/build-studio.mjs` builds it into `public/studio/` during `prebuild`.
-- `/api/studio/health`, `/api/studio/llm/chat` and `/api/studio/image` (Next.js route handlers). They replace DEVSTACK's own key-based proxy (`LLM_API_KEY`) with our providers:
+- `/api/studio/health`, `/api/studio/llm/chat` and `/api/studio/image` (Next.js route handlers). They replace token label redacted's own key-based proxy (`LLM_API_KEY`) with our providers:
   - Workers AI (`STUDIO_MODEL`, Qwen 2.5 Coder 32B) first, then Hugging Face (`HF_MODEL`, DeepSeek V3);
   - FLUX for images;
   - the signed `nvx_chat_uid` cookie, D1 `usage_counters` quotas (60 Studio calls per cookie per day, a per-IP backstop and 3000 site-wide; images share `FREE_DAILY_IMAGES` with User Chat), the new `NVX_STUDIO_LIMITER` burst limiter (20/min/IP, namespace 4715) and a same-origin check. Failed calls refund the quota.
 - Route-scoped cross-origin isolation: `public/_headers` sends COOP `same-origin` + COEP `require-corp` and a Studio CSP (`'wasm-unsafe-eval'`, StackBlitz/WebContainer `frame-src`) on `/studio/*` only. The policy is defined in `studioContentSecurityPolicy()` (`src/lib/security-headers.ts`) and tested against the file.
-- Design system sync: `scripts/sync-studio-brand.mjs` copies `tokens.css`, the mascot and the terminal signature (TSX + CSS) into `studio/src/brand/`. The Studio's DEVSTACK utility classes are mapped onto the NVX tokens (black, graphite, Apple blue, pink glow, Inter / IBM Plex). The Studio UI is Thai + English and shares `nvx-lang` with the site.
+- Design system sync: `scripts/sync-studio-brand.mjs` copies `tokens.css`, the mascot and the terminal signature (TSX + CSS) into `studio/src/brand/`. The Studio's token label redacted utility classes are mapped onto the NVX tokens (black, graphite, Apple blue, pink glow, Inter / IBM Plex). The Studio UI is Thai + English and shares `nvx-lang` with the site.
 - npm scripts: `studio:build`, `studio:dev`, `studio:check`, `studio:brand`, `studio:e2e`.
 - Tests: `tests/studio.test.ts` (proxy, quotas, refunds, headers, brand sync, no emoji or keys in `studio/src`), plus the Studio's own Vitest suite (90 tests) and Playwright specs (`studio/e2e/devstack.spec.ts` for the todo flow, `studio/e2e/site.spec.ts` for site regressions).
 - Docs: `user-guide/studio.md`, `architecture/studio.md`, Studio rows in `reference/config-env.md` and `reference/npm-scripts.md`, the Studio subsystem in `platform-manifest.json`, and Studio in the `llms.txt` intro.
@@ -55,9 +55,9 @@ Open source only: we removed everything in the Studio that was not open source o
 - Navigation: a **Studio** link in the header (xl+), the mobile menu and the command palette. It is a plain `<a>`, so the browser does a full page load and applies the isolation headers. `/studio/` was added to the sitemap.
 - `README.md` was rewritten for the whole devstack.bid platform.
 
-### Removed (from the merged DEVSTACK code)
+### Removed (from the merged token label redacted code)
 
-- DEVSTACK's Node server, Vercel functions, Cloudflare Pages functions, Dockerfile and `LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL` / `IMAGE_MODEL` handling. The Studio has no secrets of its own.
+- token label redacted's Node server, Vercel functions, Cloudflare Pages functions, Dockerfile and `LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL` / `IMAGE_MODEL` handling. The Studio has no secrets of its own.
 
 ## [0.7.0] - 2026-10-11
 
@@ -134,7 +134,7 @@ Open source only: we removed everything in the Studio that was not open source o
 
 ### Deployed
 
-- 2026-10-11 11:18 ICT, version `7ddd9404-a31f-4e31-8460-82b3b90c7d0e`; previous `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1, rollback target).
+- 2026-10-11 11:18 ICT, version `[deployment ID redacted]`; previous `[deployment ID redacted]` (v0.5.1, rollback target).
 - Live check on https://devstack.bid passed:
   - all pages, `/docs` and doc pages return 200; unknown doc slugs return a real 404
   - all 43 raw `.md` routes are byte-identical to the source (`text/markdown`), and so is the manifest
@@ -161,31 +161,31 @@ Open source only: we removed everything in the Studio that was not open source o
 
 ### Deployed
 
-- 2026-10-11 09:15 ICT, version `671b6b3b-1074-40cb-84b0-0df2681b69ce`; previous `d369f2b6-863a-4e44-8f9e-b5551e18361a` (v0.5.0).
+- 2026-10-11 09:15 ICT, version `[deployment ID redacted]`; previous `[deployment ID redacted]` (v0.5.0).
 - Live smoke test on https://devstack.bid passed:
   - pages, 404s, headers, www redirect
   - OG image URL absolute and fetchable
   - a Thai AI prompt returned `source: "openai"`
   - 429 + `Retry-After: 60`
   - mascot animation
-- workers.dev fallback is now https://nvx-stack-builder.examplessdk.workers.dev. The account's workers.dev subdomain was renamed from `space6` (not by this deploy), so the v0.5.0 URL no longer resolves.
+- workers.dev fallback is now workers.dev URL redacted The account's workers.dev subdomain was renamed from `previous subdomain redacted` (not by this deploy), so the v0.5.0 URL no longer resolves.
 
 ## [0.5.0] - 2026-10-11
 
-Release of the `feat/terminal-theme` branch: merge commit `61445c5`. v0.4 was never released separately because the v0.5 design replaces it.
+Release of the `feat/terminal-theme` branch: merge commit `[commit redacted]`. v0.4 was never released separately because the v0.5 design replaces it.
 
 ### Deployed (TEST)
 
-- Live at https://nvx-stack-builder.space6.workers.dev. This is a new Worker `nvx-stack-builder` in account `2d92bd5b25768fa9093d6adc0a8887fc` ("Examplessdk@gmail.com's Account", workers.dev subdomain `space6`), with no routes or custom domains.
+- Live at workers.dev URL redacted This is a new Worker `nvx-stack-builder` in account `[account ID redacted]` ("Cloudflare account", workers.dev subdomain `previous subdomain redacted`), with no routes or custom domains.
   - Deployed 2026-10-11 08:47 ICT from `f995d24`.
-  - Version ids: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (current, with the `OPENAI_API_KEY` secret) and `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (same code before the secret).
+  - Version ids: `[deployment ID redacted]` (current, with the `OPENAI_API_KEY` secret) and `[deployment ID redacted]` (same code before the secret).
 - Live smoke test passed:
   - pages 200, real 404s, security headers
   - brand assets, manifest and OG image
   - no horizontal scroll in TH/EN at 1440/390px, no console errors
   - a Thai AI prompt returned `source: "openai"`
   - 429 + `Retry-After: 60` after the per-minute limit
-- The existing Worker `odd-violet-5e66` in that account was not touched. The v0.3.0 test deploy (`agen-sdk-work.workers.dev`, account `f70d…e04e`) is unchanged and still live.
+- The existing Worker `other Worker name redacted` in that account was not touched. The v0.3.0 test deploy (`test subdomain redacted.workers.dev`, account `f70d…e04e`) is unchanged and still live.
 
 ### Added (brand logo and animated mascot)
 
@@ -242,7 +242,7 @@ Release of the `feat/terminal-theme` branch: merge commit `61445c5`. v0.4 was ne
 
 ## [0.3.0] - 2026-10-11
 
-Test deployment: https://nvx-stack-builder.agen-sdk-work.workers.dev (workers.dev only).
+Test deployment: workers.dev URL redacted (workers.dev only).
 
 ### Added
 

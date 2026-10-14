@@ -1,12 +1,12 @@
 # Deploying NVX Stack Builder to Cloudflare Workers
 
-> **Production (2026-10-11, v0.6.0):** live at **https://devstack.bid** (apex). It is a Workers Custom Domain of Worker `nvx-stack-builder` in account `2d92bd5b25768fa9093d6adc0a8887fc`; `www.devstack.bid` is also attached and returns 308 to the apex.
-> - v0.6.0 deployed 2026-10-11 11:18 ICT (in-app docs at `/docs`, `/llms.txt`, DevStack signature). Version `7ddd9404-a31f-4e31-8460-82b3b90c7d0e`. Then the D1 binding `DB` (database `nvx-db`) was added the same day; that build is now current: `450890b7-5432-4795-afbc-1c7ebd241bff`. Rollback targets: `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (v0.6.0), then `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1), then `d369f2b6-863a-4e44-8f9e-b5551e18361a` (v0.5.0) and `107ab78e-2cdd-4159-95e7-e8fcb89130aa`.
-> - workers.dev fallback: https://nvx-stack-builder.examplessdk.workers.dev. The account's subdomain was renamed from `space6` to `examplessdk` on 2026-10-11, so the old `space6` URL no longer resolves.
+> **Production (2026-10-11, v0.6.0):** live at **https://devstack.bid** (apex). It is a Workers Custom Domain of Worker `nvx-stack-builder` in account `[account ID redacted]`; `www.devstack.bid` is also attached and returns 308 to the apex.
+> - v0.6.0 deployed 2026-10-11 11:18 ICT (in-app docs at `/docs`, `/llms.txt`, DevStack signature). Version `[deployment ID redacted]`. Then the D1 binding `DB` (database `nvx-db`) was added the same day; that build is now current: `[deployment ID redacted]`. Rollback targets: `[deployment ID redacted]` (v0.6.0), then `[deployment ID redacted]` (v0.5.1), then `[deployment ID redacted]` (v0.5.0) and `[deployment ID redacted]`.
+> - workers.dev fallback: workers.dev URL redacted The account's subdomain was renamed from `previous subdomain redacted` to `production subdomain redacted` on 2026-10-11, so the old `previous subdomain redacted` URL no longer resolves.
 > - HSTS is now `max-age=31536000`, without `includeSubDomains`/`preload`.
 > - Details, created records and token permissions: [operations/custom-domain.md](operations/custom-domain.md).
 >
-> **v0.5.0 (2026-10-11), history:** first deployed at https://nvx-stack-builder.space6.workers.dev; that URL was retired by the subdomain rename (Worker `nvx-stack-builder`, account `2d92bd5b25768fa9093d6adc0a8887fc` "Examplessdk@gmail.com's Account", workers.dev subdomain `space6`, no routes or custom domains). Deployed 2026-10-11 08:47 ICT from commit `f995d24` (released as tag `v0.5.0`). Verified live:
+> **v0.5.0 (2026-10-11), history:** first deployed at workers.dev URL redacted that URL was retired by the subdomain rename (Worker `nvx-stack-builder`, account `[account ID redacted]` "Cloudflare account", workers.dev subdomain `previous subdomain redacted`, no routes or custom domains). Deployed 2026-10-11 08:47 ICT from commit `[commit redacted]` (released as tag `v0.5.0`). Verified live:
 > - all pages 200 (including the 10 template pages); `/templates/unknown` and `/definitely-missing` return a real 404
 > - security headers on pages, and `Cache-Control` on `/brand/*`
 > - manifest, favicon, icons and the OG image are served
@@ -14,9 +14,9 @@
 > - the mascot animates and goes static under reduced motion
 > - `/api/plan`: 415/413/400; a Thai prompt returns `source: "openai"` (gpt-6.1-sol); after 20–21 POSTs/min it returns 429 with `Retry-After: 60`
 >
-> v0.5.0 versions: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (code + `OPENAI_API_KEY` secret, the rollback target before v0.5.1); `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (same code before the secret was set, so the AI agent falls back to the offline planner). That account has no earlier versions. The only other Worker in the account, `odd-violet-5e66`, was not touched.
+> v0.5.0 versions: `[deployment ID redacted]` (code + `OPENAI_API_KEY` secret, the rollback target before v0.5.1); `[deployment ID redacted]` (same code before the secret was set, so the AI agent falls back to the offline planner). That account has no earlier versions. The only other Worker in the account, `other Worker name redacted`, was not touched.
 >
-> **Previous test deployment (unchanged, still live):** https://nvx-stack-builder.agen-sdk-work.workers.dev (account `f70d35188a3c56b9781538c73a86e04e`, v0.3.0, version `0fb9ecd4-d788-468c-8843-559545c357e3`, earlier `9b9b678a-f0b4-4727-96d7-e5f81fc00391`). It is left untouched on purpose and still serves the v0.3.0 design.
+> **Previous test deployment (unchanged, still live):** workers.dev URL redacted (account `[account ID redacted]`, v0.3.0, version `[deployment ID redacted]`, earlier `[deployment ID redacted]`). It is left untouched on purpose and still serves the v0.3.0 design.
 
 - [English](#english)
 - [ภาษาไทย](#ภาษาไทย)
@@ -70,8 +70,8 @@ Users can still paste their own OpenAI key in the UI. It travels only in the `x-
 
 ```bash
 export CLOUDFLARE_API_TOKEN=...          # only the token string, nothing else
-export CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc   # production account (devstack.bid, examplessdk.workers.dev)
-# previous test account (v0.3.0, agen-sdk-work.workers.dev): f70d35188a3c56b9781538c73a86e04e
+export CLOUDFLARE_ACCOUNT_ID=YOUR_ACCOUNT_ID   # production account (devstack.bid, workers.dev fallback)
+# previous test account (v0.3.0, test subdomain redacted.workers.dev): [account ID redacted]
 
 # 1) make sure the worker name is free (should say it does not exist)
 npx wrangler deployments list --name nvx-stack-builder
@@ -104,7 +104,7 @@ Secrets and vars belong to versions. A rollback restores the previous version's 
 
 ### 6. Later: binding `agents-sdk.space` (NOT done; plan only)
 
-Current state: zone `agents-sdk.space` (`dfb531c381f8e6dd75082a6fe964f71b`) has a proxied apex `AAAA 100::` placeholder record. That pattern is used for Worker routes, and the existing Worker **`agents-sdk-space`** most likely serves the apex through a route or custom domain.
+Current state: zone `agents-sdk.space` (`[account ID redacted]`) has a proxied apex `AAAA 100::` placeholder record. That pattern is used for Worker routes, and the existing Worker **`agents-sdk-space`** most likely serves the apex through a route or custom domain.
 
 Steps, when the owner approves:
 
@@ -123,7 +123,7 @@ Steps, when the owner approves:
 
 Each test account uses its own account-scoped token. The v0.3.0 token (`restless-heart-ac34`) covers only `f70d…e04e`. The v0.5.0 deploy used a separate token scoped to `2d92…87fc`, passed only as `CLOUDFLARE_API_TOKEN` to wrangler and never printed or stored. Its `/user/tokens/verify` returns non-JSON, which is normal for account tokens: check them with `/accounts/<id>/tokens/verify` or `wrangler whoami`. To deploy to yet another account:
 
-Minimum for the test deploy (account-scoped token, resources must include account `9d56815c97f330febf9d6a0bb7f234d1`):
+Minimum for the test deploy (account-scoped token, resources must include account `[account ID redacted]`):
 
 - Account › **Workers Scripts: Edit** (upload, secrets, versions, rollback, rate-limit bindings)
 - Account › **Account Settings: Read** (whoami, workers.dev subdomain)
@@ -137,11 +137,11 @@ Minimum for the test deploy (account-scoped token, resources must include accoun
 
 ## ภาษาไทย
 
-> **Production (11 ต.ค. 2026, v0.6.0):** เสิร์ฟที่ **https://devstack.bid** (apex) ผ่าน Workers Custom Domain ของ Worker `nvx-stack-builder` และ `www.devstack.bid` redirect 308 ไป apex เวอร์ชันปัจจุบัน `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (v0.6.0, deploy 11:18 ICT; ก่อนหน้า `671b6b3b-1074-40cb-84b0-0df2681b69ce` v0.5.1 ใช้ rollback ได้ แล้ว `d369f2b6-863a-4e44-8f9e-b5551e18361a`) workers.dev สำรองที่ https://nvx-stack-builder.examplessdk.workers.dev (บัญชีเปลี่ยน subdomain จาก `space6` เป็น `examplessdk`) HSTS เหลือ `max-age=31536000` ไม่มี `includeSubDomains` รายละเอียดดู [operations/custom-domain.md](operations/custom-domain.md)
+> **Production (11 ต.ค. 2026, v0.6.0):** เสิร์ฟที่ **https://devstack.bid** (apex) ผ่าน Workers Custom Domain ของ Worker `nvx-stack-builder` และ `www.devstack.bid` redirect 308 ไป apex เวอร์ชันปัจจุบัน `[deployment ID redacted]` (v0.6.0, deploy 11:18 ICT; ก่อนหน้า `[deployment ID redacted]` v0.5.1 ใช้ rollback ได้ แล้ว `[deployment ID redacted]`) workers.dev สำรองที่ workers.dev URL redacted (บัญชีเปลี่ยน subdomain จาก `previous subdomain redacted` เป็น `production subdomain redacted`) HSTS เหลือ `max-age=31536000` ไม่มี `includeSubDomains` รายละเอียดดู [operations/custom-domain.md](operations/custom-domain.md)
 >
-> **สถานะ v0.5.0 (11 ต.ค. 2026):** deploy ครั้งแรกที่ **https://nvx-stack-builder.space6.workers.dev** (URL นี้ใช้ไม่ได้แล้ว) (Worker `nvx-stack-builder` บัญชี `2d92bd5b25768fa9093d6adc0a8887fc` "Examplessdk@gmail.com's Account" subdomain `space6` ใช้ workers.dev เท่านั้น) deploy เมื่อ 11 ต.ค. 2026 08:47 (ICT) จาก commit `f995d24` (tag `v0.5.0`) ตรวจบนเว็บจริงผ่านทุกข้อ: ทุกหน้าได้ 200, 404 จริง, security headers, manifest/favicon/OG image, ไม่มี horizontal scroll ทั้งไทยและอังกฤษ, prompt ภาษาไทยได้ `source: "openai"`, rate limit ตอบ 429 พร้อม `Retry-After: 60` เวอร์ชันสำหรับ rollback: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (ปัจจุบัน) และ `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (โค้ดเดียวกันแต่ยังไม่ตั้ง secret) Worker เดิม `odd-violet-5e66` ในบัญชีนั้นไม่ถูกแตะ
+> **สถานะ v0.5.0 (11 ต.ค. 2026):** deploy ครั้งแรกที่ **workers.dev URL redacted (URL นี้ใช้ไม่ได้แล้ว) (Worker `nvx-stack-builder` บัญชี `[account ID redacted]` "Cloudflare account" subdomain `previous subdomain redacted` ใช้ workers.dev เท่านั้น) deploy เมื่อ 11 ต.ค. 2026 08:47 (ICT) จาก commit `[commit redacted]` (tag `v0.5.0`) ตรวจบนเว็บจริงผ่านทุกข้อ: ทุกหน้าได้ 200, 404 จริง, security headers, manifest/favicon/OG image, ไม่มี horizontal scroll ทั้งไทยและอังกฤษ, prompt ภาษาไทยได้ `source: "openai"`, rate limit ตอบ 429 พร้อม `Retry-After: 60` เวอร์ชันสำหรับ rollback: `[deployment ID redacted]` (ปัจจุบัน) และ `[deployment ID redacted]` (โค้ดเดียวกันแต่ยังไม่ตั้ง secret) Worker เดิม `other Worker name redacted` ในบัญชีนั้นไม่ถูกแตะ
 >
-> deploy ทดสอบเดิม (v0.3.0) ที่ https://nvx-stack-builder.agen-sdk-work.workers.dev บัญชี `f70d35188a3c56b9781538c73a86e04e` ยังอยู่และไม่ถูกแก้ไข (เวอร์ชัน `0fb9ecd4-d788-468c-8843-559545c357e3`)
+> deploy ทดสอบเดิม (v0.3.0) ที่ workers.dev URL redacted บัญชี `[account ID redacted]` ยังอยู่และไม่ถูกแก้ไข (เวอร์ชัน `[deployment ID redacted]`)
 
 ### 1. สิ่งที่ต้องมี
 - Node.js **22 ขึ้นไป** สำหรับ Wrangler 4
@@ -165,7 +165,7 @@ npm run preview    # รันใน Workers runtime ที่ http://localhost:
 ### 4. Deploy (workers.dev เท่านั้น)
 ```bash
 export CLOUDFLARE_API_TOKEN=...      # ใส่เฉพาะตัว token
-export CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc   # บัญชี production (devstack.bid) · บัญชีเดิม v0.3.0: f70d35188a3c56b9781538c73a86e04e
+export CLOUDFLARE_ACCOUNT_ID=YOUR_ACCOUNT_ID   # บัญชี production (devstack.bid) · บัญชีเดิม v0.3.0: [account ID redacted]
 npx wrangler deployments list --name nvx-stack-builder   # ตรวจว่าชื่อยังว่าง ถ้าไม่ว่างให้ใช้ nvx-stack-builder-staging
 npm run deploy
 printenv OPENAI_API_KEY | npx wrangler secret put OPENAI_API_KEY
@@ -180,13 +180,13 @@ npx wrangler rollback <version-id> --name nvx-stack-builder
 
 ### 6. ผูกโดเมน `agents-sdk.space` ภายหลัง (ยังไม่ได้ทำ)
 1. เลือกว่าจะใช้ apex แทน Worker `agents-sdk-space` เดิม หรือใช้ subdomain เช่น `stack.agents-sdk.space` (แนะนำ เพราะไม่ชนกับของเดิม)
-2. เพิ่มสิทธิ์ token: Zone Read, Workers Routes Edit, DNS Edit บน zone `dfb531c381f8e6dd75082a6fe964f71b`
+2. เพิ่มสิทธิ์ token: Zone Read, Workers Routes Edit, DNS Edit บน zone `[account ID redacted]`
 3. ถ้าจะใช้ apex ต้องถอด route หรือ custom domain ของ `agents-sdk-space` ก่อน และพิจารณาลบ record `AAAA 100::` (proxied) ที่เป็น placeholder ของ route เดิม
 4. เพิ่ม `"routes": [{ "pattern": "stack.agents-sdk.space", "custom_domain": true }]` แล้ว `npm run deploy`
 5. HSTS: ตั้งแต่ v0.5.1 ไม่ส่ง `includeSubDomains` เพราะแอปอยู่บน apex ถ้าจะเพิ่มกลับ ทุก subdomain ต้องรองรับ HTTPS ก่อน
 
 ### 7. สิทธิ์ของ token ที่ต้องใช้
-token ต้องมีบัญชี `9d56815c97f330febf9d6a0bb7f234d1` อยู่ใน resources และมีสิทธิ์ Account › **Workers Scripts: Edit** กับ Account › **Account Settings: Read** (ไม่บังคับ: Workers Observability Edit, Workers Tail Read)
+token ต้องมีบัญชี `[account ID redacted]` อยู่ใน resources และมีสิทธิ์ Account › **Workers Scripts: Edit** กับ Account › **Account Settings: Read** (ไม่บังคับ: Workers Observability Edit, Workers Tail Read)
 
 ### 8. ไฟล์ที่เพิ่มหรือแก้
 ดูรายการในหัวข้อ 8 ของภาษาอังกฤษด้านบน

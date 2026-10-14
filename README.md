@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./artifacts/devstack-banner.svg" alt="DEVSTACK · devstack.bid: build full-stack apps with AI agents" width="100%"/>
+<img src="./artifacts/devstack-banner.svg" alt="token label redacted · devstack.bid: build full-stack apps with AI agents" width="100%"/>
 
 <br/>
 
@@ -103,7 +103,7 @@ Browser (no secrets)                                        Cloudflare Worker "n
 ## Key handling / การจัดการ key
 
 - The browser only ever calls our own `/api/*`. Server keys (`OPENAI_API_KEY`, `HF_TOKEN`, `CHAT_COOKIE_SECRET`) are Worker **secrets** set with `wrangler secret put` (stdin). They are never `NEXT_PUBLIC_`, never bundled and never logged, and error messages are redacted.
-- The Studio has **no key of its own**. DEVSTACK's original `LLM_API_KEY` proxy was replaced by `/api/studio/*`, which uses the Workers AI binding and the existing HF token.
+- The Studio has **no key of its own**. token label redacted's original `LLM_API_KEY` proxy was replaced by `/api/studio/*`, which uses the Workers AI binding and the existing HF token.
 - Sandbox Factory and the planner accept **your** OpenAI key in the `x-openai-key` header of a single request. It is never stored.
 - Every AI endpoint has a per-IP burst limiter (Workers Rate Limiting) plus daily quotas in D1 per signed cookie, per IP and site-wide. Quotas reset at midnight Bangkok time, and failed calls are refunded.
 
@@ -139,4 +139,4 @@ We welcome issues and pull requests. Please read [CONTRIBUTING.md](./CONTRIBUTIN
 
 ## License
 
-[MIT](./LICENSE) © NVX DEVELOPER BOTH and contributors. The Studio is the team's DEVSTACK workspace (v0.2.0), merged into this repository under the same license. Every dependency is open source under a permissive license (MIT, ISC, BSD, Apache-2.0, OFL-1.1 for fonts; PGlite/pgvector under Apache-2.0 / the PostgreSQL License) with no commercial or usage-based terms: see [THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md). Tool logos come from [Simple Icons](https://simpleicons.org) (CC0) and are trademarks of their owners ([NOTICE](./NOTICE)).
+[MIT](./LICENSE) © NVX DEVELOPER BOTH and contributors. The Studio is the team's token label redacted workspace (v0.2.0), merged into this repository under the same license. Every dependency is open source under a permissive license (MIT, ISC, BSD, Apache-2.0, OFL-1.1 for fonts; PGlite/pgvector under Apache-2.0 / the PostgreSQL License) with no commercial or usage-based terms: see [THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md). Tool logos come from [Simple Icons](https://simpleicons.org) (CC0) and are trademarks of their owners ([NOTICE](./NOTICE)).

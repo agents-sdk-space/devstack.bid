@@ -4,7 +4,7 @@
 
 ## 1. ภาพรวมแพลตฟอร์ม
 
-แอป Next.js 16.4 ที่ทำงานฝั่ง client เป็นหลัก มี API เดียว (`/api/plan`) deploy เป็น Cloudflare Worker ชื่อ `nvx-stack-builder` ที่ **https://devstack.bid** (production v0.5.1, Workers Custom Domain; สำรองที่ `nvx-stack-builder.examplessdk.workers.dev`; v0.3.0 เดิมยังอยู่ที่ `agen-sdk-work.workers.dev`) ไม่มีฐานข้อมูล ไม่มีบัญชีผู้ใช้ สถานะผู้ใช้อยู่ใน URL hash และ localStorage แผนภาพดู [architecture/overview.md](../architecture/overview.md)
+แอป Next.js 16.4 ที่ทำงานฝั่ง client เป็นหลัก มี API เดียว (`/api/plan`) deploy เป็น Cloudflare Worker ชื่อ `nvx-stack-builder` ที่ **https://devstack.bid** (production v0.5.1, Workers Custom Domain; สำรองที่ `nvx-stack-builder.workers.dev fallback`; v0.3.0 เดิมยังอยู่ที่ `test subdomain redacted.workers.dev`) ไม่มีฐานข้อมูล ไม่มีบัญชีผู้ใช้ สถานะผู้ใช้อยู่ใน URL hash และ localStorage แผนภาพดู [architecture/overview.md](../architecture/overview.md)
 
 *EN: Client-heavy Next.js 16.4 app, one API route, Cloudflare Worker on workers.dev, no database.*
 
@@ -95,7 +95,7 @@ npm run lint && npm run typecheck && npm test && npm run docs:check && npm run c
 - Node 22 อยู่ที่ `/tmp/node22/bin`; Wrangler 4 ต้องการ Node 22
 - `next dev` อาจแสดง CSS ค้าง ใช้ `npm run preview` ตรวจภาพ
 - ปิด preview: `pkill -f "opennextjs-cloudflare preview"; pkill -f workerd`
-- commit identity ที่ใช้ในโปรเจกต์: `NVX-DEVELOPER-BOTH <nvx-bot@users.noreply.github.com>`
+- commit identity ที่ใช้ในโปรเจกต์: `NVX-DEVELOPER-BOTH <[email redacted]>`
 
 *EN: Box-specific notes; may not apply elsewhere.*
 

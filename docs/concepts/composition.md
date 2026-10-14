@@ -1,6 +1,6 @@
 # การประกอบคำสั่ง ลำดับ และการตัดซ้ำ · Command composition, ordering & dedup
 
-หน้านี้อธิบายตรรกะใน [`src/lib/composer.ts`](../../src/lib/composer.ts) ซึ่งเปลี่ยน `BuilderConfig` เป็นรายการ `ResolvedStep` ที่พร้อมแสดงและส่งออก ตรรกะนี้ไม่ได้เปลี่ยนเลยตั้งแต่ v0.1.0 (commit `a452dc5`) และมี unit test ครอบคลุมใน `tests/composer.test.ts`
+หน้านี้อธิบายตรรกะใน [`src/lib/composer.ts`](../../src/lib/composer.ts) ซึ่งเปลี่ยน `BuilderConfig` เป็นรายการ `ResolvedStep` ที่พร้อมแสดงและส่งออก ตรรกะนี้ไม่ได้เปลี่ยนเลยตั้งแต่ v0.1.0 (commit `[commit redacted]`) และมี unit test ครอบคลุมใน `tests/composer.test.ts`
 
 ## ขั้นตอนของ composeSteps()
 

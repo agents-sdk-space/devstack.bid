@@ -1,6 +1,6 @@
 # Studio (สร้างแอป full-stack ด้วย AI ในเบราว์เซอร์)
 
-หน้า [`/studio`](https://devstack.bid/studio/) คือพื้นที่ทำงานที่เรารวมเข้ามาจากโปรเจกต์ DEVSTACK ของทีม (v0.2.0) บอก AI ว่าอยากได้แอปอะไร แล้วดู agent สี่ตัวช่วยกันเขียนโค้ด ออกแบบฐานข้อมูล วาดภาพ และรันแอปให้ดูสด ๆ ในเบราว์เซอร์ของคุณเอง ไม่ต้องติดตั้งอะไร ไม่ต้องมี API key และไม่มีโค้ดของคุณถูกรันบนเซิร์ฟเวอร์ของเรา
+หน้า [`/studio`](https://devstack.bid/studio/) คือพื้นที่ทำงานที่เรารวมเข้ามาจากโปรเจกต์ token label redacted ของทีม (v0.2.0) บอก AI ว่าอยากได้แอปอะไร แล้วดู agent สี่ตัวช่วยกันเขียนโค้ด ออกแบบฐานข้อมูล วาดภาพ และรันแอปให้ดูสด ๆ ในเบราว์เซอร์ของคุณเอง ไม่ต้องติดตั้งอะไร ไม่ต้องมี API key และไม่มีโค้ดของคุณถูกรันบนเซิร์ฟเวอร์ของเรา
 
 > สถานะ: **beta (v0.8.0-rc)** เรากำลังทดลองใช้ ถ้าเจอปัญหา บอกเราได้ที่ repo
 
@@ -61,4 +61,4 @@
 
 ## In English
 
-Studio (`/studio`) is the DEVSTACK workspace we merged into devstack.bid: four agents (Core, Code, DB, Design) build a full-stack app in your browser with a static live preview (compiled in the browser with Sucrase, run in a sandboxed iframe with no network; only `react` and `react-dom` can be imported, there is no npm install or Node), PGlite + pgvector, FLUX images and a one-click export zip. Every part is open source with no third-party runtime fees. AI calls go through our own server (`/api/studio/*`, Workers AI first, then Hugging Face DeepSeek V3) with free daily quotas per browser: 60 AI calls, plus the 5 images shared with User Chat. No key is needed and none reaches your browser. When AI is unavailable or the quota is used up, the agents fall back to tested templates and placeholder images, so the whole flow still works. Architecture: [Studio architecture](../architecture/studio.md).
+Studio (`/studio`) is the token label redacted workspace we merged into devstack.bid: four agents (Core, Code, DB, Design) build a full-stack app in your browser with a static live preview (compiled in the browser with Sucrase, run in a sandboxed iframe with no network; only `react` and `react-dom` can be imported, there is no npm install or Node), PGlite + pgvector, FLUX images and a one-click export zip. Every part is open source with no third-party runtime fees. AI calls go through our own server (`/api/studio/*`, Workers AI first, then Hugging Face DeepSeek V3) with free daily quotas per browser: 60 AI calls, plus the 5 images shared with User Chat. No key is needed and none reaches your browser. When AI is unavailable or the quota is used up, the agents fall back to tested templates and placeholder images, so the whole flow still works. Architecture: [Studio architecture](../architecture/studio.md).

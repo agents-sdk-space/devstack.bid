@@ -90,7 +90,7 @@ Studio (`/studio`) ไม่มี secret ของตัวเอง ใช้ 
 | `NVX_PLAN_AI_LIMITER` | ratelimit (namespace `4711`) | 5 / 60 วินาที | POST ที่ใช้ key ของเซิร์ฟเวอร์ |
 | `ASSETS` | assets (`.open-next/assets`) | — | เสิร์ฟไฟล์ static/prerendered |
 | `WORKER_SELF_REFERENCE` | service (`nvx-stack-builder`) | — | OpenNext ใช้สำหรับ cache revalidation; ต้องตรงกับ `name` |
-| `DB` | D1 (`nvx-db`, id `3ee9bbab-06b5-49da-b175-5f7162ad5086`, `migrations_dir: migrations`) | — | ประวัติแชตของทั้งสองแชตและ Factory (คอลัมน์ `channel`), ตัวนับโควตา `usage_counters` ดู [d1-schema.md](./d1-schema.md) |
+| `DB` | D1 (`nvx-db`, id `[deployment ID redacted]`, `migrations_dir: migrations`) | — | ประวัติแชตของทั้งสองแชตและ Factory (คอลัมน์ `channel`), ตัวนับโควตา `usage_counters` ดู [d1-schema.md](./d1-schema.md) |
 | `AI` | Workers AI | — | โมเดลของ User Chat (`WAI_*`) ใช้ free allowance 10,000 neurons/วัน แล้วคิด $0.011 ต่อ 1,000 neurons ตอน `wrangler dev`/preview binding นี้รันแบบ remote เสมอ (ใช้โควตาจริงของบัญชี) |
 | `NVX_CHAT_LIMITER` | ratelimit (namespace `4713`) | 4 / 60 วินาที | burst ของ `/api/chat/turn` และ `/api/chat/dev/turn` |
 | `NVX_FACTORY_LIMITER` | ratelimit (namespace `4714`) | 10 / 60 วินาที | burst ของ `/api/factory/*` |
@@ -107,7 +107,7 @@ Studio (`/studio`) ไม่มี secret ของตัวเอง ใช้ 
 | ชื่อ | ใช้กับ | หมายเหตุ |
 |---|---|---|
 | `CLOUDFLARE_API_TOKEN` | wrangler (deploy, secret, rollback) | token เท่านั้น ห้ามพิมพ์/commit สิทธิ์ขั้นต่ำ Workers Scripts: Edit + Account Settings: Read; คำสั่ง `wrangler d1` ต้องมี D1: Edit และ R2 ต้องมี Workers R2 Storage: Edit |
-| `CLOUDFLARE_ACCOUNT_ID` | wrangler | บัญชี production `2d92bd5b25768fa9093d6adc0a8887fc` (devstack.bid, workers.dev `examplessdk`); บัญชีเดิม `f70d35188a3c56b9781538c73a86e04e` (v0.3.0) |
+| `CLOUDFLARE_ACCOUNT_ID` | wrangler | บัญชี production `[account ID redacted]` (devstack.bid, workers.dev `production subdomain redacted`); บัญชีเดิม `[account ID redacted]` (v0.3.0) |
 | `NODE_ENV` | Next.js | `development` เปิด CSP แบบ dev (`unsafe-eval`, `ws:`) และไม่ส่ง HSTS |
 
 ## ไฟล์ตัวอย่าง
