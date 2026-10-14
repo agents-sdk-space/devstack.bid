@@ -2,7 +2,7 @@
   "$comment": "Machine-readable map of NVX Stack Builder for AI agents. Verified by `npm run docs:check` (templateIds must equal src/data/template-ids.ts; every keyFiles path must exist). Human docs: docs/agents/AGENT-PLAYBOOK.md",
   "name": "nvx-stack-builder",
   "version": "0.8.0-rc.2",
-  "branchState": "Production https://devstack.bid is Worker version ffbd53ae-957b-4b48-b411-3a882f14f8ae (CURSOR_APP_ID app_01m4xk8788f7s941zg4cpjxcer, 2026-10-14 23:19 ICT; same code as /learn merge be6eb3f). Rollback: d29b83b8-1753-4a47-a0b5-a63ba79fa6a2.",
+  "branchState": "Production https://devstack.bid is Worker version [deployment ID redacted] (CURSOR_APP_ID [application ID redacted], 2026-10-14 23:19 ICT; same code as /learn merge be6eb3f). Rollback: [deployment ID redacted].",
   "stack": {
     "framework": "Next.js 16.4 App Router",
     "language": "TypeScript",
@@ -537,7 +537,7 @@
       "secret": true,
       "default": null,
       "set": "wrangler secret put (stdin) / .dev.vars",
-      "notes": "Public Cursor Origin app id. Production Worker nvx-stack-builder version ffbd53ae-957b-4b48-b411-3a882f14f8ae (2026-10-14 23:19 ICT) has app_01m4xk8788f7s941zg4cpjxcer. Callback https://devstack.bid/api/auth/cursor/callback verifies installation receipts; do not store a private key."
+      "notes": "Public Cursor Origin app id. Production Worker nvx-stack-builder version [deployment ID redacted] (2026-10-14 23:19 ICT) has [application ID redacted]. Callback https://devstack.bid/api/auth/cursor/callback verifies installation receipts; do not store a private key."
     },
     {
       "name": "AI_GATEWAY_API_KEY",
@@ -632,7 +632,7 @@
       "name": "DB",
       "type": "d1",
       "databaseName": "nvx-db",
-      "databaseId": "3ee9bbab-06b5-49da-b175-5f7162ad5086",
+      "databaseId": "[deployment ID redacted]",
       "migrationsDir": "migrations"
     },
     {
@@ -649,45 +649,24 @@
     "url": "https://devstack.bid",
     "customDomains": [
       {
-        "hostname": "devstack.bid",
-        "id": "8a5d7eb2f2cfa18393ac30447b9f6c65f5f83a3f",
-        "certId": "f16d512e-25fd-4b1f-8cc8-e1b91d33ee43"
+        "hostname": "devstack.bid"
       },
       {
         "hostname": "www.devstack.bid",
-        "id": "b58b3b3a650e9363bb329b327445d2a12a2f446a",
-        "certId": "960b36e2-0c90-442a-910b-b40abe83927d",
         "behaviour": "308 redirect to https://devstack.bid (next.config.ts)"
       }
     ],
     "zone": {
       "name": "devstack.bid",
-      "id": "f5ceb4b6eae9aad8aafccf24c350ae1e",
       "dnsRecords": [
         "AAAA devstack.bid 100:: proxied (managed by custom domain)",
         "AAAA www.devstack.bid 100:: proxied (managed by custom domain)"
       ]
     },
-    "workersDevUrl": "https://nvx-stack-builder.examplessdk.workers.dev",
-    "workersDevSubdomain": "examplessdk",
-    "accountId": "2d92bd5b25768fa9093d6adc0a8887fc",
-    "accountName": "Examplessdk@gmail.com's Account",
     "deployedVersion": "v0.6.0 + D1 binding (feat/d1-chat-schema b90ca11)",
-    "currentVersionId": "450890b7-5432-4795-afbc-1c7ebd241bff",
-    "previousVersionId": "7ddd9404-a31f-4e31-8460-82b3b90c7d0e",
-    "olderVersionIds": [
-      "671b6b3b-1074-40cb-84b0-0df2681b69ce",
-      "d369f2b6-863a-4e44-8f9e-b5551e18361a",
-      "107ab78e-2cdd-4159-95e7-e8fcb89130aa"
-    ],
     "hsts": "max-age=31536000 (no includeSubDomains/preload)",
-    "otherWorkersInAccount": [
-      "odd-violet-5e66 (not ours, never modify)"
-    ],
-    "tokenNotes": "Attaching custom domains needs one token with Account Workers Scripts:Edit + zone access; CLOUDFLARE_API_TOKEN_DEVSTACK lacks Workers Scripts, CLOUDFLARE_API_TOKEN_EXAMPLESSDK worked.",
     "d1": {
       "database": "nvx-db",
-      "id": "3ee9bbab-06b5-49da-b175-5f7162ad5086",
       "region": "WNAM",
       "appliedMigrations": [
         "0001_schema_meta.sql",
@@ -715,23 +694,5 @@
     "d1Schema": "docs/reference/d1-schema.md",
     "d1Operations": "docs/operations/d1-database.md",
     "studio": "docs/architecture/studio.md"
-  },
-  "previousDeployments": [
-    {
-      "environment": "test",
-      "url": "https://nvx-stack-builder.space6.workers.dev",
-      "deployedVersion": "v0.5.0",
-      "status": "URL retired: account workers.dev subdomain renamed space6 -> examplessdk"
-    },
-    {
-      "environment": "test",
-      "worker": "nvx-stack-builder",
-      "url": "https://nvx-stack-builder.agen-sdk-work.workers.dev",
-      "accountId": "f70d35188a3c56b9781538c73a86e04e",
-      "deployedVersion": "v0.3.0",
-      "currentVersionId": "0fb9ecd4-d788-468c-8843-559545c357e3",
-      "previousVersionId": "9b9b678a-f0b4-4727-96d7-e5f81fc00391",
-      "status": "live, intentionally left untouched"
-    }
-  ]
+  }
 }

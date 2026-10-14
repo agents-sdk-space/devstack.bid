@@ -1,20 +1,20 @@
 # โดเมนจริง devstack.bid · Custom domain
 
-> **สถานะ (11 ต.ค. 2026, v0.5.1): ใช้งานแล้ว** แอปเสิร์ฟที่ **https://devstack.bid** (apex) ผ่าน Workers Custom Domain ของ Worker `nvx-stack-builder` บัญชี `2d92bd5b25768fa9093d6adc0a8887fc` ส่วน `www.devstack.bid` เป็น custom domain ของ Worker เดียวกันและ redirect แบบ 308 ไปที่ apex ได้รับอนุมัติจากเจ้าของโดเมนแล้ว รายละเอียดการ deploy อยู่ใน [DEPLOY.md](../DEPLOY.md)
+> **สถานะ (11 ต.ค. 2026, v0.5.1): ใช้งานแล้ว** แอปเสิร์ฟที่ **https://devstack.bid** (apex) ผ่าน Workers Custom Domain ของ Worker `nvx-stack-builder` บัญชี `[account ID redacted]` ส่วน `www.devstack.bid` เป็น custom domain ของ Worker เดียวกันและ redirect แบบ 308 ไปที่ apex ได้รับอนุมัติจากเจ้าของโดเมนแล้ว รายละเอียดการ deploy อยู่ใน [DEPLOY.md](../DEPLOY.md)
 
 ## สิ่งที่สร้างไว้
 
 | รายการ | ค่า | หมายเหตุ |
 |---|---|---|
-| zone | `devstack.bid` (id `f5ceb4b6eae9aad8aafccf24c350ae1e`) | ก่อนเริ่มไม่มี DNS record เลย |
-| Custom Domain | `devstack.bid` → `nvx-stack-builder` (id `8a5d7eb2f2cfa18393ac30447b9f6c65f5f83a3f`) | ใบรับรอง `f16d512e-25fd-4b1f-8cc8-e1b91d33ee43` (Google Trust Services, SAN `devstack.bid`, `*.devstack.bid`, หมดอายุ 9 ม.ค. 2027 ต่ออายุอัตโนมัติ) |
-| Custom Domain | `www.devstack.bid` → `nvx-stack-builder` (id `b58b3b3a650e9363bb329b327445d2a12a2f446a`) | ใบรับรอง `960b36e2-0c90-442a-910b-b40abe83927d` |
+| zone | `devstack.bid` (id `[account ID redacted]`) | ก่อนเริ่มไม่มี DNS record เลย |
+| Custom Domain | `devstack.bid` → `nvx-stack-builder` (id `[resource ID redacted]`) | ใบรับรอง `[deployment ID redacted]` (Google Trust Services, SAN `devstack.bid`, `*.devstack.bid`, หมดอายุ 9 ม.ค. 2027 ต่ออายุอัตโนมัติ) |
+| Custom Domain | `www.devstack.bid` → `nvx-stack-builder` (id `[resource ID redacted]`) | ใบรับรอง `[deployment ID redacted]` |
 | DNS (สร้างอัตโนมัติ) | `AAAA devstack.bid 100::` proxied, `AAAA www.devstack.bid 100::` proxied | **อย่าแก้หรือลบเอง** Cloudflare ผูก record เหล่านี้กับ custom domain |
 | config | `routes` ใน [`wrangler.jsonc`](../../wrangler.jsonc): `{ "pattern": "devstack.bid", "custom_domain": true }` และ `www.devstack.bid` | ทำให้ `npm run deploy` ครั้งต่อไปยืนยันโดเมนเดิมเสมอ |
 | redirect | `redirects()` ใน [`next.config.ts`](../../next.config.ts): host `www.devstack.bid` → `https://devstack.bid/:path*` (308, คง path และ query) | ให้มี URL หลักเดียว (canonical) ดีต่อ SEO และ cookie |
 | metadata | `metadataBase` = `https://devstack.bid` (ค่าเริ่มต้นของ `NEXT_PUBLIC_SITE_URL` ใน [`src/app/layout.tsx`](../../src/app/layout.tsx)) | `og:image` / `twitter:image` เป็น URL เต็มบน devstack.bid |
 
-workers.dev ยังเปิดอยู่เป็นทางสำรอง (`workers_dev: true`) ที่ `https://nvx-stack-builder.examplessdk.workers.dev` บัญชีนี้เปลี่ยนชื่อ subdomain จาก `space6` เป็น `examplessdk` ระหว่างวันที่ 11 ต.ค. URL `space6` เดิมจึงใช้ไม่ได้แล้ว
+workers.dev ยังเปิดอยู่เป็นทางสำรอง (`workers_dev: true`) ที่ `workers.dev URL redacted` บัญชีนี้เปลี่ยนชื่อ subdomain จาก `previous subdomain redacted` เป็น `production subdomain redacted` ระหว่างวันที่ 11 ต.ค. URL `previous subdomain redacted` เดิมจึงใช้ไม่ได้แล้ว
 
 ## ทำไมเลือก Workers Custom Domain (ไม่ใช่ route)
 
@@ -29,7 +29,7 @@ workers.dev ยังเปิดอยู่เป็นทางสำรอ�
 - Account › **Workers Scripts: Edit** (ต้องเข้าถึง Worker ปลายทาง)
 - สิทธิ์ระดับ zone ของ `devstack.bid` อย่างน้อย **Zone: Read** (ในการ deploy ครั้งนี้ token ที่มี Workers Scripts: Edit + Zone: Read ทำงานได้)
 
-ผลการตรวจ token เมื่อ 11 ต.ค.: token `CLOUDFLARE_API_TOKEN_DEVSTACK` อยู่บัญชีเดียวกัน อ่าน zone และ DNS ได้ แต่ **ไม่มีสิทธิ์ Workers Scripts เลย** (list scripts ได้ผลว่าง และ `/workers/scripts/nvx-stack-builder/settings` ตอบ "No access to the specified resource", `/workers/domains` ตอบ Authentication error) จึงผูกโดเมนกับ Worker ไม่ได้ การผูกจึงใช้ token `CLOUDFLARE_API_TOKEN_EXAMPLESSDK` (Workers Scripts: Edit + Zone: Read) ส่วน token DEVSTACK ใช้แค่อ่าน DNS เพื่อยืนยันผล ถ้าต้องการให้ token เดียวทำได้ทั้งหมด ให้เพิ่ม **Account › Workers Scripts: Edit** ให้ token DEVSTACK
+ผลการตรวจ token เมื่อ 11 ต.ค.: token `CLOUDFLARE_API_TOKEN` อยู่บัญชีเดียวกัน อ่าน zone และ DNS ได้ แต่ **ไม่มีสิทธิ์ Workers Scripts เลย** (list scripts ได้ผลว่าง และ `/workers/scripts/nvx-stack-builder/settings` ตอบ "No access to the specified resource", `/workers/domains` ตอบ Authentication error) จึงผูกโดเมนกับ Worker ไม่ได้ การผูกจึงใช้ token `CLOUDFLARE_API_TOKEN` (Workers Scripts: Edit + Zone: Read) ส่วน token ที่อ่าน DNS ได้ใช้แค่ยืนยันผล ถ้าต้องการให้ token เดียวทำได้ทั้งหมด ให้เพิ่ม **Account › Workers Scripts: Edit** ให้ deployment token
 
 ## HSTS
 
@@ -53,7 +53,7 @@ zone นี้เปิด Web Analytics แบบติดตั้งอัต
 
 ## zone อื่น: agents-sdk.space (ห้ามแตะ)
 
-zone `agents-sdk.space` (id `dfb531c381f8e6dd75082a6fe964f71b`, บัญชี `9d56815c97f330febf9d6a0bb7f234d1`) เป็นของระบบอื่น มี Worker `agents-sdk-space` เสิร์ฟอยู่ **ห้ามแตะ** DNS, routes หรือ custom domain ของ zone นี้ แผนเดิมที่จะผูกโดเมนนี้ถูกยกเลิก เพราะเจ้าของเลือก devstack.bid แทน
+zone `agents-sdk.space` (id `[account ID redacted]`, บัญชี `[account ID redacted]`) เป็นของระบบอื่น มี Worker `agents-sdk-space` เสิร์ฟอยู่ **ห้ามแตะ** DNS, routes หรือ custom domain ของ zone นี้ แผนเดิมที่จะผูกโดเมนนี้ถูกยกเลิก เพราะเจ้าของเลือก devstack.bid แทน
 
 ## สิ่งที่ AI agent ต้องทำเมื่อถูกขอให้เพิ่มหรือเปลี่ยนโดเมน
 

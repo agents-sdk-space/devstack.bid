@@ -1,6 +1,6 @@
 # D1 schema reference (`nvx-db`)
 
-Reference ของทุกตารางในฐานข้อมูล D1 `nvx-db` (binding `DB`, id `3ee9bbab-06b5-49da-b175-5f7162ad5086`, region WNAM) ที่มาของข้อมูลคือไฟล์ใน `migrations/` เหตุผลของการออกแบบอยู่ที่ [architecture/chat-data-model.md](../architecture/chat-data-model.md)
+Reference ของทุกตารางในฐานข้อมูล D1 `nvx-db` (binding `DB`, id `[deployment ID redacted]`, region WNAM) ที่มาของข้อมูลคือไฟล์ใน `migrations/` เหตุผลของการออกแบบอยู่ที่ [architecture/chat-data-model.md](../architecture/chat-data-model.md)
 
 กติกาที่ใช้ทุกตาราง: ทุกตารางเป็น `STRICT`, id เป็น `TEXT` (UUIDv7/ULID), เวลาเป็น `INTEGER` epoch มิลลิวินาที UTC และค่า default คือ `unixepoch('subsec') * 1000` D1 บังคับ foreign key โดยค่าเริ่มต้น
 

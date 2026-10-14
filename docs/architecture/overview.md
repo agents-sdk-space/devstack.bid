@@ -63,7 +63,7 @@ flowchart LR
 | Route | ประเภท | หมายเหตุ |
 |---|---|---|
 | `/` | prerendered | หน้าแรก hero + how it works + เทมเพลต + features ปุ่ม Ask the AI agent ไปที่ `/learn` |
-| `/learn` | prerendered | หน้าเปิดตัวพรีเซนต์ทั้งระบบ จัดทำโดยผู้สร้าง devstack.sdk@gmail.com และ Cursor ปุ่มตั้งค่า Cursor (สร้างหรือถาม) อยู่ในหัวเว็บทุกหน้า |
+| `/learn` | prerendered | หน้าเปิดตัวพรีเซนต์ทั้งระบบ จัดทำโดยผู้สร้าง [email redacted] และ Cursor ปุ่มตั้งค่า Cursor (สร้างหรือถาม) อยู่ในหัวเว็บทุกหน้า |
 | `/templates` | prerendered | catalog (ค้นหา/กรองฝั่ง client) |
 | `/templates/[id]` | prerendered ต่อ id | id ไม่รู้จัก → rewrite ไป `/__nvx_not_found` เพื่อ HTTP 404 จริง |
 | `/builder` | shell prerendered, builder render ฝั่ง client | อ่าน URL hash + localStorage จึงต้องเป็น client-only (`builder-loader.tsx`) |

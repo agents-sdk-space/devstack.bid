@@ -10,36 +10,36 @@
 
 ## เป้าหมาย rollback ที่บันทึกไว้
 
-**Production (ปัจจุบัน):** https://devstack.bid (+ `www.devstack.bid`), workers.dev สำรอง https://nvx-stack-builder.examplessdk.workers.dev, บัญชี `2d92bd5b25768fa9093d6adc0a8887fc`
+**Production (ปัจจุบัน):** https://devstack.bid (+ `www.devstack.bid`), workers.dev สำรอง workers.dev URL redacted บัญชี `[account ID redacted]`
 
 | เวอร์ชัน | id | หมายเหตุ |
 |---|---|---|
-| ปัจจุบัน | `d4c19335-3b9b-4003-9cd9-a744eab5afd4` | 2026-10-14: โค้ดชุดเข้าสู่ระบบเดิม พร้อม secret GitHub, Google และ AI Gateway |
-| ก่อนหน้า (rollback แรก) | `f3257677-8d0e-4f59-80da-35d8141d3bf8` | โค้ดเดียวกันก่อนตั้ง secret ชุดนี้ การย้อนมาที่นี่จะเอา secret OAuth ออก |
-| ก่อนหน้า | `05fbb6ee-eb43-4386-a273-7f3277c415be` | v0.7.0 ก่อนชุดเข้าสู่ระบบ |
-| ก่อนหน้า | `450890b7-5432-4795-afbc-1c7ebd241bff` | v0.6.0 + D1 binding `DB` |
-| ก่อนหน้า | `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` | v0.6.0 (tag `v0.6.0`): docs ในแอป `/docs`, raw `.md`, `/llms.txt`, signature |
-| ก่อนหน้า | `671b6b3b-1074-40cb-84b0-0df2681b69ce` | v0.5.1: metadata ชี้ devstack.bid, HSTS ไม่มี includeSubDomains, redirect www → apex |
-| ก่อนหน้านั้น | `d369f2b6-863a-4e44-8f9e-b5551e18361a` | v0.5.0 + secret (ถ้าย้อนมา: HSTS กลับเป็น includeSubDomains และ OG ชี้ space6 ซึ่งใช้ไม่ได้แล้ว) |
-| เก่ากว่า | `107ab78e-2cdd-4159-95e7-e8fcb89130aa` | v0.5.0 ก่อนตั้ง secret (AI agent จะใช้ offline planner) |
+| ปัจจุบัน | `[deployment ID redacted]` | 2026-10-14: โค้ดชุดเข้าสู่ระบบเดิม พร้อม secret GitHub, Google และ AI Gateway |
+| ก่อนหน้า (rollback แรก) | `[deployment ID redacted]` | โค้ดเดียวกันก่อนตั้ง secret ชุดนี้ การย้อนมาที่นี่จะเอา secret OAuth ออก |
+| ก่อนหน้า | `[deployment ID redacted]` | v0.7.0 ก่อนชุดเข้าสู่ระบบ |
+| ก่อนหน้า | `[deployment ID redacted]` | v0.6.0 + D1 binding `DB` |
+| ก่อนหน้า | `[deployment ID redacted]` | v0.6.0 (tag `v0.6.0`): docs ในแอป `/docs`, raw `.md`, `/llms.txt`, signature |
+| ก่อนหน้า | `[deployment ID redacted]` | v0.5.1: metadata ชี้ devstack.bid, HSTS ไม่มี includeSubDomains, redirect www → apex |
+| ก่อนหน้านั้น | `[deployment ID redacted]` | v0.5.0 + secret (ถ้าย้อนมา: HSTS กลับเป็น includeSubDomains และ OG ชี้ previous subdomain redacted ซึ่งใช้ไม่ได้แล้ว) |
+| เก่ากว่า | `[deployment ID redacted]` | v0.5.0 ก่อนตั้ง secret (AI agent จะใช้ offline planner) |
 
 rollback เวอร์ชันไม่ถอด custom domain โดเมนยังชี้ Worker เดิม (ดู [custom-domain.md](./custom-domain.md))
 
 บัญชีนี้ไม่มีเวอร์ชันเก่ากว่านี้ ถ้าต้องกลับไปใช้ดีไซน์ v0.3.0 ให้ใช้ deploy เดิมที่ยังเปิดอยู่ (ด้านล่าง) หรือ build tag `v0.3.0` แล้ว deploy ใหม่ (ต้องได้รับอนุมัติ)
 
-**TEST deploy v0.3.0 (เดิม ไม่ถูกแก้ไข):** https://nvx-stack-builder.agen-sdk-work.workers.dev, บัญชี `f70d35188a3c56b9781538c73a86e04e`
+**TEST deploy v0.3.0 (เดิม ไม่ถูกแก้ไข):** workers.dev URL redacted บัญชี `[account ID redacted]`
 
 | เวอร์ชัน | id | หมายเหตุ |
 |---|---|---|
-| ปัจจุบัน | `0fb9ecd4-d788-468c-8843-559545c357e3` | รวม IPv6 /64 rate-limit key |
-| ก่อนหน้า | `9b9b678a-f0b4-4727-96d7-e5f81fc00391` | ก่อนแก้ IPv6 |
+| ปัจจุบัน | `[deployment ID redacted]` | รวม IPv6 /64 rate-limit key |
+| ก่อนหน้า | `[deployment ID redacted]` | ก่อนแก้ IPv6 |
 
 เมื่อ deploy เวอร์ชันใหม่ ให้บันทึก id ใหม่ไว้ใน DEPLOY.md, CHANGELOG และหน้านี้
 
 ## ขั้นตอน
 
 ```bash
-export CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc   # v0.5.0; ใช้ f70d35188a3c56b9781538c73a86e04e สำหรับ deploy v0.3.0 เดิม
+export CLOUDFLARE_ACCOUNT_ID=YOUR_ACCOUNT_ID   # v0.5.0; ใช้ [account ID redacted] สำหรับ deploy v0.3.0 เดิม
 # 1) ดูรายการเวอร์ชัน
 npx wrangler deployments list --name nvx-stack-builder
 # 2) rollback ไปเวอร์ชันที่ต้องการ พร้อมเหตุผล

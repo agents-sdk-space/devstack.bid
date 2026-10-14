@@ -12,7 +12,7 @@ description = "A small Python package created with NVX Stack Builder"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
-authors = [{ name = "Your Name", email = "you@example.com" }]
+authors = [{ name = "Your Name", email = "[email redacted]" }]
 dependencies = []
 classifiers = [
   "Programming Language :: Python :: 3",

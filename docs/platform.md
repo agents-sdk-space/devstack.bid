@@ -13,7 +13,7 @@
 
 ## หน้าพรีเซนต์ระบบ
 
-[เรียนรู้ทั้งระบบ](https://devstack.bid/learn) เป็นหน้าเปิดตัว จัดทำโดยผู้สร้าง devstack.sdk@gmail.com และ Cursor ปุ่ม **Ask the AI agent** ที่หน้าแรกเปิดหน้านี้ หัวเว็บทุกหน้ามีปุ่ม **Setup Cursor** สำหรับสร้างโปรเจกต์หรือถามคำถามใน Cursor ลิงก์ไปที่ `https://cursor.com/link/prompt` และคุณยืนยันข้อความก่อนรัน
+[เรียนรู้ทั้งระบบ](https://devstack.bid/learn) เป็นหน้าเปิดตัว จัดทำโดยผู้สร้าง [email redacted] และ Cursor ปุ่ม **Ask the AI agent** ที่หน้าแรกเปิดหน้านี้ หัวเว็บทุกหน้ามีปุ่ม **Setup Cursor** สำหรับสร้างโปรเจกต์หรือถามคำถามใน Cursor ลิงก์ไปที่ `https://cursor.com/link/prompt` และคุณยืนยันข้อความก่อนรัน
 
 *EN: `/learn` presents the whole system. The homepage Ask the AI agent button opens it. Every page header has Setup Cursor, which creates or asks through a Cursor prompt link you confirm first.*
 

@@ -29,7 +29,7 @@ merge เข้า `main`, deploy, push, การผูกโดเมน, ก�
 
 - `main` = `v0.5.0` (tag `v0.5.0` บน release commit หลัง merge `61445c5` ของ `feat/terminal-theme`) ต่อด้วย `v0.5.1` (โดเมน devstack.bid) และ deploy เป็น production ที่ `https://devstack.bid` แล้ว
 - v0.4 ไม่ถูกออกเป็นรุ่นแยก เพราะ v0.5 แทนที่ดีไซน์ v0.4 ทั้งหมด
-- deploy v0.3.0 เดิม (`agen-sdk-work.workers.dev`) ยังเปิดอยู่และไม่ถูกแก้ไข
+- deploy v0.3.0 เดิม (`test subdomain redacted.workers.dev`) ยังเปิดอยู่และไม่ถูกแก้ไข
 
 ## Hotfix
 
