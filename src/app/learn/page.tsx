@@ -99,6 +99,9 @@ export default function LearnPage() {
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
             <T k="learn.creditNote" />
           </p>
+          <p className="mt-6 max-w-2xl rounded-xl border border-border bg-surface-2 px-4 py-3 text-sm leading-relaxed text-fg" role="status">
+            <T k="announce.cursor" />
+          </p>
           <div className="mt-10 flex flex-wrap gap-3">
             <a href="#setup-cursor" className={buttonClasses("primary", "lg")}>
               <Sparkles className="h-[18px] w-[18px]" aria-hidden /> <T k="learn.heroCursor" />

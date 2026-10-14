@@ -110,6 +110,7 @@
 | [`src/components/docs/docs-shell.tsx`](../../src/components/docs/docs-shell.tsx), [`src/components/docs/doc-view.tsx`](../../src/components/docs/doc-view.tsx), [`src/components/docs/doc-article.tsx`](../../src/components/docs/doc-article.tsx), [`src/components/docs/doc-toc.tsx`](../../src/components/docs/doc-toc.tsx), [`src/lib/docs.ts`](../../src/lib/docs.ts), [`src/lib/docs-search.ts`](../../src/lib/docs-search.ts) | UI และข้อมูลของ `/docs` |
 | `public/docs-assets/diagrams/` | SVG ของ Mermaid ที่เรนเดอร์ไว้ (commit) |
 | [`tests/composer.test.ts`](../../tests/composer.test.ts), [`tests/scripts-share-ai.test.ts`](../../tests/scripts-share-ai.test.ts), [`tests/production.test.ts`](../../tests/production.test.ts), [`tests/tokens.test.ts`](../../tests/tokens.test.ts), [`tests/ui-components.test.tsx`](../../tests/ui-components.test.tsx), [`tests/tool-icons.test.tsx`](../../tests/tool-icons.test.tsx), [`tests/docs-check.test.ts`](../../tests/docs-check.test.ts), [`tests/mascot.test.tsx`](../../tests/mascot.test.tsx), [`tests/docs-site.test.ts`](../../tests/docs-site.test.ts), [`tests/setup.ts`](../../tests/setup.ts) | ชุด test ([testing.md](../contributing/testing.md)) |
+| [`studio/e2e/cursor-signin.spec.ts`](../../studio/e2e/cursor-signin.spec.ts) | e2e ปุ่มเข้าสู่ระบบ Cursor บน production (`CURSOR_SIGNIN_E2E=1`) |
 
 ## `docs/`
 

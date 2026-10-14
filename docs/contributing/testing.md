@@ -45,3 +45,9 @@ npm run lint && npm run typecheck && npm test && npm run docs:check && npm run c
 2. builder: โหลดเทมเพลต → Configure → ย้ายด้วยคีย์บอร์ด (Space, ↓, Space) และลากด้วยเมาส์ → ลบ (toast) → ดาวน์โหลด setup.sh (ตรวจขนาด/เนื้อหา) → คัดลอก share link → เปิดลิงก์ใน context ใหม่ภาษาไทย ได้ขั้น Review
 3. agent panel: skeleton ระหว่างโหลด, error state
 4. `/templates/unknown` → 404, ทุกหน้าไม่มี horizontal scroll
+
+การเข้าสู่ระบบ Cursor บน production ตรวจด้วย Playwright ใน `studio/e2e/cursor-signin.spec.ts` สเปกนี้ไม่รันใน `npm run studio:e2e` ปกติ เพราะ preview ไม่มี `CURSOR_APP_ID`
+
+```bash
+CURSOR_SIGNIN_E2E=1 STUDIO_BASE_URL=https://devstack.bid npm run studio:e2e -- e2e/cursor-signin.spec.ts
+```

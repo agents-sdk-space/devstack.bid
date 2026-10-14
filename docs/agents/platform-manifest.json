@@ -460,7 +460,7 @@
     "studioBuild": "npm run studio:build  # also runs automatically in prebuild",
     "studioCheck": "npm run studio:check",
     "studioDev": "npm run studio:dev  # with npm run dev on :3000",
-    "studioE2e": "npm run studio:e2e  # against a running preview (STUDIO_BASE_URL)",
+    "studioE2e": "npm run studio:e2e  # against a running preview (STUDIO_BASE_URL). Live Cursor sign-in: CURSOR_SIGNIN_E2E=1 STUDIO_BASE_URL=https://devstack.bid npm run studio:e2e -- e2e/cursor-signin.spec.ts",
     "licenses": "npm run licenses  # regenerate THIRD_PARTY_LICENSES.md after dependency changes (npm test enforces the policy)"
   },
   "env": [

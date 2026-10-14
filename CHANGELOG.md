@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Official notice, 14 October 2026:** Continue with Cursor is open. `/learn` and `/login` say so in Thai and English. Chat history stays on that Cursor account. The chat box still answers with the model the person picks. `studio/e2e/cursor-signin.spec.ts` checks the live install redirect (`CURSOR_SIGNIN_E2E=1`, `STUDIO_BASE_URL=https://devstack.bid`): English and Thai both reach Cursor with app `app_01m4xk8788f7s941zg4cpjxcer` and callback `https://devstack.bid/api/auth/cursor/callback`, and Cursor does not show `redirect_uri is not allowed`. The run on 14 October 2026 passed (2 tests).
+
 - **Learn page** at `/learn`: a launch presentation of the whole system, credited to the creator devstack.sdk@gmail.com and Cursor. The homepage **Ask the AI agent** button opens it. Every page header (and the Studio nav) can **Setup Cursor** — create a project or ask a question through `https://cursor.com/link/prompt`, which the person confirms in Cursor before it runs.
 
 - **Remote MCP server** at `/mcp` with discovery metadata at `/.well-known/mcp`, offering public tools for templates, custom Builder edits, script/starter-bundle exports, sharing and docs, plus scoped planner, chat, Dev Chat, Factory, conversation-history and GitHub tools. MCP key management lives at `/settings/mcp`; keys are shown once, stored as hashes, rate-limited per key and revocable. See `docs/integrations/mcp.md`.
