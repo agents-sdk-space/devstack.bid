@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Cline support for the MCP server.** `/settings/mcp` shows a copy-ready `cline_mcp_settings.json` entry (with `"type": "streamableHttp"`, which Cline requires for a remote server) right after a key is created. `docs/integrations/mcp.md` has a Thai and English Cline section, and `/.well-known/mcp` lists a `clients.cline` hint. The snippet leaves `autoApprove` empty so Cline asks before tools that use quota or commit to GitHub. No new endpoint or scope; the `/mcp` server is unchanged.
 - **Learn page** at `/learn`: a launch presentation of the whole system, credited to the creator devstack.sdk@gmail.com and Cursor. The homepage **Ask the AI agent** button opens it. Every page header (and the Studio nav) can **Setup Cursor** — create a project or ask a question through `https://cursor.com/link/prompt`, which the person confirms in Cursor before it runs.
 
 - **Remote MCP server** at `/mcp` with discovery metadata at `/.well-known/mcp`, offering public tools for templates, custom Builder edits, script/starter-bundle exports, sharing and docs, plus scoped planner, chat, Dev Chat, Factory, conversation-history and GitHub tools. MCP key management lives at `/settings/mcp`; keys are shown once, stored as hashes, rate-limited per key and revocable. See `docs/integrations/mcp.md`.

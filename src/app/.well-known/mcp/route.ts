@@ -13,6 +13,10 @@ export async function GET() {
       header: "Authorization: Bearer nvx_live_…",
       scopes: ["plan:write", "chat:read", "chat:write", "dev:write", "factory:write", "github:read", "github:write"],
     },
+    clients: {
+      // Cline needs an explicit transport type; without it Cline assumes a local stdio server.
+      cline: { configType: "streamableHttp", settingsFile: "cline_mcp_settings.json", guide: `${SITE_URL}/docs/integrations/mcp#cline-vs-code` },
+    },
     documentation: `${SITE_URL}/docs/integrations/mcp`,
   }, { headers: { "Cache-Control": "public, max-age=300" } });
 }

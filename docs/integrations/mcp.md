@@ -54,6 +54,34 @@ Most desktop clients accept a remote MCP URL and custom headers. For a JSON conf
 
 Add `x-openai-key` as a second secret header only if you use planner BYOK or Factory. Client configuration formats differ; if your client cannot add HTTP headers to a remote server, it cannot call protected tools. The current server advertises MCP protocol versions `2025-11-25`, `2025-06-18`, and `2025-03-26`, sends JSON responses, and supports tool and resource discovery. The endpoint is stateless; clients do not need a session id.
 
+### Cline (VS Code)
+
+[Cline](https://cline.bot/) connects to DevStack as a remote Streamable HTTP server. Cline's own config differs from the generic example above in one important way: it needs `"type": "streamableHttp"`. Without `type`, Cline assumes a local stdio server and the connection fails; the hyphenated value `streamable-http` is not accepted.
+
+1. Create a key at [`/settings/mcp`](https://devstack.bid/settings/mcp). After you create it, the page shows a ready-to-copy Cline snippet with your key filled in.
+2. In VS Code open the Cline panel, click the **MCP Servers** icon, open the **Configure** tab, and choose **Configure MCP Servers**. This opens `cline_mcp_settings.json`.
+3. Add the `devstack` entry under `mcpServers`, then save. Cline applies the change without restarting VS Code.
+
+```json
+{
+  "mcpServers": {
+    "devstack": {
+      "type": "streamableHttp",
+      "url": "https://devstack.bid/mcp",
+      "headers": {
+        "Authorization": "Bearer nvx_live_REPLACE_WITH_YOUR_KEY"
+      },
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}
+```
+
+Keep `autoApprove` empty. `plan_stack`, `chat_send`, `dev_chat_send`, the Factory tools and especially `github_commit_file` use quota, can cost money, or change a repository, so Cline should ask before each call. The public tools (templates, docs, script export) need no key; you can omit `headers` if you only use those. The settings file stores the key in plain text on your machine, so do not commit it or paste it into a chat, and revoke the key at `/settings/mcp` if the file leaks.
+
+ผู้ใช้ Cline: เปิดแผง Cline ใน VS Code > ไอคอน **MCP Servers** > แท็บ **Configure** > **Configure MCP Servers** แล้วเพิ่มรายการ `devstack` ตามตัวอย่างด้านบน ต้องมี `"type": "streamableHttp"` เสมอ ถ้าไม่ใส่ Cline จะเข้าใจว่าเป็น server แบบ stdio ในเครื่องและเชื่อมต่อไม่ได้ ควรปล่อย `autoApprove` ว่างไว้เพื่อให้ Cline ถามก่อนเรียกเครื่องมือที่ใช้โควตา มีค่าใช้จ่าย หรือแก้ repository และห้ามนำไฟล์ตั้งค่าที่มีคีย์ไป commit
+
 ## Security and availability
 
 Keys are shown once, stored as hashes, scope-checked on each call, and can be revoked immediately. Calls are limited to 60 per minute per key. Do not share a key between people or put a broad key in a public integration. The `github_commit_file` tool changes a repository; it is explicitly marked as a write operation. Other setup-script tools return plain text only. Cloudflare deployment must apply migration `0008_mcp_clients` before key management works in production; until then, the production endpoint cannot issue or authenticate these account keys.
