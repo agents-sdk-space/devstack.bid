@@ -71,7 +71,6 @@ export function AccountButton({ next, full, onNavigate }: { next: string; full?:
   return (
     <div className={full ? "flex items-center gap-2" : "flex items-center gap-1"}>
       {current.avatarUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img src={current.avatarUrl} alt="" width={28} height={28} className="h-7 w-7 rounded-full" />
       ) : null}
       <span className="max-w-[7rem] truncate text-[13px] font-medium text-fg" title={t(viaKey(current.provider))}>

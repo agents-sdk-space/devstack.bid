@@ -39,8 +39,7 @@ function InlineNodes({ nodes }: { nodes: Inline[] }) {
           }
           case "img":
             return (
-              <a key={i} href={n.src} target="_blank" rel="noopener" className="my-2 block w-fit">
-                {/* eslint-disable-next-line @next/next/no-img-element -- private, same-origin generated image */}
+              <a key={i} href={n.src} target="_blank" rel="noopener noreferrer" className="my-2 block w-fit">
                 <img src={n.src} alt={n.alt} loading="lazy" className="max-h-[420px] max-w-full rounded-xl border border-border object-contain" />
               </a>
             );

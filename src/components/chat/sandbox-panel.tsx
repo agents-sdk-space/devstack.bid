@@ -138,8 +138,7 @@ export function SandboxPanel({
             {images.length > 0 && (
               <div className="mb-2 grid grid-cols-3 gap-2">
                 {images.map((im) => (
-                  <a key={im.id} href={im.url} target="_blank" rel="noopener" title={im.caption} className="focus-ring block overflow-hidden rounded-lg border border-border">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- private generated image */}
+                  <a key={im.id} href={im.url} target="_blank" rel="noopener noreferrer" title={im.caption} className="focus-ring block overflow-hidden rounded-lg border border-border">
                     <img src={im.url} alt={im.caption} loading="lazy" className="aspect-square w-full object-cover" />
                   </a>
                 ))}

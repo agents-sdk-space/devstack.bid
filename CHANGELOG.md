@@ -27,12 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Patched the active GitHub Dependabot alerts: `glob` under `@node-minify/core` is pinned to 10.5.0, and Mermaid is updated to 12.2.0 so it uses patched KaTeX 0.18.10.
+- Removed the `eslint-config-next` dependency path that brought in vulnerable `braces@3.0.3` (GHSA-vfj7-8cjw-p6xm). No patched npm release is available, so ESLint now uses flat configs for JavaScript, TypeScript, React, React Hooks, and accessibility; `npm audit` reports zero vulnerabilities. Next-specific ESLint plugin rules are temporarily absent until the upstream dependency has a fixed release.
 
 - GitHub Pages workflow (`.github/workflows/jekyll-gh-pages.yml`) pins `actions/checkout` (v4.4.0), `actions/configure-pages` (v5.0.0), `actions/jekyll-build-pages` (v1.0.13), `actions/upload-pages-artifact` (v3.0.1) and `actions/deploy-pages` (v5.0.1) to full commit SHAs. The org policy rejected the floating tags, so the latest commit on `main` still showed a red X after the CI workflow itself was green. Deploy still runs only from `main`.
 
 ### Deployed
 
-- 2026-10-14 15:31 ICT: Cloudflare Worker `nvx-stack-builder`, version `d196d1e5-e6e5-4e5e-98cb-22764ef8ad4e`, commit `d684720`. Includes the dependency security patch. Applied remote D1 migration `0008_mcp_clients.sql`; live page, MCP discovery, initialize, 19-tool catalog, all five Thai safety topics and unauthenticated key endpoint checks passed. Rollback target: `450890b7-5432-4795-afbc-1c7ebd241bff`.
+- 2026-10-14 15:31 ICT: Cloudflare Worker `nvx-stack-builder`, version `d196d1e5-e6e5-4e5e-98cb-22764ef8ad4e`, commit `d684720`. Includes the earlier production dependency fixes. Applied remote D1 migration `0008_mcp_clients.sql`; live page, MCP discovery, initialize, 19-tool catalog, all five Thai safety topics and unauthenticated key endpoint checks passed. Rollback target: `450890b7-5432-4795-afbc-1c7ebd241bff`.
 
 ## [0.7.0] - 2026-10-11
 

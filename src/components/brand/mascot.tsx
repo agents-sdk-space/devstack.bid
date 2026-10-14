@@ -103,7 +103,6 @@ export function Mascot({ size, interactive = false, label, className }: MascotPr
     >
       <span className="nvx-mascot-float">
         <span className="nvx-mascot-body">
-          {/* eslint-disable-next-line @next/next/no-img-element -- tiny static brand asset, no optimizer needed */}
           <img src={src} srcSet={srcSet} width={size} height={size} alt="" draggable={false} decoding="async" />
           <svg viewBox="0 0 1024 1024" className="nvx-mascot-eyes" aria-hidden focusable="false">
             <defs>
