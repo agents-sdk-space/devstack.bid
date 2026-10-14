@@ -281,6 +281,7 @@ const dict = {
   "chat.sandboxSelf": { en: "Your own machine runs codex exec-server and executes the agent's commands", th: "เครื่องของคุณรัน codex exec-server และรันคำสั่งของ agent" },
   "chat.cap.shell": { en: "Shell and files in the sandbox", th: "shell และไฟล์ใน sandbox" },
   "nav.factory": { en: "Factory", th: "Factory" },
+  "nav.studio": { en: "Studio", th: "Studio" },
   "factory.title": { en: "Sandbox Factory", th: "Sandbox Factory" },
   "factory.subtitle": {
     en: "Bring your own OpenAI key and spin up your own agent, session and sandbox — OpenAI-hosted or on your own machine — then chat with it here.",

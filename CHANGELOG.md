@@ -26,6 +26,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - GitHub Pages workflow (`.github/workflows/jekyll-gh-pages.yml`) pins `actions/checkout` (v4.4.0), `actions/configure-pages` (v5.0.0), `actions/jekyll-build-pages` (v1.0.13), `actions/upload-pages-artifact` (v3.0.1) and `actions/deploy-pages` (v5.0.1) to full commit SHAs. The org policy rejected the floating tags, so the latest commit on `main` still showed a red X after the CI workflow itself was green. Deploy still runs only from `main`.
 
+## [0.8.0-rc.2] - 2026-10-11 (branch `merge/devstack-workspace`, local, not deployed)
+
+Open source only: we removed everything in the Studio that was not open source or could carry commercial or usage-based fees.
+
+### Removed
+
+- **WebContainers** (`@webcontainer/api`, StackBlitz). Its runtime is proprietary and needs a commercial license for some production use. Also removed: the StackBlitz / `*.webcontainer-api.io` / `*.webcontainer.io` / `*.staticblitz.com` `frame-src` entries in the Studio CSP, the in-browser `npm install` and Vite dev server, and the **Shell (jsh)** terminal tab. Generated apps can no longer import npm packages other than `react` / `react-dom`, run Node, or keep state across edits (HMR).
+
+### Added
+
+- **Static preview** for the Studio, fully open source:
+  - `studio/src/sandbox/staticBundler.ts` compiles the project in the browser with Sucrase (MIT) and turns `public/` files into data URLs;
+  - `studio/public/preview/index.html` runs the bundle in `<iframe sandbox="allow-scripts allow-forms allow-modals">` with a small `require()` loader and the vendored React 19 runtime (`studio/src/preview/vendor.ts`, built by `vite.preview.config.ts`, ~220 KB);
+  - the iframe forwards console output and errors to the Output tab, and edits rebuild in about 0.3 s;
+  - the PGlite SQL bridge (`devstack:sql`) is unchanged and now accepts only messages from the preview iframe's opaque origin.
+- `/studio/preview/*` headers: the block detaches the Studio CSP and `X-Frame-Options` and sets `studioPreviewContentSecurityPolicy()` (`default-src 'none'`, `connect-src 'none'`, `frame-ancestors 'self'`). The Studio CSP now has `frame-src 'self'` only.
+- **License audit**: `scripts/third-party-licenses.mjs` (`npm run licenses`, `npm run licenses:check`) reads both lockfiles and writes `THIRD_PARTY_LICENSES.md`. `tests/licenses.test.ts` fails on any production dependency that is not permissive (OSI-approved permissive, OFL-1.1 fonts, CC0, PostgreSQL License). The audit found nothing to replace: dual licenses (`jszip` MIT/GPL, `dompurify` MPL/Apache, PGlite Apache/PostgreSQL) use the permissive option; `caniuse-lite` (CC-BY-4.0, build-time data) and `sharp-libvips` (LGPL, optional, dev-only, not shipped) are documented.
+- AGENTS.md invariant 9 (open-source dependencies only).
+
+### Changed
+
+- Studio e2e: the todo flow now adds a todo inside the preview iframe and checks it in the Data Inspector (PGlite bridge), and asserts that the only iframe is the same-origin sandboxed preview.
+- The Studio terminal uses IBM Plex Mono (it referenced JetBrains Mono, which was not loaded).
+- Docs, README, `llms.txt` intro and the platform manifest describe the static preview instead of WebContainers.
+
+## [0.8.0-rc.1] - 2026-10-11 (branch `merge/devstack-workspace`, local trial merge, not deployed)
+
+### Added
+
+- **Studio** at `/studio/` (beta): the team's DEVSTACK v0.2.0 browser workspace, merged as a static sub-app of the same Worker.
+  - Four agents (Core router, CodeAgent, DBAgent, DesignAgent) build a full-stack app from a prompt such as "build a todo app".
+  - A WebContainers Node sandbox with a live preview and terminal, PGlite + native pgvector in the browser (Data Inspector, vector search), FLUX images written to `public/assets/` of the generated app, and a one-click export zip (source, SQL migration, Prisma schema, Vercel / Cloudflare Pages / Docker configs).
+  - The source lives in `studio/` (Vite 8 + React 19, its own lockfile). `scripts/build-studio.mjs` builds it into `public/studio/` during `prebuild`.
+- `/api/studio/health`, `/api/studio/llm/chat` and `/api/studio/image` (Next.js route handlers). They replace DEVSTACK's own key-based proxy (`LLM_API_KEY`) with our providers:
+  - Workers AI (`STUDIO_MODEL`, Qwen 2.5 Coder 32B) first, then Hugging Face (`HF_MODEL`, DeepSeek V3);
+  - FLUX for images;
+  - the signed `nvx_chat_uid` cookie, D1 `usage_counters` quotas (60 Studio calls per cookie per day, a per-IP backstop and 3000 site-wide; images share `FREE_DAILY_IMAGES` with User Chat), the new `NVX_STUDIO_LIMITER` burst limiter (20/min/IP, namespace 4715) and a same-origin check. Failed calls refund the quota.
+- Route-scoped cross-origin isolation: `public/_headers` sends COOP `same-origin` + COEP `require-corp` and a Studio CSP (`'wasm-unsafe-eval'`, StackBlitz/WebContainer `frame-src`) on `/studio/*` only. The policy is defined in `studioContentSecurityPolicy()` (`src/lib/security-headers.ts`) and tested against the file.
+- Design system sync: `scripts/sync-studio-brand.mjs` copies `tokens.css`, the mascot and the terminal signature (TSX + CSS) into `studio/src/brand/`. The Studio's DEVSTACK utility classes are mapped onto the NVX tokens (black, graphite, Apple blue, pink glow, Inter / IBM Plex). The Studio UI is Thai + English and shares `nvx-lang` with the site.
+- npm scripts: `studio:build`, `studio:dev`, `studio:check`, `studio:brand`, `studio:e2e`.
+- Tests: `tests/studio.test.ts` (proxy, quotas, refunds, headers, brand sync, no emoji or keys in `studio/src`), plus the Studio's own Vitest suite (90 tests) and Playwright specs (`studio/e2e/devstack.spec.ts` for the todo flow, `studio/e2e/site.spec.ts` for site regressions).
+- Docs: `user-guide/studio.md`, `architecture/studio.md`, Studio rows in `reference/config-env.md` and `reference/npm-scripts.md`, the Studio subsystem in `platform-manifest.json`, and Studio in the `llms.txt` intro.
+
+### Changed
+
+- Navigation: a **Studio** link in the header (xl+), the mobile menu and the command palette. It is a plain `<a>`, so the browser does a full page load and applies the isolation headers. `/studio/` was added to the sitemap.
+- `README.md` was rewritten for the whole devstack.bid platform.
+
+### Removed (from the merged DEVSTACK code)
+
+- DEVSTACK's Node server, Vercel functions, Cloudflare Pages functions, Dockerfile and `LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL` / `IMAGE_MODEL` handling. The Studio has no secrets of its own.
+
 ## [0.7.0] - 2026-10-11
 
 ### Added

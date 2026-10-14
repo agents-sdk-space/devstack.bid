@@ -68,6 +68,22 @@
 | `FACTORY_TURNS_PER_HOUR` | var | 60 | `60` | turn ต่อ IP ต่อชั่วโมง |
 | `FACTORY_BURST_PER_MIN` | var | 10 | — | limit in-memory สำรองเมื่อไม่มี `NVX_FACTORY_LIMITER` |
 
+## ตัวแปรของ Studio ([`src/lib/studio/config.ts`](../../src/lib/studio/config.ts))
+
+Studio (`/studio`) ไม่มี secret ของตัวเอง ใช้ `CHAT_COOKIE_SECRET` (ระบุผู้ใช้), binding `AI` และ `HF_TOKEN` ร่วมกับแชต ภาพของ DesignAgent ใช้โควตา `FREE_DAILY_IMAGES` เดียวกับ User Chat ดู [studio.md](../architecture/studio.md)
+
+| ชื่อ | ชนิด | ค่าเริ่มต้นในโค้ด | ค่าใน `wrangler.jsonc` | ใช้ทำอะไร |
+|---|---|---|---|---|
+| `STUDIO_ENABLED` | var | `true` | `true` | ปิด AI ของ Studio ได้ทันที (หน้า `/studio` ยังเปิดได้และใช้ agent แบบออฟไลน์) |
+| `STUDIO_MODEL` | var | `@cf/qwen/qwen2.5-coder-32b-instruct` | เหมือนกัน | โมเดล Workers AI ของ router, CodeAgent, DBAgent |
+| `STUDIO_PROVIDER` | var | `wai` | `wai` | ลำดับผู้ให้บริการ: `wai` = Workers AI ก่อนแล้ว HF (`HF_MODEL`), `hf` = HF ก่อน |
+| `STUDIO_MAX_TOKENS` | var | 4000 | `4000` | เพดาน output ต่อการเรียกหนึ่งครั้ง (256–8000) |
+| `STUDIO_MAX_INPUT_CHARS` | var | 60000 | — | ความยาวรวมของ messages ต่อคำขอ |
+| `STUDIO_DAILY_CALLS` | var | 60 | `60` | การเรียก LLM ฟรีต่อวันต่อ cookie (สร้างแอปหนึ่งครั้งใช้ราว 3–6) เพดานต่อ IP = ค่านี้ × `FREE_IP_MULTIPLIER` |
+| `STUDIO_GLOBAL_CALLS_PER_DAY` | var | 3000 | `3000` | การเรียกรวมทั้งเว็บต่อวัน |
+| `STUDIO_BURST_PER_MIN` | var | 20 | — | limit in-memory สำรองเมื่อไม่มี `NVX_STUDIO_LIMITER` |
+| `STUDIO_TIMEOUT_MS` | var | 90000 | — | timeout ของการเรียก HF หนึ่งครั้งจาก Studio |
+
 | `NEXT_PUBLIC_REPO_URL` | build-time (public) | URL `https://` ของ repo เช่น `https://github.com/<owner>/nvx-stack-builder` | ไม่ตั้ง | — | เปิดปุ่ม "Edit on GitHub" ในหน้า `/docs` และเปลี่ยนลิงก์ไปไฟล์โค้ดในเอกสารเป็นลิงก์ GitHub ([`src/lib/docs.ts`](../../src/lib/docs.ts), [`scripts/build-docs.mjs`](../../scripts/build-docs.mjs)) ค่าที่ไม่ใช่ https ถูกเมิน ถ้าไม่ตั้ง ปุ่มจะซ่อน |
 | `NEXT_PUBLIC_SITE_URL` | build-time (public) | URL เต็ม | `https://devstack.bid` | — | `metadataBase` ใน [`src/app/layout.tsx`](../../src/app/layout.tsx) ใช้สร้าง URL เต็มของ `og:image` / `twitter:image` ถูกฝังตอน build (ไม่ใช่ secret) ถ้า deploy ไปโดเมนอื่นให้ตั้งก่อน `npm run cf:build` |
 
@@ -85,6 +101,7 @@
 | `AI` | Workers AI | — | โมเดลของ User Chat (`WAI_*`) ใช้ free allowance 10,000 neurons/วัน แล้วคิด $0.011 ต่อ 1,000 neurons ตอน `wrangler dev`/preview binding นี้รันแบบ remote เสมอ (ใช้โควตาจริงของบัญชี) |
 | `NVX_CHAT_LIMITER` | ratelimit (namespace `4713`) | 4 / 60 วินาที | burst ของ `/api/chat/turn` และ `/api/chat/dev/turn` |
 | `NVX_FACTORY_LIMITER` | ratelimit (namespace `4714`) | 10 / 60 วินาที | burst ของ `/api/factory/*` |
+| `NVX_STUDIO_LIMITER` | ratelimit (namespace `4715`) | 20 / 60 วินาที | burst ของ `/api/studio/llm/chat` และ `/api/studio/image` (เพิ่มใน v0.8.0-rc, ยังไม่เคย deploy) |
 
 `ASSETS_BUCKET` (R2 bucket `nvx-assets`) **ยังไม่ได้เพิ่ม** เพราะบัญชียังไม่เปิด R2 ขั้นตอนอยู่ที่ [d1-database.md](../operations/d1-database.md) อย่าใส่ binding ก่อนมี bucket จริง เพราะ deploy จะล้ม
 

@@ -1,0 +1,11 @@
+node_modules
+dist
+.DS_Store
+*.local
+.env
+.env.*
+test-results
+playwright-report
+e2e-artifacts
+*.tsbuildinfo
+public/preview/vendor.js

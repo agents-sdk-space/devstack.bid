@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Blocks, BookOpen, Bot, House, Languages, Layers, LayoutGrid, Menu, FlaskConical, MessagesSquare, Moon, Palette, SquareTerminal, Sun } from "lucide-react";
+import { AppWindow, Blocks, BookOpen, Bot, House, Languages, Layers, LayoutGrid, Menu, FlaskConical, MessagesSquare, Moon, Palette, SquareTerminal, Sun } from "lucide-react";
 import { Button, cn, Dialog, DialogContent, DialogTrigger, SearchIcon, Tooltip } from "@/components/ui";
 import { AccountButton } from "./account-button";
 import { CommandPalette, PaletteTrigger } from "./command-palette";
@@ -20,9 +20,18 @@ const NAV = [
   { href: "/factory", key: "nav.factory", Icon: FlaskConical, wide: true },
   { href: "/docs/platform", key: "nav.functions", Icon: Layers },
   { href: "/docs/agents/cursor-caretakers", key: "nav.agents", Icon: Bot, wide: true },
+  // /studio is a separate, cross-origin-isolated document (static Vite app, COOP/COEP): a plain
+  // <a> forces the full page load that applies those headers (a client-side Link would not).
+  { href: "/studio/", key: "nav.studio", Icon: AppWindow, wide: true, document: true },
   { href: "/docs", key: "nav.docs", Icon: BookOpen },
   { href: "/design", key: "nav.design", Icon: Palette, wide: true },
 ] as const;
+
+/** Next <Link> for app routes; a plain <a> for documents outside the Next.js router (/studio). */
+function NavLink({ item, ...props }: { item: (typeof NAV)[number] } & Omit<React.ComponentProps<"a">, "href">) {
+  if ("document" in item && item.document) return <a href={item.href} {...props} />;
+  return <Link href={item.href} {...props} />;
+}
 
 function isActive(pathname: string, href: string) {
   if (href === "/" || href === "/chat") return pathname === href;
@@ -55,9 +64,9 @@ export function Header() {
           {NAV.map((item) => {
             const active = isActive(pathname, item.href);
             return (
-              <Link
+              <NavLink
                 key={item.href}
-                href={item.href}
+                item={item}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "focus-ring motion-fast whitespace-nowrap rounded-md px-3 py-1.5 text-[13px]",
@@ -66,7 +75,7 @@ export function Header() {
                 )}
               >
                 {t(item.key)}
-              </Link>
+              </NavLink>
             );
           })}
         </nav>
@@ -104,8 +113,8 @@ export function Header() {
                     const active = isActive(pathname, item.href);
                     return (
                       <li key={item.href}>
-                        <Link
-                          href={item.href}
+                        <NavLink
+                          item={item}
                           onClick={() => setMenuOpen(false)}
                           aria-current={active ? "page" : undefined}
                           className={cn(
@@ -115,7 +124,7 @@ export function Header() {
                         >
                           <item.Icon className="h-5 w-5 text-subtle" aria-hidden />
                           {t(item.key)}
-                        </Link>
+                        </NavLink>
                       </li>
                     );
                   })}

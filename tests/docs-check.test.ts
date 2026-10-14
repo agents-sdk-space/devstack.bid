@@ -53,6 +53,15 @@ describe("docs:check", () => {
     expect(check(fixture()).errors).toEqual([]);
   });
 
+  it("tolerates missing paths that are git-ignored build output, but not other missing paths", () => {
+    const doc = `# Build\n\nOutput goes to \`public/studio/\` and \`public/studio/assets/app.js\`. ${LONG}`;
+    expect(check(fixture({ ".gitignore": "# build\n/public/studio/\nnode_modules\n", "docs/build.md": doc })).errors).toEqual([]);
+    const errors = check(fixture({ "docs/build.md": doc })).errors;
+    expect(errors).toContain("docs/build.md: path `public/studio/` does not exist");
+    const other = check(fixture({ ".gitignore": "/public/studio/\n", "docs/build.md": `# B\n\n\`public/other.js\` ${LONG}` })).errors;
+    expect(other).toContain("docs/build.md: path `public/other.js` does not exist");
+  });
+
   it("counts prose only, not code blocks or link targets", () => {
     const md = "# Title\n\n```bash\n" + "x".repeat(2000) + "\n```\n\n[ok](https://example.com/very/long/url)";
     expect(contentLength(md)).toBeLessThan(20);

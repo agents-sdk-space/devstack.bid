@@ -1,0 +1,61 @@
+{
+  "name": "nvx-studio",
+  "private": true,
+  "version": "0.8.0-rc.2",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "predev": "vite build -c vite.preview.config.ts --logLevel warn",
+    "dev": "vite --port 43123 --host 127.0.0.1",
+    "build": "tsc -b && npm run build:web",
+    "build:web": "vite build -c vite.preview.config.ts --logLevel warn && vite build",
+    "typecheck": "tsc -b",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build:web"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@electric-sql/pglite-pgvector": "^0.0.9",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/ibm-plex-sans-thai": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@monaco-editor/react": "^4.7.0",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "acorn": "^8.19.0",
+    "acorn-jsx": "^5.3.2",
+    "jszip": "^3.10.2",
+    "monaco-editor": "^0.57.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "sucrase": "^3.35.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^22.19.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.71.1",
+    "vite": "^8.3.4",
+    "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "dompurify": "^3.4.16"
+  },
+  "description": "devstack.bid Studio (/studio): DEVSTACK v0.2.0 browser workspace merged into NVX Stack Builder. Built into ../public/studio by ../scripts/build-studio.mjs."
+}

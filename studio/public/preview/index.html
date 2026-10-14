@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Preview</title>
+    <style>
+      html, body { margin: 0; background: #000; color: #fff; font-family: Inter, system-ui, sans-serif; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!--
+      NVX Studio static preview host. Loaded in <iframe sandbox="allow-scripts allow-forms allow-modals">
+      (opaque origin: no cookies, storage or DOM access to the Studio). The parent posts the vendored
+      React runtime and the Sucrase-compiled module map; this loader runs them with a small require().
+      No network: the CSP for /studio/preview/* sets default-src 'none' and connect-src 'none'.
+    -->
+    <script>
+      (function () {
+        'use strict';
+        var host = window.parent;
+        function send(msg) {
+          try { host.postMessage(msg, '*'); } catch (e) { /* ignore */ }
+        }
+        function fmt(a) {
+          if (a instanceof Error) return a.stack || a.message;
+          if (a && typeof a === 'object') { try { return JSON.stringify(a); } catch (e) { return String(a); } }
+          return String(a);
+        }
+        ['log', 'info', 'warn', 'error'].forEach(function (level) {
+          var orig = console[level];
+          console[level] = function () {
+            send({ type: 'nvx-preview:console', level: level, text: Array.prototype.map.call(arguments, fmt).join(' ') });
+            return orig.apply(console, arguments);
+          };
+        });
+        window.addEventListener('error', function (e) {
+          send({ type: 'nvx-preview:error', text: (e.error && e.error.stack) || e.message });
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          send({ type: 'nvx-preview:error', text: 'Unhandled rejection: ' + fmt(e.reason) });
+        });
+
+        function dirname(p) { var i = p.lastIndexOf('/'); return i < 0 ? '' : p.slice(0, i); }
+        function join(base, rel) {
+          var parts = (base ? base.split('/') : []).concat(rel.split('/'));
+          var out = [];
+          for (var i = 0; i < parts.length; i++) {
+            var s = parts[i];
+            if (!s || s === '.') continue;
+            if (s === '..') { out.pop(); continue; }
+            out.push(s);
+          }
+          return out.join('/');
+        }
+        var EXT = ['', '.jsx', '.js', '.tsx', '.ts', '.mjs', '.json', '/index.jsx', '/index.js', '/index.tsx', '/index.ts'];
+
+        var booted = false;
+        window.addEventListener('message', function (ev) {
+          if (ev.source !== host) return;
+          var m = ev.data;
+          if (!m || m.type !== 'nvx-preview:load' || booted) return;
+          booted = true;
+          try {
+            if (m.title) document.title = m.title;
+            (0, eval)(m.vendor);
+            var vendor = window.__nvxPreviewVendor || {};
+            var modules = m.modules || {}, css = m.css || {}, assets = m.assets || {};
+            var cache = {}, injected = {};
+
+            var resolve = function (from, spec) {
+              if (Object.prototype.hasOwnProperty.call(vendor, spec)) return { kind: 'vendor', id: spec };
+              if (spec.charAt(0) !== '.' && spec.charAt(0) !== '/') {
+                throw new Error('Package "' + spec + '" is not available in the Studio preview (no npm install in the browser). ' +
+                  'Available: ' + Object.keys(vendor).join(', '));
+              }
+              if (spec.charAt(0) === '/' && assets[spec]) return { kind: 'asset', id: spec };
+              var base = spec.charAt(0) === '/' ? '' : dirname(from);
+              var p = join(base, spec);
+              for (var i = 0; i < EXT.length; i++) {
+                var c = p + EXT[i];
+                if (modules[c] !== undefined) return { kind: 'module', id: c };
+                if (css[c] !== undefined) return { kind: 'css', id: c };
+                if (assets[c] !== undefined) return { kind: 'asset', id: c };
+              }
+              throw new Error('Cannot resolve "' + spec + '" from ' + from);
+            };
+
+            var load = function (from, spec) {
+              var r = resolve(from, spec);
+              if (r.kind === 'vendor') return vendor[r.id];
+              if (r.kind === 'asset') return { __esModule: true, default: assets[r.id] };
+              if (r.kind === 'css') {
+                if (!injected[r.id]) {
+                  injected[r.id] = true;
+                  var style = document.createElement('style');
+                  style.setAttribute('data-path', r.id);
+                  style.textContent = css[r.id];
+                  document.head.appendChild(style);
+                }
+                return {};
+              }
+              if (cache[r.id]) return cache[r.id].exports;
+              var module = { exports: {} };
+              cache[r.id] = module;
+              var fn = new Function('require', 'module', 'exports', modules[r.id] + '\n//# sourceURL=studio-preview/' + r.id);
+              fn(function (s) { return load(r.id, s); }, module, module.exports);
+              return module.exports;
+            };
+
+            load('', './' + m.entry);
+            send({ type: 'nvx-preview:ready' });
+          } catch (err) {
+            var root = document.getElementById('root');
+            if (root) {
+              root.innerHTML = '';
+              var pre = document.createElement('pre');
+              pre.style.cssText = 'color:#ff6b6b;padding:16px;white-space:pre-wrap;font:12px/1.5 monospace';
+              pre.textContent = String((err && err.stack) || err);
+              root.appendChild(pre);
+            }
+            send({ type: 'nvx-preview:error', text: String((err && err.stack) || err) });
+          }
+        });
+        send({ type: 'nvx-preview:hello' });
+      })();
+    </script>
+  </body>
+</html>
