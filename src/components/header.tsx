@@ -28,9 +28,23 @@ const NAV = [
 ] as const;
 
 /** Next <Link> for app routes; a plain <a> for documents outside the Next.js router (/studio). */
-function NavLink({ item, ...props }: { item: (typeof NAV)[number] } & Omit<React.ComponentProps<"a">, "href">) {
-  if ("document" in item && item.document) return <a href={item.href} {...props} />;
-  return <Link href={item.href} {...props} />;
+function NavLink({
+  item,
+  children,
+  ...props
+}: { item: (typeof NAV)[number]; children: React.ReactNode } & Omit<React.ComponentProps<"a">, "href" | "children">) {
+  if ("document" in item && item.document) {
+    return (
+      <a href={item.href} {...props}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link href={item.href} {...props}>
+      {children}
+    </Link>
+  );
 }
 
 function isActive(pathname: string, href: string) {
