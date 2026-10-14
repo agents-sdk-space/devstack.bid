@@ -90,7 +90,11 @@ export function llmsTxt(site = SITE_URL): string {
     lines.push("");
   }
   lines.push("## Optional", "");
-  for (const e of DOC_EXTRAS) lines.push(`- [${e.path}](${site}/docs/${e.path}): machine-readable platform manifest (JSON)`);
+  const extraNote: Record<string, string> = {
+    "agents/platform-manifest.json": "machine-readable platform map (JSON)",
+    "agents/cursor-agents.json": "NVX DEVELOPER BOTH agent roster (JSON)",
+  };
+  for (const e of DOC_EXTRAS) lines.push(`- [${e.path}](${site}/docs/${e.path}): ${extraNote[e.path] ?? "machine-readable JSON"}`);
   lines.push(`- [llms-full.txt](${site}/llms-full.txt): every page above concatenated into one file`, "");
   return lines.join("\n");
 }

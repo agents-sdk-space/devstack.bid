@@ -39,7 +39,10 @@ flowchart LR
 | `/docs/<slug>` | หน้าเอกสาร เช่น `/docs/user-guide/getting-started` (slug = path ตัวพิมพ์เล็ก ไม่มี `.md`) |
 | `/docs/<slug>.md`, `/docs/index.md` | Markdown ต้นฉบับแบบไบต์ต่อไบต์ `Content-Type: text/markdown; charset=utf-8` |
 | `/docs/raw/<slug>` | ปลายทางจริงของไฟล์ดิบ (rewrite จาก `.md` ใน `next.config.ts`) |
-| `/docs/agents/platform-manifest.json` | manifest แบบ JSON |
+| `/docs/platform` | สารบัญฟังก์ชันของแพลตฟอร์ม (จาก `docs/platform.md`) |
+| `/docs/agents/cursor-caretakers` | บอท NVX DEVELOPER BOTH ที่สร้างและดูแลทั้งแพลตฟอร์ม |
+| `/docs/agents/platform-manifest.json` | แผนที่แพลตฟอร์มแบบ JSON |
+| `/docs/agents/cursor-agents.json` | roster ของ caretaker แบบ JSON |
 | `/llms.txt` | สารบัญลิงก์ไฟล์ดิบทุกหน้าตามรูปแบบ llmstxt.org |
 | `/llms-full.txt` | ทุกหน้ารวมเป็นไฟล์เดียว |
 
@@ -47,7 +50,7 @@ slug ที่ไม่มีอยู่ได้ **HTTP 404 จริง** ผ
 
 ## UI (Material 3 บนธีมดำของเรา)
 
-- **Navigation drawer** ด้านซ้ายแบ่งตามหมวด (user-guide, concepts, architecture, history, operations, contributing, reference, agents) รายการที่เลือกอยู่ใช้สีแบบ "secondary container" และทุกปุ่มมี state layer ตอน hover/focus/กด
+- **Navigation drawer** ด้านซ้ายแบ่งตามหมวด (platform, user-guide, concepts, architecture, history, operations, contributing, reference, agents) รายการที่เลือกอยู่ใช้สีแบบ "secondary container" และทุกปุ่มมี state layer ตอน hover/focus/กด
 - บนมือถือมี **top app bar** เล็ก ๆ ใต้ header กดปุ่มเมนูเพื่อเปิด drawer แบบ modal จากซ้าย
 - **ในหน้านี้ (TOC)** ด้านขวาบนเดสก์ท็อป ไฮไลต์หัวข้อที่กำลังอ่าน บนจอแคบเป็นกล่องพับได้เหนือเนื้อหา
 - breadcrumb, ปุ่มก่อนหน้า/ถัดไป, ปุ่ม **คัดลอก Markdown**, **ดูไฟล์ดิบ** และ **แก้ไขบน GitHub** (ซ่อนไว้จนกว่าจะตั้ง `NEXT_PUBLIC_REPO_URL`)

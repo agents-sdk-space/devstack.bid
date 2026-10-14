@@ -1,13 +1,13 @@
 /**
- * Anonymous user identity for /chat: a random id in a signed, HttpOnly cookie (no OAuth yet).
+ * Anonymous user identity for /chat: a random id in a signed, HttpOnly cookie.
  * Cookie value: `<uuid>.<base64url HMAC-SHA256(uuid)>`, keyed by CHAT_COOKIE_SECRET. A missing or
  * tampered cookie yields a fresh id. Pure Web Crypto, so it runs on Workers, Node and in tests.
  */
 
 export const CHAT_COOKIE = "nvx_chat_uid";
-/** Signed user id after GitHub sign-in. Same HMAC format as the anonymous cookie, different name. */
+/** Signed user id after Cursor, Google, GitHub or DevStack sign-in. Same HMAC format as the anonymous cookie. */
 export const AUTH_COOKIE = "nvx_auth";
-/** Short-lived CSRF state for the GitHub OAuth callback. */
+/** Short-lived CSRF state for OAuth callbacks. Path is /api/auth so every provider can read it. */
 export const OAUTH_STATE_COOKIE = "nvx_oauth_state";
 const MAX_AGE = 60 * 60 * 24 * 365;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -98,7 +98,7 @@ export async function verifyPayload(value: string | undefined, secret: string): 
 }
 
 /**
- * Chat identity. A valid GitHub session wins over the anonymous cookie.
+ * Chat identity. A valid sign-in session wins over the anonymous cookie.
  * `issue` mints an anonymous cookie when neither is present (POST turns). GETs pass `issue: false`.
  */
 export async function resolveActor(

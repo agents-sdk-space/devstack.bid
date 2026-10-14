@@ -26,13 +26,14 @@ const nextConfig: NextConfig = {
     // /docs/<slug> paths get a real 404 the same way as unknown templates.
     const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\/-]/g, "\\$&");
     const docSlugs = docsNav.sections.flatMap((s) => s.pages.map((p) => p.slug)).filter(Boolean).map(esc).join("|");
+    const jsonExtras = ["agents/platform-manifest.json", "agents/cursor-agents.json"];
     return {
       beforeFiles: [
         { source: `/templates/:id((?!(?:${known})$)[^/]+)`, destination: "/__nvx_not_found" },
         { source: "/docs.md", destination: "/docs/raw/index" },
         { source: "/docs/:path((?!raw/).+)\\.md", destination: "/docs/raw/:path" },
-        { source: "/docs/agents/platform-manifest.json", destination: "/docs/raw/agents/platform-manifest.json" },
-        { source: `/docs/:path((?!(?:${docSlugs}|agents/platform-manifest\\.json)$)(?!raw/)(?!.*\\.md$).+)`, destination: "/__nvx_not_found" },
+        ...jsonExtras.map((file) => ({ source: `/docs/${file}`, destination: `/docs/raw/${file}` })),
+        { source: `/docs/:path((?!(?:${docSlugs}|${jsonExtras.map(esc).join("|")})$)(?!raw/)(?!.*\\.md$).+)`, destination: "/__nvx_not_found" },
       ],
       afterFiles: [],
       fallback: [],

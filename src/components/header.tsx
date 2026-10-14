@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Blocks, BookOpen, House, Languages, LayoutGrid, Menu, FlaskConical, MessagesSquare, Moon, Palette, SquareTerminal, Sun } from "lucide-react";
+import { Blocks, BookOpen, Bot, House, Languages, Layers, LayoutGrid, Menu, FlaskConical, MessagesSquare, Moon, Palette, SquareTerminal, Sun } from "lucide-react";
 import { Button, cn, Dialog, DialogContent, DialogTrigger, SearchIcon, Tooltip } from "@/components/ui";
+import { AccountButton } from "./account-button";
 import { CommandPalette, PaletteTrigger } from "./command-palette";
 import { Mascot } from "./brand/mascot";
 import { TerminalSignature } from "./brand/terminal-signature";
@@ -17,13 +18,16 @@ const NAV = [
   { href: "/chat", key: "nav.chat", Icon: MessagesSquare },
   { href: "/chat/dev", key: "nav.devChat", Icon: SquareTerminal, wide: true },
   { href: "/factory", key: "nav.factory", Icon: FlaskConical, wide: true },
+  { href: "/docs/platform", key: "nav.functions", Icon: Layers },
+  { href: "/docs/agents/cursor-caretakers", key: "nav.agents", Icon: Bot, wide: true },
   { href: "/docs", key: "nav.docs", Icon: BookOpen },
   { href: "/design", key: "nav.design", Icon: Palette, wide: true },
 ] as const;
 
 function isActive(pathname: string, href: string) {
   if (href === "/" || href === "/chat") return pathname === href;
-  return pathname.startsWith(href);
+  if (href === "/docs") return pathname === "/docs" || (pathname.startsWith("/docs/") && !pathname.startsWith("/docs/platform") && !pathname.startsWith("/docs/agents/cursor-caretakers"));
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function Header() {
@@ -68,6 +72,7 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5">
+          <AccountButton next={pathname} />
           <PaletteTrigger onClick={() => setPaletteOpen(true)} />
           <Tooltip content={t("palette.open")}>
             <Button variant="ghost" size="icon" className="md:hidden" aria-label={t("palette.open")} onClick={() => setPaletteOpen(true)}>
@@ -90,6 +95,9 @@ export function Header() {
               </Button>
             </DialogTrigger>
             <DialogContent side="right" title={t("nav.mainMenu")} closeLabel={t("nav.close")}>
+              <div className="mb-4">
+                <AccountButton next={pathname} full onNavigate={() => setMenuOpen(false)} />
+              </div>
               <nav aria-label="Mobile">
                 <ul className="space-y-1">
                   {NAV.map((item) => {

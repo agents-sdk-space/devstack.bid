@@ -63,6 +63,26 @@ const schema = z.object({
     .regex(/^[\w-]{16,200}$/)
     .optional()
     .catch(undefined),
+  /** Google OAuth client. Both are required before /api/auth/google leaves the site. */
+  GOOGLE_CLIENT_ID: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9][A-Za-z0-9._-]{7,180}$/)
+    .optional()
+    .catch(undefined),
+  GOOGLE_CLIENT_SECRET: z
+    .string()
+    .trim()
+    .regex(/^[\w-]{16,200}$/)
+    .optional()
+    .catch(undefined),
+  /** Cursor Origin app id (public). The callback verifies installation receipts; no private key is stored. */
+  CURSOR_APP_ID: z
+    .string()
+    .trim()
+    .regex(/^app_[A-Za-z0-9]{6,80}$/)
+    .optional()
+    .catch(undefined),
   /** Vercel AI Gateway key for the model picker on /chat. Requests use provider/model ids. */
   AI_GATEWAY_API_KEY: z
     .string()
@@ -87,7 +107,7 @@ export function serverEnv(source: Record<string, string | undefined> = process.e
   if (cached && KEYS.every((k) => cached!.source[k] === source[k])) return cached.env;
   const raw = Object.fromEntries(KEYS.map((k) => [k, source[k] === "" ? undefined : source[k]]));
   const env = schema.parse(raw);
-  const secrets = new Set<keyof ServerEnv>(["OPENAI_API_KEY", "HF_TOKEN", "GITHUB_CLIENT_SECRET", "AI_GATEWAY_API_KEY"]);
+  const secrets = new Set<keyof ServerEnv>(["OPENAI_API_KEY", "HF_TOKEN", "GITHUB_CLIENT_SECRET", "GOOGLE_CLIENT_SECRET", "AI_GATEWAY_API_KEY"]);
   const invalid: string[] = KEYS.filter((k) => raw[k] !== undefined && !secrets.has(k) && String(env[k]) !== String(raw[k]).trim());
   for (const k of secrets) if (raw[k] !== undefined && !env[k]) invalid.push(k);
   if (invalid.length) console.warn(`[env] ignoring invalid values for: ${invalid.join(", ")} (using defaults)`);

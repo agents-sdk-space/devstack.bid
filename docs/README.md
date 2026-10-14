@@ -30,7 +30,7 @@
 | ผู้ร่วมพัฒนา (contributor) | [Concepts: Stack Template](./concepts/stack-template.md) | [Add a template](./contributing/add-template.md), [Testing](./contributing/testing.md), [File map](./reference/file-map.md) |
 | ผู้ดูแลระบบ / DevOps | [Local dev](./operations/local-dev.md) | [Env & secrets](./operations/env-secrets.md), [Deploy](./operations/deploy-cloudflare.md), [Rollback](./operations/rollback.md), [Monitoring](./operations/monitoring.md) |
 | สถาปนิก / reviewer | [Architecture overview](./architecture/overview.md) | [Data flow](./architecture/data-flow.md), [Subsystem history](./history/SUBSYSTEM-HISTORY.md) |
-| AI agent ที่ต้องดูแลแพลตฟอร์ม | [AGENTS.md](../AGENTS.md) | [Agent playbook](./agents/AGENT-PLAYBOOK.md), [platform-manifest.json](./agents/platform-manifest.json) |
+| AI agent ที่ต้องดูแลแพลตฟอร์ม | [เมนูฟังก์ชัน](./platform.md) | [NVX DEVELOPER BOTH](./agents/cursor-caretakers.md), [cursor-agents.json](./agents/cursor-agents.json), [Agent playbook](./agents/AGENT-PLAYBOOK.md) |
 
 ## แผนผังเอกสาร · Site map
 
@@ -55,7 +55,8 @@
   - [add-template.md](./contributing/add-template.md), [add-component.md](./contributing/add-component.md), [testing.md](./contributing/testing.md), [release-process.md](./contributing/release-process.md), [docs-maintenance.md](./contributing/docs-maintenance.md)
 - **reference/** ข้อมูลอ้างอิง
   - [api-plan.md](./reference/api-plan.md), [template-schema.md](./reference/template-schema.md), [config-env.md](./reference/config-env.md), [npm-scripts.md](./reference/npm-scripts.md), [file-map.md](./reference/file-map.md)
-- **agents/** สำหรับ AI agent: [AGENT-PLAYBOOK.md](./agents/AGENT-PLAYBOOK.md), [platform-manifest.json](./agents/platform-manifest.json)
+- **[platform.md](./platform.md)** เมนูฟังก์ชันของทั้งแพลตฟอร์ม (ไฟล์ดิบ `/docs/platform.md`)
+- **agents/** สำหรับ AI agent: [AGENT-PLAYBOOK.md](./agents/AGENT-PLAYBOOK.md), [cursor-caretakers.md](./agents/cursor-caretakers.md), [cursor-agents.json](./agents/cursor-agents.json), [platform-manifest.json](./agents/platform-manifest.json)
 - เอกสารเดิม: [UI-FRAMEWORK.md](./UI-FRAMEWORK.md) (ระบบดีไซน์ NVX UI, TH + EN)
 
 ## แหล่งความจริง · Where truth lives

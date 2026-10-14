@@ -41,6 +41,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 /** Section order for the navigation drawer. `files` fixes the reading order; unknown files go last. */
 export const SECTIONS = [
   { id: "start", label: { th: "เริ่มต้นที่นี่", en: "Start here" }, files: ["README.md"] },
+  { id: "platform", label: { th: "เมนูฟังก์ชัน", en: "Functions" }, files: ["platform.md"] },
   {
     id: "user-guide",
     label: { th: "คู่มือผู้ใช้", en: "User guide" },
@@ -67,11 +68,11 @@ export const SECTIONS = [
     files: ["add-template", "add-component", "testing", "release-process", "docs-maintenance"].map((f) => `contributing/${f}.md`),
   },
   { id: "reference", label: { th: "อ้างอิง", en: "Reference" }, files: ["api-plan", "api-chat", "template-schema", "config-env", "d1-schema", "npm-scripts", "file-map"].map((f) => `reference/${f}.md`) },
-  { id: "agents", label: { th: "สำหรับ AI agent", en: "For AI agents" }, files: ["agents/AGENT-PLAYBOOK.md"] },
+  { id: "agents", label: { th: "สำหรับ AI agent", en: "For AI agents" }, files: ["agents/AGENT-PLAYBOOK.md", "agents/cursor-caretakers.md"] },
 ];
 
 /** Extra non-Markdown files under docs/ that are served raw too (linked from the Markdown). */
-export const RAW_EXTRAS = ["agents/platform-manifest.json"];
+export const RAW_EXTRAS = ["agents/platform-manifest.json", "agents/cursor-agents.json"];
 
 function walk(dir, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {

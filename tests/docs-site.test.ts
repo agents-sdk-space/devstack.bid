@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { getPathMatch } from "next/dist/shared/lib/router/utils/path-match";
 import nextConfig from "../next.config";
 import { buildDocsBundle, SECTIONS } from "../scripts/build-docs.mjs";
-import { DOCS, DOCS_NAV, getDoc, getDocByRawSlug, llmsTxt, pagePath, rawPath, repoUrl } from "@/lib/docs";
+import { DOC_EXTRAS, DOCS, DOCS_NAV, getDoc, getDocByRawSlug, llmsTxt, pagePath, rawPath, repoUrl } from "@/lib/docs";
 import { normalize, searchDocs, type SearchEntry } from "@/lib/docs-search";
 import { GET as rawGET, generateStaticParams as rawParams } from "@/app/docs/raw/[...slug]/route";
 import { generateStaticParams as pageParams } from "@/app/docs/[...slug]/page";
@@ -93,7 +93,7 @@ describe("raw Markdown route", () => {
   });
 
   it("prerenders a raw URL and a page for every doc", () => {
-    expect(rawParams().length).toBe(DOCS.length + 1); // + platform-manifest.json
+    expect(rawParams().length).toBe(DOCS.length + DOC_EXTRAS.length);
     expect(pageParams().length).toBe(DOCS.length - 1); // landing is /docs
   });
 });
@@ -115,6 +115,10 @@ describe("next.config rewrites for docs", () => {
   it("leaves known pages alone and sends unknown slugs to the 404 page", async () => {
     expect(await resolve("/docs/user-guide/builder")).toBe("/docs/user-guide/builder");
     expect(await resolve("/docs/deploy")).toBe("/docs/deploy");
+    expect(await resolve("/docs/platform")).toBe("/docs/platform");
+    expect(await resolve("/docs/agents/cursor-caretakers")).toBe("/docs/agents/cursor-caretakers");
+    expect(await resolve("/docs/agents/platform-manifest.json")).toBe("/docs/raw/agents/platform-manifest.json");
+    expect(await resolve("/docs/agents/cursor-agents.json")).toBe("/docs/raw/agents/cursor-agents.json");
     expect(await resolve("/docs/user-guide/nope")).toBe("/__nvx_not_found");
     expect(await resolve("/docs/raw/user-guide/builder")).toBe("/docs/raw/user-guide/builder");
   });

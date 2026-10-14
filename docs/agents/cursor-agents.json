@@ -1,0 +1,57 @@
+{
+  "version": 2,
+  "platform": "https://devstack.bid",
+  "builtBy": "NVX DEVELOPER BOTH",
+  "index": "/docs/platform.md",
+  "llms": "/llms.txt",
+  "playbook": "/docs/agents/AGENT-PLAYBOOK.md",
+  "agent": {
+    "id": "nvx-developer",
+    "name": "NVX DEVELOPER BOTH",
+    "owns": ["."],
+    "role": "Built this platform and looks after all of it when a Cursor agent opens the repo."
+  },
+  "never": [
+    "execute user, AI, or template commands on the server",
+    "commit or print secrets",
+    "deploy, remote-migrate D1, bind domains, or delete Cloudflare resources without explicit human approval"
+  ],
+  "areas": [
+    {
+      "id": "docs",
+      "owns": ["docs/**", "scripts/build-docs.mjs", "scripts/docs-check.mjs", "src/lib/docs.ts", "src/app/docs/**", "src/app/llms.txt/**"],
+      "reads": ["/docs/architecture/docs-site.md", "/docs/contributing/docs-maintenance.md"],
+      "verify": ["npm run docs:check"]
+    },
+    {
+      "id": "templates",
+      "owns": ["src/data/templates/**", "src/data/template-ids.ts", "src/lib/composer.ts", "src/lib/scripts.ts", "scripts/export-template.ts"],
+      "reads": ["/docs/user-guide/templates.md", "/docs/contributing/add-template.md"],
+      "verify": ["npm test"]
+    },
+    {
+      "id": "chat",
+      "owns": ["src/lib/chat/**", "src/lib/ai/**", "src/components/chat/**", "src/app/api/chat/**", "src/app/chat/**"],
+      "reads": ["/docs/user-guide/chat.md", "/docs/reference/api-chat.md"],
+      "verify": ["npm test"]
+    },
+    {
+      "id": "accounts",
+      "owns": ["src/lib/auth/**", "src/app/api/auth/**", "src/app/api/github/**", "src/app/login/**", "src/components/login-form.tsx", "src/components/account-button.tsx", "migrations/**"],
+      "reads": ["/docs/platform.md", "/docs/reference/config-env.md", "/docs/reference/d1-schema.md"],
+      "verify": ["npm test"]
+    },
+    {
+      "id": "design",
+      "owns": ["src/app/tokens.css", "src/app/globals.css", "src/components/ui/**", "src/lib/design-tokens.ts", "src/components/design-system.tsx"],
+      "reads": ["/docs/concepts/design-system.md"],
+      "verify": ["npm test"]
+    },
+    {
+      "id": "release",
+      "owns": ["CHANGELOG.md", "package.json", "wrangler.jsonc", "docs/operations/**"],
+      "reads": ["/docs/contributing/release-process.md", "/docs/operations/deploy-cloudflare.md"],
+      "verify": ["npm run lint", "npm run typecheck", "npm test", "npm run docs:check"]
+    }
+  ]
+}

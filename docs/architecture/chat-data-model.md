@@ -2,7 +2,7 @@
 
 หน้านี้อธิบายว่าเราเก็บประวัติแชตระหว่างผู้ใช้กับ AI ไว้อย่างไร ตารางหลักอยู่ใน D1 (`nvx-db`) และหน้า `/chat` อ่านเขียนตารางเหล่านี้อยู่แล้ว รายละเอียด route อยู่ที่ [reference/api-chat.md](../reference/api-chat.md)
 
-การเข้าสู่ระบบใช้ GitHub OAuth migration `0006_github_auth` เพิ่ม `users.login`, `users.avatar_url` และตาราง `github_credentials` ที่เก็บเฉพาะ ciphertext ของ access token (AES-GCM จาก `CHAT_COOKIE_SECRET`) cookie `nvx_auth` เป็นรหัสผู้ใช้ที่ลงลายเซ็น ไม่ใช่ token แผนเดิมที่ยังไม่ทำ (API key สำหรับบริการภายนอก, R2) อยู่ท้ายหน้า
+การเข้าสู่ระบบมีสี่วิธีบน `/login`: Cursor (ใบเสร็จติดตั้ง Origin ที่ตรวจลายเซ็นแล้ว ไม่เก็บใบเสร็จ), Google (ไม่เก็บ access token), GitHub และรหัสผ่านของ DevStack migration `0006_github_auth` เพิ่ม `users.login`, `users.avatar_url` และตาราง `github_credentials` ที่เก็บเฉพาะ ciphertext ของ access token (AES-GCM จาก `CHAT_COOKIE_SECRET`) migration `0007_password_auth` เก็บแฮช PBKDF2 ใน `password_credentials` cookie `nvx_auth` เป็นรหัสผู้ใช้ที่ลงลายเซ็น ไม่ใช่ token หรือรหัสผ่าน อีเมลเดียวกันบนคนละผู้ให้บริการเป็นคนละบัญชี แผนเดิมที่ยังไม่ทำ (API key สำหรับบริการภายนอก, R2) อยู่ท้ายหน้า
 
 ## เป้าหมาย
 

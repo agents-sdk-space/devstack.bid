@@ -11,9 +11,12 @@ CHAT_COOKIE_SECRET=
 # Hugging Face router token (fine-grained, "Make calls to Inference Providers"):
 HF_TOKEN=
 # OPENAI_FALLBACK=false
-# GitHub OAuth (sign-in + push a chat code block). Callback URL must match the OAuth app.
+# Sign-in. Callback URL must match each provider app ({origin}/api/auth/<provider>/callback).
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+CURSOR_APP_ID=
 # Vercel AI Gateway (model picker on /chat).
 AI_GATEWAY_API_KEY=
 # AI_GATEWAY_BASE_URL=https://ai-gateway.vercel.sh/v1

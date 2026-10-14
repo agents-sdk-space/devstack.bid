@@ -7,7 +7,7 @@ import { TEMPLATES } from "@/data/templates";
 import { CATEGORY_LABELS } from "@/lib/i18n";
 import { Dialog, DialogContent, Kbd, SearchIcon } from "@/components/ui";
 import { useDarkMode, useLang } from "./prefs";
-import { Blocks, BookOpen, FileText, FlaskConical, House, Languages, LayoutGrid, MessagesSquare, Palette, SquareTerminal, SunMoon } from "lucide-react";
+import { Blocks, BookOpen, Bot, FileText, FlaskConical, House, Languages, Layers, LayoutGrid, MessagesSquare, Palette, SquareTerminal, SunMoon } from "lucide-react";
 import docsNav from "@/generated/docs-nav.json";
 import { templateTool, ToolTile } from "./brand/tool-icon";
 
@@ -61,6 +61,8 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
                   ["/chat", MessagesSquare, t("nav.chat")],
                   ["/chat/dev", SquareTerminal, t("nav.devChat")],
                   ["/factory", FlaskConical, t("nav.factory")],
+                  ["/docs/platform", Layers, t("nav.functions")],
+                  ["/docs/agents/cursor-caretakers", Bot, t("nav.agents")],
                   ["/docs", BookOpen, t("nav.docs")],
                   ["/design", Palette, t("nav.design")],
                 ] as const

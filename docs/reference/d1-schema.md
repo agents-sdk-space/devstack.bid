@@ -12,7 +12,7 @@ Reference ของทุกตารางในฐานข้อมูล D1 
 | `value` | TEXT | ไม่ | — | |
 | `updated_at` | INTEGER | ไม่ | now (ms) | |
 
-ไฟล์ migration ตั้ง `schema_version` ไปจนถึง `6` ค่าบนฐานจริงคือเลขของ migration ที่ apply แล้ว (remote ต้องได้รับอนุมัติก่อน apply `0006`)
+ไฟล์ migration ตั้ง `schema_version` ไปจนถึง `7` ค่าบนฐานจริงคือเลขของ migration ที่ apply แล้ว (remote ต้องได้รับอนุมัติก่อน apply `0006` และ `0007`)
 
 ## `users`
 
@@ -21,11 +21,11 @@ Reference ของทุกตารางในฐานข้อมูล D1 
 | `id` | TEXT | ไม่ | — | PK |
 | `created_at` | INTEGER | ไม่ | now (ms) | |
 | `display_name` | TEXT | ได้ | — | |
-| `auth_provider` | TEXT | ได้ | — | เช่น `github`, `google`, `passkey`, `cf-access` |
-| `auth_subject` | TEXT | ได้ | — | id ถาวรของผู้ใช้ที่ผู้ให้บริการ auth ส่งมา (`sub`) |
+| `auth_provider` | TEXT | ได้ | — | `github`, `google`, `cursor`, `password` หรือ null สำหรับผู้ใช้ที่ไม่ระบุตัวตน |
+| `auth_subject` | TEXT | ได้ | — | id ถาวรจากผู้ให้บริการ หรืออีเมลที่ปรับรูปแบบแล้วสำหรับ `password` |
 | `email` | TEXT | ได้ | — | |
-| `login` | TEXT | ได้ | — | ชื่อผู้ใช้ GitHub (migration 0006) |
-| `avatar_url` | TEXT | ได้ | — | รูปโปรไฟล์ `https://avatars.githubusercontent.com/...` |
+| `login` | TEXT | ได้ | — | ชื่อที่โชว์ในหัวเว็บ (migration 0006) |
+| `avatar_url` | TEXT | ได้ | — | รูปจาก `avatars.githubusercontent.com` หรือ `*.googleusercontent.com` |
 
 Constraint: `auth_provider` กับ `auth_subject` ต้องเป็น null พร้อมกันหรือมีค่าพร้อมกัน
 Index: `users_auth_identity_uq` (unique: `auth_provider`, `auth_subject`), `users_email_idx` (`email`, เฉพาะแถวที่มี email)
@@ -40,6 +40,18 @@ Index: `users_auth_identity_uq` (unique: `auth_provider`, `auth_subject`), `user
 | `updated_at` | INTEGER | ไม่ | now (ms) | |
 
 ออกจากระบบจะลบแถวนี้ แถวผู้ใช้และแชตยังอยู่
+
+## `password_credentials` (0007)
+
+| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น | หมายเหตุ |
+|---|---|---|---|---|
+| `user_id` | TEXT | ไม่ | — | PK, FK → `users.id`, `ON DELETE CASCADE` |
+| `password_hash` | TEXT | ไม่ | — | ผล PBKDF2-SHA256 ไม่ใช่รหัสผ่านจริง |
+| `salt` | TEXT | ไม่ | — | salt แบบสุ่ม |
+| `iterations` | INTEGER | ไม่ | — | 50000–1000000 |
+| `updated_at` | INTEGER | ไม่ | now (ms) | |
+
+ออกจากระบบไม่ลบแถวนี้ อีเมลเดียวกันบน Google หรือ GitHub เป็นคนละแถวใน `users`
 
 ## `conversations`
 
@@ -104,6 +116,7 @@ Index: unique index ของ `key_hash`, `api_clients_active_created_idx` (`cre
 - **0004** `conversations.source` (`'chat'|'factory'`, default `'chat'`), `conversations.environment` (`none|openai_hosted|self_hosted`), index `conversations_user_source_updated`
 - **0005** `conversations.channel` (`'user'|'dev'`, default `'user'`; แถวที่มี `agent_session_id` หรือ `source='factory'` ถูกตั้งเป็น `'dev'`), index `conversations_user_channel_updated`, `schema_version = 5`
 - **0006** `users.login`, `users.avatar_url`, ตาราง `github_credentials` (`user_id` PK → `users.id`, `token_enc` คือ ciphertext AES-GCM ของ OAuth token, `scope`, `updated_at`), `schema_version = 6` ยังไม่ได้ apply บน remote จนกว่าจะได้รับอนุมัติ
+- **0007** ตาราง `password_credentials` (แฮช PBKDF2 ของบัญชี DevStack), `schema_version = 7` ยังไม่ได้ apply บน remote จนกว่าจะได้รับอนุมัติ
 
 bucket ของ `usage_counters`: `d:YYYYMMDD` = วันตามเวลาไทย (UTC+7), `h:YYYYMMDDHH` = ชั่วโมง UTC
 

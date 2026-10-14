@@ -135,6 +135,9 @@
       "summary": "Documentation site and checker",
       "keyFiles": [
         "docs/README.md",
+        "docs/platform.md",
+        "docs/agents/cursor-caretakers.md",
+        "docs/agents/cursor-agents.json",
         "scripts/docs-check.mjs",
         "tests/docs-check.test.ts",
         "AGENTS.md"
@@ -175,20 +178,35 @@
     },
     {
       "id": "github-auth",
-      "summary": "GitHub OAuth sign-in stores an encrypted token and keeps chat history on the account. Users pick a Vercel AI Gateway model and can commit one chat code block through the GitHub Contents API. The server never runs that file.",
+      "summary": "Sign-in from the header and /login: Cursor Origin install receipt, Google, GitHub, or a DevStack password. GitHub stores an encrypted token so a chat code block can be committed through the Contents API. The server never runs that file. Users can also pick a Vercel AI Gateway model.",
       "keyFiles": [
         "src/lib/auth/github-policy.ts",
+        "src/lib/auth/oauth-flow.ts",
+        "src/lib/auth/password.ts",
+        "src/lib/auth/google-api.ts",
+        "src/lib/auth/cursor-receipt.ts",
+        "src/lib/auth/link-account.ts",
         "src/lib/auth/token-box.ts",
         "src/lib/auth/github-api.ts",
         "src/lib/ai/gateway-models.ts",
         "src/lib/ai/gateway.ts",
+        "src/app/login/page.tsx",
         "src/app/api/auth/github/route.ts",
         "src/app/api/auth/github/callback/route.ts",
+        "src/app/api/auth/google/route.ts",
+        "src/app/api/auth/google/callback/route.ts",
+        "src/app/api/auth/cursor/route.ts",
+        "src/app/api/auth/cursor/callback/route.ts",
+        "src/app/api/auth/password/route.ts",
+        "src/app/api/auth/session/route.ts",
         "src/app/api/auth/logout/route.ts",
         "src/app/api/github/repos/route.ts",
         "src/app/api/github/contents/route.ts",
+        "src/components/login-form.tsx",
+        "src/components/account-button.tsx",
         "src/components/chat/github-publish.tsx",
-        "migrations/0006_github_auth.sql"
+        "migrations/0006_github_auth.sql",
+        "migrations/0007_password_auth.sql"
       ],
       "docs": "docs/user-guide/chat.md"
     }
@@ -358,6 +376,26 @@
       "secret": true,
       "default": null,
       "set": "wrangler secret put (stdin) / .dev.vars"
+    },
+    {
+      "name": "GOOGLE_CLIENT_ID",
+      "secret": true,
+      "default": null,
+      "set": "wrangler secret put (stdin) / .dev.vars",
+      "notes": "Google OAuth client id; callback {origin}/api/auth/google/callback"
+    },
+    {
+      "name": "GOOGLE_CLIENT_SECRET",
+      "secret": true,
+      "default": null,
+      "set": "wrangler secret put (stdin) / .dev.vars"
+    },
+    {
+      "name": "CURSOR_APP_ID",
+      "secret": true,
+      "default": null,
+      "set": "wrangler secret put (stdin) / .dev.vars",
+      "notes": "Public Cursor Origin app id. Callback verifies installation receipts; do not store a private key."
     },
     {
       "name": "AI_GATEWAY_API_KEY",
