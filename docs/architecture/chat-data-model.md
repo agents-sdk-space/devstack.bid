@@ -8,7 +8,7 @@
 
 1. เก็บบทสนทนาของผู้ใช้กับ AI ได้ครบ (ข้อความทุก role, โมเดลที่ใช้, จำนวน token) เพื่อเปิดต่อ ค้นย้อนหลัง และคิดต้นทุนได้
 2. ไฟล์แนบอยู่ใน R2 ส่วน D1 เก็บแค่ key และ metadata เพื่อให้ฐานข้อมูลเล็กและเร็ว
-3. ให้ AI หรือบริการอื่นเชื่อมต่อผ่าน API key ที่ **เราออกและเพิกถอนได้เอง** โดยเก็บแค่ hash ของ key
+3. ให้ AI หรือบริการอื่นเชื่อมต่อผ่าน MCP key ที่ **เราออกและเพิกถอนได้เอง** โดยเก็บแค่ hash ของ key และบังคับ scope
 4. ไม่ผูกกับผู้ให้บริการ auth รายใด คอลัมน์ auth จึงเป็น nullable ไว้ก่อน
 
 ## แผนภาพ
@@ -55,6 +55,7 @@ erDiagram
   }
   api_clients {
     TEXT id PK
+    TEXT user_id FK
     TEXT name
     TEXT key_hash
     TEXT scopes
@@ -64,7 +65,7 @@ erDiagram
   }
 ```
 
-`api_clients` ไม่ผูก foreign key กับตารางอื่น เพราะเป็นตัวตนของ "เครื่อง" ที่เข้ามาใช้ API ไม่ใช่ผู้ใช้คน
+`api_clients` เดิมเก็บ API client แบบไม่ผูกเจ้าของ แต่ migration `0008_mcp_clients` เพิ่ม `user_id` foreign key ไป `users.id` เพื่อให้ผู้ใช้ที่ลงชื่อเข้าใช้เป็นเจ้าของ scoped MCP key และลบ key ตามบัญชีได้
 
 ## การตัดสินใจหลัก
 
@@ -122,8 +123,8 @@ bucket `nvx-assets` (binding `ASSETS_BUCKET`) **ยังไม่ได้ส�
 **Auth:**
 
 - ผู้ใช้คน: เริ่มด้วย OAuth (GitHub/Google) หรือ passkey ผ่าน session cookie แบบ `HttpOnly; Secure; SameSite=Lax`; ทางเลือกที่เร็วกว่าสำหรับใช้ภายในคือ Cloudflare Access
-- AI ภายนอก: key รูปแบบ `nvx_live_<random 32 bytes>` แสดงครั้งเดียว เก็บ SHA-256 ใน `api_clients.key_hash` ตรวจ `revoked_at IS NULL` และ scope (เช่น `chat:read`, `chat:write`) ทุกคำขอ
-- Rate limit ต่อ client ตาม `api_clients.rate_limit` ด้วย Workers Rate Limiting (ต้องเพิ่ม binding และ namespace ใหม่)
+- AI ภายนอก: MCP key รูปแบบ `nvx_live_<random 32 bytes>` แสดงครั้งเดียว เก็บ SHA-256 ใน `api_clients.key_hash` ตรวจ `user_id`, `revoked_at IS NULL` และ scope (เช่น `chat:read`, `chat:write`) ทุกคำขอ
+- Rate limit MCP ต่อ key ใช้ fixed-window counter ใน D1 `usage_counters` และค่า `api_clients.rate_limit` แบบ atomic upsert; ค่าเริ่มต้น 60 calls/minute
 
 **UI:**
 

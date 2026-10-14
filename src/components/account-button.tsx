@@ -1,6 +1,6 @@
 "use client";
 
-import { LogIn, LogOut } from "lucide-react";
+import { KeyRound, LogIn, LogOut } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import { buttonClasses } from "@/components/ui";
 import type { DictKey } from "@/lib/i18n";
@@ -50,7 +50,7 @@ function viaKey(provider: ChatAccount["provider"]): DictKey {
 
 /** Header control: sign-in link, or the current account and a sign-out button. */
 export function AccountButton({ next, full, onNavigate }: { next: string; full?: boolean; onNavigate?: () => void }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const current = useSyncExternalStore(subscribe, snapshot, () => null);
   const href = `/login?next=${encodeURIComponent(next.startsWith("/login") ? "/" : next)}`;
 
@@ -77,6 +77,16 @@ export function AccountButton({ next, full, onNavigate }: { next: string; full?:
       <span className="max-w-[7rem] truncate text-[13px] font-medium text-fg" title={t(viaKey(current.provider))}>
         {current.login}
       </span>
+      <a
+        href="/settings/mcp"
+        onClick={onNavigate}
+        className={buttonClasses("ghost", "sm", "px-2.5")}
+        aria-label={lang === "th" ? "ตั้งค่า MCP integrations" : "MCP integrations settings"}
+        title={lang === "th" ? "ตั้งค่า MCP" : "MCP settings"}
+      >
+        <KeyRound className="h-4 w-4" aria-hidden />
+        {full ? <span>MCP</span> : <span className="sr-only">MCP</span>}
+      </a>
       <button type="button" onClick={logout} className={buttonClasses("ghost", "sm", "px-2.5")} aria-label={t("auth.logout")}>
         <LogOut className="h-4 w-4" aria-hidden />
         {full ? <span>{t("auth.logout")}</span> : <span className="sr-only">{t("auth.logout")}</span>}

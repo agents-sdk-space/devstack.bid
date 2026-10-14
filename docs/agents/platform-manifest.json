@@ -1,8 +1,8 @@
 {
   "$comment": "Machine-readable map of NVX Stack Builder for AI agents. Verified by `npm run docs:check` (templateIds must equal src/data/template-ids.ts; every keyFiles path must exist). Human docs: docs/agents/AGENT-PLAYBOOK.md",
   "name": "nvx-stack-builder",
-  "version": "0.6.0",
-  "branchState": "main = v0.6.0 (deployed to devstack.bid). feat/d1-chat-schema = D1 nvx-db binding + chat schema migrations (schema only, no UI)",
+  "version": "0.8.0",
+  "branchState": "feat/full-platform-mcp = scoped remote MCP server, key management, tool catalog and docs; not deployed",
   "stack": {
     "framework": "Next.js 16.4 App Router",
     "language": "TypeScript",
@@ -209,6 +209,21 @@
         "migrations/0007_password_auth.sql"
       ],
       "docs": "docs/user-guide/chat.md"
+    },
+    {
+      "id": "remote-mcp",
+      "summary": "Stateless remote MCP over HTTP: public templates/docs/composer/planner tools plus scoped account chat, Factory and GitHub tools; user-managed hashed keys.",
+      "keyFiles": [
+        "src/app/mcp/route.ts",
+        "src/app/.well-known/mcp/route.ts",
+        "src/app/api/mcp/keys/route.ts",
+        "src/app/api/mcp/keys/[id]/route.ts",
+        "src/lib/mcp/server.ts",
+        "src/lib/mcp/auth.ts",
+        "src/components/mcp-keys.tsx",
+        "migrations/0008_mcp_clients.sql"
+      ],
+      "docs": "docs/integrations/mcp.md"
     }
   ],
   "templateIds": [
@@ -270,6 +285,21 @@
       "path": "/llms-full.txt",
       "file": "src/app/llms-full.txt/route.ts",
       "notes": "all docs concatenated"
+    },
+    {
+      "path": "/mcp",
+      "file": "src/app/mcp/route.ts",
+      "notes": "Stateless Streamable HTTP MCP endpoint; tools/resources discovery and tool calls."
+    },
+    {
+      "path": "/.well-known/mcp",
+      "file": "src/app/.well-known/mcp/route.ts",
+      "notes": "Machine-readable remote MCP discovery metadata."
+    },
+    {
+      "path": "/settings/mcp",
+      "file": "src/app/settings/mcp/page.tsx",
+      "notes": "Manage scoped API keys; requires sign-in."
     }
   ],
   "endpoints": [
@@ -302,6 +332,38 @@
       "method": "GET",
       "path": "/opengraph-image.png",
       "purpose": "Open Graph card 1200x630"
+    },
+    {
+      "method": "POST",
+      "path": "/mcp",
+      "purpose": "MCP JSON-RPC: initialize, tool/resource discovery and calls",
+      "bodyLimitBytes": 98304,
+      "docs": "docs/integrations/mcp.md"
+    },
+    {
+      "method": "GET",
+      "path": "/.well-known/mcp",
+      "purpose": "Remote MCP discovery metadata",
+      "docs": "docs/integrations/mcp.md"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mcp/keys",
+      "purpose": "List active keys and available scopes for current account",
+      "docs": "docs/integrations/mcp.md"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mcp/keys",
+      "purpose": "Issue one scoped MCP key; raw key is returned once",
+      "bodyLimitBytes": 8192,
+      "docs": "docs/integrations/mcp.md"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/mcp/keys/[id]",
+      "purpose": "Revoke an owned MCP key",
+      "docs": "docs/integrations/mcp.md"
     }
   ],
   "commands": {

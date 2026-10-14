@@ -68,6 +68,7 @@ export const SECTIONS = [
     files: ["add-template", "add-component", "testing", "release-process", "docs-maintenance"].map((f) => `contributing/${f}.md`),
   },
   { id: "reference", label: { th: "อ้างอิง", en: "Reference" }, files: ["api-plan", "api-chat", "template-schema", "config-env", "d1-schema", "npm-scripts", "file-map"].map((f) => `reference/${f}.md`) },
+  { id: "integrations", label: { th: "การเชื่อมต่อ", en: "Integrations" }, files: ["integrations/mcp.md"] },
   { id: "agents", label: { th: "สำหรับ AI agent", en: "For AI agents" }, files: ["agents/AGENT-PLAYBOOK.md", "agents/cursor-caretakers.md"] },
 ];
 
