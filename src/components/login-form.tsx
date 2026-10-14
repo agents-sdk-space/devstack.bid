@@ -32,6 +32,9 @@ export function LoginForm({ next, auth, provider }: { next: string; auth: string
     <div className="mx-auto w-full max-w-md px-4 py-10 sm:py-16">
       <h1 className="text-3xl font-semibold tracking-tight text-fg">{t("auth.title")}</h1>
       <p className="mt-2 text-sm leading-relaxed text-subtle">{t("auth.lead")}</p>
+      <p className="mt-4 rounded-xl border border-border bg-surface-2 px-4 py-3 text-sm leading-relaxed text-fg" role="status">
+        {t("announce.cursor")}
+      </p>
       {alert && (
         <div role="alert" className="mt-6 rounded-xl border border-border bg-surface-2 px-4 py-3">
           <p className="text-sm font-medium text-fg">{t(alert.title)}</p>

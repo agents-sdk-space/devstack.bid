@@ -13,6 +13,7 @@ describe("learn page", () => {
     expect(screen.getByRole("link", { name: /Create with Cursor/ }).getAttribute("href")).toMatch(/^https:\/\/cursor\.com\/link\/prompt\?text=/);
     expect(screen.getByRole("link", { name: /Download Cursor/ }).getAttribute("href")).toBe("https://cursor.com/download");
     expect(screen.getByRole("link", { name: "Ask the AI agent" }).getAttribute("href")).toBe("/builder#agent");
+    expect(screen.getByRole("status").textContent).toContain("Official, 14 October 2026");
     learn.unmount();
 
     render(<Home />);

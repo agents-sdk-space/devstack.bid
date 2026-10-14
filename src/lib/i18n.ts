@@ -203,6 +203,10 @@ const dict = {
     en: "Keep chat history on an account. Use Cursor, Google, GitHub, or a DevStack password.",
     th: "เก็บประวัติแชตไว้กับบัญชี ใช้ Cursor, Google, GitHub หรือรหัสผ่านของ DevStack",
   },
+  "announce.cursor": {
+    en: "Official, 14 October 2026. Continue with Cursor is open. Sign in, confirm the DevStack app, and chat history stays on that Cursor account. A question typed in the chat box is answered by the model you pick.",
+    th: "ประกาศอย่างเป็นทางการ 14 ตุลาคม 2026 ปุ่มเข้าสู่ระบบด้วย Cursor เปิดแล้ว เข้าสู่ระบบ ยืนยันแอป DevStack แล้วประวัติแชตจะอยู่กับบัญชี Cursor นั้น คำถามที่พิมพ์ในช่องแชตตอบโดยโมเดลที่เลือก",
+  },
   "auth.withCursor": { en: "Continue with Cursor", th: "เข้าสู่ระบบด้วย Cursor" },
   "auth.withGoogle": { en: "Continue with Google", th: "เข้าสู่ระบบด้วย Google" },
   "auth.withGithub": { en: "Continue with GitHub", th: "เข้าสู่ระบบด้วย GitHub" },

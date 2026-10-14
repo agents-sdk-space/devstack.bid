@@ -24,6 +24,8 @@ CF = Cloudflare Workers AI, HF = Hugging Face, Vercel = [Vercel AI Gateway](http
 
 ## เข้าสู่ระบบ
 
+ประกาศอย่างเป็นทางการ 14 ตุลาคม 2026: ปุ่ม **เข้าสู่ระบบด้วย Cursor** เปิดบน [devstack.bid](https://devstack.bid/login) แล้ว กดเข้าสู่ระบบ ยืนยันแอป DevStack ใน Cursor แล้วประวัติแชตจะอยู่กับบัญชีนั้น คำถามที่พิมพ์ในช่องแชตยังตอบโดยโมเดลที่เลือกบนแถบเหนือช่องพิมพ์ การตรวจปลายทางกับเว็บจริงในวันเดียวกันผ่านแล้ว ทั้งภาษาอังกฤษและภาษาไทยไปถึง Cursor ด้วย callback `https://devstack.bid/api/auth/cursor/callback` และไม่เจอข้อความ `redirect_uri is not allowed`
+
 ปุ่ม **เข้าสู่ระบบ** อยู่ที่หัวเว็บทุกหน้า และบนแถบประวัติแชต หน้า [`/login`](https://devstack.bid/login) มีสี่วิธี
 
 | วิธี | ใช้ทำอะไร | สิ่งที่เซิร์ฟเวอร์ต้องมี |
