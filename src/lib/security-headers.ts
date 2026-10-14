@@ -2,7 +2,7 @@
  * Security headers applied to every route (next.config.ts) — and mirrored for static assets in
  * public/_headers. The CSP allows 'unsafe-inline' scripts because the app is statically
  * prerendered (Next's inline bootstrap + our pre-paint theme script cannot carry per-request nonces);
- * everything else is locked to the app's own origin, plus GitHub profile images for signed-in chat.
+ * everything else is locked to the app's own origin, plus GitHub and Google profile images.
  */
 export function contentSecurityPolicy(dev = false): string {
   return [
@@ -10,7 +10,7 @@ export function contentSecurityPolicy(dev = false): string {
     // Cloudflare Web Analytics is injected on the devstack.bid zone (beacon script + RUM endpoint).
     `script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com${dev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https://avatars.githubusercontent.com",
+    "img-src 'self' data: blob: https://avatars.githubusercontent.com https://*.googleusercontent.com",
     "font-src 'self' data:",
     `connect-src 'self' https://cloudflareinsights.com${dev ? " ws: wss:" : ""}`,
     "media-src 'self'",

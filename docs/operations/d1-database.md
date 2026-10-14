@@ -38,7 +38,7 @@ npx wrangler d1 execute nvx-db --remote --command "select * from schema_meta"
 4. อัปเดต [reference/d1-schema.md](../reference/d1-schema.md) และ [architecture/chat-data-model.md](../architecture/chat-data-model.md) แล้วรัน `npm run docs:check`
 5. ขออนุมัติ แล้วรัน `npm run db:migrate:remote` **ก่อน** deploy โค้ดที่ใช้ schema ใหม่
 
-`0006_github_auth.sql` เป็น migration ของการเข้าสู่ระบบ GitHub ยังไม่ถูก apply บน remote จากงานนี้ การเข้าสู่ระบบบน production ใช้ได้หลังได้รับอนุมัติให้ migrate
+`0006_github_auth.sql` และ `0007_password_auth.sql` ยังไม่ถูก apply บน remote จากงานนี้ การเข้าสู่ระบบบน production ใช้ได้หลังได้รับอนุมัติให้ migrate
 
 ## สำรองและกู้คืน
 

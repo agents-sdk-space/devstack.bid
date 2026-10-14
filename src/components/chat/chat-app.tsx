@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowUp, BookOpenText, Box, Code2, FlaskConical, GitBranch, History, ImageIcon, MessageSquarePlus, Paperclip, Square, TerminalSquare, Trash2, Users } from "lucide-react";
+import { AlertTriangle, ArrowUp, BookOpenText, Box, Code2, FlaskConical, History, ImageIcon, LogIn, MessageSquarePlus, Paperclip, Square, TerminalSquare, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { Badge, Button, buttonClasses, cn, Dialog, DialogContent, Kbd, Spinner, Tooltip } from "@/components/ui";
@@ -11,7 +11,14 @@ import { useLang } from "../prefs";
 import { GithubPublish } from "./github-publish";
 import { MarkdownView } from "./markdown-view";
 import { SandboxPanel, StatusDot } from "./sandbox-panel";
-import type { ChatInfo, ChatMessage, ChatMode, ChatModelOption, ConversationSummary, Quota, SandboxStatus } from "./types";
+import type { ChatAccount, ChatInfo, ChatMessage, ChatMode, ChatModelOption, ConversationSummary, Quota, SandboxStatus } from "./types";
+
+function viaKey(provider: ChatAccount["provider"]): DictKey {
+  if (provider === "cursor") return "auth.via.cursor";
+  if (provider === "google") return "auth.via.google";
+  if (provider === "password") return "auth.via.password";
+  return "auth.via.github";
+}
 
 const MODE_STORE = "nvx-chat-mode";
 
@@ -444,32 +451,23 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
       {info?.account ? (
         <div className="mb-3 flex items-center gap-2">
           {info.account.avatarUrl ? (
-            // GitHub avatar; the login text next to it is the accessible name.
+            // Profile image from GitHub or Google. The login text next to it is the accessible name.
             // eslint-disable-next-line @next/next/no-img-element
             <img src={info.account.avatarUrl} alt="" width={28} height={28} className="h-7 w-7 rounded-full" />
           ) : (
-            <GitBranch className="h-4 w-4 shrink-0" aria-hidden />
+            <LogIn className="h-4 w-4 shrink-0" aria-hidden />
           )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-medium text-fg">{info.account.login}</p>
-            <p className="truncate text-[11px] text-subtle">{t("auth.signedIn")}</p>
+            <p className="truncate text-[11px] text-subtle">{t(viaKey(info.account.provider))}</p>
           </div>
           <Button variant="ghost" size="sm" onClick={logout}>
             {t("auth.logout")}
           </Button>
         </div>
       ) : (
-        <a
-          href="/api/auth/github?next=/chat"
-          className={buttonClasses("secondary", "sm", "mb-3 w-full justify-start")}
-          onClick={(e) => {
-            if (info?.github?.configured === false) {
-              e.preventDefault();
-              setNotice({ title: t("auth.missingTitle"), message: t("auth.missing") });
-            }
-          }}
-        >
-          <GitBranch className="h-3.5 w-3.5" aria-hidden /> {t("auth.login")}
+        <a href="/login?next=/chat" className={buttonClasses("secondary", "sm", "mb-3 w-full justify-start")}>
+          <LogIn className="h-3.5 w-3.5" aria-hidden /> {t("auth.signIn")}
         </a>
       )}
       <Button variant="secondary" size="sm" className="mb-3 w-full justify-start" onClick={newChat} disabled={busy}>
@@ -640,7 +638,7 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
                             <span>{m.error.message || t("agent.error")}</span>
                           </div>
                         )}
-                        {!dev && !byok && m.content && !m.pending && <GithubPublish text={m.content} signedIn={Boolean(info?.account)} />}
+                        {!dev && !byok && m.content && !m.pending && <GithubPublish text={m.content} signedIn={info?.account?.provider === "github"} />}
                         {m.activities.length > 0 && (
                           <button
                             type="button"

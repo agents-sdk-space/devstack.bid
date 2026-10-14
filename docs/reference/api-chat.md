@@ -6,9 +6,16 @@
 |---|---|---|
 | `/api/chat?channel=user\|dev` | GET | สถานะ, `limits`, `models` (รวม Vercel AI Gateway), `github.configured`, `account` ถ้าเข้าสู่ระบบแล้ว, `quota`, รายการแชตของ session หรือ cookie |
 | `/api/chat/turn` | POST | User Chat: `{ message, conversationId?, mode?: general\|thai\|code\|strong\|image\|gateway, model? }` → SSE โหมด `gateway` รับเฉพาะ id ในรายการอนุญาต |
-| `/api/auth/github` | GET | เริ่ม GitHub OAuth (state ลงนามใน cookie) ถ้ายังไม่ตั้งค่า จะพากลับ `/chat?auth=missing` |
+| `/login` | GET | หน้าเข้าสู่ระบบ: Cursor, Google, GitHub และบัญชี DevStack |
+| `/api/auth/session` | GET | `{ account }` ของ cookie `nvx_auth` หรือ `account: null` |
+| `/api/auth/github` | GET | เริ่ม GitHub OAuth (state ลงนามใน cookie) ถ้ายังไม่ตั้งค่า จะพากลับ `/login?auth=missing&provider=github` |
 | `/api/auth/github/callback` | GET | แลก code, ผูกแชตกับบัญชี, ตั้ง cookie `nvx_auth` |
-| `/api/auth/logout` | POST | ลบ token ที่เข้ารหัสไว้และล้าง session (ต้องมาจาก origin เดียวกัน) |
+| `/api/auth/google` | GET | เริ่ม Google OAuth พร้อม PKCE ถ้ายังไม่ตั้งค่า จะพากลับ `/login?auth=missing&provider=google` |
+| `/api/auth/google/callback` | GET | แลก code, อ่าน userinfo, ไม่เก็บ access token |
+| `/api/auth/cursor` | GET | พาไปติดตั้งแอป Cursor Origin ถ้ายังไม่มี `CURSOR_APP_ID` จะพากลับ `/login?auth=missing&provider=cursor` |
+| `/api/auth/cursor/callback` | GET | ตรวจใบเสร็จติดตั้ง (EdDSA) แล้วตั้ง session จาก `installedBy` |
+| `/api/auth/password` | POST | ฟอร์ม `email`, `password`, `action=login\|register`, `next` สร้างหรือเข้าบัญชี DevStack (ต้องมาจาก origin เดียวกัน) |
+| `/api/auth/logout` | POST | ลบ token GitHub ที่เข้ารหัสไว้และล้าง session (ต้องมาจาก origin เดียวกัน) |
 | `/api/github/repos` | GET | รายการ repo ที่บัญชีที่เข้าสู่ระบบ push ได้ |
 | `/api/github/contents` | POST | `{ repo, path, message, content, branch? }` สร้างหรืออัปเดตไฟล์ผ่าน GitHub Contents API ไม่รันไฟล์ |
 | `/api/chat/dev/turn` | POST | Dev Chat: `{ message, conversationId? }` → SSE |

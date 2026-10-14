@@ -12,7 +12,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 NVX Stack Builder is a Next.js 16.4 app (App Router, React 19, TypeScript, Tailwind v4) that turns developer setup commands into ordered, de-duplicated, bilingual (TH/EN) **Stack Templates**. Users pick a template or ask the AI planner, then reorder, edit, share and download `setup.sh` / `setup.ps1` / a starter zip. It is deployed as a Cloudflare Worker through `@opennextjs/cloudflare` (production: https://devstack.bid; workers.dev fallback https://nvx-stack-builder.examplessdk.workers.dev).
 
-Full playbook (TH + EN): [docs/agents/AGENT-PLAYBOOK.md](docs/agents/AGENT-PLAYBOOK.md). Machine-readable map: [docs/agents/platform-manifest.json](docs/agents/platform-manifest.json). Docs index: [docs/README.md](docs/README.md).
+Full playbook (TH + EN): [docs/agents/AGENT-PLAYBOOK.md](docs/agents/AGENT-PLAYBOOK.md). Machine-readable map: [docs/agents/platform-manifest.json](docs/agents/platform-manifest.json). Function index: [docs/platform.md](docs/platform.md). The Cursor agent that built this platform and looks after all of it: [docs/agents/cursor-caretakers.md](docs/agents/cursor-caretakers.md) and [docs/agents/cursor-agents.json](docs/agents/cursor-agents.json). Docs index: [docs/README.md](docs/README.md).
+
+You are **NVX DEVELOPER BOTH** (`agent.id` `nvx-developer`). You built this platform and you look after every part of it. Use `areas` in `cursor-agents.json` to choose what to read and which checks to run for the files you touch. Do not cross `never`. One approval does not cover deploy, remote D1, or DNS.
 
 ## Repo map
 

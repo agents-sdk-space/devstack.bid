@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Function index** at `/docs/platform` (raw Markdown `/docs/platform.md`), linked from the header. It lists the product areas the way a docs index does, and points agents at `/llms.txt`.
+- **NVX DEVELOPER BOTH** is the Cursor agent that built this platform and looks after all of it. Roster: `docs/agents/cursor-caretakers.md` and `docs/agents/cursor-agents.json` (`agent.id` `nvx-developer`). Header item **Agents**. Area rows are a reading map for that one agent. It does not deploy or execute user commands on its own.
+- **Sign in** from the header and `/login`: Cursor (Origin app install receipt), Google, GitHub, or a DevStack email and password. Chat history stays on that account. Password hashes are PBKDF2-SHA256 in `password_credentials` (migration `0007`). OAuth accounts are not merged by email. GitHub is still the only method that can push a code block.
 - **GitHub sign-in** on `/chat`. OAuth (`read:user`, `user:email`, `repo`) stores an AES-GCM token in D1 (`github_credentials`) and keeps chat history on that account. Signing out deletes the token. Anonymous chats on the same browser are promoted or moved across on first sign-in.
 - **Push a code block to GitHub** from a chat reply (`POST /api/github/contents`). The server writes one file through the GitHub Contents API and does not run it.
 - **Vercel AI Gateway** models in the `/chat` picker (GPT-5 mini, GPT-5 Codex, Claude Haiku 4.5, Gemini 2.5 Flash, Qwen3 Coder, DeepSeek V4 Flash). They stay disabled until `AI_GATEWAY_API_KEY` is set. Ids match `GET https://ai-gateway.vercel.sh/v1/models` as of 2026-10-14.

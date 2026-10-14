@@ -9,14 +9,15 @@
 | [`package.json`](../../package.json) | dependencies, npm scripts ([npm-scripts.md](./npm-scripts.md)) |
 | [`next.config.ts`](../../next.config.ts) | Cache Components, security headers, real-404 rewrite, dev bindings |
 | [`wrangler.jsonc`](../../wrangler.jsonc) | Worker config, vars, rate limits, D1 binding `DB` |
-| [`migrations/0001_schema_meta.sql`](../../migrations/0001_schema_meta.sql), [`migrations/0002_chat_history.sql`](../../migrations/0002_chat_history.sql), [`0003_chat_runtime.sql`](../../migrations/0003_chat_runtime.sql), [`0004_factory.sql`](../../migrations/0004_factory.sql), [`0005_channels.sql`](../../migrations/0005_channels.sql), [`0006_github_auth.sql`](../../migrations/0006_github_auth.sql) | D1 migrations ของ `nvx-db` ([d1-schema.md](./d1-schema.md)) |
+| [`migrations/0001_schema_meta.sql`](../../migrations/0001_schema_meta.sql), [`migrations/0002_chat_history.sql`](../../migrations/0002_chat_history.sql), [`0003_chat_runtime.sql`](../../migrations/0003_chat_runtime.sql), [`0004_factory.sql`](../../migrations/0004_factory.sql), [`0005_channels.sql`](../../migrations/0005_channels.sql), [`0006_github_auth.sql`](../../migrations/0006_github_auth.sql), [`0007_password_auth.sql`](../../migrations/0007_password_auth.sql) | D1 migrations ของ `nvx-db` ([d1-schema.md](./d1-schema.md)) |
 | [`agents/orchestrator/`](../../agents/orchestrator/agent.json) | นิยาม agent (`agent.json`) และแอป Python อ้างอิง (OpenAI Agents API, self-hosted executor) |
 | [`src/app/chat/page.tsx`](../../src/app/chat/page.tsx), [`src/app/chat/dev/page.tsx`](../../src/app/chat/dev/page.tsx), [`src/app/factory/page.tsx`](../../src/app/factory/page.tsx) | หน้า User Chat, Dev Chat, Sandbox Factory |
 | [`src/components/chat/`](../../src/components/chat/chat-app.tsx), [`src/components/factory/factory-app.tsx`](../../src/components/factory/factory-app.tsx) | UI แชต, แผง Sandbox, Markdown renderer, ฟอร์ม Factory |
 | [`src/lib/chat/turn-route.ts`](../../src/lib/chat/turn-route.ts), [`plain-turn.ts`](../../src/lib/chat/plain-turn.ts), [`turn.ts`](../../src/lib/chat/turn.ts), [`limits.ts`](../../src/lib/chat/limits.ts), [`store.ts`](../../src/lib/chat/store.ts) | handler ของแชต, provider chain, agent runner, โควตา, D1 |
 | [`src/lib/ai/workers-ai.ts`](../../src/lib/ai/workers-ai.ts), [`src/lib/ai/hf.ts`](../../src/lib/ai/hf.ts), [`src/lib/ai/gateway.ts`](../../src/lib/ai/gateway.ts), [`src/lib/ai/gateway-models.ts`](../../src/lib/ai/gateway-models.ts) | client ของ Workers AI, Hugging Face router และ Vercel AI Gateway |
 | [`src/lib/auth/github-policy.ts`](../../src/lib/auth/github-policy.ts), [`src/lib/auth/token-box.ts`](../../src/lib/auth/token-box.ts), [`src/lib/auth/github-api.ts`](../../src/lib/auth/github-api.ts) | กฎการส่งไฟล์ขึ้น GitHub, กล่องเข้ารหัส token, GitHub REST |
-| [`src/app/api/auth/github/route.ts`](../../src/app/api/auth/github/route.ts), [`src/app/api/auth/github/callback/route.ts`](../../src/app/api/auth/github/callback/route.ts), [`src/app/api/auth/logout/route.ts`](../../src/app/api/auth/logout/route.ts) | เริ่ม OAuth, callback, ออกจากระบบ |
+| [`src/lib/auth/oauth-flow.ts`](../../src/lib/auth/oauth-flow.ts), [`src/lib/auth/password.ts`](../../src/lib/auth/password.ts), [`src/lib/auth/google-api.ts`](../../src/lib/auth/google-api.ts), [`src/lib/auth/cursor-receipt.ts`](../../src/lib/auth/cursor-receipt.ts), [`src/lib/auth/link-account.ts`](../../src/lib/auth/link-account.ts) | state ของ OAuth, แฮชรหัสผ่าน, Google userinfo, ใบเสร็จ Cursor, แผนผูกบัญชี |
+| [`src/app/api/auth/github/route.ts`](../../src/app/api/auth/github/route.ts), [`src/app/api/auth/google/route.ts`](../../src/app/api/auth/google/route.ts), [`src/app/api/auth/cursor/route.ts`](../../src/app/api/auth/cursor/route.ts), [`src/app/api/auth/password/route.ts`](../../src/app/api/auth/password/route.ts), [`src/app/api/auth/session/route.ts`](../../src/app/api/auth/session/route.ts), [`src/app/api/auth/logout/route.ts`](../../src/app/api/auth/logout/route.ts) | เริ่มการเข้าสู่ระบบ, callback อยู่โฟลเดอร์เดียวกับ route เริ่ม, session, ออกจากระบบ |
 | [`src/app/api/github/repos/route.ts`](../../src/app/api/github/repos/route.ts), [`src/app/api/github/contents/route.ts`](../../src/app/api/github/contents/route.ts), [`src/components/chat/github-publish.tsx`](../../src/components/chat/github-publish.tsx) | รายการ repo, commit ไฟล์, ปุ่มส่งโค้ดจากแชต |
 | [`open-next.config.ts`](../../open-next.config.ts) | OpenNext: static-assets incremental cache |
 | [`cloudflare-env.d.ts`](../../cloudflare-env.d.ts) | ชนิดของ Cloudflare bindings |
@@ -36,6 +37,9 @@
 |---|---|
 | [`src/app/layout.tsx`](../../src/app/layout.tsx) | root layout, ฟอนต์, `<html class="dark">`, สคริปต์ pre-paint, providers |
 | [`src/app/page.tsx`](../../src/app/page.tsx) | หน้าแรก `/` |
+| [`docs/platform.md`](../../docs/platform.md) | เมนูฟังก์ชัน `/docs/platform` (ไฟล์ดิบ `/docs/platform.md`) |
+| [`docs/agents/cursor-caretakers.md`](../../docs/agents/cursor-caretakers.md), [`docs/agents/cursor-agents.json`](../../docs/agents/cursor-agents.json) | บอท NVX DEVELOPER BOTH ที่สร้างและดูแลทั้งแพลตฟอร์ม |
+| [`src/app/login/page.tsx`](../../src/app/login/page.tsx) | หน้าเข้าสู่ระบบ `/login` |
 | [`src/app/templates/page.tsx`](../../src/app/templates/page.tsx) | catalog `/templates` |
 | [`src/app/templates/[id]/page.tsx`](../../src/app/templates/[id]/page.tsx) | รายละเอียดเทมเพลต |
 | [`src/app/builder/page.tsx`](../../src/app/builder/page.tsx) | `/builder` |
@@ -56,7 +60,7 @@
 | [`step-card.tsx`](../../src/components/step-card.tsx) | การ์ดขั้นตอน |
 | [`agent-panel.tsx`](../../src/components/agent-panel.tsx) | แผง AI agent |
 | [`catalog.tsx`](../../src/components/catalog.tsx), [`template-card.tsx`](../../src/components/template-card.tsx), [`template-detail.tsx`](../../src/components/template-detail.tsx) | catalog และรายละเอียด |
-| [`header.tsx`](../../src/components/header.tsx) | header, nav, footer |
+| [`header.tsx`](../../src/components/header.tsx), [`account-button.tsx`](../../src/components/account-button.tsx), [`login-form.tsx`](../../src/components/login-form.tsx) | header, nav, footer, ปุ่มเข้าสู่ระบบ, ฟอร์ม `/login` |
 | [`command-palette.tsx`](../../src/components/command-palette.tsx) | Ctrl/⌘+K |
 | [`prefs.tsx`](../../src/components/prefs.tsx), [`providers.tsx`](../../src/components/providers.tsx) | ภาษา/ธีม, providers (toast, tooltip) |
 | [`os-toggle.tsx`](../../src/components/os-toggle.tsx), [`copy-button.tsx`](../../src/components/copy-button.tsx) | สลับ POSIX/Windows, ปุ่มคัดลอก |

@@ -20,8 +20,11 @@
 | `HF_MAX_TOKENS` | var | 128–8000 | 1500 | — | เพดาน output ของแชต |
 | `HF_PLAN_MAX_TOKENS` | var | 512–16000 | 6000 | — | เพดาน output ของ planner |
 | `OPENAI_FALLBACK` | var | `true` / `false` | `false` | `false` | ให้ planner ถอยไปใช้ OpenAI key ของเซิร์ฟเวอร์เมื่อ HF ล้มหรือไม่ (ปิดไว้เพื่อสงวนเครดิตให้ Orchestrator) |
-| `GITHUB_CLIENT_ID` | **secret** | `^[A-Za-z0-9.]{8,80}$` | ไม่มี → ปุ่มเข้าสู่ระบบพากลับ `/chat?auth=missing` | `wrangler secret put` (ไม่ใส่ใน `vars`) | OAuth App id สำหรับเข้าสู่ระบบ GitHub ที่ `/chat` |
-| `GITHUB_CLIENT_SECRET` | **secret** | `^[\w-]{16,200}$` | ไม่มี → เข้าสู่ระบบปิด | `wrangler secret put` (stdin) | OAuth App secret ใช้แลก code ครั้งเดียว ไม่ถูกเก็บใน D1 |
+| `GITHUB_CLIENT_ID` | **secret** | `^[A-Za-z0-9.]{8,80}$` | ไม่มี → ปุ่ม GitHub พากลับ `/login?auth=missing&provider=github` | `wrangler secret put` (ไม่ใส่ใน `vars`) | OAuth App id สำหรับเข้าสู่ระบบ GitHub |
+| `GITHUB_CLIENT_SECRET` | **secret** | `^[\w-]{16,200}$` | ไม่มี → เข้าสู่ระบบ GitHub ปิด | `wrangler secret put` (stdin) | OAuth App secret ใช้แลก code ครั้งเดียว ไม่ถูกเก็บใน D1 |
+| `GOOGLE_CLIENT_ID` | **secret** | `^[A-Za-z0-9][A-Za-z0-9._-]{7,180}$` | ไม่มี → ปุ่ม Google พากลับ `/login?auth=missing&provider=google` | `wrangler secret put` (stdin) | OAuth client id callback `{origin}/api/auth/google/callback` |
+| `GOOGLE_CLIENT_SECRET` | **secret** | `^[\w-]{16,200}$` | ไม่มี → เข้าสู่ระบบ Google ปิด | `wrangler secret put` (stdin) | ใช้แลก code ครั้งเดียว ไม่ถูกเก็บใน D1 |
+| `CURSOR_APP_ID` | **secret** | `^app_[A-Za-z0-9]{6,80}$` | ไม่มี → ปุ่ม Cursor พากลับ `/login?auth=missing&provider=cursor` | `wrangler secret put` (stdin) | รหัสแอป Origin ที่เป็นสาธารณะ ไม่เก็บ private key ตรวจใบเสร็จจาก JWKS ของ Origin |
 | `AI_GATEWAY_API_KEY` | **secret** | `^[\w-]{16,400}$` | ไม่มี → ปุ่มเกตเวย์ในตัวเลือกโมเดลกดไม่ได้ | `wrangler secret put` (stdin) | คีย์ Vercel AI Gateway สำหรับโมเดลที่ผู้ใช้เลือกใน `/chat` |
 | `AI_GATEWAY_BASE_URL` | var | URL https | `https://ai-gateway.vercel.sh/v1` | — | endpoint แบบ OpenAI-compatible ของ AI Gateway |
 

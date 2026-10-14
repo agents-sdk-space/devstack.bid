@@ -39,6 +39,7 @@ export interface ChatAccount {
   login: string;
   name: string | null;
   avatarUrl: string | null;
+  provider: "github" | "google" | "cursor" | "password";
 }
 export interface ChatModelOption {
   mode: ChatMode;

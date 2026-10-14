@@ -4,9 +4,9 @@
 
 ## 1. ภาพรวมแพลตฟอร์ม
 
-แอป Next.js 16.4 ที่ทำงานฝั่ง client เป็นหลัก มี API เดียว (`/api/plan`) deploy เป็น Cloudflare Worker ชื่อ `nvx-stack-builder` ที่ **https://devstack.bid** (production v0.5.1, Workers Custom Domain; สำรองที่ `nvx-stack-builder.examplessdk.workers.dev`; v0.3.0 เดิมยังอยู่ที่ `agen-sdk-work.workers.dev`) ไม่มีฐานข้อมูล ไม่มีบัญชีผู้ใช้ สถานะผู้ใช้อยู่ใน URL hash และ localStorage แผนภาพดู [architecture/overview.md](../architecture/overview.md)
+แอป Next.js 16.4 deploy เป็น Cloudflare Worker ชื่อ `nvx-stack-builder` ที่ **https://devstack.bid** มีแชต, D1 และบัญชีผู้ใช้ (Cursor, Google, GitHub, รหัสผ่าน DevStack) สารบัญฟังก์ชันอยู่ที่ [platform.md](../platform.md) บอท **NVX DEVELOPER BOTH** สร้างแพลตฟอร์มนี้และดูแลทั้งหมดตาม [cursor-caretakers.md](./cursor-caretakers.md) และ [cursor-agents.json](./cursor-agents.json) แผนภาพดู [architecture/overview.md](../architecture/overview.md)
 
-*EN: Client-heavy Next.js 16.4 app, one API route, Cloudflare Worker on workers.dev, no database.*
+*EN: Next.js 16.4 app on https://devstack.bid, with chat, D1 and sign-in. Function index: platform.md. NVX DEVELOPER BOTH built it and looks after all of it: cursor-caretakers.md and cursor-agents.json.*
 
 ## 2. แหล่งความจริง (where truth lives)
 
