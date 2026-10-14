@@ -86,6 +86,15 @@ Workers มี free tier; ค่าใช้จ่ายหลักคือ Op
 - **ข้อสังเกต:** console มี error จาก CSP บล็อก `static.cloudflareinsights.com/beacon.min.js` (Web Analytics ที่ Cloudflare ฉีดเข้ามา) ไม่มีผลกับการทำงาน; จะเปิดใน CSP หรือปิด Web Analytics ต้องให้ผู้ใช้ตัดสินใจ
 - **rollback:** `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1)
 
+## บันทึก secret: CURSOR_APP_ID (14 ต.ค. 2026)
+
+- **บัญชี:** `2d92bd5b25768fa9093d6adc0a8887fc` (examplessdk@gmail.com) Worker `nvx-stack-builder` เท่านั้น ไม่แตะ Worker อื่นและไม่สร้าง DNS ใหม่
+- **โค้ด:** ไม่ได้ deploy โค้ดใหม่ ใช้โค้ดเดียวกับ version `d29b83b8-1753-4a47-a0b5-a63ba79fa6a2` (merge `be6eb3f`)
+- **วิธีตั้ง:** `printf '%s' '<app id>' | wrangler secret put CURSOR_APP_ID --name nvx-stack-builder` ผ่าน stdin เซสชัน Wrangler OAuth ของ `examplessdk@gmail.com` (`env -u CLOUDFLARE_API_TOKEN` เพราะ token ในสภาพแวดล้อมถูกปฏิเสธด้วยรหัส `9109`) ไม่ได้พิมพ์ secret อื่น
+- **เวอร์ชันของบันทึกนี้:** `ffbd53ae-957b-4b48-b411-3a882f14f8ae` (23:19 ICT) ชื่อ secret บน Worker เพิ่ม `CURSOR_APP_ID` รหัสแอปสาธารณะคือ `app_01m4xk8788f7s941zg4cpjxcer` เว็บไม่เก็บ private key ของ Origin
+- **ตรวจบนเว็บจริง:** `GET https://devstack.bid/api/auth/cursor` ตอบ 302 ไป `https://cursor.com/codebase/apps/install` พร้อม `client_id` นั้น, `scope=repository:metadata:read`, `redirect_uri=https://devstack.bid/api/auth/cursor/callback` และ `summary=Sign in to DevStack` (`cache-control: no-store`) ตอนยังไม่ล็อกอิน Cursor ตอบ 307 ไปหน้าล็อกอินของ Cursor และคง URL ติดตั้งไว้
+- **rollback:** `d29b83b8-1753-4a47-a0b5-a63ba79fa6a2` คืนโค้ด `/learn` เดิมและเอา secret `CURSOR_APP_ID` ออก ปุ่ม Cursor จะกลับไป `/login?auth=missing&provider=cursor`
+
 ## บันทึก deploy: หน้า /learn และ Setup Cursor (14 ต.ค. 2026)
 
 - **บัญชี:** `2d92bd5b25768fa9093d6adc0a8887fc` (examplessdk@gmail.com) Worker `nvx-stack-builder` เท่านั้น ไม่แตะ Worker อื่นและไม่สร้าง DNS ใหม่
@@ -114,7 +123,7 @@ Workers มี free tier; ค่าใช้จ่ายหลักคือ Op
 
 - **บัญชี:** `2d92bd5b25768fa9093d6adc0a8887fc` Worker `nvx-stack-builder` เท่านั้น
 - **วิธีตั้ง:** `wrangler secret put` ผ่าน stdin จากค่าที่ผู้ใช้กรอกในแบบฟอร์ม Runtime secret ไม่ได้พิมพ์ค่าลับ เซสชัน Wrangler OAuth ของ `examplessdk@gmail.com` เป็นตัวเขียน secret เพราะ `CLOUDFLARE_API_TOKEN` ที่กรอกมาถูก Cloudflare ปฏิเสธด้วยรหัส `9109`
-- **เวอร์ชันปัจจุบัน:** `d4c19335-3b9b-4003-9cd9-a744eab5afd4` secret ที่มีชื่อบน Worker คือ `AI_GATEWAY_API_KEY`, `CHAT_COOKIE_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `HF_TOKEN`, `OPENAI_API_KEY`
+- **เวอร์ชันของบันทึกนี้:** `d4c19335-3b9b-4003-9cd9-a744eab5afd4` secret ที่มีชื่อบน Worker ตอนนั้นคือ `AI_GATEWAY_API_KEY`, `CHAT_COOKIE_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `HF_TOKEN`, `OPENAI_API_KEY` (`CURSOR_APP_ID` ถูกตั้งในบันทึกด้านบน)
 - **ตรวจบนเว็บจริง:** `GET /api/auth/github` ตอบ 302 ไป `github.com/login/oauth/authorize` และ `GET /api/auth/google` ตอบ 302 ไป `accounts.google.com/o/oauth2/v2/auth` ไม่ได้ตาม query เพราะมี client id `GET /api/auth/cursor` ยังตอบ 302 ไป `/login?auth=missing&provider=cursor` เพราะไม่ได้กรอก `CURSOR_APP_ID`
 - **rollback:** `f3257677-8d0e-4f59-80da-35d8141d3bf8` คืนโค้ดเดิมและเอา secret GitHub, Google, AI Gateway ออก
 

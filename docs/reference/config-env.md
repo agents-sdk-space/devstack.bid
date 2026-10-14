@@ -24,7 +24,7 @@
 | `GITHUB_CLIENT_SECRET` | **secret** | `^[\w-]{16,200}$` | ไม่มี → เข้าสู่ระบบ GitHub ปิด | `wrangler secret put` (stdin) | OAuth App secret ใช้แลก code ครั้งเดียว ไม่ถูกเก็บใน D1 |
 | `GOOGLE_CLIENT_ID` | **secret** | `^[A-Za-z0-9][A-Za-z0-9._-]{7,180}$` | ไม่มี → ปุ่ม Google พากลับ `/login?auth=missing&provider=google` | `wrangler secret put` (stdin) | OAuth client id callback `{origin}/api/auth/google/callback` |
 | `GOOGLE_CLIENT_SECRET` | **secret** | `^[\w-]{16,200}$` | ไม่มี → เข้าสู่ระบบ Google ปิด | `wrangler secret put` (stdin) | ใช้แลก code ครั้งเดียว ไม่ถูกเก็บใน D1 |
-| `CURSOR_APP_ID` | **secret** | `^app_[A-Za-z0-9]{6,80}$` | ไม่มี → ปุ่ม Cursor พากลับ `/login?auth=missing&provider=cursor` | `wrangler secret put` (stdin) | รหัสแอป Origin ที่เป็นสาธารณะ ไม่เก็บ private key ตรวจใบเสร็จจาก JWKS ของ Origin |
+| `CURSOR_APP_ID` | **secret** | `^app_[A-Za-z0-9]{6,80}$` | ไม่มี → ปุ่ม Cursor พากลับ `/login?auth=missing&provider=cursor` | `wrangler secret put` (stdin) | รหัสแอป Origin ที่เป็นสาธารณะ ไม่เก็บ private key ตรวจใบเสร็จจาก JWKS ของ Origin บน production ตั้งแล้วที่เวอร์ชัน `ffbd53ae-957b-4b48-b411-3a882f14f8ae` (`app_01m4xk8788f7s941zg4cpjxcer`) |
 | `AI_GATEWAY_API_KEY` | **secret** | `^[\w-]{16,400}$` | ไม่มี → ปุ่มเกตเวย์ในตัวเลือกโมเดลกดไม่ได้ | `wrangler secret put` (stdin) | คีย์ Vercel AI Gateway สำหรับโมเดลที่ผู้ใช้เลือกใน `/chat` |
 | `AI_GATEWAY_BASE_URL` | var | URL https | `https://ai-gateway.vercel.sh/v1` | — | endpoint แบบ OpenAI-compatible ของ AI Gateway |
 
