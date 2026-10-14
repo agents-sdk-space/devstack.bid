@@ -17,7 +17,7 @@
 
 ## ลองครั้งแรกกับเรา
 
-1. เปิดหน้าแรก กด **Ask the AI agent** จะไปที่ [`/learn`](https://devstack.bid/learn) ซึ่งเป็นหน้าเปิดตัวที่พรีเซนต์ทั้งระบบ จัดทำโดยผู้สร้าง devstack.sdk@gmail.com และ Cursor
+1. เปิดหน้าแรก กด **Ask the AI agent** จะไปที่ [`/learn`](https://devstack.bid/learn) ซึ่งเป็นหน้าเปิดตัวที่พรีเซนต์ทั้งระบบ จัดทำโดยผู้สร้าง [email redacted] และ Cursor
 2. จากหน้า `/learn` กด **Ask the AI agent** เพื่อเข้าตัวสร้าง กด **Browse templates** หรือเลื่อนไปที่ **Setup Cursor** เพื่อสร้างหรือถามใน Cursor
 3. ในตัวสร้าง (builder) ขั้น **Start** เลือก "Pick a template" แล้วเลือก *Next.js Analytics Dashboard*
 4. ขั้น **Configure** ตั้งชื่อโปรเจกต์ เลือกเวอร์ชัน Node (LTS/24/22/20) ตัวจัดการแพ็กเกจ (npm/pnpm/yarn) และ add-on เช่น Testing หรือ Docker ลองสังเกตแถบสรุปสแต็ก (current stack) ด้านบนที่เปลี่ยนตามทันที

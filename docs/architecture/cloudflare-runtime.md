@@ -1,6 +1,6 @@
 # Subsystem: Cloudflare Workers / OpenNext runtime
 
-ตั้งแต่ v0.3.0 (commit `f9ef054`) แอปถูก build เป็น Cloudflare Worker ด้วย [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) 1.20.x และ Wrangler 4 คู่มือ deploy ทีละขั้นอยู่ที่ [DEPLOY.md](../DEPLOY.md) และ [operations/deploy-cloudflare.md](../operations/deploy-cloudflare.md) หน้านี้อธิบายว่า runtime ประกอบกันอย่างไรและทำไม
+ตั้งแต่ v0.3.0 (commit `[commit redacted]`) แอปถูก build เป็น Cloudflare Worker ด้วย [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) 1.20.x และ Wrangler 4 คู่มือ deploy ทีละขั้นอยู่ที่ [DEPLOY.md](../DEPLOY.md) และ [operations/deploy-cloudflare.md](../operations/deploy-cloudflare.md) หน้านี้อธิบายว่า runtime ประกอบกันอย่างไรและทำไม
 
 ## ทำไม Cloudflare Workers + OpenNext
 
@@ -42,4 +42,4 @@ Worker มี binding `DB` ชี้ D1 `nvx-db` (ประกาศใน `d1_d
 
 ## สถานะ deploy ล่าสุด
 
-Production ที่ `https://devstack.bid` และ `www.devstack.bid` (Workers Custom Domains, redirect www → apex) บัญชี `2d92bd5b25768fa9093d6adc0a8887fc` เวอร์ชันปัจจุบัน `ffbd53ae-957b-4b48-b411-3a882f14f8ae` (14 ต.ค. 2026 23:19 ICT, secret `CURSOR_APP_ID` ของแอป Origin `app_01m4xk8788f7s941zg4cpjxcer` โค้ดเดียวกับ `/learn` ที่ `d29b83b8-1753-4a47-a0b5-a63ba79fa6a2`) workers.dev สำรอง `https://nvx-stack-builder.examplessdk.workers.dev` ส่วน deploy เดิม (v0.3.0) ที่ `https://nvx-stack-builder.agen-sdk-work.workers.dev` บัญชี `f70d35188a3c56b9781538c73a86e04e` ยังเปิดอยู่และไม่ถูกแก้ไข รายละเอียดอยู่ที่ [DEPLOY.md](../DEPLOY.md)
+Production ที่ `https://devstack.bid` และ `www.devstack.bid` (Workers Custom Domains, redirect www → apex) บัญชี `[account ID redacted]` เวอร์ชันปัจจุบัน `[deployment ID redacted]` (14 ต.ค. 2026 23:19 ICT, secret `CURSOR_APP_ID` ของแอป Origin `[application ID redacted]` โค้ดเดียวกับ `/learn` ที่ `[deployment ID redacted]`) workers.dev สำรอง `workers.dev URL redacted` ส่วน deploy เดิม (v0.3.0) ที่ `workers.dev URL redacted` บัญชี `[account ID redacted]` ยังเปิดอยู่และไม่ถูกแก้ไข รายละเอียดอยู่ที่ [DEPLOY.md](../DEPLOY.md)

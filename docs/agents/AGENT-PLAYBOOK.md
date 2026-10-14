@@ -95,7 +95,7 @@ npm run lint && npm run typecheck && npm test && npm run docs:check && npm run c
 - Node 22 อยู่ที่ `/tmp/node22/bin`; Wrangler 4 ต้องการ Node 22
 - `next dev` อาจแสดง CSS ค้าง ใช้ `npm run preview` ตรวจภาพ
 - ปิด preview: `pkill -f "opennextjs-cloudflare preview"; pkill -f workerd`
-- commit identity ที่ใช้ในโปรเจกต์: `NVX-DEVELOPER-BOTH <nvx-bot@users.noreply.github.com>`
+- commit identity ที่ใช้ในโปรเจกต์: `NVX-DEVELOPER-BOTH <[email redacted]>`
 
 *EN: Box-specific notes; may not apply elsewhere.*
 

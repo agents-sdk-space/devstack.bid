@@ -18,12 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Optional Cloudflare AI Gateway for Workers AI.** New var `CF_AI_GATEWAY_ID` (empty by default, so nothing changes until it is set) sends `/chat` and `/studio` Workers AI calls, text and images, through that gateway for logs, analytics and rate limits. Replies are never cached (`skipCache: true`). Streaming is unchanged: the existing SSE path keeps streaming deltas. See `docs/reference/config-env.md`.
 - **Cline support for the MCP server.** `/settings/mcp` shows a copy-ready `cline_mcp_settings.json` entry (with `"type": "streamableHttp"`, which Cline requires for a remote server) right after a key is created. `docs/integrations/mcp.md` has a Thai and English Cline section, and `/.well-known/mcp` lists a `clients.cline` hint. The snippet leaves `autoApprove` empty so Cline asks before tools that use quota or commit to GitHub. No new endpoint or scope; the `/mcp` server is unchanged.
-- **Learn page** at `/learn`: a launch presentation of the whole system, credited to the creator devstack.sdk@gmail.com and Cursor. The homepage **Ask the AI agent** button opens it. Every page header (and the Studio nav) can **Setup Cursor** — create a project or ask a question through `https://cursor.com/link/prompt`, which the person confirms in Cursor before it runs.
+- **Learn page** at `/learn`: a launch presentation of the whole system, credited to the creator [email redacted] and Cursor. The homepage **Ask the AI agent** button opens it. Every page header (and the Studio nav) can **Setup Cursor** — create a project or ask a question through `https://cursor.com/link/prompt`, which the person confirms in Cursor before it runs.
 
 - **Remote MCP server** at `/mcp` with discovery metadata at `/.well-known/mcp`, offering public tools for templates, custom Builder edits, script/starter-bundle exports, sharing and docs, plus scoped planner, chat, Dev Chat, Factory, conversation-history and GitHub tools. MCP key management lives at `/settings/mcp`; keys are shown once, stored as hashes, rate-limited per key and revocable. See `docs/integrations/mcp.md`.
 - Added the public `get_safety_recommendations` MCP tool with Thai and English privacy, account/device security, scam-response, and personal-safety checklists. It takes no personal details and does not inspect devices or accounts.
 - D1 migration `0008_mcp_clients` ties issued MCP keys to signed-in accounts; applied to production `nvx-db` on 2026-10-14 before deploy.
-- Deployed the sign-in page, function index, and NVX DEVELOPER BOTH roster to https://devstack.bid. Worker version `d4c19335-3b9b-4003-9cd9-a744eab5afd4` includes the GitHub, Google, and AI Gateway secrets. Rollback to `f3257677-8d0e-4f59-80da-35d8141d3bf8` keeps the same code and removes those secrets. Remote D1 migrations `0001`–`0007` are applied on `nvx-db`. An unknown DevStack password returns `auth=invalid`. GitHub and Google redirect to their providers. On that version Cursor returned `auth=missing`; `CURSOR_APP_ID` was set later (see Deployed).
+- Deployed the sign-in page, function index, and NVX DEVELOPER BOTH roster to https://devstack.bid. Worker version `[deployment ID redacted]` includes the GitHub, Google, and AI Gateway secrets. Rollback to `[deployment ID redacted]` keeps the same code and removes those secrets. Remote D1 migrations `0001`–`0007` are applied on `nvx-db`. An unknown DevStack password returns `auth=invalid`. GitHub and Google redirect to their providers. On that version Cursor returned `auth=missing`; `CURSOR_APP_ID` was set later (see Deployed).
 - **Function index** at `/docs/platform` (raw Markdown `/docs/platform.md`), linked from the header. It lists the product areas the way a docs index does, and points agents at `/llms.txt`.
 - **NVX DEVELOPER BOTH** is the Cursor agent that built this platform and looks after all of it. Roster: `docs/agents/cursor-caretakers.md` and `docs/agents/cursor-agents.json` (`agent.id` `nvx-developer`). Header item **Agents**. Area rows are a reading map for that one agent. It does not deploy or execute user commands on its own.
 - **Sign in** from the header and `/login`: Cursor (Origin app install receipt), Google, GitHub, or a DevStack email and password. Chat history stays on that account. Password hashes are PBKDF2-SHA256 in `password_credentials` (migration `0007`). OAuth accounts are not merged by email. GitHub is still the only method that can push a code block.
@@ -41,12 +41,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deployed
 
-- 2026-10-14 23:19 ICT: Cloudflare Worker `nvx-stack-builder`, version `ffbd53ae-957b-4b48-b411-3a882f14f8ae`. Secret `CURSOR_APP_ID` set to the public Origin app `app_01m4xk8788f7s941zg4cpjxcer`. Same code as `d29b83b8-1753-4a47-a0b5-a63ba79fa6a2`. `GET /api/auth/cursor` returns 302 to `https://cursor.com/codebase/apps/install` with that `client_id`, scope `repository:metadata:read`, and redirect `https://devstack.bid/api/auth/cursor/callback`. Unauthenticated, Cursor then sends the browser to its own login and keeps the install URL. Rollback target: `d29b83b8-1753-4a47-a0b5-a63ba79fa6a2` (same code, without this secret).
-- 2026-10-14 22:18 ICT: Cloudflare Worker `nvx-stack-builder`, version `d29b83b8-1753-4a47-a0b5-a63ba79fa6a2`, merge commit `be6eb3f` (pull request #6). `/learn` is live on https://devstack.bid. Homepage **Ask the AI agent** opens `/learn`. `/`, `/learn`, `/templates`, `/templates/nextjs-dashboard`, `/builder`, `/design`, `/chat`, `/docs`, `/login`, and `/docs/platform` returned 200. `/templates/does-not-exist` returned 404. `www.devstack.bid/learn` returned 308 to the apex. A fallback plan for a Thai Next.js dashboard prompt selected `nextjs-dashboard`. No new secrets. Rollback target: `bbc2369e-a302-4527-ad23-87f44bb144d1`.
-- 2026-10-14 21:11 ICT: Cloudflare Worker `nvx-stack-builder`, version `bbc2369e-a302-4527-ad23-87f44bb144d1`, commit `838440a`. Studio at `/studio/`, the remote MCP server, and sign-in are on https://devstack.bid. All 10 template pages, `/docs/user-guide/studio`, and `/api/studio/health` returned 200. `/templates/does-not-exist` returned 404. `www` returned 308 to the apex. A fallback plan for a Thai Next.js dashboard prompt selected `nextjs-dashboard`. Rollback target: `e9fa394a-7c15-4aee-b3ae-064bdf85e7dd`.
-- 2026-10-14 15:44 ICT: Cloudflare Worker `nvx-stack-builder`, version `e9fa394a-7c15-4aee-b3ae-064bdf85e7dd`, commit `e866cc8`. The vulnerable development dependency path was removed. Applied remote D1 migration `0008_mcp_clients.sql`; live page, MCP discovery, initialize, 19-tool catalog, all five Thai safety topics and unauthenticated key endpoint checks passed. Rollback target: `450890b7-5432-4795-afbc-1c7ebd241bff`.
+- 2026-10-14 23:19 ICT: Cloudflare Worker `nvx-stack-builder`, version `[deployment ID redacted]`. Secret `CURSOR_APP_ID` set to the public Origin app `[application ID redacted]`. Same code as `[deployment ID redacted]`. `GET /api/auth/cursor` returns 302 to `https://cursor.com/codebase/apps/install` with that `client_id`, scope `repository:metadata:read`, and redirect `https://devstack.bid/api/auth/cursor/callback`. Unauthenticated, Cursor then sends the browser to its own login and keeps the install URL. Rollback target: `[deployment ID redacted]` (same code, without this secret).
+- 2026-10-14 22:18 ICT: Cloudflare Worker `nvx-stack-builder`, version `[deployment ID redacted]`, merge commit `[commit redacted]` (pull request #6). `/learn` is live on https://devstack.bid. Homepage **Ask the AI agent** opens `/learn`. `/`, `/learn`, `/templates`, `/templates/nextjs-dashboard`, `/builder`, `/design`, `/chat`, `/docs`, `/login`, and `/docs/platform` returned 200. `/templates/does-not-exist` returned 404. `www.devstack.bid/learn` returned 308 to the apex. A fallback plan for a Thai Next.js dashboard prompt selected `nextjs-dashboard`. No new secrets. Rollback target: `[deployment ID redacted]`.
+- 2026-10-14 21:11 ICT: Cloudflare Worker `nvx-stack-builder`, version `[deployment ID redacted]`, commit `[commit redacted]`. Studio at `/studio/`, the remote MCP server, and sign-in are on https://devstack.bid. All 10 template pages, `/docs/user-guide/studio`, and `/api/studio/health` returned 200. `/templates/does-not-exist` returned 404. `www` returned 308 to the apex. A fallback plan for a Thai Next.js dashboard prompt selected `nextjs-dashboard`. Rollback target: `[deployment ID redacted]`.
+- 2026-10-14 15:44 ICT: Cloudflare Worker `nvx-stack-builder`, version `[deployment ID redacted]`, commit `[commit redacted]`. The vulnerable development dependency path was removed. Applied remote D1 migration `0008_mcp_clients.sql`; live page, MCP discovery, initialize, 19-tool catalog, all five Thai safety topics and unauthenticated key endpoint checks passed. Rollback target: `[deployment ID redacted]`.
 
-## [0.8.0-rc.2] - 2026-10-11 (branch `merge/devstack-workspace`; production deploy `bbc2369e-a302-4527-ad23-87f44bb144d1` on 2026-10-14)
+## [0.8.0-rc.2] - 2026-10-11 (branch `merge/devstack-workspace`; production deploy `[deployment ID redacted]` on 2026-10-14)
 
 Open source only: we removed everything in the Studio that was not open source or could carry commercial or usage-based fees.
 
@@ -173,7 +173,7 @@ Open source only: we removed everything in the Studio that was not open source o
 
 ### Deployed
 
-- 2026-10-11 11:18 ICT, version `7ddd9404-a31f-4e31-8460-82b3b90c7d0e`; previous `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1, rollback target).
+- 2026-10-11 11:18 ICT, version `[deployment ID redacted]`; previous `[deployment ID redacted]` (v0.5.1, rollback target).
 - Live check on https://devstack.bid passed:
   - all pages, `/docs` and doc pages return 200; unknown doc slugs return a real 404
   - all 43 raw `.md` routes are byte-identical to the source (`text/markdown`), and so is the manifest
@@ -200,31 +200,31 @@ Open source only: we removed everything in the Studio that was not open source o
 
 ### Deployed
 
-- 2026-10-11 09:15 ICT, version `671b6b3b-1074-40cb-84b0-0df2681b69ce`; previous `d369f2b6-863a-4e44-8f9e-b5551e18361a` (v0.5.0).
+- 2026-10-11 09:15 ICT, version `[deployment ID redacted]`; previous `[deployment ID redacted]` (v0.5.0).
 - Live smoke test on https://devstack.bid passed:
   - pages, 404s, headers, www redirect
   - OG image URL absolute and fetchable
   - a Thai AI prompt returned `source: "openai"`
   - 429 + `Retry-After: 60`
   - mascot animation
-- workers.dev fallback is now https://nvx-stack-builder.examplessdk.workers.dev. The account's workers.dev subdomain was renamed from `space6` (not by this deploy), so the v0.5.0 URL no longer resolves.
+- workers.dev fallback is now workers.dev URL redacted The account's workers.dev subdomain was renamed from `previous subdomain redacted` (not by this deploy), so the v0.5.0 URL no longer resolves.
 
 ## [0.5.0] - 2026-10-11
 
-Release of the `feat/terminal-theme` branch: merge commit `61445c5`. v0.4 was never released separately because the v0.5 design replaces it.
+Release of the `feat/terminal-theme` branch: merge commit `[commit redacted]`. v0.4 was never released separately because the v0.5 design replaces it.
 
 ### Deployed (TEST)
 
-- Live at https://nvx-stack-builder.space6.workers.dev. This is a new Worker `nvx-stack-builder` in account `2d92bd5b25768fa9093d6adc0a8887fc` ("Examplessdk@gmail.com's Account", workers.dev subdomain `space6`), with no routes or custom domains.
+- Live at workers.dev URL redacted This is a new Worker `nvx-stack-builder` in account `[account ID redacted]` ("Cloudflare account", workers.dev subdomain `previous subdomain redacted`), with no routes or custom domains.
   - Deployed 2026-10-11 08:47 ICT from `f995d24`.
-  - Version ids: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (current, with the `OPENAI_API_KEY` secret) and `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (same code before the secret).
+  - Version ids: `[deployment ID redacted]` (current, with the `OPENAI_API_KEY` secret) and `[deployment ID redacted]` (same code before the secret).
 - Live smoke test passed:
   - pages 200, real 404s, security headers
   - brand assets, manifest and OG image
   - no horizontal scroll in TH/EN at 1440/390px, no console errors
   - a Thai AI prompt returned `source: "openai"`
   - 429 + `Retry-After: 60` after the per-minute limit
-- The existing Worker `odd-violet-5e66` in that account was not touched. The v0.3.0 test deploy (`agen-sdk-work.workers.dev`, account `f70d…e04e`) is unchanged and still live.
+- The existing Worker `other Worker name redacted` in that account was not touched. The v0.3.0 test deploy (`test subdomain redacted.workers.dev`, account `f70d…e04e`) is unchanged and still live.
 
 ### Added (brand logo and animated mascot)
 
@@ -281,7 +281,7 @@ Release of the `feat/terminal-theme` branch: merge commit `61445c5`. v0.4 was ne
 
 ## [0.3.0] - 2026-10-11
 
-Test deployment: https://nvx-stack-builder.agen-sdk-work.workers.dev (workers.dev only).
+Test deployment: workers.dev URL redacted (workers.dev only).
 
 ### Added
 

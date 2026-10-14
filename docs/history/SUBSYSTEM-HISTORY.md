@@ -11,7 +11,7 @@
 | v0.3.0 | tag `v0.3.0`, branch `feat/cloudflare-production` | `510048b` (merge), release `576f6f7` | 10 ต.ค. 22:26 – 11 ต.ค. 00:35 | Cloudflare Workers + production hardening, TEST deploy |
 | v0.4 (ไม่มี tag) | branch `feat/terminal-theme` | `2210920` … `abec887` | 11 ต.ค. 2026 00:54 | ธีมเทอร์มินัลดำเป็นค่าเริ่มต้น (ยังไม่ merge/deploy) |
 | v0.5.0 | tag `v0.5.0`, branch `feat/terminal-theme` | `3dad906` … `9790c94` (ธีม), docs `07c3310` … `5d5b583`, โลโก้และมาสคอต `f995d24`, merge `61445c5` | 11 ต.ค. 2026 06:03–08:50 | ธีมอ้างอิง Apple Developer, โลโก้เครื่องมือจริง, ชุดเอกสาร, มาสคอตที่ขยับได้, TEST deploy ใหม่ (บัญชี `2d92…87fc`) |
-| v0.6.0 | tag `v0.6.0` (= `main`) | release commit ของ v0.6.0 | 11 ต.ค. 2026 11:18 | docs ในแอป `/docs` (raw `.md`, `/llms.txt`, ค้นหาภาษาไทย), DevStack signature, deploy version `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` |
+| v0.6.0 | tag `v0.6.0` (= `main`) | release commit ของ v0.6.0 | 11 ต.ค. 2026 11:18 | docs ในแอป `/docs` (raw `.md`, `/llms.txt`, ค้นหาภาษาไทย), DevStack signature, deploy version `[deployment ID redacted]` |
 | v0.5.1 | tag `v0.5.1` | release commit ของ v0.5.1 | 11 ต.ค. 2026 09:15 | โดเมนจริง devstack.bid + www (Workers Custom Domains), redirect www → apex, `metadataBase` = devstack.bid, HSTS ไม่มี includeSubDomains |
 
 หมายเหตุ: v0.4 (`2210920` … `abec887`) ไม่ถูก tag แยก เพราะ v0.5 แทนที่ดีไซน์ทั้งหมด และ `package.json` เป็น `0.5.0` ตั้งแต่ release commit ของ v0.5.0

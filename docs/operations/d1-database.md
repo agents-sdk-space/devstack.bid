@@ -6,11 +6,11 @@
 
 | ทรัพยากร | ค่า | สถานะ |
 |---|---|---|
-| D1 database | `nvx-db`, id `3ee9bbab-06b5-49da-b175-5f7162ad5086`, region WNAM | สร้าง 11 ต.ค. 2026; migration `0001`–`0007` apply บน remote แล้ว (`schema_version` = 7, ตรวจ 14 ต.ค. 2026) |
+| D1 database | `nvx-db`, id `[deployment ID redacted]`, region WNAM | สร้าง 11 ต.ค. 2026; migration `0001`–`0007` apply บน remote แล้ว (`schema_version` = 7, ตรวจ 14 ต.ค. 2026) |
 | Binding ใน Worker | `DB` (ชนิด `D1Database` ใน `cloudflare-env.d.ts`) | อยู่ใน `wrangler.jsonc`; ยังไม่มีโค้ดใช้ |
 | R2 bucket | `nvx-assets`, binding `ASSETS_BUCKET` | **ยังไม่ได้สร้าง**: บัญชียังไม่เปิด R2 |
 
-บัญชี `2d92bd5b25768fa9093d6adc0a8887fc` ใช้ token `CLOUDFLARE_API_TOKEN_EXAMPLESSDK` (มีสิทธิ์ D1 Edit) ส่วน `CLOUDFLARE_API_TOKEN_DEVSTACK` ไม่มีสิทธิ์ D1 และ R2
+บัญชี `[account ID redacted]` ใช้ token `CLOUDFLARE_API_TOKEN` (มีสิทธิ์ D1 Edit) ส่วน `CLOUDFLARE_API_TOKEN` ไม่มีสิทธิ์ D1 และ R2
 
 ## คำสั่ง
 
@@ -21,10 +21,10 @@
 npm run db:migrate:local
 
 # ดูว่า migration ไหนยังไม่ได้ apply บน remote
-CLOUDFLARE_API_TOKEN="$CLOUDFLARE_API_TOKEN_EXAMPLESSDK" CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc npm run db:migrations:list
+CLOUDFLARE_API_TOKEN="$CLOUDFLARE_API_TOKEN" CLOUDFLARE_ACCOUNT_ID=YOUR_ACCOUNT_ID npm run db:migrations:list
 
 # apply บน remote (ต้องอนุมัติ)
-CLOUDFLARE_API_TOKEN="$CLOUDFLARE_API_TOKEN_EXAMPLESSDK" CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc npm run db:migrate:remote
+CLOUDFLARE_API_TOKEN="$CLOUDFLARE_API_TOKEN" CLOUDFLARE_ACCOUNT_ID=YOUR_ACCOUNT_ID npm run db:migrate:remote
 
 # query แบบอ่านอย่างเดียว
 npx wrangler d1 execute nvx-db --remote --command "select * from schema_meta"
@@ -40,7 +40,7 @@ npx wrangler d1 execute nvx-db --remote --command "select * from schema_meta"
 
 `0006_github_auth.sql` และ `0007_password_auth.sql` ถูก apply บน remote `nvx-db` แล้วเมื่อ 14 ต.ค. 2026 หลังได้รับอนุมัติ `d1_migrations` มีแถว `0001` ถึง `0007` และ `schema_meta.schema_version` เป็น `7` ตาราง `github_credentials` กับ `password_credentials` มีอยู่บนฐานจริง การล็อกอินรหัสผ่านของอีเมลที่ไม่มีบัญชีตอบ `303` ไป `/login?auth=invalid&provider=password` (ก่อนมีตาราง คำสั่ง SQL พังแล้วตอบ `auth=error`)
 
-เมื่อ 14 ต.ค. 2026 secret `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` และ `AI_GATEWAY_API_KEY` ถูกตั้งบน Worker `nvx-stack-builder` แล้ว (เวอร์ชัน `d4c19335-3b9b-4003-9cd9-a744eab5afd4`) `GET /api/auth/github` และ `GET /api/auth/google` ตอบ 302 ไปผู้ให้บริการ ตอนเวอร์ชันนั้น `CURSOR_APP_ID` ยังไม่ได้ตั้ง จึงปุ่ม Cursor พาไป `/login?auth=missing&provider=cursor` ต่อมาเวลา 23:19 ICT ของวันเดียวกันได้ตั้ง `CURSOR_APP_ID` เป็นแอป Origin สาธารณะ `app_01m4xk8788f7s941zg4cpjxcer` (เวอร์ชัน `ffbd53ae-957b-4b48-b411-3a882f14f8ae`) `GET /api/auth/cursor` จึงตอบ 302 ไป `https://cursor.com/codebase/apps/install` callback ที่ลงทะเบียนคือ `https://devstack.bid/api/auth/github/callback`, `https://devstack.bid/api/auth/google/callback` และ `https://devstack.bid/api/auth/cursor/callback`
+เมื่อ 14 ต.ค. 2026 secret `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` และ `AI_GATEWAY_API_KEY` ถูกตั้งบน Worker `nvx-stack-builder` แล้ว (เวอร์ชัน `[deployment ID redacted]`) `GET /api/auth/github` และ `GET /api/auth/google` ตอบ 302 ไปผู้ให้บริการ ตอนเวอร์ชันนั้น `CURSOR_APP_ID` ยังไม่ได้ตั้ง จึงปุ่ม Cursor พาไป `/login?auth=missing&provider=cursor` ต่อมาเวลา 23:19 ICT ของวันเดียวกันได้ตั้ง `CURSOR_APP_ID` เป็นแอป Origin สาธารณะ `[application ID redacted]` (เวอร์ชัน `[deployment ID redacted]`) `GET /api/auth/cursor` จึงตอบ 302 ไป `https://cursor.com/codebase/apps/install` callback ที่ลงทะเบียนคือ `https://devstack.bid/api/auth/github/callback`, `https://devstack.bid/api/auth/google/callback` และ `https://devstack.bid/api/auth/cursor/callback`
 
 ## สำรองและกู้คืน
 
@@ -59,7 +59,7 @@ npx wrangler d1 export nvx-db --remote --output backup.sql       # export เป
 ผลตรวจเมื่อ 11 ต.ค. 2026: `GET /accounts/<id>/r2/buckets` ตอบ error `10042` "Please enable R2 through the Cloudflare Dashboard"
 
 1. เจ้าของบัญชีเปิด R2 ใน Cloudflare dashboard (R2 Object Storage) ขั้นนี้ต้องยอมรับเงื่อนไขและการคิดเงิน มี free tier แต่ส่วนเกินจะถูกเรียกเก็บ
-2. ให้ token ที่ใช้มีสิทธิ์ **Account › Workers R2 Storage: Edit** (token EXAMPLESSDK ตอนนี้สร้าง D1 ได้ แต่ยังไม่ได้ทดสอบสิทธิ์ R2)
+2. ให้ token ที่ใช้มีสิทธิ์ **Account › Workers R2 Storage: Edit** (deployment token currently creates D1; R2 permissions have not been tested)
 3. สร้าง bucket: `npx wrangler r2 bucket create nvx-assets`
 4. เพิ่ม binding ใน `wrangler.jsonc`: `"r2_buckets": [{ "binding": "ASSETS_BUCKET", "bucket_name": "nvx-assets" }]` แล้วรัน `npm run cf:typegen` และเพิ่ม `ASSETS_BUCKET` ในตาราง binding ของ [config-env.md](../reference/config-env.md)
 5. bucket ต้อง private (ไม่เปิด public URL หรือ r2.dev) ไฟล์เสิร์ฟผ่าน Worker ที่ตรวจสิทธิ์แล้วเท่านั้น
