@@ -9,7 +9,7 @@ import { expect, test } from '@playwright/test';
 const SHOTS = process.env.STUDIO_SHOTS_DIR ?? new URL('../../screenshots/v0.8', import.meta.url).pathname;
 mkdirSync(SHOTS, { recursive: true });
 
-const PAGES = ['/', '/templates', '/builder', '/chat', '/chat/dev', '/factory', '/docs', '/docs/user-guide/studio', '/docs/architecture/studio', '/design'];
+const PAGES = ['/', '/learn', '/templates', '/builder', '/chat', '/chat/dev', '/factory', '/docs', '/docs/user-guide/studio', '/docs/architecture/studio', '/design'];
 
 for (const width of [1440, 390]) {
   for (const lang of ['en', 'th'] as const) {

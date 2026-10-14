@@ -11,6 +11,12 @@
 - [คู่มือเอเจนต์](./agents/AGENT-PLAYBOOK.md) และ [รายชื่อ Cursor caretakers](./agents/cursor-caretakers.md)
 - ไฟล์เครื่องอ่าน [cursor-agents.json](./agents/cursor-agents.json) บอกว่าบอท NVX DEVELOPER BOTH ดูแลทั้งแพลตฟอร์ม และแต่ละพื้นที่ต้องอ่านหน้าไหน
 
+## หน้าพรีเซนต์ระบบ
+
+[เรียนรู้ทั้งระบบ](https://devstack.bid/learn) เป็นหน้าเปิดตัว จัดทำโดยผู้สร้าง devstack.sdk@gmail.com และ Cursor ปุ่ม **Ask the AI agent** ที่หน้าแรกเปิดหน้านี้ หัวเว็บทุกหน้ามีปุ่ม **Setup Cursor** สำหรับสร้างโปรเจกต์หรือถามคำถามใน Cursor ลิงก์ไปที่ `https://cursor.com/link/prompt` และคุณยืนยันข้อความก่อนรัน
+
+*EN: `/learn` presents the whole system. The homepage Ask the AI agent button opens it. Every page header has Setup Cursor, which creates or asks through a Cursor prompt link you confirm first.*
+
 ## สร้างสแต็ก
 
 #### Stack Templates

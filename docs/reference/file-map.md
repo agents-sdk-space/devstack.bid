@@ -37,6 +37,7 @@
 |---|---|
 | [`src/app/layout.tsx`](../../src/app/layout.tsx) | root layout, ฟอนต์, `<html class="dark">`, สคริปต์ pre-paint, providers |
 | [`src/app/page.tsx`](../../src/app/page.tsx) | หน้าแรก `/` |
+| [`src/app/learn/page.tsx`](../../src/app/learn/page.tsx) | หน้าพรีเซนต์ระบบ `/learn` |
 | [`docs/platform.md`](../../docs/platform.md) | เมนูฟังก์ชัน `/docs/platform` (ไฟล์ดิบ `/docs/platform.md`) |
 | [`docs/agents/cursor-caretakers.md`](../../docs/agents/cursor-caretakers.md), [`docs/agents/cursor-agents.json`](../../docs/agents/cursor-agents.json) | บอท NVX DEVELOPER BOTH ที่สร้างและดูแลทั้งแพลตฟอร์ม |
 | [`src/app/login/page.tsx`](../../src/app/login/page.tsx) | หน้าเข้าสู่ระบบ `/login` |
@@ -60,7 +61,7 @@
 | [`step-card.tsx`](../../src/components/step-card.tsx) | การ์ดขั้นตอน |
 | [`agent-panel.tsx`](../../src/components/agent-panel.tsx) | แผง AI agent |
 | [`catalog.tsx`](../../src/components/catalog.tsx), [`template-card.tsx`](../../src/components/template-card.tsx), [`template-detail.tsx`](../../src/components/template-detail.tsx) | catalog และรายละเอียด |
-| [`header.tsx`](../../src/components/header.tsx), [`account-button.tsx`](../../src/components/account-button.tsx), [`login-form.tsx`](../../src/components/login-form.tsx) | header, nav, footer, ปุ่มเข้าสู่ระบบ, ฟอร์ม `/login` |
+| [`header.tsx`](../../src/components/header.tsx), [`account-button.tsx`](../../src/components/account-button.tsx), [`login-form.tsx`](../../src/components/login-form.tsx), [`setup-cursor.tsx`](../../src/components/setup-cursor.tsx) | header, nav, footer, ปุ่มเข้าสู่ระบบ, ฟอร์ม `/login`, ปุ่มตั้งค่า Cursor |
 | [`command-palette.tsx`](../../src/components/command-palette.tsx) | Ctrl/⌘+K |
 | [`prefs.tsx`](../../src/components/prefs.tsx), [`providers.tsx`](../../src/components/providers.tsx) | ภาษา/ธีม, providers (toast, tooltip) |
 | [`os-toggle.tsx`](../../src/components/os-toggle.tsx), [`copy-button.tsx`](../../src/components/copy-button.tsx) | สลับ POSIX/Windows, ปุ่มคัดลอก |
@@ -74,6 +75,7 @@
 | ไฟล์ | หน้าที่ |
 |---|---|
 | [`types.ts`](../../src/lib/types.ts) | ชนิดข้อมูลหลัก |
+| [`cursor-link.ts`](../../src/lib/cursor-link.ts) | ลิงก์สร้างหรือถาม Cursor (`https://cursor.com/link/prompt`) |
 | [`composer.ts`](../../src/lib/composer.ts), [`placeholders.ts`](../../src/lib/placeholders.ts) | ประกอบคำสั่ง |
 | [`scripts.ts`](../../src/lib/scripts.ts), [`download.ts`](../../src/lib/download.ts) | setup.sh/ps1/README/zip |
 | [`share.ts`](../../src/lib/share.ts) | ลิงก์แชร์ |

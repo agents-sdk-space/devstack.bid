@@ -270,6 +270,11 @@
       "file": "src/app/page.tsx"
     },
     {
+      "path": "/learn",
+      "file": "src/app/learn/page.tsx",
+      "notes": "Launch presentation of the whole system. Homepage Ask the AI agent opens this page. Header Setup Cursor creates or asks via cursor.com/link/prompt."
+    },
+    {
       "path": "/templates",
       "file": "src/app/templates/page.tsx"
     },

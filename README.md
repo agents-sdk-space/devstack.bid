@@ -28,6 +28,7 @@ An open developer platform from the NVX community. You can turn setup commands i
 
 | App | Path | What it does | AI and cost |
 | --- | --- | --- | --- |
+| **Learn** | [`/learn`](https://devstack.bid/learn) | Launch page for the whole system, made by the creator devstack.sdk@gmail.com and Cursor. The homepage **Ask the AI agent** button opens it. Every page header has **Setup Cursor** (create a project or ask Cursor). | — |
 | **Stack Builder** | [`/templates`](https://devstack.bid/templates), [`/builder`](https://devstack.bid/builder) | 10 curated Stack Templates (Next.js, Vite, Express, FastAPI, Streamlit, CLI, PyPI …). Pick versions and add-ons, then reorder, share as a link, or download `setup.sh` / `setup.ps1` / a starter zip. The AI planner turns a description into a stack. | Planner: Hugging Face DeepSeek V3, falling back to an offline rule-based planner. You can also bring your own OpenAI key. |
 | **Chat** | [`/chat`](https://devstack.bid/chat) | A free AI chat (General, Thai, Code, Stronger and Image modes) with history saved per browser. | Workers AI (Gemma 4, SEA-LION, Qwen Coder, FLUX) and HF DeepSeek V3, with free daily quotas. |
 | **Dev Chat** | [`/chat/dev`](https://devstack.bid/chat/dev) | The Image and Research Orchestrator agent, with a live sandbox panel (commands, subagents, files). | OpenAI Agents API on our key, capped at a few turns per day. |
@@ -85,7 +86,7 @@ The full list is in [docs/reference/npm-scripts.md](./docs/reference/npm-scripts
 ```
 Browser (no secrets)                                        Cloudflare Worker "nvx-stack-builder" (Next.js 16 via OpenNext)
 ───────────────────────────────────────────────────         ────────────────────────────────────────────────────────────────
-/, /templates, /builder, /docs  (prerendered pages) ◄──────  static assets + App Router, site CSP (no COEP)
+/, /learn, /templates, /builder, /docs  (prerendered pages) ◄──  static assets + App Router, site CSP (no COEP)
 /builder AI panel ──────────────────────────────────────►  POST /api/plan ─────────► HF DeepSeek V3 → offline planner
 /chat ──────────────────────────────────────────────────►  /api/chat/turn ─────────► Workers AI (AI binding) ⇄ HF router
 /chat/dev ──────────────────────────────────────────────►  /api/chat/dev/turn ─────► OpenAI Agents API (server key, low caps)
