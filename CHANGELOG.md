@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Remote MCP server** at `/mcp` with discovery metadata at `/.well-known/mcp`, offering public tools for templates, custom Builder edits, script/starter-bundle exports, sharing and docs, plus scoped planner, chat, Dev Chat, Factory, conversation-history and GitHub tools. MCP key management lives at `/settings/mcp`; keys are shown once, stored as hashes, rate-limited per key and revocable. See `docs/integrations/mcp.md`.
 - Added the public `get_safety_recommendations` MCP tool with Thai and English privacy, account/device security, scam-response, and personal-safety checklists. It takes no personal details and does not inspect devices or accounts.
-- D1 migration `0008_mcp_clients` ties issued MCP keys to signed-in accounts. It must be applied to the remote database before production key management can work.
+- D1 migration `0008_mcp_clients` ties issued MCP keys to signed-in accounts; applied to production `nvx-db` on 2026-10-14 before deploy.
 - **Function index** at `/docs/platform` (raw Markdown `/docs/platform.md`), linked from the header. It lists the product areas the way a docs index does, and points agents at `/llms.txt`.
 - **NVX DEVELOPER BOTH** is the Cursor agent that built this platform and looks after all of it. Roster: `docs/agents/cursor-caretakers.md` and `docs/agents/cursor-agents.json` (`agent.id` `nvx-developer`). Header item **Agents**. Area rows are a reading map for that one agent. It does not deploy or execute user commands on its own.
 - **Sign in** from the header and `/login`: Cursor (Origin app install receipt), Google, GitHub, or a DevStack email and password. Chat history stays on that account. Password hashes are PBKDF2-SHA256 in `password_credentials` (migration `0007`). OAuth accounts are not merged by email. GitHub is still the only method that can push a code block.
@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - GitHub Pages workflow (`.github/workflows/jekyll-gh-pages.yml`) pins `actions/checkout` (v4.4.0), `actions/configure-pages` (v5.0.0), `actions/jekyll-build-pages` (v1.0.13), `actions/upload-pages-artifact` (v3.0.1) and `actions/deploy-pages` (v5.0.1) to full commit SHAs. The org policy rejected the floating tags, so the latest commit on `main` still showed a red X after the CI workflow itself was green. Deploy still runs only from `main`.
+
+### Deployed
+
+- 2026-10-14 15:16 ICT: Cloudflare Worker `nvx-stack-builder`, version `26c9dbb9-49b1-4d05-9597-3859170c02e4`, commit `42dfde6`. Applied remote D1 migration `0008_mcp_clients.sql`; live MCP discovery, initialize, 19-tool catalog, Thai safety guidance and unauthenticated key endpoint checks passed. Rollback target: `450890b7-5432-4795-afbc-1c7ebd241bff`.
 
 ## [0.7.0] - 2026-10-11
 

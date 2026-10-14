@@ -1,7 +1,9 @@
 # Deploying NVX Stack Builder to Cloudflare Workers
 
-> **Production (2026-10-11, v0.6.0):** live at **https://devstack.bid** (apex). It is a Workers Custom Domain of Worker `nvx-stack-builder` in account `2d92bd5b25768fa9093d6adc0a8887fc`; `www.devstack.bid` is also attached and returns 308 to the apex.
-> - v0.6.0 deployed 2026-10-11 11:18 ICT (in-app docs at `/docs`, `/llms.txt`, DevStack signature). Version `7ddd9404-a31f-4e31-8460-82b3b90c7d0e`. Then the D1 binding `DB` (database `nvx-db`) was added the same day; that build is now current: `450890b7-5432-4795-afbc-1c7ebd241bff`. Rollback targets: `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (v0.6.0), then `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1), then `d369f2b6-863a-4e44-8f9e-b5551e18361a` (v0.5.0) and `107ab78e-2cdd-4159-95e7-e8fcb89130aa`.
+> **Current production (2026-10-14):** live at **https://devstack.bid** (apex). Worker `nvx-stack-builder` in account `2d92bd5b25768fa9093d6adc0a8887fc`; `www.devstack.bid` is also attached and returns 308 to the apex.
+> - Deployed 2026-10-14 15:16 ICT from commit `42dfde6`; Cloudflare version `26c9dbb9-49b1-4d05-9597-3859170c02e4`. D1 migration `0008_mcp_clients.sql` applied to `nvx-db` before deploy. Rollback target: `450890b7-5432-4795-afbc-1c7ebd241bff`.
+> - Live checks passed: MCP discovery, protocol initialization, 19 tools, Thai privacy-guidance tool response, settings page, and unauthenticated key API returns 401.
+> - Previous production versions: `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (v0.6.0), `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1), then `d369f2b6-863a-4e44-8f9e-b5551e18361a` (v0.5.0) and `107ab78e-2cdd-4159-95e7-e8fcb89130aa`.
 > - workers.dev fallback: https://nvx-stack-builder.examplessdk.workers.dev. The account's subdomain was renamed from `space6` to `examplessdk` on 2026-10-11, so the old `space6` URL no longer resolves.
 > - HSTS is now `max-age=31536000`, without `includeSubDomains`/`preload`.
 > - Details, created records and token permissions: [operations/custom-domain.md](operations/custom-domain.md).
@@ -66,30 +68,34 @@ printenv OPENAI_API_KEY | npx wrangler secret put OPENAI_API_KEY
 
 Users can still paste their own OpenAI key in the UI. It travels only in the `x-openai-key` header of that single request, isn't rate-limited by the AI limiter, and is never stored or logged.
 
-### 4. Deploy (workers.dev only)
+### 4. Deploy to the configured production domains
 
 ```bash
-export CLOUDFLARE_API_TOKEN=...          # only the token string, nothing else
-export CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc   # production account (devstack.bid, examplessdk.workers.dev)
-# previous test account (v0.3.0, agen-sdk-work.workers.dev): f70d35188a3c56b9781538c73a86e04e
+export CLOUDFLARE_API_TOKEN=...          # use a narrowly scoped token; never commit it
+export CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc   # production account
+# Or authenticate interactively with `npx wrangler login --device`, then confirm with `npx wrangler whoami`.
 
-# 1) make sure the worker name is free (should say it does not exist)
+# 1) confirm the account and inspect the existing production Worker
+npx wrangler whoami
 npx wrangler deployments list --name nvx-stack-builder
-#    If it exists and is not ours: change "name" (and the WORKER_SELF_REFERENCE
-#    service) in wrangler.jsonc to "nvx-stack-builder-staging".
+#    Stop if the account or Worker is not the intended production target.
 
-# 2) build + deploy (creates the Worker on first deploy)
+# 2) review D1 migrations; apply only after owner approval
+npm run db:migrations:list
+npm run db:migrate:remote
+
+# 3) build + deploy this Worker and its configured custom domains
 npm run deploy                            # = opennextjs-cloudflare build && opennextjs-cloudflare deploy
 
-# 3) secret (after the worker exists)
+# 4) secret (after the worker exists)
 printenv OPENAI_API_KEY | npx wrangler secret put OPENAI_API_KEY
 
-# 4) verify
-curl -sI https://nvx-stack-builder.<subdomain>.workers.dev/ | grep -iE 'strict-transport|content-security'
-curl -s https://nvx-stack-builder.<subdomain>.workers.dev/api/plan   # {"serverKeyConfigured":true,...}
+# 5) verify the production domain and MCP discovery
+curl -sI https://devstack.bid/ | grep -iE 'strict-transport|content-security'
+curl -fsS https://devstack.bid/.well-known/mcp
 ```
 
-`wrangler.jsonc` sets `workers_dev: true`, `preview_urls: false` and **no `routes`**, so the deploy never touches any zone, DNS or custom domain.
+`wrangler.jsonc` sets `workers_dev: true`, `preview_urls: false`, and the approved Workers Custom Domains `devstack.bid` and `www.devstack.bid`. A deploy updates this Worker and those configured domains; do not add other routes or domains without approval. GitHub is not linked to Cloudflare for automatic deployments.
 
 ### 5. Rollback
 
@@ -137,7 +143,10 @@ Minimum for the test deploy (account-scoped token, resources must include accoun
 
 ## ภาษาไทย
 
-> **Production (11 ต.ค. 2026, v0.6.0):** เสิร์ฟที่ **https://devstack.bid** (apex) ผ่าน Workers Custom Domain ของ Worker `nvx-stack-builder` และ `www.devstack.bid` redirect 308 ไป apex เวอร์ชันปัจจุบัน `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (v0.6.0, deploy 11:18 ICT; ก่อนหน้า `671b6b3b-1074-40cb-84b0-0df2681b69ce` v0.5.1 ใช้ rollback ได้ แล้ว `d369f2b6-863a-4e44-8f9e-b5551e18361a`) workers.dev สำรองที่ https://nvx-stack-builder.examplessdk.workers.dev (บัญชีเปลี่ยน subdomain จาก `space6` เป็น `examplessdk`) HSTS เหลือ `max-age=31536000` ไม่มี `includeSubDomains` รายละเอียดดู [operations/custom-domain.md](operations/custom-domain.md)
+> **Production ปัจจุบัน (14 ต.ค. 2026):** เสิร์ฟที่ **https://devstack.bid** ผ่าน Workers Custom Domain ของ Worker `nvx-stack-builder`; `www.devstack.bid` redirect 308 ไป apex
+> - deploy เวลา 15:16 ICT จาก commit `42dfde6`; Cloudflare version `26c9dbb9-49b1-4d05-9597-3859170c02e4`; rollback target `450890b7-5432-4795-afbc-1c7ebd241bff`
+> - apply D1 migration `0008_mcp_clients.sql` ก่อน deploy แล้ว; ตรวจ discovery, initialize, 19 MCP tools, คำแนะนำความเป็นส่วนตัวภาษาไทย, หน้า settings และ API คีย์ที่ไม่ล็อกอินตอบ 401 ผ่าน
+> - workers.dev สำรองที่ https://nvx-stack-builder.examplessdk.workers.dev; HSTS เป็น `max-age=31536000` ไม่มี `includeSubDomains` ดู [operations/custom-domain.md](operations/custom-domain.md)
 >
 > **สถานะ v0.5.0 (11 ต.ค. 2026):** deploy ครั้งแรกที่ **https://nvx-stack-builder.space6.workers.dev** (URL นี้ใช้ไม่ได้แล้ว) (Worker `nvx-stack-builder` บัญชี `2d92bd5b25768fa9093d6adc0a8887fc` "Examplessdk@gmail.com's Account" subdomain `space6` ใช้ workers.dev เท่านั้น) deploy เมื่อ 11 ต.ค. 2026 08:47 (ICT) จาก commit `f995d24` (tag `v0.5.0`) ตรวจบนเว็บจริงผ่านทุกข้อ: ทุกหน้าได้ 200, 404 จริง, security headers, manifest/favicon/OG image, ไม่มี horizontal scroll ทั้งไทยและอังกฤษ, prompt ภาษาไทยได้ `source: "openai"`, rate limit ตอบ 429 พร้อม `Retry-After: 60` เวอร์ชันสำหรับ rollback: `d369f2b6-863a-4e44-8f9e-b5551e18361a` (ปัจจุบัน) และ `107ab78e-2cdd-4159-95e7-e8fcb89130aa` (โค้ดเดียวกันแต่ยังไม่ตั้ง secret) Worker เดิม `odd-violet-5e66` ในบัญชีนั้นไม่ถูกแตะ
 >
@@ -162,15 +171,17 @@ npm run preview    # รันใน Workers runtime ที่ http://localhost:
 - Rate limit: `NVX_PLAN_LIMITER` 20 ครั้งต่อนาทีต่อ IP สำหรับทุก POST และ `NVX_PLAN_AI_LIMITER` 5 ครั้งต่อนาทีต่อ IP เฉพาะเมื่อใช้ key ของเซิร์ฟเวอร์ binding ทั้งสองถูกสร้างพร้อมการ deploy
 - key ที่ผู้ใช้ใส่เองถูกใช้แค่ในคำขอนั้น ไม่ถูกเก็บและไม่ถูกบันทึก log
 
-### 4. Deploy (workers.dev เท่านั้น)
+### 4. Deploy ไปยัง production domains ที่ตั้งไว้
 ```bash
-export CLOUDFLARE_API_TOKEN=...      # ใส่เฉพาะตัว token
-export CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc   # บัญชี production (devstack.bid) · บัญชีเดิม v0.3.0: f70d35188a3c56b9781538c73a86e04e
-npx wrangler deployments list --name nvx-stack-builder   # ตรวจว่าชื่อยังว่าง ถ้าไม่ว่างให้ใช้ nvx-stack-builder-staging
+export CLOUDFLARE_API_TOKEN=...      # ใช้ token ที่จำกัดสิทธิ์และห้าม commit
+export CLOUDFLARE_ACCOUNT_ID=2d92bd5b25768fa9093d6adc0a8887fc   # ตรวจบัญชีด้วย npx wrangler whoami ก่อน
+npm run db:migrations:list          # ตรวจ migration ก่อน
+# หลังเจ้าของอนุมัติ migration เท่านั้น:
+npm run db:migrate:remote
 npm run deploy
 printenv OPENAI_API_KEY | npx wrangler secret put OPENAI_API_KEY
 ```
-ไฟล์ config ไม่มี `routes` จึงไม่แตะ zone, DNS หรือ custom domain ใด ๆ
+คำสั่ง deploy อัปเดต Worker และ Custom Domains ที่อนุมัติไว้คือ `devstack.bid` กับ `www.devstack.bid` ใน `wrangler.jsonc`; Cloudflare ไม่ได้ผูก Git เพื่อ deploy อัตโนมัติ ห้ามเพิ่มโดเมนหรือ route อื่นโดยไม่อนุมัติ
 
 ### 5. ย้อนเวอร์ชัน (rollback)
 ```bash
