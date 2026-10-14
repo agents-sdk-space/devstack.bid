@@ -91,7 +91,7 @@ Workers มี free tier; ค่าใช้จ่ายหลักคือ Op
 - **บัญชี:** `2d92bd5b25768fa9093d6adc0a8887fc` (examplessdk@gmail.com) Worker `nvx-stack-builder` เท่านั้น ไม่แตะ `odd-violet-5e66`
 - **deploy:** `npm run deploy` ได้ version `f3257677-8d0e-4f59-80da-35d8141d3bf8` โดเมน `devstack.bid` และ `www.devstack.bid` ยังอยู่ครบ
 - **ตรวจบนเว็บจริง:** `/`, `/login`, `/docs/platform`, `/docs/agents/cursor-caretakers` ได้ 200; `/templates/unknown` ได้ 404; www `/login` ได้ 308 ไป apex
-- **เข้าสู่ระบบ:** ปุ่ม Cursor, Google, GitHub พาไป `/login?auth=missing` เพราะยังไม่ได้ตั้ง `CURSOR_APP_ID`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` บน Worker นี้ รหัสผ่าน DevStack ตอบ `auth=error` เพราะ migration `0006` และ `0007` ยังไม่ได้ apply บน remote
+- **เข้าสู่ระบบ:** migration `0006` และ `0007` apply บน remote แล้วเมื่อ 14 ต.ค. 2026 (`schema_version` = 7) รหัสผ่านของอีเมลที่ไม่มีบัญชีตอบ `303` `auth=invalid` ปุ่ม Cursor, Google, GitHub ยังพาไป `/login?auth=missing` เพราะยังไม่ได้ตั้ง `CURSOR_APP_ID`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` บน Worker นี้ ดู [d1-database.md](./d1-database.md)
 - **rollback:** `05fbb6ee-eb43-4386-a273-7f3277c415be`
 
 ## บันทึก deploy: เพิ่ม D1 binding (11 ต.ค. 2026)

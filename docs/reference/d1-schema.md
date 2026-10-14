@@ -12,7 +12,7 @@ Reference ของทุกตารางในฐานข้อมูล D1 
 | `value` | TEXT | ไม่ | — | |
 | `updated_at` | INTEGER | ไม่ | now (ms) | |
 
-ไฟล์ migration ตั้ง `schema_version` ไปจนถึง `7` ค่าบนฐานจริงคือเลขของ migration ที่ apply แล้ว (remote ต้องได้รับอนุมัติก่อน apply `0006` และ `0007`)
+ไฟล์ migration ตั้ง `schema_version` ไปจนถึง `7` บน remote `nvx-db` ค่า `schema_meta.schema_version` เป็น `7` หลัง apply `0001`–`0007` เมื่อ 14 ต.ค. 2026
 
 ## `users`
 
@@ -115,8 +115,8 @@ Index: unique index ของ `key_hash`, `api_clients_active_created_idx` (`cre
 - **0003** `conversations.agent_session_id`, `messages.meta` (JSON), ตาราง `usage_counters` (`scope`, `bucket`, `count`, `updated_at`; PK `(scope, bucket)`) และ `attachment_blobs` (`attachment_id` → `attachments.id`, `data` BLOB ≤ 1,500,000 ไบต์)
 - **0004** `conversations.source` (`'chat'|'factory'`, default `'chat'`), `conversations.environment` (`none|openai_hosted|self_hosted`), index `conversations_user_source_updated`
 - **0005** `conversations.channel` (`'user'|'dev'`, default `'user'`; แถวที่มี `agent_session_id` หรือ `source='factory'` ถูกตั้งเป็น `'dev'`), index `conversations_user_channel_updated`, `schema_version = 5`
-- **0006** `users.login`, `users.avatar_url`, ตาราง `github_credentials` (`user_id` PK → `users.id`, `token_enc` คือ ciphertext AES-GCM ของ OAuth token, `scope`, `updated_at`), `schema_version = 6` ยังไม่ได้ apply บน remote จนกว่าจะได้รับอนุมัติ
-- **0007** ตาราง `password_credentials` (แฮช PBKDF2 ของบัญชี DevStack), `schema_version = 7` ยังไม่ได้ apply บน remote จนกว่าจะได้รับอนุมัติ
+- **0006** `users.login`, `users.avatar_url`, ตาราง `github_credentials` (`user_id` PK → `users.id`, `token_enc` คือ ciphertext AES-GCM ของ OAuth token, `scope`, `updated_at`), `schema_version = 6` apply บน remote แล้วเมื่อ 14 ต.ค. 2026
+- **0007** ตาราง `password_credentials` (แฮช PBKDF2 ของบัญชี DevStack), `schema_version = 7` apply บน remote แล้วเมื่อ 14 ต.ค. 2026
 
 bucket ของ `usage_counters`: `d:YYYYMMDD` = วันตามเวลาไทย (UTC+7), `h:YYYYMMDDHH` = ชั่วโมง UTC
 

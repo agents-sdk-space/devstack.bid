@@ -6,7 +6,7 @@
 
 | ทรัพยากร | ค่า | สถานะ |
 |---|---|---|
-| D1 database | `nvx-db`, id `3ee9bbab-06b5-49da-b175-5f7162ad5086`, region WNAM | สร้าง 11 ต.ค. 2026; migration `0001` และ `0002` apply บน remote แล้ว |
+| D1 database | `nvx-db`, id `3ee9bbab-06b5-49da-b175-5f7162ad5086`, region WNAM | สร้าง 11 ต.ค. 2026; migration `0001`–`0007` apply บน remote แล้ว (`schema_version` = 7, ตรวจ 14 ต.ค. 2026) |
 | Binding ใน Worker | `DB` (ชนิด `D1Database` ใน `cloudflare-env.d.ts`) | อยู่ใน `wrangler.jsonc`; ยังไม่มีโค้ดใช้ |
 | R2 bucket | `nvx-assets`, binding `ASSETS_BUCKET` | **ยังไม่ได้สร้าง**: บัญชียังไม่เปิด R2 |
 
@@ -38,7 +38,9 @@ npx wrangler d1 execute nvx-db --remote --command "select * from schema_meta"
 4. อัปเดต [reference/d1-schema.md](../reference/d1-schema.md) และ [architecture/chat-data-model.md](../architecture/chat-data-model.md) แล้วรัน `npm run docs:check`
 5. ขออนุมัติ แล้วรัน `npm run db:migrate:remote` **ก่อน** deploy โค้ดที่ใช้ schema ใหม่
 
-`0006_github_auth.sql` และ `0007_password_auth.sql` ยังไม่ถูก apply บน remote จากงานนี้ การเข้าสู่ระบบบน production ใช้ได้หลังได้รับอนุมัติให้ migrate
+`0006_github_auth.sql` และ `0007_password_auth.sql` ถูก apply บน remote `nvx-db` แล้วเมื่อ 14 ต.ค. 2026 หลังได้รับอนุมัติ `d1_migrations` มีแถว `0001` ถึง `0007` และ `schema_meta.schema_version` เป็น `7` ตาราง `github_credentials` กับ `password_credentials` มีอยู่บนฐานจริง การล็อกอินรหัสผ่านของอีเมลที่ไม่มีบัญชีตอบ `303` ไป `/login?auth=invalid&provider=password` (ก่อนมีตาราง คำสั่ง SQL พังแล้วตอบ `auth=error`)
+
+ปุ่ม Cursor, Google และ GitHub บน production ยังพาไป `/login?auth=missing` เพราะ Worker `nvx-stack-builder` ยังไม่มี secret `CURSOR_APP_ID`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` เครื่องนี้ไม่มี client id หรือ client secret ของสามผู้ให้บริการ และ GitHub ไม่มี API สำหรับสร้าง OAuth App (ต้องสร้างใน GitHub settings) ส่วน Google Cloud กับ Cursor Origin ก็สร้างได้จากแดชบอร์ดของผู้ให้บริการเท่านั้น callback ที่ต้องลงทะเบียนคือ `https://devstack.bid/api/auth/github/callback`, `https://devstack.bid/api/auth/google/callback` และ `https://devstack.bid/api/auth/cursor/callback` จากนั้นส่งค่าผ่าน stdin ด้วย `wrangler secret put` ห้ามพิมพ์ค่าลับ
 
 ## สำรองและกู้คืน
 
