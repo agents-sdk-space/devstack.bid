@@ -1,0 +1,145 @@
+/**
+ * Pure checks for GitHub sign-in and "push this code block" (no network, no secrets).
+ * The server stores a file through the GitHub API. It never runs the file.
+ */
+
+/** Classic OAuth scopes: profile, email, and write access to repos the user can push. */
+export const GITHUB_SCOPES = "read:user user:email repo";
+
+export const MAX_FILE_CHARS = 100_000;
+
+export interface AccountPlan {
+  userId: string;
+  promoteAnon: boolean;
+  create: boolean;
+  /** Anonymous id whose conversations should move onto the GitHub account. */
+  moveFrom: string | null;
+}
+
+/**
+ * Where chat history goes when GitHub sign-in succeeds.
+ * An existing GitHub account wins. Otherwise the anonymous row is promoted so its chats stay put.
+ */
+export function planAccountLink(anonId: string | null, existingId: string | null, freshId: string): AccountPlan {
+  if (existingId) {
+    return { userId: existingId, promoteAnon: false, create: false, moveFrom: anonId && anonId !== existingId ? anonId : null };
+  }
+  if (anonId) return { userId: anonId, promoteAnon: true, create: false, moveFrom: null };
+  return { userId: freshId, promoteAnon: false, create: true, moveFrom: null };
+}
+
+/** Same-site path only. Rejects protocol-relative and API URLs. */
+export function safeNext(raw: string | null | undefined): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\") || /[\u0000-\u001f]/.test(raw)) return "/chat";
+  if (raw.startsWith("/api/") || raw.startsWith("/api?")) return "/chat";
+  return raw.slice(0, 200);
+}
+
+const PATH_RE = /^[A-Za-z0-9][A-Za-z0-9._@~/-]{0,199}$/;
+
+/** Relative file path inside a repository. */
+export function safeRepoPath(path: string): string | null {
+  const p = path.trim();
+  if (!PATH_RE.test(p)) return null;
+  if (p.includes("..") || p.startsWith("/") || p.endsWith("/") || p.includes("//") || p.includes("\\")) return null;
+  return p;
+}
+
+export function parseRepo(repo: string): { owner: string; name: string } | null {
+  const m = repo.trim().match(/^([A-Za-z0-9][A-Za-z0-9_.-]{0,99})\/([A-Za-z0-9_.-]{1,100})$/);
+  if (!m || m[1].includes("..") || m[2].includes("..")) return null;
+  return { owner: m[1], name: m[2] };
+}
+
+export function safeBranch(branch: string): string | null {
+  const b = branch.trim();
+  if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$/.test(b)) return null;
+  if (b.includes("..") || b.endsWith("/") || b.includes("//")) return null;
+  return b;
+}
+
+export function safeCommitMessage(message: string): string | null {
+  const m = message.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+  if (m.length < 1 || m.length > 200) return null;
+  return m;
+}
+
+/** https://github.com/... only, so a commit response cannot redirect the UI elsewhere. */
+export function githubHref(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (u.protocol === "https:" && u.hostname === "github.com") return u.toString();
+  } catch {
+    /* not a url */
+  }
+  return null;
+}
+
+export function sameOrigin(req: Request): boolean {
+  const host = req.headers.get("host");
+  if (!host) return false;
+  const origin = req.headers.get("origin");
+  if (origin) {
+    try {
+      return new URL(origin).host === host;
+    } catch {
+      return false;
+    }
+  }
+  const site = req.headers.get("sec-fetch-site");
+  return site === "same-origin" || site === "same-site" || site === "none";
+}
+
+const FILE_LINE = /^(?:\/\/|#|--)\s*file:\s*(\S+)\s*$/;
+const EXT: Record<string, string> = {
+  py: "py",
+  python: "py",
+  ts: "ts",
+  tsx: "tsx",
+  js: "js",
+  jsx: "jsx",
+  sh: "sh",
+  bash: "sh",
+  json: "json",
+  md: "md",
+  css: "css",
+  html: "html",
+  yml: "yml",
+  yaml: "yml",
+  go: "go",
+  rs: "rs",
+  sql: "sql",
+  toml: "toml",
+};
+
+export interface FencedFile {
+  lang: string;
+  path: string;
+  code: string;
+}
+
+/** Code fences the user can push. A first line `// file: path` (or `# file:`) sets the path. */
+export function fencedFiles(markdown: string): FencedFile[] {
+  const out: FencedFile[] = [];
+  const re = /```([^\n`]*)\n([\s\S]*?)```/g;
+  let m: RegExpExecArray | null;
+  let n = 0;
+  while ((m = re.exec(markdown))) {
+    n += 1;
+    const info = m[1].trim();
+    const lang = info.split(/\s+/)[0]?.replace(/[^A-Za-z0-9]/g, "") ?? "";
+    let code = m[2].replace(/\n$/, "");
+    let path = "";
+    const hinted = info.split(/\s+/).slice(1).find((p) => p.includes(".") || p.includes("/"));
+    if (hinted && safeRepoPath(hinted)) path = hinted;
+    const lines = code.split("\n");
+    const fileLine = lines[0]?.match(FILE_LINE);
+    if (fileLine && safeRepoPath(fileLine[1])) {
+      path = fileLine[1];
+      code = lines.slice(1).join("\n").replace(/^\n/, "");
+    }
+    if (!path) path = `snippet-${n}.${EXT[lang.toLowerCase()] ?? "txt"}`;
+    if (code.trim() && safeRepoPath(path)) out.push({ lang, path, code });
+  }
+  return out;
+}

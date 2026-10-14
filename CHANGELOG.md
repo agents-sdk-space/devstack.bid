@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **GitHub sign-in** on `/chat`. OAuth (`read:user`, `user:email`, `repo`) stores an AES-GCM token in D1 (`github_credentials`) and keeps chat history on that account. Signing out deletes the token. Anonymous chats on the same browser are promoted or moved across on first sign-in.
+- **Push a code block to GitHub** from a chat reply (`POST /api/github/contents`). The server writes one file through the GitHub Contents API and does not run it.
+- **Vercel AI Gateway** models in the `/chat` picker (GPT-5 mini, GPT-5 Codex, Claude Haiku 4.5, Gemini 2.5 Flash, Qwen3 Coder, DeepSeek V4 Flash). They stay disabled until `AI_GATEWAY_API_KEY` is set. Ids match `GET https://ai-gateway.vercel.sh/v1/models` as of 2026-10-14.
+- D1 migration `0006_github_auth` (`users.login`, `users.avatar_url`, `github_credentials`). Apply on the remote database before relying on sign-in in production.
+
 ### Fixed
 
 - GitHub Pages workflow (`.github/workflows/jekyll-gh-pages.yml`) pins `actions/checkout` (v4.4.0), `actions/configure-pages` (v5.0.0), `actions/jekyll-build-pages` (v1.0.13), `actions/upload-pages-artifact` (v3.0.1) and `actions/deploy-pages` (v5.0.1) to full commit SHAs. The org policy rejected the floating tags, so the latest commit on `main` still showed a red X after the CI workflow itself was green. Deploy still runs only from `main`.

@@ -6,7 +6,7 @@ import type { RawEvent } from "./agents-api";
  * reasoning are never forwarded; only labels, short details and the final reply text.
  */
 
-export type ChatMode = "general" | "thai" | "code" | "strong" | "image" | "agent";
+export type ChatMode = "general" | "thai" | "code" | "strong" | "image" | "agent" | "gateway";
 
 export type ActivityKind = "note" | "reasoning" | "tool" | "search" | "mcp" | "command" | "subagent" | "sandbox" | "image" | "file";
 

@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { CHAT_COOKIE, readCookie, verifyUid } from "@/lib/chat/identity";
+import { resolveActor } from "@/lib/chat/identity";
 import { chatEnv, chatRuntime, json, unavailable } from "@/lib/chat/runtime";
 import { loadInlineImage } from "@/lib/chat/store";
 
@@ -10,8 +10,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const env = chatEnv();
   const { db } = await chatRuntime();
   if (unavailable(env, db) || !/^[0-9a-f-]{36}$/.test(id)) return json({ error: "Not found" }, 404);
-  const uid = await verifyUid(readCookie(req.headers.get("cookie"), CHAT_COOKIE), env.CHAT_COOKIE_SECRET!);
-  if (!uid) return json({ error: "Not found" }, 404);
+  const actor = await resolveActor(req, env.CHAT_COOKIE_SECRET!);
+  if (!actor.uid) return json({ error: "Not found" }, 404);
+  const uid = actor.uid;
   const img = await loadInlineImage(db!, uid, id);
   if (!img) return json({ error: "Not found" }, 404);
   const bytes = img.data instanceof Uint8Array ? img.data : Array.isArray(img.data) ? new Uint8Array(img.data) : new Uint8Array(img.data);

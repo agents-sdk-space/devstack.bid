@@ -4,8 +4,13 @@
 
 | Route | Method | ใช้ทำอะไร |
 |---|---|---|
-| `/api/chat?channel=user\|dev` | GET | สถานะ, `limits`, `models`, `quota` คงเหลือ, รายการแชตของ cookie นี้ |
-| `/api/chat/turn` | POST | User Chat: `{ message, conversationId?, mode?: general\|thai\|code\|strong\|image }` → SSE |
+| `/api/chat?channel=user\|dev` | GET | สถานะ, `limits`, `models` (รวม Vercel AI Gateway), `github.configured`, `account` ถ้าเข้าสู่ระบบแล้ว, `quota`, รายการแชตของ session หรือ cookie |
+| `/api/chat/turn` | POST | User Chat: `{ message, conversationId?, mode?: general\|thai\|code\|strong\|image\|gateway, model? }` → SSE โหมด `gateway` รับเฉพาะ id ในรายการอนุญาต |
+| `/api/auth/github` | GET | เริ่ม GitHub OAuth (state ลงนามใน cookie) ถ้ายังไม่ตั้งค่า จะพากลับ `/chat?auth=missing` |
+| `/api/auth/github/callback` | GET | แลก code, ผูกแชตกับบัญชี, ตั้ง cookie `nvx_auth` |
+| `/api/auth/logout` | POST | ลบ token ที่เข้ารหัสไว้และล้าง session (ต้องมาจาก origin เดียวกัน) |
+| `/api/github/repos` | GET | รายการ repo ที่บัญชีที่เข้าสู่ระบบ push ได้ |
+| `/api/github/contents` | POST | `{ repo, path, message, content, branch? }` สร้างหรืออัปเดตไฟล์ผ่าน GitHub Contents API ไม่รันไฟล์ |
 | `/api/chat/dev/turn` | POST | Dev Chat: `{ message, conversationId? }` → SSE |
 | `/api/chat/conversations/[id]` | GET / DELETE | อ่านข้อความ / archive แชต (เฉพาะเจ้าของ) |
 | `/api/chat/images/[id]` | GET | bytes ของภาพ (เฉพาะเจ้าของ) |
@@ -29,5 +34,7 @@
 | 409 | `busy` | ข้อความก่อนหน้ายังตอบไม่เสร็จ |
 | 413 | `too_long` | เกิน `CHAT_MAX_INPUT_CHARS` / ไฟล์เกิน 10 MB |
 | 429 | `rate_limited` + `limit` | `burst`, `msg_user_day`, `msg_ip_day`, `chat_global_day`, `image_user_day`, `image_ip_day`, `image_global_day`, `agent_user_day`, `agent_global_day`, `budget` พร้อม `Retry-After` |
-| 503 | `unavailable` / `no_database` / `uploads_disabled` | ปิดแชต หรือไม่มี binding |
+| 503 | `unavailable` / `no_database` / `uploads_disabled` / `gateway_unconfigured` | ปิดแชต, ไม่มี binding, หรือยังไม่มี `AI_GATEWAY_API_KEY` |
+| 401 | `unauthorized` / `reauth` | ยังไม่เข้าสู่ระบบ GitHub หรือ token ที่เก็บไว้เปิดไม่ได้อีก |
+| 403 | `forbidden` | คำขอเขียนข้าม origin |
 | 401/403 | `key_rejected` / `missing_scope` | Factory: key ผู้ใช้ใช้ไม่ได้ |

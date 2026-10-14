@@ -5,6 +5,10 @@
  */
 
 export const CHAT_COOKIE = "nvx_chat_uid";
+/** Signed user id after GitHub sign-in. Same HMAC format as the anonymous cookie, different name. */
+export const AUTH_COOKIE = "nvx_auth";
+/** Short-lived CSRF state for the GitHub OAuth callback. */
+export const OAUTH_STATE_COOKIE = "nvx_oauth_state";
 const MAX_AGE = 60 * 60 * 24 * 365;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -43,8 +47,16 @@ export async function signUid(uid: string, secret: string): Promise<string> {
   return `${uid}.${await hmac(secret, uid)}`;
 }
 
+export function namedCookie(name: string, value: string, secure: boolean, maxAge = MAX_AGE, path = "/"): string {
+  return `${name}=${encodeURIComponent(value)}; Path=${path}; Max-Age=${maxAge}; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`;
+}
+
 export function cookieHeader(value: string, secure: boolean): string {
-  return `${CHAT_COOKIE}=${encodeURIComponent(value)}; Path=/; Max-Age=${MAX_AGE}; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`;
+  return namedCookie(CHAT_COOKIE, value, secure);
+}
+
+export function clearCookie(name: string, secure: boolean, path = "/"): string {
+  return namedCookie(name, "", secure, 0, path);
 }
 
 /** Resolve the caller's uid; `setCookie` is non-null when a new id was issued. */
@@ -54,4 +66,51 @@ export async function resolveIdentity(req: Request, secret: string): Promise<{ u
   const uid = crypto.randomUUID();
   const secure = new URL(req.url).protocol === "https:";
   return { uid, setCookie: cookieHeader(await signUid(uid, secret), secure) };
+}
+
+function b64urlEncode(payload: string): string {
+  return btoa(payload).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function b64urlDecode(payload: string): string | null {
+  try {
+    const pad = payload.length % 4 === 0 ? "" : "=".repeat(4 - (payload.length % 4));
+    return atob(payload.replace(/-/g, "+").replace(/_/g, "/") + pad);
+  } catch {
+    return null;
+  }
+}
+
+/** Sign an ASCII payload (OAuth state). Value is `base64url(payload).hmac`. */
+export async function signPayload(secret: string, payload: string): Promise<string> {
+  const body = b64urlEncode(payload);
+  return `${body}.${await hmac(secret, body)}`;
+}
+
+export async function verifyPayload(value: string | undefined, secret: string): Promise<string | null> {
+  if (!value) return null;
+  const i = value.lastIndexOf(".");
+  if (i <= 0) return null;
+  const body = value.slice(0, i);
+  const sig = value.slice(i + 1);
+  if (!body || !sig || !timingSafeEqual(sig, await hmac(secret, body))) return null;
+  return b64urlDecode(body);
+}
+
+/**
+ * Chat identity. A valid GitHub session wins over the anonymous cookie.
+ * `issue` mints an anonymous cookie when neither is present (POST turns). GETs pass `issue: false`.
+ */
+export async function resolveActor(
+  req: Request,
+  secret: string,
+  opts: { issue?: boolean } = {}
+): Promise<{ uid: string | null; setCookie: string | null; authenticated: boolean }> {
+  const session = await verifyUid(readCookie(req.headers.get("cookie"), AUTH_COOKIE), secret);
+  if (session) return { uid: session, setCookie: null, authenticated: true };
+  const anon = await verifyUid(readCookie(req.headers.get("cookie"), CHAT_COOKIE), secret);
+  if (anon) return { uid: anon, setCookie: null, authenticated: false };
+  if (!opts.issue) return { uid: null, setCookie: null, authenticated: false };
+  const minted = await resolveIdentity(req, secret);
+  return { uid: minted.uid, setCookie: minted.setCookie, authenticated: false };
 }

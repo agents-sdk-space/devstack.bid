@@ -1,4 +1,5 @@
 import "server-only";
+import { GATEWAY_MODELS, isGatewayModel } from "@/lib/ai/gateway-models";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { AiBinding } from "@/lib/ai/workers-ai";
 import type { SearchEntry } from "@/lib/docs-search";
@@ -8,7 +9,7 @@ import { checkRateLimit } from "@/lib/server/rate-limit";
 import { AgentsApi } from "./agents-api";
 import { quotaConfig } from "./config";
 import type { UiEvent } from "./events";
-import { resolveIdentity } from "./identity";
+import { resolveActor } from "./identity";
 import { agentRules, consume, imageRules, messageRules, pruneCounters, refund, spentToday, type LimitResult } from "./limits";
 import { runImageTurn, runPlainTurn, USER_MODES, type UserMode } from "./plain-turn";
 import { chatEnv, chatRuntime, json, unavailable } from "./runtime";
@@ -82,7 +83,7 @@ export async function handleTurn(req: Request, channel: "user" | "dev"): Promise
   const burst = await checkRateLimit("NVX_CHAT_LIMITER", ip, env.CHAT_BURST_PER_MIN);
   if (!burst.ok) return limitError("burst", 60);
 
-  let body: { message?: unknown; conversationId?: unknown; mode?: unknown };
+  let body: { message?: unknown; conversationId?: unknown; mode?: unknown; model?: unknown };
   try {
     const parsed = await readJsonBody(req, MAX_BODY_BYTES);
     body = parsed && typeof parsed === "object" ? (parsed as typeof body) : {};
@@ -96,9 +97,15 @@ export async function handleTurn(req: Request, channel: "user" | "dev"): Promise
     return json({ error: `Message is too long (max ${env.CHAT_MAX_INPUT_CHARS} characters). / ข้อความยาวเกิน ${env.CHAT_MAX_INPUT_CHARS} ตัวอักษร`, code: "too_long", max: env.CHAT_MAX_INPUT_CHARS }, 413);
   }
   const mode: UserMode | "agent" = channel === "dev" ? "agent" : USER_MODES.includes(body.mode as UserMode) ? (body.mode as UserMode) : "general";
+  const gatewayModel = mode === "gateway" && typeof body.model === "string" && isGatewayModel(body.model) ? body.model : mode === "gateway" ? GATEWAY_MODELS[0].id : undefined;
 
-  const { uid, setCookie } = await resolveIdentity(req, env.CHAT_COOKIE_SECRET!);
+  const actor = await resolveActor(req, env.CHAT_COOKIE_SECRET!, { issue: true });
+  const uid = actor.uid!;
+  const setCookie = actor.setCookie;
   const cookie: Record<string, string> = setCookie ? { "Set-Cookie": setCookie } : {};
+  if (mode === "gateway" && !server.AI_GATEWAY_API_KEY) {
+    return json({ error: "Vercel AI Gateway is not configured on this server. / เซิร์ฟเวอร์ยังไม่ได้ตั้งค่า Vercel AI Gateway", code: "gateway_unconfigured" }, 503, cookie);
+  }
   const database = db!;
   const q = quotaConfig(env);
 
@@ -127,7 +134,19 @@ export async function handleTurn(req: Request, channel: "user" | "dev"): Promise
 
   const ai = channel === "user" ? await aiBinding() : null;
   const replyModel =
-    mode === "agent" ? env.CHAT_MODEL : mode === "image" ? env.WAI_IMAGE_MODEL : mode === "strong" ? server.HF_MODEL : mode === "thai" ? env.WAI_THAI_MODEL : mode === "code" ? env.WAI_CODE_MODEL : env.WAI_MODEL;
+    mode === "agent"
+      ? env.CHAT_MODEL
+      : mode === "image"
+        ? env.WAI_IMAGE_MODEL
+        : mode === "gateway"
+          ? gatewayModel!
+          : mode === "strong"
+            ? server.HF_MODEL
+            : mode === "thai"
+              ? env.WAI_THAI_MODEL
+              : mode === "code"
+                ? env.WAI_CODE_MODEL
+                : env.WAI_MODEL;
 
   await ensureUser(database, uid);
   const history = conversation ? await listMessages(database, conversation.id, 40) : [];
@@ -148,7 +167,7 @@ export async function handleTurn(req: Request, channel: "user" | "dev"): Promise
     if (!open) return;
     writer.write(encoder.encode(`data: ${JSON.stringify(e)}\n\n`)).catch(() => (open = false));
   };
-  const provider = mode === "agent" ? "openai" : mode === "strong" ? "huggingface" : "workers-ai";
+  const provider = mode === "agent" ? "openai" : mode === "gateway" ? "vercel" : mode === "strong" ? "huggingface" : "workers-ai";
   emit({ t: "meta", conversationId: conversation.id, messageId: assistantMessageId, title: conversation.title ?? "", mode, model: replyModel, provider });
   const r = lim.remaining;
   if (mode === "agent") emit({ t: "quota", agentLeft: min(r.agent_user_day, r.msg_ip_day, r.agent_global_day) });
@@ -191,7 +210,7 @@ export async function handleTurn(req: Request, channel: "user" | "dev"): Promise
         })
       : mode === "image"
         ? runImageTurn(base)
-        : runPlainTurn({ ...base, mode, history, timeoutMs: Math.min(env.CHAT_TURN_TIMEOUT_MS, 90_000) });
+        : runPlainTurn({ ...base, mode, history, gatewayModel, timeoutMs: Math.min(env.CHAT_TURN_TIMEOUT_MS, 90_000) });
   waitUntil(finish(work));
 
   return new Response(stream.readable, {
