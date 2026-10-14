@@ -1,7 +1,7 @@
 # Deploying NVX Stack Builder to Cloudflare Workers
 
 > **Current production (2026-10-14):** live at **https://devstack.bid** (apex). Worker `nvx-stack-builder` in account `2d92bd5b25768fa9093d6adc0a8887fc`; `www.devstack.bid` is also attached and returns 308 to the apex.
-> - Deployed 2026-10-14 15:16 ICT from commit `42dfde6`; Cloudflare version `26c9dbb9-49b1-4d05-9597-3859170c02e4`. D1 migration `0008_mcp_clients.sql` applied to `nvx-db` before deploy. Rollback target: `450890b7-5432-4795-afbc-1c7ebd241bff`.
+> - Deployed 2026-10-14 15:31 ICT from commit `d684720`; Cloudflare version `d196d1e5-e6e5-4e5e-98cb-22764ef8ad4e`. This deployment includes the dependency security patch. D1 migration `0008_mcp_clients.sql` applied to `nvx-db` before deploy. Rollback target: `450890b7-5432-4795-afbc-1c7ebd241bff`.
 > - Live checks passed: MCP discovery, protocol initialization, 19 tools, Thai privacy-guidance tool response, settings page, and unauthenticated key API returns 401.
 > - Previous production versions: `7ddd9404-a31f-4e31-8460-82b3b90c7d0e` (v0.6.0), `671b6b3b-1074-40cb-84b0-0df2681b69ce` (v0.5.1), then `d369f2b6-863a-4e44-8f9e-b5551e18361a` (v0.5.0) and `107ab78e-2cdd-4159-95e7-e8fcb89130aa`.
 > - workers.dev fallback: https://nvx-stack-builder.examplessdk.workers.dev. The account's subdomain was renamed from `space6` to `examplessdk` on 2026-10-11, so the old `space6` URL no longer resolves.
@@ -144,7 +144,7 @@ Minimum for the test deploy (account-scoped token, resources must include accoun
 ## ภาษาไทย
 
 > **Production ปัจจุบัน (14 ต.ค. 2026):** เสิร์ฟที่ **https://devstack.bid** ผ่าน Workers Custom Domain ของ Worker `nvx-stack-builder`; `www.devstack.bid` redirect 308 ไป apex
-> - deploy เวลา 15:16 ICT จาก commit `42dfde6`; Cloudflare version `26c9dbb9-49b1-4d05-9597-3859170c02e4`; rollback target `450890b7-5432-4795-afbc-1c7ebd241bff`
+> - deploy เวลา 15:31 ICT จาก commit `d684720`; Cloudflare version `d196d1e5-e6e5-4e5e-98cb-22764ef8ad4e` (รวมแพตช์ dependency security แล้ว); rollback target `450890b7-5432-4795-afbc-1c7ebd241bff`
 > - apply D1 migration `0008_mcp_clients.sql` ก่อน deploy แล้ว; ตรวจ discovery, initialize, 19 MCP tools, คำแนะนำความเป็นส่วนตัวภาษาไทย, หน้า settings และ API คีย์ที่ไม่ล็อกอินตอบ 401 ผ่าน
 > - workers.dev สำรองที่ https://nvx-stack-builder.examplessdk.workers.dev; HSTS เป็น `max-age=31536000` ไม่มี `includeSubDomains` ดู [operations/custom-domain.md](operations/custom-domain.md)
 >
