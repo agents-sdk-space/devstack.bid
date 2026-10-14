@@ -49,6 +49,7 @@ npm run cf:build      # ต้องผ่านก่อน deploy
 ## ปัญหาที่พบบ่อย
 
 - **`wrangler` บอกว่า Node เก่าเกินไป** → ใช้ Node 22+
+- **หน้า `/builder` ค้างที่ "Loading builder…"** → เปิด `http://localhost:3000` Next.js 16 บล็อก HMR เมื่อต้นทางเป็น `127.0.0.1` (ตอบคำว่า `Unauthorized` แบบไม่มีสถานะ HTTP) หน้า client-only จึงไม่ hydrate
 - **พอร์ต 8787 ถูกใช้** → ปิด preview เก่าตามคำสั่งข้างบน
 - **AI ไม่ทำงานใน dev** → ตรวจว่า `OPENAI_API_KEY` อยู่ใน `.env.local` หรือ `.dev.vars` และตรงรูปแบบ `^[\w-]{20,400}$`; `GET /api/plan` จะบอก `serverKeyConfigured`
 - **ได้ 429 ระหว่างทดสอบ** → เกิน 20 POST/นาทีจาก IP เดียว (limiter ในหน่วยความจำรีเซ็ตเมื่อ restart server)
