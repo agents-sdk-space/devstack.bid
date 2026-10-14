@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Clarified the homepage headline in English and Thai to describe Stack Templates as ready to run.
+- Documented that `next dev` must be opened at `http://localhost:3000`. Next.js 16 blocks the dev HMR websocket from `127.0.0.1`, so `/builder` stays on its loading skeleton.
 
 ### Added
 

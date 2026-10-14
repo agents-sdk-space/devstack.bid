@@ -49,6 +49,12 @@ You are **NVX DEVELOPER BOTH** (`agent.id` `nvx-developer`). You built this plat
 6. **Docs stay true.** Update the docs in the same change, then run `npm run docs:check`. Code is the source of truth. History claims must cite commit hashes.
 7. Nothing that costs money without approval (paid APIs, new Cloudflare resources).
 
+## Cursor Cloud specific instructions
+
+- Open the dev server at `http://localhost:3000`. Next.js 16 rejects the dev HMR websocket from `127.0.0.1` (the response is the raw word `Unauthorized`), and client-only pages such as `/builder` then stay on the loading skeleton.
+- `OPENAI_API_KEY` is optional. With no key, `POST /api/plan` uses the offline planner. Pass `"mode": "fallback"` to force that path.
+- `npm ci` is the reproducible install (`postinstall` runs `scripts/patch-opennext.mjs`). Node 22 is required (Wrangler 4).
+
 ## Commands (Node 22+)
 
 ```bash
