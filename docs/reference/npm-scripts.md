@@ -13,9 +13,9 @@
 | `npm run test:watch` | `vitest` แบบ watch | ระหว่างเขียน test |
 | `npm run typecheck` | `tsc --noEmit` | ก่อน commit; CI |
 | `npm run export -- <id> [opts]` | `tsx scripts/export-template.ts` เขียน setup.sh/ps1/README ของเทมเพลตลงดิสก์ | ทดสอบเทมเพลต end-to-end |
-| `npm run cf:build` | `opennextjs-cloudflare build` → `.open-next/` | ตรวจว่า build เป็น Worker ได้ |
-| `npm run preview` | build + `opennextjs-cloudflare preview` ใน workerd ที่ :8787 | ตรวจพฤติกรรม/ภาพแบบ production |
-| `npm run deploy` | build + `opennextjs-cloudflare deploy` | **ต้องได้รับอนุมัติก่อน** ดู [deploy-cloudflare.md](../operations/deploy-cloudflare.md) |
+| `npm run cf:build` | `opennextjs-cloudflare build` แล้ว `node scripts/patch-opennext-worker.mjs` → `.open-next/` | ตรวจว่า build เป็น Worker ได้ และ export `MediaLifecycleWorkflow` |
+| `npm run preview` | build + patch worker + `opennextjs-cloudflare preview` ใน workerd ที่ :8787 | ตรวจพฤติกรรม/ภาพแบบ production |
+| `npm run deploy` | build + patch worker + `opennextjs-cloudflare deploy` | **ต้องได้รับอนุมัติก่อน** ดู [deploy-cloudflare.md](../operations/deploy-cloudflare.md) |
 | `npm run cf:typegen` | `wrangler types ...` → `cloudflare-env.d.ts` | หลังแก้ binding ใน wrangler.jsonc |
 | `npm run db:migrate:local` | `wrangler d1 migrations apply nvx-db --local` | ทดสอบ migration ในฐานข้อมูลจำลองบนเครื่อง |
 | `npm run db:migrate:remote` | `wrangler d1 migrations apply nvx-db --remote` | **ต้องได้รับอนุมัติก่อน** apply บน D1 จริง ดู [d1-database.md](../operations/d1-database.md) |
@@ -40,6 +40,7 @@ npm run export -- fastapi-ai --py uv --addons testing,docker --out /tmp/fastapi 
 |---|---|---|
 | [`scripts/gen-brand-icons.mjs`](../../scripts/gen-brand-icons.mjs) | `node scripts/gen-brand-icons.mjs` | สร้าง `src/components/brand/brand-icons.data.ts` จาก simple-icons (รันหลังเพิ่ม id โลโก้) |
 | [`scripts/patch-opennext.mjs`](../../scripts/patch-opennext.mjs) | อัตโนมัติ (postinstall) | patch `preview-props.json` |
+| [`scripts/patch-opennext-worker.mjs`](../../scripts/patch-opennext-worker.mjs) | ท้าย `cf:build`, `preview`, `deploy` | export `MediaLifecycleWorkflow` จาก `.open-next/worker.js` |
 | [`scripts/docs-check.mjs`](../../scripts/docs-check.mjs) | `npm run docs:check` | docs freshness |
 | [`scripts/docs-pdf.mjs`](../../scripts/docs-pdf.mjs) | `npm run docs:pdf` | PDF คู่มือผู้ใช้ |
 | [`scripts/build-docs.mjs`](../../scripts/build-docs.mjs) | `npm run docs:bundle` (และ pre-hooks) | docs bundle สำหรับ `/docs` ([docs-site.md](../architecture/docs-site.md)) |

@@ -88,6 +88,8 @@
 
 `ASSETS_BUCKET` (R2 bucket `nvx-assets`) **ยังไม่ได้เพิ่ม** เพราะบัญชียังไม่เปิด R2 ขั้นตอนอยู่ที่ [d1-database.md](../operations/d1-database.md) อย่าใส่ binding ก่อนมี bucket จริง เพราะ deploy จะล้ม
 
+`MEDIA_WORKFLOW`, `VECTORIZE` และ `EMAIL` ก็ยังไม่ถูกใส่ด้วยเหตุผลเดียวกัน โค้ดของ `MediaLifecycleWorkflow` พร้อมแล้ว แต่การเพิ่ม binding จะไปสร้าง Workflow, ดัชนี Vectorize หรือช่องส่งอีเมลตอน deploy รายการคำสั่งและก้อน config อยู่ที่ [media-workflow.md](../operations/media-workflow.md) ตัวแปร `EMAIL_FROM` กับ `LIFECYCLE_FOLLOWUP` จะถูกอ่านจาก env ของ Workflow เมื่อมีค่า และยังไม่ได้อยู่ใน `vars`
+
 ## การตั้งค่าอื่นใน wrangler.jsonc
 
 `name: nvx-stack-builder`, `compatibility_date: 2026-10-06`, `compatibility_flags: [nodejs_compat, global_fetch_strictly_public]`, `workers_dev: true`, `preview_urls: false`, ไม่มี `routes`, `observability.enabled: true` (`head_sampling_rate: 1`), `upload_source_maps: true`

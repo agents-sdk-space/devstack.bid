@@ -12,7 +12,7 @@ Reference ของทุกตารางในฐานข้อมูล D1 
 | `value` | TEXT | ไม่ | — | |
 | `updated_at` | INTEGER | ไม่ | now (ms) | |
 
-ไฟล์ migration ตั้ง `schema_version` ไปจนถึง `7` ค่าบนฐานจริงคือเลขของ migration ที่ apply แล้ว (remote ต้องได้รับอนุมัติก่อน apply `0006` และ `0007`)
+ไฟล์ migration ตั้ง `schema_version` ไปจนถึง `8` ค่าบนฐานจริงคือเลขของ migration ที่ apply แล้ว (remote ต้องได้รับอนุมัติก่อน apply `0006`, `0007` และ `0008`)
 
 ## `users`
 
@@ -117,6 +117,34 @@ Index: unique index ของ `key_hash`, `api_clients_active_created_idx` (`cre
 - **0005** `conversations.channel` (`'user'|'dev'`, default `'user'`; แถวที่มี `agent_session_id` หรือ `source='factory'` ถูกตั้งเป็น `'dev'`), index `conversations_user_channel_updated`, `schema_version = 5`
 - **0006** `users.login`, `users.avatar_url`, ตาราง `github_credentials` (`user_id` PK → `users.id`, `token_enc` คือ ciphertext AES-GCM ของ OAuth token, `scope`, `updated_at`), `schema_version = 6` ยังไม่ได้ apply บน remote จนกว่าจะได้รับอนุมัติ
 - **0007** ตาราง `password_credentials` (แฮช PBKDF2 ของบัญชี DevStack), `schema_version = 7` ยังไม่ได้ apply บน remote จนกว่าจะได้รับอนุมัติ
+- **0008** ตาราง `upload_objects` (สถานะของวัตถุ R2 ที่ Workflow ฝังลง Vectorize) และ `lifecycle_mail` (เคลมจดหมาย `welcome` / `inactive`), `schema_version = 8` ยังไม่ได้ apply บน remote จนกว่าจะได้รับอนุมัติ ขั้นตอนอยู่ที่ [media-workflow.md](../operations/media-workflow.md)
+
+## `upload_objects` (0008)
+
+| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น | หมายเหตุ |
+|---|---|---|---|---|
+| `id` | TEXT | ไม่ | — | PK, id ของไฟล์ที่อัปโหลด |
+| `user_id` | TEXT | ไม่ | — | FK → `users.id`, `ON DELETE CASCADE` |
+| `r2_key` | TEXT | ไม่ | — | unique; `u/<user_id>/pending/<id>` |
+| `mime` | TEXT | ไม่ | — | |
+| `size` | INTEGER | ไม่ | — | ไบต์, ≥ 0 |
+| `status` | TEXT | ไม่ | — | `stored`, `indexed`, `skipped`, `failed` |
+| `chunk_count` | INTEGER | ไม่ | `0` | จำนวนชิ้นที่ upsert แล้ว |
+| `error` | TEXT | ได้ | — | เหตุที่ข้ามหรือล้ม เช่น `image` |
+| `created_at` | INTEGER | ไม่ | now (ms) | |
+| `updated_at` | INTEGER | ไม่ | now (ms) | |
+
+Index: `upload_objects_user_idx` (`user_id`, `created_at DESC`) และ unique index ของ `r2_key`
+
+## `lifecycle_mail` (0008)
+
+| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น | หมายเหตุ |
+|---|---|---|---|---|
+| `user_id` | TEXT | ไม่ | — | PK ร่วมกับ `event`, FK → `users.id`, `ON DELETE CASCADE` |
+| `event` | TEXT | ไม่ | — | `welcome` หรือ `inactive` |
+| `status` | TEXT | ไม่ | — | `pending` ระหว่างส่ง, `sent` เมื่อ Email Service รับแล้ว |
+| `message_id` | TEXT | ได้ | — | id ที่ Email Service คืนมา |
+| `created_at` | INTEGER | ไม่ | now (ms) | |
 
 bucket ของ `usage_counters`: `d:YYYYMMDD` = วันตามเวลาไทย (UTC+7), `h:YYYYMMDDHH` = ชั่วโมง UTC
 

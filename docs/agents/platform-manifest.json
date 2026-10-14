@@ -177,6 +177,19 @@
       "docs": "docs/architecture/chat-data-model.md"
     },
     {
+      "id": "media-workflow",
+      "summary": "MediaLifecycleWorkflow indexes an R2 upload with Workers AI into Vectorize, or sends a welcome email and a later inactivity note. Bindings are not in wrangler.jsonc until the owner creates R2, the index and the sending domain.",
+      "keyFiles": [
+        "src/workflows/media-lifecycle.ts",
+        "src/lib/workflows/run.ts",
+        "src/lib/workflows/trigger.ts",
+        "src/lib/workflows/schedule.ts",
+        "migrations/0008_media_workflow.sql",
+        "scripts/patch-opennext-worker.mjs"
+      ],
+      "docs": "docs/operations/media-workflow.md"
+    },
+    {
       "id": "github-auth",
       "summary": "Sign-in from the header and /login: Cursor Origin install receipt, Google, GitHub, or a DevStack password. GitHub stores an encrypted token so a chat code block can be committed through the Contents API. The server never runs that file. Users can also pick a Vercel AI Gateway model.",
       "keyFiles": [

@@ -7,6 +7,7 @@ import { chatEnv } from "@/lib/chat/config";
 import { signUid } from "@/lib/chat/identity";
 import { chatRuntime, json } from "@/lib/chat/runtime";
 import { findPasswordAccount, savePasswordAccount } from "@/lib/chat/store";
+import { scheduleWelcome } from "@/lib/workflows/schedule";
 import { clientIp } from "@/lib/server/http";
 import { checkRateLimit } from "@/lib/server/rate-limit";
 
@@ -55,6 +56,7 @@ export async function POST(req: Request) {
       const plan = await planSignIn(db, req, secret, "password", email);
       if (!plan.create && !plan.promoteAnon) return back(url.origin, secure, "taken", dest);
       await savePasswordAccount(db, plan, email, hashed);
+      await scheduleWelcome(plan);
       console.warn(JSON.stringify({ at: "api/auth/password", event: "registered" }));
       return signedInRedirect(url.origin, secure, dest, await signUid(plan.userId, secret), 303);
     }

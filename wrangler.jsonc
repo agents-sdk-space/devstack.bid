@@ -27,6 +27,10 @@
   // D1 (SQLite) for chat history. Created 2026-10-11 (region WNAM). Schema: migrations/ and
   // docs/reference/d1-schema.md. Apply with `npm run db:migrate:remote` (approval required).
   // R2 binding ASSETS_BUCKET (bucket nvx-assets) is NOT added yet: R2 is not enabled on the account.
+  // MediaLifecycleWorkflow (src/workflows/media-lifecycle.ts) is exported from the OpenNext worker
+  // after cf:build, but workflows / vectorize / send_email bindings are omitted until the owner
+  // creates those resources. Adding them now would fail or create billable resources on deploy.
+  // Steps: docs/operations/media-workflow.md
   // Workers AI (User Chat on /chat). Always runs remotely, also in `wrangler dev`/preview.
   "ai": { "binding": "AI" },
   "d1_databases": [

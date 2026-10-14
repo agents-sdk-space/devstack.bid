@@ -6,6 +6,7 @@ import { chatEnv } from "@/lib/chat/config";
 import { OAUTH_STATE_COOKIE, readCookie, signUid } from "@/lib/chat/identity";
 import { chatRuntime } from "@/lib/chat/runtime";
 import { saveOAuthAccount } from "@/lib/chat/store";
+import { scheduleWelcome } from "@/lib/workflows/schedule";
 import { serverEnv } from "@/lib/server/env";
 import { clientIp } from "@/lib/server/http";
 import { checkRateLimit } from "@/lib/server/rate-limit";
@@ -40,6 +41,7 @@ export async function GET(req: Request) {
     const profile = await fetchGoogleProfile(token);
     const plan = await planSignIn(db, req, secret, "google", profile.id);
     await saveOAuthAccount(db, plan, { provider: "google", subject: profile.id, login: profile.login, name: profile.name, email: profile.email, avatarUrl: profile.avatarUrl });
+    await scheduleWelcome(plan);
     console.warn(JSON.stringify({ at: "api/auth/google", event: "linked" }));
     return signedInRedirect(url.origin, secure, opened.next, await signUid(plan.userId, secret));
   } catch (error) {

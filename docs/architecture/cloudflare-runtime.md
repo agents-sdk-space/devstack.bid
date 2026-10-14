@@ -38,7 +38,9 @@
 
 ## D1 (ฐานข้อมูล)
 
-Worker มี binding `DB` ชี้ D1 `nvx-db` (ประกาศใน `d1_databases` ของ `wrangler.jsonc` พร้อม `migrations_dir`) ตอนนี้ยังไม่มีโค้ดเรียกใช้ D1 ดู schema ที่ [chat-data-model.md](./chat-data-model.md) และวิธีดูแลที่ [d1-database.md](../operations/d1-database.md) ส่วน R2 ยังไม่ได้เปิดใช้
+Worker มี binding `DB` ชี้ D1 `nvx-db` (ประกาศใน `d1_databases` ของ `wrangler.jsonc` พร้อม `migrations_dir`) ดู schema ที่ [chat-data-model.md](./chat-data-model.md) และวิธีดูแลที่ [d1-database.md](../operations/d1-database.md) ส่วน R2 ยังไม่ได้เปิดใช้
+
+`scripts/patch-opennext-worker.mjs` export `MediaLifecycleWorkflow` จาก `.open-next/worker.js` หลัง build เพื่อให้ Wrangler เห็นคลาสเมื่อเจ้าของบัญชีเพิ่ม binding `workflows` วันนี้นั้นยังไม่ถูกเพิ่ม งานนี้อ่านวัตถุใน R2 แล้วฝังลง Vectorize หรือส่งอีเมลวงจรชีวิต ดู [media-workflow.md](../operations/media-workflow.md)
 
 ## สถานะ deploy ล่าสุด
 

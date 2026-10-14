@@ -8,6 +8,7 @@ import { chatEnv } from "@/lib/chat/config";
 import { OAUTH_STATE_COOKIE, readCookie, signUid } from "@/lib/chat/identity";
 import { chatRuntime } from "@/lib/chat/runtime";
 import { saveOAuthAccount } from "@/lib/chat/store";
+import { scheduleWelcome } from "@/lib/workflows/schedule";
 import { serverEnv } from "@/lib/server/env";
 import { clientIp } from "@/lib/server/http";
 import { checkRateLimit } from "@/lib/server/rate-limit";
@@ -45,6 +46,7 @@ export async function GET(req: Request) {
       { provider: "github", subject: profile.id, login: profile.login, name: profile.name, email: profile.email, avatarUrl: profile.avatarUrl },
       { tokenEnc: await sealSecret(secret, token), scope: GITHUB_SCOPES }
     );
+    await scheduleWelcome(plan);
     console.warn(JSON.stringify({ at: "api/auth/github", event: "linked", login: profile.login }));
     return signedInRedirect(url.origin, secure, opened.next, await signUid(plan.userId, secret));
   } catch (err) {

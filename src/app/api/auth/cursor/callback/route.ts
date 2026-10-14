@@ -6,6 +6,7 @@ import { chatEnv } from "@/lib/chat/config";
 import { OAUTH_STATE_COOKIE, readCookie, signUid } from "@/lib/chat/identity";
 import { chatRuntime } from "@/lib/chat/runtime";
 import { saveOAuthAccount } from "@/lib/chat/store";
+import { scheduleWelcome } from "@/lib/workflows/schedule";
 import { serverEnv } from "@/lib/server/env";
 import { clientIp } from "@/lib/server/http";
 import { checkRateLimit } from "@/lib/server/rate-limit";
@@ -39,6 +40,7 @@ export async function GET(req: Request) {
       email: identity.email,
       avatarUrl: null,
     });
+    await scheduleWelcome(plan);
     console.warn(JSON.stringify({ at: "api/auth/cursor", event: "linked" }));
     return signedInRedirect(url.origin, secure, opened.next, await signUid(plan.userId, secret));
   } catch (err) {

@@ -4,6 +4,7 @@ import { chatEnv, chatRuntime, json } from "@/lib/chat/runtime";
 import { newId } from "@/lib/chat/store";
 import { clientIp } from "@/lib/server/http";
 import { checkRateLimit } from "@/lib/server/rate-limit";
+import { startMediaWorkflow, type TriggerEnv } from "@/lib/workflows/trigger";
 
 /**
  * POST /api/chat/attachments  (raw body = the file; headers Content-Type, Content-Length,
@@ -13,6 +14,8 @@ import { checkRateLimit } from "@/lib/server/rate-limit";
  * answers 503 `uploads_disabled` after the size check; the UI keeps the attach button disabled.
  * When the bucket exists the file is stored at u/<uid>/pending/<id> and its id is returned
  * (linking it to a message is done by the turn route in a later release).
+ * If MEDIA_WORKFLOW, VECTORIZE and AI are bound, the upload starts MediaLifecycleWorkflow,
+ * which embeds the text into Vectorize. The HTTP response does not wait for that job.
  */
 
 interface R2Like {
@@ -37,12 +40,13 @@ export async function POST(req: Request) {
   const burst = await checkRateLimit("NVX_CHAT_LIMITER", ip, env.CHAT_BURST_PER_MIN);
   if (!burst.ok) return json({ error: "Too many uploads — wait a minute. / อัปโหลดถี่เกินไป กรุณารอสักครู่", code: "rate_limited" }, 429, { "Retry-After": "60" });
 
-  let bucket: R2Like | undefined;
+  let cf: { env: TriggerEnv & { ASSETS_BUCKET?: R2Like }; ctx: { waitUntil(p: Promise<unknown>): void } } | undefined;
   try {
-    bucket = ((await getCloudflareContext({ async: true })).env as unknown as { ASSETS_BUCKET?: R2Like }).ASSETS_BUCKET;
+    cf = (await getCloudflareContext({ async: true })) as unknown as { env: TriggerEnv & { ASSETS_BUCKET?: R2Like }; ctx: { waitUntil(p: Promise<unknown>): void } };
   } catch {
-    bucket = undefined;
+    cf = undefined;
   }
+  const bucket = cf?.env.ASSETS_BUCKET;
   if (!bucket) {
     return json(
       { error: "File uploads aren't available yet (storage is being set up). / ยังอัปโหลดไฟล์ไม่ได้ (กำลังเตรียมพื้นที่จัดเก็บ)", code: "uploads_disabled", maxBytes: max },
@@ -79,5 +83,6 @@ export async function POST(req: Request) {
   const id = newId();
   const key = `u/${uid}/pending/${id}`;
   await bucket.put(key, buf.buffer as ArrayBuffer, { httpMetadata: { contentType: type } });
+  if (cf) cf.ctx.waitUntil(startMediaWorkflow(cf.env, { kind: "upload", userId: uid, attachmentId: id, key, mime: type, size }));
   return json({ id, size, mime: type }, 201, setCookie ? { "Set-Cookie": setCookie } : {});
 }

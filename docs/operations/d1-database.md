@@ -61,6 +61,7 @@ npx wrangler d1 export nvx-db --remote --output backup.sql       # export เป
 3. สร้าง bucket: `npx wrangler r2 bucket create nvx-assets`
 4. เพิ่ม binding ใน `wrangler.jsonc`: `"r2_buckets": [{ "binding": "ASSETS_BUCKET", "bucket_name": "nvx-assets" }]` แล้วรัน `npm run cf:typegen` และเพิ่ม `ASSETS_BUCKET` ในตาราง binding ของ [config-env.md](../reference/config-env.md)
 5. bucket ต้อง private (ไม่เปิด public URL หรือ r2.dev) ไฟล์เสิร์ฟผ่าน Worker ที่ตรวจสิทธิ์แล้วเท่านั้น
+6. งานฝังเวกเตอร์และจดหมายวงจรชีวิตใช้ bucket นี้ร่วมกับ Vectorize, Workflow และ Email Service อย่าเพิ่ม binding ก่อนทรัพยากรมีจริง ขั้นตอนอยู่ที่ [media-workflow.md](./media-workflow.md)
 
 ## ดูเพิ่ม
 

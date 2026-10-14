@@ -22,7 +22,7 @@
 | `/api/chat/conversations/[id]` | GET / DELETE | อ่านข้อความ / archive แชต (เฉพาะเจ้าของ) |
 | `/api/chat/images/[id]` | GET | bytes ของภาพ (เฉพาะเจ้าของ) |
 | `/api/chat/files/[conversationId]/[artifactId]` | GET | ดาวน์โหลดไฟล์จาก sandbox ของ Dev Chat |
-| `/api/chat/attachments` | POST | อัปโหลดไฟล์ (≤ `MAX_ATTACHMENT_BYTES`) — ตอบ 503 `uploads_disabled` จนกว่าจะมี `ASSETS_BUCKET` |
+| `/api/chat/attachments` | POST | อัปโหลดไฟล์ (≤ `MAX_ATTACHMENT_BYTES`) — ตอบ 503 `uploads_disabled` จนกว่าจะมี `ASSETS_BUCKET` เมื่อมี Workflow ด้วย งานฝัง Vectorize เริ่มหลังเก็บวัตถุ สำเร็จของ HTTP ไม่รอให้ฝังเสร็จ |
 | `/api/factory` | GET | config ของ Factory (models, scopes, limits) |
 | `/api/factory/session` | POST | สร้าง agent + session ด้วย key ผู้ใช้ |
 | `/api/factory/watch` | GET | SSE สถานะ environment |

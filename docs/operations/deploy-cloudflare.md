@@ -40,6 +40,7 @@ curl -s -X POST $BASE/api/plan -H 'content-type: application/json' \
 - rate-limit bindings `NVX_PLAN_LIMITER` (4712), `NVX_PLAN_AI_LIMITER` (4711) — เป็น config ไม่ใช่ resource แยก
 - secret `OPENAI_API_KEY`
 - **ไม่สร้าง** KV, R2, D1, route, DNS record
+- **ไม่สร้าง** Workflow, ดัชนี Vectorize หรือช่อง Email Service จนกว่าเจ้าของบัญชีจะเพิ่ม binding ตาม [media-workflow.md](./media-workflow.md)
 
 ## ค่าใช้จ่าย
 

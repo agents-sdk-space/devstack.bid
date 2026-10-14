@@ -105,6 +105,8 @@ wrangler บันทึกว่ารันไฟล์ไหนไปแล�
 
 bucket `nvx-assets` (binding `ASSETS_BUCKET`) **ยังไม่ได้สร้าง** เพราะบัญชียังไม่เปิดใช้ R2 (API ตอบ error 10042 "Please enable R2 through the Cloudflare Dashboard") การเปิด R2 ต้องยอมรับเงื่อนไขการใช้งานและการคิดเงินใน dashboard ซึ่งเจ้าของบัญชีต้องตัดสินใจเอง ตาราง `attachments` ออกแบบรอไว้แล้ว และ binding จะเพิ่มใน `wrangler.jsonc` หลัง bucket มีจริงเท่านั้น (ถ้าใส่ก่อน deploy จะล้ม)
 
+เมื่อ bucket, ดัชนี Vectorize `nvx-uploads` และ Workflow `nvx-media-lifecycle` พร้อมพร้อมกัน การอัปโหลดจะเริ่ม `MediaLifecycleWorkflow` เพื่อฝังข้อความลงดัชนี บัญชีใหม่จะเข้างานเดียวกันเพื่อส่งจดหมายต้อนรับและจดหมายเตือนผ่าน Email Service รายละเอียดและคำสั่งที่เจ้าของบัญชีต้องรันเองอยู่ที่ [media-workflow.md](../operations/media-workflow.md) migration `0008_media_workflow.sql` เพิ่ม `upload_objects` กับ `lifecycle_mail`
+
 ## แผนขั้นต่อไป (ยังไม่ได้สร้าง)
 
 **API routes** (ทั้งหมดอยู่ใต้ `/api`, ใช้ zod ตรวจ input และ rate limit แบบเดียวกับ `/api/plan`):
