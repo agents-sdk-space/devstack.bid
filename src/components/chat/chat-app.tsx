@@ -452,7 +452,6 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
         <div className="mb-3 flex items-center gap-2">
           {info.account.avatarUrl ? (
             // Profile image from GitHub or Google. The login text next to it is the accessible name.
-            // eslint-disable-next-line @next/next/no-img-element
             <img src={info.account.avatarUrl} alt="" width={28} height={28} className="h-7 w-7 rounded-full" />
           ) : (
             <LogIn className="h-4 w-4 shrink-0" aria-hidden />
@@ -625,8 +624,7 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
                             {m.images
                               .filter((im) => !m.content.includes(im.url))
                               .map((im) => (
-                                <a key={im.id} href={im.url} target="_blank" rel="noopener" className="block">
-                                  {/* eslint-disable-next-line @next/next/no-img-element -- private generated image */}
+                                <a key={im.id} href={im.url} target="_blank" rel="noopener noreferrer" className="block">
                                   <img src={im.url} alt={im.caption} className="max-h-72 rounded-xl border border-border" />
                                 </a>
                               ))}

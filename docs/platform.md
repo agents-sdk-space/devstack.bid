@@ -45,6 +45,12 @@ Orchestrator อยู่ที่ [Dev Chat](https://devstack.bid/chat/dev) แ
 
 จากคำตอบในแชตที่ลงชื่อด้วย GitHub ส่งได้หนึ่งไฟล์ผ่าน GitHub API เซิร์ฟเวอร์ไม่รันไฟล์นั้น
 
+## ใช้ DevStack จากแพลตฟอร์มอื่น
+
+Remote MCP ที่ `https://devstack.bid/mcp` เปิดเครื่องมือที่เหมาะกับ AI client ภายนอก ได้แก่ แคตตาล็อก template, composer รวม custom edits, สร้างสคริปต์และไฟล์ครบชุดสำหรับ starter ZIP, ลิงก์แชร์, ค้น/อ่านเอกสาร, AI planner, User Chat, Dev Chat, ประวัติแชต, Sandbox Factory และ GitHub API ฟังก์ชันที่แตะบัญชีหรือใช้โควตาต้องใช้ API key แบบกำหนด scope ได้ ออกและเพิกถอน key ได้ที่ [MCP settings](https://devstack.bid/settings/mcp) รายการ tool, ตัวอย่าง config, protocol และข้อจำกัดอยู่ใน [MCP integration guide](./integrations/mcp.md) กับ machine-readable discovery ที่ `/.well-known/mcp`
+
+Remote MCP ให้ฟังก์ชันของเว็บที่ส่งผ่าน API หรือส่งคืนเป็นไฟล์ได้ แต่ไม่จำลองหน้าจอทุกอย่าง เช่น OAuth login, ตั้งค่าบัญชี, theme, drag-and-drop หรืออัปโหลดไฟล์ MCP คืนคำสั่งเป็นข้อความเท่านั้น ไม่รันคำสั่ง setup บนเซิร์ฟเวอร์
+
 ## สิ่งที่เอเจนต์ห้ามทำเอง
 
 deploy, migrate D1 บน remote, ผูกโดเมน, แก้ DNS, ลบทรัพยากร Cloudflare, commit secret, หรือรันคำสั่งของผู้ใช้บนเซิร์ฟเวอร์ ต้องมีคนอนุมัติก่อน รายละเอียดอยู่ใน [playbook](./agents/AGENT-PLAYBOOK.md) และ [cursor caretakers](./agents/cursor-caretakers.md)

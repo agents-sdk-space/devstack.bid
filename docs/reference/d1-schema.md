@@ -12,7 +12,7 @@ Reference ของทุกตารางในฐานข้อมูล D1 
 | `value` | TEXT | ไม่ | — | |
 | `updated_at` | INTEGER | ไม่ | now (ms) | |
 
-ไฟล์ migration ตั้ง `schema_version` ไปจนถึง `7` ค่าบนฐานจริงคือเลขของ migration ที่ apply แล้ว (remote ต้องได้รับอนุมัติก่อน apply `0006` และ `0007`)
+ไฟล์ migration ตั้ง `schema_version` ไปจนถึง `8` ค่าบนฐานจริงคือเลขของ migration ที่ apply แล้ว (remote ต้องได้รับอนุมัติก่อน apply migration ใหม่)
 
 ## `users`
 
@@ -101,6 +101,7 @@ Index: `attachments_message_idx` (`message_id`) และ unique index ของ
 | คอลัมน์ | ชนิด | null | ค่าเริ่มต้น | หมายเหตุ |
 |---|---|---|---|---|
 | `id` | TEXT | ไม่ | — | PK |
+| `user_id` | TEXT | ได้ | — | migration `0008`; FK → `users.id`, `ON DELETE CASCADE`; null for pre-existing unowned clients |
 | `name` | TEXT | ไม่ | — | ชื่อที่อ่านเข้าใจ เช่นชื่อบริการ |
 | `key_hash` | TEXT | ไม่ | — | unique; SHA-256 hex ของ key เต็ม (ห้ามเก็บ key จริง) |
 | `scopes` | TEXT | ไม่ | `'[]'` | JSON array (CHECK `json_valid` + ต้องเป็น array) |
@@ -108,7 +109,9 @@ Index: `attachments_message_idx` (`message_id`) และ unique index ของ
 | `created_at` | INTEGER | ไม่ | now (ms) | |
 | `revoked_at` | INTEGER | ได้ | — | null = ใช้งานได้ |
 
-Index: unique index ของ `key_hash`, `api_clients_active_created_idx` (`created_at DESC`, เฉพาะแถวที่ `revoked_at IS NULL`)
+Index: unique index ของ `key_hash`, `api_clients_active_created_idx` (`created_at DESC`, เฉพาะแถวที่ `revoked_at IS NULL`), `api_clients_user_active_idx` (`user_id`, `created_at DESC`, เฉพาะแถวที่ยังไม่ revoke)
+
+Migration `0008_mcp_clients` เพิ่ม `user_id` ที่ผูกกับ `users.id` และ owner index เพื่อให้เจ้าของบัญชีออกและเพิกถอน scoped MCP keys ได้ key ดิบแสดงครั้งเดียว ส่วน D1 เก็บ SHA-256 hash เท่านั้น
 
 ## Migration 0003–0005 (แชต)
 
@@ -117,6 +120,7 @@ Index: unique index ของ `key_hash`, `api_clients_active_created_idx` (`cre
 - **0005** `conversations.channel` (`'user'|'dev'`, default `'user'`; แถวที่มี `agent_session_id` หรือ `source='factory'` ถูกตั้งเป็น `'dev'`), index `conversations_user_channel_updated`, `schema_version = 5`
 - **0006** `users.login`, `users.avatar_url`, ตาราง `github_credentials` (`user_id` PK → `users.id`, `token_enc` คือ ciphertext AES-GCM ของ OAuth token, `scope`, `updated_at`), `schema_version = 6` ยังไม่ได้ apply บน remote จนกว่าจะได้รับอนุมัติ
 - **0007** ตาราง `password_credentials` (แฮช PBKDF2 ของบัญชี DevStack), `schema_version = 7` ยังไม่ได้ apply บน remote จนกว่าจะได้รับอนุมัติ
+- **0008** `api_clients.user_id` foreign key ไป `users.id` และ active-owner index สำหรับจัดการ key ที่หน้า MCP settings; remote ต้อง apply ก่อนเปิด key management จริง
 
 bucket ของ `usage_counters`: `d:YYYYMMDD` = วันตามเวลาไทย (UTC+7), `h:YYYYMMDDHH` = ชั่วโมง UTC
 
