@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Copy, KeyRound, Plus, Trash2 } from "lucide-react";
 import { buttonClasses, Card } from "@/components/ui";
 import { useLang } from "@/components/prefs";
+import { clineConfig } from "@/lib/mcp/client-config";
 
 type Client = { id: string; name: string; scopes: string[]; rateLimit: number; createdAt: number };
 type Scope = { id: string; label: string };
@@ -91,7 +92,7 @@ export function McpKeys() {
         <form onSubmit={createKey} className="mt-4 space-y-4">
           <label className="block text-sm font-medium text-fg">
             {th ? "ชื่อการเชื่อมต่อ" : "Connection name"}
-            <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-fg outline-none focus:border-accent" placeholder={th ? "เช่น Cursor ส่วนตัว" : "e.g. Cursor personal"} />
+            <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-fg outline-none focus:border-accent" placeholder={th ? "เช่น Cline ส่วนตัว" : "e.g. Cline personal"} />
           </label>
           <fieldset>
             <legend className="text-sm font-medium text-fg">{th ? "สิทธิ์" : "Scopes"}</legend>
@@ -114,6 +115,13 @@ export function McpKeys() {
             <button type="button" onClick={() => void navigator.clipboard.writeText(freshKey)} className={buttonClasses("secondary", "sm")}><Copy className="h-4 w-4" aria-hidden />{th ? "คัดลอก" : "Copy"}</button>
           </div>
           <p className="mt-3 text-xs text-subtle">{th ? "ตั้งค่า server URL เป็น https://devstack.bid/mcp และส่งคีย์เป็น Authorization: Bearer …" : "Set the server URL to https://devstack.bid/mcp and send the key as Authorization: Bearer …"}</p>
+          <div className="mt-4 border-t border-sky-400/20 pt-4">
+            <p className="text-sm font-semibold text-fg">{th ? "ใช้กับ Cline" : "Use with Cline"}</p>
+            <p className="mt-1 text-xs text-subtle">{th ? "ใน VS Code เปิด Cline > MCP Servers > Configure > Configure MCP Servers แล้ววางรายการนี้ใน cline_mcp_settings.json ต้องมี type เป็น streamableHttp" : "In VS Code open Cline > MCP Servers > Configure > Configure MCP Servers and merge this entry into cline_mcp_settings.json. The type must be streamableHttp."}</p>
+            <pre className="mt-2 overflow-x-auto rounded-lg bg-black/40 p-3 text-xs text-sky-100"><code>{clineConfig(freshKey)}</code></pre>
+            <button type="button" onClick={() => void navigator.clipboard.writeText(clineConfig(freshKey))} className={buttonClasses("secondary", "sm", "mt-2")}><Copy className="h-4 w-4" aria-hidden />{th ? "คัดลอก config ของ Cline" : "Copy Cline config"}</button>
+            <p className="mt-2 text-xs text-subtle">{th ? "ปล่อย autoApprove ว่างไว้ เพื่อให้ Cline ถามก่อนเรียกเครื่องมือที่ใช้โควตาหรือแก้ GitHub และอย่า commit ไฟล์ตั้งค่านี้" : "Leave autoApprove empty so Cline asks before tools that use quota or change GitHub, and do not commit this settings file."}</p>
+          </div>
         </div>}
       </Card>
 

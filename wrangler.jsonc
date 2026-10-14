@@ -75,6 +75,10 @@
     "WAI_CODE_MODEL": "@cf/qwen/qwen2.5-coder-32b-instruct",
     "WAI_IMAGE_MODEL": "@cf/black-forest-labs/flux-1-schnell",
     "WAI_MAX_TOKENS": "1500",
+    // Cloudflare AI Gateway id for Workers AI calls from /chat and /studio. Empty = off (calls go straight
+    // to Workers AI). Set to an existing gateway id, or "default" (Cloudflare creates it on first use), to
+    // get logs, analytics and rate limits. Replies are never cached (skipCache). Needs owner approval.
+    "CF_AI_GATEWAY_ID": "",
     "HF_MODEL": "deepseek-ai/DeepSeek-V3",
     "HF_FAST_MODEL": "meta-llama/Llama-3.1-8B-Instruct",
     "OPENAI_FALLBACK": "false",

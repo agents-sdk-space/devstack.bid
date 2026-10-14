@@ -46,6 +46,8 @@ const schema = z.object({
   WAI_CODE_MODEL: word(/^@[\w./:-]{3,120}$/, "@cf/qwen/qwen2.5-coder-32b-instruct"),
   WAI_IMAGE_MODEL: word(/^@[\w./:-]{3,120}$/, "@cf/black-forest-labs/flux-1-schnell"),
   WAI_MAX_TOKENS: intIn(128, 8_000, 1_500),
+  /** Cloudflare AI Gateway id for Workers AI calls (/chat and /studio). Empty = calls go straight to Workers AI. */
+  CF_AI_GATEWAY_ID: word(/^[A-Za-z0-9][\w-]{0,63}$/, ""),
   /** User Chat site-wide daily caps (Workers AI neurons / HF credits). */
   CHAT_USER_GLOBAL_PER_DAY: intIn(0, 1_000_000, 3_000),
   CHAT_USER_GLOBAL_IMAGES_PER_DAY: intIn(0, 1_000_000, 500),

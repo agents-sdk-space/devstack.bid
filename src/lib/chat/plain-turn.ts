@@ -72,7 +72,7 @@ function toMessages(system: string, history: MessageRow[], userText: string): Ch
 async function* streamFrom(p: Provider, d: PlainTurnDeps, messages: ChatMsg[], signal: AbortSignal) {
   if (p.kind === "wai") {
     if (!d.ai) throw new Error("Workers AI binding (AI) is not available");
-    yield* waiChatStream(d.ai, p.model, messages, d.env.WAI_MAX_TOKENS);
+    yield* waiChatStream(d.ai, p.model, messages, d.env.WAI_MAX_TOKENS, d.env.CF_AI_GATEWAY_ID);
   } else if (p.kind === "gateway") {
     if (!d.server.AI_GATEWAY_API_KEY) throw new Error("AI_GATEWAY_API_KEY is not configured");
     yield* gatewayChatStream({
@@ -153,7 +153,7 @@ export async function runImageTurn(d: Omit<PlainTurnDeps, "mode" | "history" | "
   const prompt = d.userText.slice(0, 1500);
   try {
     if (!d.ai) throw new Error("Workers AI binding (AI) is not available");
-    const img = await waiImage(d.ai, d.env.WAI_IMAGE_MODEL, prompt, 4);
+    const img = await waiImage(d.ai, d.env.WAI_IMAGE_MODEL, prompt, 4, d.env.CF_AI_GATEWAY_ID);
     if (img.bytes.byteLength > 1_400_000) throw new Error("image too large to store");
     const id = await saveInlineImage(d.db, d.assistantMessageId, img.bytes, img.mime);
     const url = `/api/chat/images/${id}`;

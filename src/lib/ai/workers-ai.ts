@@ -12,6 +12,15 @@ export interface AiBinding {
   run(model: string, input: Record<string, unknown>, options?: Record<string, unknown>): Promise<unknown>;
 }
 
+/**
+ * Third argument of `env.AI.run()` that routes a request through Cloudflare AI Gateway (logs, analytics,
+ * caching and rate limits are configured on the gateway). Empty id = no gateway, the request is unchanged.
+ * `skipCache` is set because chat and Studio replies must never be served to a different visitor.
+ */
+export function gatewayRunOptions(gatewayId?: string): Record<string, unknown> | undefined {
+  return gatewayId ? { gateway: { id: gatewayId, skipCache: true } } : undefined;
+}
+
 export class WorkersAiError extends Error {
   constructor(message: string) {
     super(message);
@@ -28,11 +37,12 @@ export async function* waiChatStream(
   ai: AiBinding,
   model: string,
   messages: WaiMsg[],
-  maxTokens: number
+  maxTokens: number,
+  gatewayId?: string
 ): AsyncGenerator<{ delta: string } | { usage: { input: number; output: number } }> {
   let out: unknown;
   try {
-    out = await ai.run(model, { messages, max_tokens: maxTokens, stream: true, temperature: 0.6 });
+    out = await ai.run(model, { messages, max_tokens: maxTokens, stream: true, temperature: 0.6 }, gatewayRunOptions(gatewayId));
   } catch (err) {
     throw new WorkersAiError(`Workers AI: ${(err as Error)?.message?.slice(0, 200) ?? "error"}`);
   }
@@ -73,10 +83,10 @@ export async function* waiChatStream(
   }
 }
 
-export async function waiImage(ai: AiBinding, model: string, prompt: string, steps = 4): Promise<{ bytes: Uint8Array; mime: string }> {
+export async function waiImage(ai: AiBinding, model: string, prompt: string, steps = 4, gatewayId?: string): Promise<{ bytes: Uint8Array; mime: string }> {
   let out: unknown;
   try {
-    out = await ai.run(model, { prompt: prompt.slice(0, 2000), steps });
+    out = await ai.run(model, { prompt: prompt.slice(0, 2000), steps }, gatewayRunOptions(gatewayId));
   } catch (err) {
     throw new WorkersAiError(`Workers AI image: ${(err as Error)?.message?.slice(0, 200) ?? "error"}`);
   }
