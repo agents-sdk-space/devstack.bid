@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Plugins catalog page.** `/plugins` and `/plugins/[name]` list MCP servers from [agents-sdk-space/devstack-plugins](https://github.com/agents-sdk-space/devstack-plugins) (MIT), using a snapshot pinned to commit `cb82a66` in `src/data/plugin-catalog.json`. `scripts/sync-plugin-catalog.mjs` (`npm run plugins:sync` / `plugins:check`) refreshes and validates it. The pages show metadata and links only. There is no runtime fetch, no CSP change, no new dependency and no D1 change. A footer link, TH/EN strings, sitemap entries, tests and `docs/integrations/plugins.md` are included.
+
 ### Changed
 
 - **UI revamp phase 2: home page.** The home page has been rebuilt following `docs/design/ui-ux-revamp-plan.md` section 14.

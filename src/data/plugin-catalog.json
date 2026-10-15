@@ -1,0 +1,84 @@
+{
+  "source": {
+    "repo": "agents-sdk-space/devstack-plugins",
+    "commit": "cb82a660517fc87ec5d52caef3e9a5fd86e155c9",
+    "license": "MIT",
+    "url": "https://github.com/agents-sdk-space/devstack-plugins/blob/cb82a660517fc87ec5d52caef3e9a5fd86e155c9/catalog/plugins.json"
+  },
+  "plugins": [
+    {
+      "name": "cloudflare",
+      "description": "Cloudflare's MCP servers for Workers, D1, R2 and other Cloudflare services.",
+      "category": "deployment",
+      "homepage": "https://github.com/cloudflare/mcp-server-cloudflare",
+      "source": "https://github.com/cloudflare/mcp-server-cloudflare",
+      "keywords": [
+        "cloudflare",
+        "workers",
+        "d1",
+        "r2"
+      ]
+    },
+    {
+      "name": "github",
+      "description": "Official GitHub MCP server for working with repositories, issues and pull requests.",
+      "category": "development",
+      "homepage": "https://github.com/github/github-mcp-server",
+      "source": "https://github.com/github/github-mcp-server",
+      "keywords": [
+        "github",
+        "git",
+        "issues",
+        "pull-requests"
+      ]
+    },
+    {
+      "name": "neon",
+      "description": "Neon's MCP server for the Neon management API and Postgres databases.",
+      "category": "database",
+      "homepage": "https://github.com/neondatabase/mcp-server-neon",
+      "source": "https://github.com/neondatabase/mcp-server-neon",
+      "keywords": [
+        "neon",
+        "postgres",
+        "database"
+      ]
+    },
+    {
+      "name": "playwright",
+      "description": "Microsoft's Playwright MCP server for browser automation.",
+      "category": "testing",
+      "homepage": "https://www.npmjs.com/package/@playwright/mcp",
+      "source": "https://github.com/microsoft/playwright-mcp",
+      "keywords": [
+        "playwright",
+        "browser",
+        "testing"
+      ]
+    },
+    {
+      "name": "sentry",
+      "description": "Sentry's agent tooling, including a hosted MCP server for errors and issues.",
+      "category": "monitoring",
+      "homepage": "https://mcp.sentry.dev",
+      "source": "https://github.com/getsentry/toolkit",
+      "keywords": [
+        "sentry",
+        "errors",
+        "monitoring"
+      ]
+    },
+    {
+      "name": "stripe",
+      "description": "Stripe's AI toolkit, including the Stripe MCP server for payments APIs.",
+      "category": "payments",
+      "homepage": "https://docs.stripe.com/agents",
+      "source": "https://github.com/stripe/ai",
+      "keywords": [
+        "stripe",
+        "payments",
+        "billing"
+      ]
+    }
+  ]
+}

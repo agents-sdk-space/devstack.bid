@@ -200,6 +200,7 @@ const FOOTER: { heading: "footer.product" | "footer.resources" | "footer.develop
     links: [
       { href: "/docs", key: "nav.docs" },
       { href: "/learn", key: "nav.learn" },
+      { href: "/plugins", key: "nav.plugins" },
       { href: "/design", key: "nav.design" },
     ],
   },

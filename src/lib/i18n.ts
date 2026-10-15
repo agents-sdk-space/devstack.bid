@@ -524,6 +524,18 @@ const dict = {
     en: "Setup commands are text you copy and run on your own machine. Dev servers and publish steps stay commented out in the scripts.",
     th: "คำสั่งตั้งค่าเป็นข้อความที่คุณคัดลอกแล้วรันบนเครื่องตัวเอง ขั้นตอน dev server และ publish ถูกคอมเมนต์ไว้ในสคริปต์",
   },
+  "nav.plugins": { en: "Plugins", th: "ปลั๊กอิน" },
+  "plugins.title": { en: "Plugins & MCP servers", th: "ปลั๊กอินและ MCP server" },
+  "plugins.subtitle": { en: "A curated list of MCP servers you can connect to your AI tools. DevStack only shows links; it never installs or runs them.", th: "รายการ MCP server ที่เชื่อมกับเครื่องมือ AI ของคุณได้ DevStack แสดงเฉพาะลิงก์ ไม่ติดตั้งหรือรันให้" },
+  "plugins.all": { en: "All", th: "ทั้งหมด" },
+  "plugins.count": { en: "plugins", th: "ปลั๊กอิน" },
+  "plugins.source": { en: "Source", th: "ซอร์สโค้ด" },
+  "plugins.homepage": { en: "Homepage", th: "หน้าเว็บ" },
+  "plugins.details": { en: "Details", th: "รายละเอียด" },
+  "plugins.back": { en: "← All plugins", th: "← ปลั๊กอินทั้งหมด" },
+  "plugins.keywords": { en: "Keywords", th: "คีย์เวิร์ด" },
+  "plugins.disclaimer": { en: "Third-party project with its own license and terms. Review its code and permissions before connecting it.", th: "โปรเจกต์ภายนอกที่มีสัญญาอนุญาตและเงื่อนไขของตัวเอง ตรวจโค้ดและสิทธิ์ก่อนเชื่อมต่อ" },
+  "plugins.catalogFrom": { en: "Catalog from", th: "รายการจาก" },
   "notFound": { en: "Page not found", th: "ไม่พบหน้านี้" },
 } as const satisfies Record<string, { en: string; th: string }>;
 
@@ -544,4 +556,16 @@ export const CATEGORY_LABELS: Record<string, { en: string; th: string }> = {
   collab: { en: "Collaborative", th: "ทำงานร่วมกัน" },
   "internal-tool": { en: "Internal tool", th: "ระบบภายใน" },
   "web-app": { en: "Web app", th: "เว็บแอป" },
+};
+
+export const PLUGIN_CATEGORY_LABELS: Record<string, { en: string; th: string }> = {
+  development: { en: "Development", th: "พัฒนา" },
+  deployment: { en: "Deployment", th: "ดีพลอย" },
+  database: { en: "Database", th: "ฐานข้อมูล" },
+  monitoring: { en: "Monitoring", th: "มอนิเตอร์" },
+  testing: { en: "Testing", th: "ทดสอบ" },
+  payments: { en: "Payments", th: "ชำระเงิน" },
+  productivity: { en: "Productivity", th: "งานประจำ" },
+  design: { en: "Design", th: "ดีไซน์" },
+  ai: { en: "AI", th: "AI" },
 };
