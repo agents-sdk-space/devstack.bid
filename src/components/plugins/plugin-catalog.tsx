@@ -5,6 +5,7 @@ import { PLUGIN_CATEGORY_LABELS } from "@/lib/i18n";
 import { PLUGIN_CATEGORIES, PLUGIN_SOURCE, PLUGINS } from "@/lib/plugins/catalog";
 import { cn } from "@/components/ui";
 import { useLang } from "@/components/prefs";
+import { CategoryDock } from "./category-dock";
 import { PluginCard } from "./plugin-card";
 
 export function PluginCatalog() {
@@ -12,7 +13,7 @@ export function PluginCatalog() {
   const [category, setCategory] = useState("all");
   const filtered = category === "all" ? PLUGINS : PLUGINS.filter((p) => p.category === category);
   return (
-    <div>
+    <div className="pb-24">
       <div role="group" aria-label="Category" className="flex flex-wrap gap-1.5">
         {["all", ...PLUGIN_CATEGORIES].map((c) => (
           <button
@@ -46,6 +47,7 @@ export function PluginCatalog() {
         </a>{" "}
         ({PLUGIN_SOURCE.license})
       </p>
+      <CategoryDock categories={PLUGIN_CATEGORIES} value={category} onChange={setCategory} />
     </div>
   );
 }

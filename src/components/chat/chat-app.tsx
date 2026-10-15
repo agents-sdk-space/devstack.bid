@@ -643,7 +643,7 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
                           <MarkdownView text={m.content} />
                         ) : m.pending ? (
                           <p className="flex items-center gap-2 text-sm text-muted">
-                            <Spinner className="h-4 w-4" /> {t(`chat.status.${status}` as const)}…
+                            <Spinner variant="dots" /> {t(`chat.status.${status}` as const)}…
                           </p>
                         ) : null}
                         {m.images.length > 0 && !m.images.every((im) => m.content.includes(im.url)) && (

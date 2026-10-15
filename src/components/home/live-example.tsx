@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { useDarkMode, useLang } from "@/components/prefs";
-import { buttonClasses } from "@/components/ui";
+import { buttonClasses, Spinner } from "@/components/ui";
 import { APP_TSX } from "./sandbox-files";
 
 /**
@@ -13,7 +13,14 @@ import { APP_TSX } from "./sandbox-files";
  * The code runs in a cross-origin *.codesandbox.io iframe in the visitor's browser,
  * never on our server. CSP: docs/architecture/api-hardening.md.
  */
-const LiveEditor = dynamic(() => import("./live-editor"), { ssr: false });
+const LiveEditor = dynamic(() => import("./live-editor"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full min-h-[34rem] items-center justify-center gap-2 text-sm text-muted md:min-h-[26.5rem]">
+      <Spinner size="md" label="Loading live editor" /> Loading live editor…
+    </div>
+  ),
+});
 
 export function LiveExample() {
   const { t } = useLang();

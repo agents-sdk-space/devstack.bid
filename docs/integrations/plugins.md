@@ -8,7 +8,7 @@
 
 - Catalog repo: [agents-sdk-space/devstack-plugins](https://github.com/agents-sdk-space/devstack-plugins) (MIT), file `catalog/plugins.json`, validated by its own CI.
 - Snapshot in this repo: `src/data/plugin-catalog.json`, which records the pinned commit. The site reads it at build time; there is no runtime fetch, no CSP change and no D1 table.
-- Code: `src/lib/plugins/catalog.ts`, `src/components/plugins/*`, `src/app/plugins/page.tsx`, `src/app/plugins/[name]/page.tsx`.
+- Code: `src/lib/plugins/catalog.ts`, `src/components/plugins/*` (cards, filter chips, and the floating category dock), `src/app/plugins/page.tsx`, `src/app/plugins/[name]/page.tsx`.
 
 ## Update the catalog · อัปเดตรายการ
 

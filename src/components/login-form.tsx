@@ -1,6 +1,7 @@
 "use client";
 
-import { buttonClasses, Field, Input } from "@/components/ui";
+import { useState } from "react";
+import { buttonClasses, Field, Input, Spinner } from "@/components/ui";
 import type { DictKey } from "@/lib/i18n";
 import { useLang } from "./prefs";
 
@@ -28,6 +29,7 @@ function notice(auth: string, provider: string): { title: DictKey; body: DictKey
 export function LoginForm({ next, auth, provider }: { next: string; auth: string; provider: string }) {
   const { t } = useLang();
   const alert = notice(auth, provider);
+  const [pending, setPending] = useState<string | null>(null);
   return (
     <div className="mx-auto w-full max-w-md px-4 py-10 sm:py-16">
       <h1 className="text-3xl font-semibold tracking-tight text-fg">{t("auth.title")}</h1>
@@ -48,7 +50,16 @@ export function LoginForm({ next, auth, provider }: { next: string; auth: string
           </a>
         ))}
       </div>
-      <form method="post" action="/api/auth/password" className="mt-8 space-y-4 border-t border-border pt-6">
+      <form
+        method="post"
+        action="/api/auth/password"
+        className="mt-8 space-y-4 border-t border-border pt-6"
+        aria-busy={pending !== null}
+        onSubmit={(e) => {
+          const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+          setPending(submitter?.value ?? "login");
+        }}
+      >
         <h2 className="text-base font-semibold text-fg">{t("auth.ownHeading")}</h2>
         <input type="hidden" name="next" value={next} />
         <Field label={t("auth.email")}>
@@ -58,10 +69,12 @@ export function LoginForm({ next, auth, provider }: { next: string; auth: string
           {(props) => <Input {...props} name="password" type="password" autoComplete="current-password" required minLength={10} maxLength={200} />}
         </Field>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <button type="submit" name="action" value="login" className={buttonClasses("primary", "md", "w-full")}>
+          <button type="submit" name="action" value="login" className={buttonClasses("primary", "md", "w-full")} aria-disabled={pending !== null}>
+            {pending === "login" && <Spinner size="md" />}
             {t("auth.signIn")}
           </button>
-          <button type="submit" name="action" value="register" className={buttonClasses("outline", "md", "w-full")}>
+          <button type="submit" name="action" value="register" className={buttonClasses("outline", "md", "w-full")} aria-disabled={pending !== null}>
+            {pending === "register" && <Spinner size="md" />}
             {t("auth.create")}
           </button>
         </div>

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import PluginsPage from "@/app/plugins/page";
@@ -34,8 +34,13 @@ describe("plugin catalog", () => {
     render(<PluginsPage />);
     expect(screen.getAllByRole("article")).toHaveLength(PLUGINS.length);
     const cat = PLUGINS[0].category;
-    await user.click(screen.getByRole("button", { name: new RegExp(`^${cat}$`, "i") }));
+    await user.click(screen.getAllByRole("button", { name: new RegExp(`^${cat}$`, "i") })[0]);
     expect(screen.getAllByRole("article")).toHaveLength(PLUGINS.filter((p) => p.category === cat).length);
+    // floating dock mirrors the same state and can switch back
+    const dock = within(screen.getByRole("navigation", { name: "Plugin categories" }));
+    expect(dock.getByRole("button", { name: new RegExp(`^${cat}$`, "i") }).getAttribute("aria-pressed")).toBe("true");
+    await user.click(dock.getByRole("button", { name: "All" }));
+    expect(screen.getAllByRole("article")).toHaveLength(PLUGINS.length);
     for (const a of screen.getAllByRole("link", { name: /Source/ })) {
       expect(a.getAttribute("rel")).toContain("noopener");
       expect(a.getAttribute("target")).toBe("_blank");
@@ -53,5 +58,14 @@ describe("plugin catalog", () => {
     const urls = sitemap().map((e) => e.url);
     expect(urls.some((u) => u.endsWith("/plugins"))).toBe(true);
     for (const p of PLUGINS) expect(urls.some((u) => u.endsWith(`/plugins/${p.name}`))).toBe(true);
+  });
+});
+
+describe("Spinner", () => {
+  it("is decorative without a label and a status with one", async () => {
+    const { Spinner } = await import("@/components/ui");
+    const { container } = render(<><Spinner /><Spinner variant="dots" label="Thinking" /></>);
+    expect(container.querySelector('[data-spinner="ring"]')?.getAttribute("aria-hidden")).toBe("true");
+    expect(screen.getByRole("status", { name: "Thinking" }).getAttribute("data-spinner")).toBe("dots");
   });
 });

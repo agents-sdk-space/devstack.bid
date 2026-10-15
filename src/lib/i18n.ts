@@ -527,6 +527,7 @@ const dict = {
   "nav.plugins": { en: "Plugins", th: "ปลั๊กอิน" },
   "plugins.title": { en: "Plugins & MCP servers", th: "ปลั๊กอินและ MCP server" },
   "plugins.subtitle": { en: "A curated list of MCP servers you can connect to your AI tools. DevStack only shows links; it never installs or runs them.", th: "รายการ MCP server ที่เชื่อมกับเครื่องมือ AI ของคุณได้ DevStack แสดงเฉพาะลิงก์ ไม่ติดตั้งหรือรันให้" },
+  "plugins.dock": { en: "Plugin categories", th: "หมวดปลั๊กอิน" },
   "plugins.all": { en: "All", th: "ทั้งหมด" },
   "plugins.count": { en: "plugins", th: "ปลั๊กอิน" },
   "plugins.source": { en: "Source", th: "ซอร์สโค้ด" },
