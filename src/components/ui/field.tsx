@@ -8,7 +8,7 @@ const CONTROL =
   "disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-danger";
 
 export type ControlSize = "sm" | "md" | "lg";
-const HEIGHT: Record<ControlSize, string> = { sm: "h-8 text-xs", md: "h-10", lg: "h-12 text-base" };
+const HEIGHT: Record<ControlSize, string> = { sm: "h-10 text-xs sm:h-7", md: "h-10 sm:h-9", lg: "h-11 text-base" };
 
 export const Input = forwardRef<HTMLInputElement, Omit<InputHTMLAttributes<HTMLInputElement>, "size"> & { size?: ControlSize; invalid?: boolean }>(
   function Input({ className, size = "md", invalid, ...props }, ref) {

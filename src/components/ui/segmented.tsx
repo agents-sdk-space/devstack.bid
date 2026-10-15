@@ -30,13 +30,13 @@ export function Segmented<T extends string>({
       <legend className={cn(hideLegend ? "sr-only" : "mb-1.5 text-sm font-medium text-fg")}>
         {legend} {hint && <span className="text-xs font-normal text-subtle">{hint}</span>}
       </legend>
-      <div className="inline-flex flex-wrap gap-1 rounded-lg bg-surface-2 p-1">
+      <div className="inline-flex flex-wrap gap-0.5 rounded-lg bg-surface-2 p-0.5">
         {options.map((o) => (
           <label
             key={o.value}
             className={cn(
               "motion-fast inline-flex cursor-pointer items-center gap-1.5 rounded-md font-medium has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
-              size === "sm" ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm",
+              size === "sm" ? "min-h-10 px-2 py-0.5 text-xs sm:min-h-0" : "min-h-10 px-2.5 py-1 text-sm sm:min-h-0",
               value === o.value ? "bg-raised text-fg shadow-sm" : "text-muted hover:text-fg"
             )}
           >

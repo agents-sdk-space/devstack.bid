@@ -447,6 +447,7 @@ const dict = {
   "footer.status": { en: "System status", th: "สถานะระบบ" },
   "footer.careers": { en: "Careers", th: "ร่วมงานกับเรา" },
   "footer.terms": { en: "Terms of Use", th: "ข้อกำหนดการใช้งาน" },
+  "footer.apiPolicy": { en: "API Use Policy", th: "นโยบายการใช้ API" },
   "footer.security": { en: "Report Security Issues", th: "แจ้งปัญหาความปลอดภัย" },
   "footer.privacy": { en: "Privacy Policy", th: "นโยบายความเป็นส่วนตัว" },
   "footer.cookies": { en: "Cookie Preferences", th: "การตั้งค่าคุกกี้" },

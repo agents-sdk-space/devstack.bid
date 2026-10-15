@@ -110,3 +110,7 @@ describe("markdown cache headers", () => {
     expect(res.headers.get("x-content-type-options")).toBe("nosniff");
   });
 });
+
+import { isKnownSitePath as _known } from "@/lib/agent/site-paths";
+import { describe as _d, it as _it, expect as _e } from "vitest";
+_d("terms/api route", () => { _it("is a known site path", () => { _e(_known("/terms/api")).toBe(true); }); });

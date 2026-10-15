@@ -7,14 +7,14 @@ import { cn } from "./cn";
 export const Tabs = TabsPrimitive.Root;
 
 export function TabsList({ className, ...props }: ComponentProps<typeof TabsPrimitive.List>) {
-  return <TabsPrimitive.List className={cn("inline-flex flex-wrap gap-1 rounded-lg bg-surface-2 p-1", className)} {...props} />;
+  return <TabsPrimitive.List className={cn("inline-flex flex-wrap gap-0.5 rounded-lg bg-surface-2 p-0.5", className)} {...props} />;
 }
 
 export function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        "focus-ring motion-fast inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted hover:text-fg",
+        "focus-ring motion-fast inline-flex items-center gap-1.5 min-h-10 rounded-md px-2.5 py-1 text-sm sm:min-h-0 font-medium text-muted hover:text-fg",
         "data-[state=active]:bg-raised data-[state=active]:text-fg data-[state=active]:shadow-sm",
         className
       )}

@@ -15,10 +15,10 @@ const VARIANTS: Record<ButtonVariant, string> = {
 
 const SIZES: Record<ButtonSize, string> = {
   // Apple-style pills.
-  sm: "h-8 gap-1.5 rounded-full px-3.5 text-xs",
-  md: "h-10 gap-2 rounded-full px-5 text-sm",
-  lg: "h-12 gap-2 rounded-full px-7 text-[17px]",
-  icon: "h-9 w-9 rounded-full text-base",
+  sm: "h-10 gap-1.5 rounded-full px-3 text-xs sm:h-7",
+  md: "h-10 gap-2 rounded-full px-4 text-sm sm:h-9",
+  lg: "h-11 gap-2 rounded-full px-6 text-base",
+  icon: "h-10 w-10 rounded-full text-base sm:h-8 sm:w-8",
 };
 
 export function buttonClasses(variant: ButtonVariant = "primary", size: ButtonSize = "md", className?: string) {
