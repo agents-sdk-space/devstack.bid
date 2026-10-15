@@ -9,6 +9,8 @@ nvx21st list
 nvx21st new <name> [-t static|worker]
 nvx21st add <user>/<slug> [--print]
 nvx21st add @<registry> [--print]
+nvx21st theme <id|url|file.css> [--into <file.css>] [--print]
+nvx21st logo <query> [--save <dir>] [--pick <n>] [--dark] [--wordmark] [--json]
 nvx21st zip [dir] [-o <file>] [--force]
 nvx21st deploy [dir] [--dry-run]
 nvx21st whoami
@@ -41,6 +43,21 @@ public Turnstile test keys only, so a generated project is safe to share.
   `API_KEY_21ST` is set it is appended to the URL but never printed.
   `--print` shows the command without running it.
 
+**theme** *id* | *https-url* | *file.css*
+: Read a theme's `:root` and `.dark` custom properties and write them between
+  `/* nvx21st theme:start */` and `/* nvx21st theme:end */` markers in the
+  project CSS (the first of `app/globals.css`, `src/app/globals.css`,
+  `src/index.css`, `src/styles.css`, `styles.css`, `style.css`, else `theme.css`).
+  Running it again replaces the block. A 21st theme id is fetched with the
+  official `@21st-dev/cli theme` and needs `API_KEY_21ST`, which is never printed.
+  A URL or local file needs no key. `--print` writes nothing.
+
+**logo** *query*
+: Search the free SVG logo library that 21st uses (svgl, `api.svgl.app`, no
+  login) and list up to 10 matches. `--save` *dir* downloads one (`--pick` *n*;
+  default is the exact title match, else the first; `--dark`, `--wordmark` for variants) after checking that it is a
+  plain SVG with no scripts. Follow each brand's own usage guidelines.
+
 **zip** [*dir*]
 : Pack *dir* (default `.`) into *dir*-deploy.zip next to the folder (so it is never deployed as an asset). `.env*`, `.dev.vars*`, `.git`,
   `node_modules`, `.wrangler`, `.npmrc` and `.next` are always left out. Refuses
@@ -60,6 +77,12 @@ public Turnstile test keys only, so a generated project is safe to share.
 
 `-o`, `--out` *file*
 : Output path for **zip**.
+
+`--into` *file.css*
+: **theme**: target CSS file.
+
+`--save` *dir* / `-n`, `--pick` *n* / `--dark` / `--wordmark` / `--json`
+: **logo** options.
 
 `--force`
 : **zip** even when the secret check matches.
@@ -82,7 +105,7 @@ public Turnstile test keys only, so a generated project is safe to share.
 : CLI key (`nvx_live_…`) from https://devstack.bid/settings/cli. Used for **new** and **whoami**.
 
 `API_KEY_21ST`
-: Optional 21st.dev key for **add**.
+: Optional 21st.dev key for **add** and **theme** *id*.
 
 `DEVSTACK_API`
 : Same as `--api`.
@@ -95,6 +118,10 @@ export DEVSTACK_KEY=nvx_live_...      # hidden: read -rs DEVSTACK_KEY && export 
 nvx21st new my-app -t worker
 cd my-app
 nvx21st add shadcnui-blocks/process-timeline --print
+nvx21st theme https://example.com/theme.css --print
+nvx21st theme ./my-theme.css
+nvx21st logo cloudflare
+nvx21st logo github --save public/logos --dark
 nvx21st zip . -o ../my-app-deploy.zip
 nvx21st deploy --dry-run
 nvx21st deploy
@@ -112,4 +139,5 @@ starter in a single command, no Node needed), wrangler(1), shadcn.
 # CREDITS
 
 The command layout takes ideas from the public 21st CLI documentation
-(https://help.21st.dev/cli). It is used as reference only and no code was copied.
+(https://help.21st.dev/cli, https://help.21st.dev/cli/reference). Logos come
+from svgl (https://svgl.app, MIT). Both are used as reference only and no code was copied.

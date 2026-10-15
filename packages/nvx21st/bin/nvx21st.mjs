@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // nvx21st: devstack.bid template CLI (zero dependencies). See nvx21st.1.md.
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
 import { deflateRawSync } from "node:zlib";
 
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 const api = () => (process.env.DEVSTACK_API || "https://devstack.bid").replace(/\/+$/, "");
 const TEMPLATES = {
   static: "Static site on Workers Assets (HTML/CSS/JS, no build step)",
@@ -23,6 +23,8 @@ Commands:
   list                         List starter templates
   new <name> [-t static|worker] Create a project from a template (needs DEVSTACK_KEY)
   add <user>/<slug> [--print]  Add a 21st.dev component via shadcn
+  theme <id|url|file.css>      Apply a theme's :root/.dark CSS variables (--into, --print)
+  logo <query> [--save dir]    Search brand SVG logos (svgl via 21st), save one (--dark, --wordmark)
   zip [dir] [-o file]          Pack a folder into a deploy-ready zip (secrets excluded)
   deploy [dir] [--dry-run]     Run wrangler deploy with your own Cloudflare login
   whoami                       Show the devstack.bid account for DEVSTACK_KEY
@@ -42,8 +44,8 @@ function parse(argv) {
     if (a === "--") { pos.push(...argv.slice(i + 1)); break; }
     const m = a.match(/^--?([a-z-]+)(?:=(.*))?$/i);
     if (!m) { pos.push(a); continue; }
-    const k = { t: "template", o: "out", h: "help", v: "version" }[m[1]] || m[1];
-    const valued = ["template", "out", "api"].includes(k);
+    const k = { t: "template", o: "out", h: "help", v: "version", n: "pick" }[m[1]] || m[1];
+    const valued = ["template", "out", "api", "into", "save", "pick"].includes(k);
     flags[k] = m[2] ?? (valued ? argv[++i] : true);
     if (valued && flags[k] === undefined) die(`--${k} needs a value`);
   }
@@ -121,6 +123,47 @@ export function findSecrets(files) {
   return hits;
 }
 
+
+const THEME_START = "/* nvx21st theme:start */", THEME_END = "/* nvx21st theme:end */";
+const CSS_TARGETS = ["app/globals.css", "src/app/globals.css", "src/index.css", "src/styles.css", "styles.css", "style.css"];
+
+export function themeBlocks(css) {
+  const out = {};
+  for (const [sel, key] of [[":root", "root"], [".dark", "dark"]]) {
+    const re = new RegExp(`(^|[\\s}])${sel.replace(".", "\\.")}\\s*\\{([^}]*)\\}`, "g");
+    const vars = [];
+    for (const m of css.matchAll(re)) for (const d of m[2].matchAll(/(--[\w-]+)\s*:\s*([^;]+);?/g)) vars.push(`  ${d[1]}: ${d[2].trim()};`);
+    if (vars.length) out[key] = [...new Map(vars.map((v) => [v.split(":")[0], v])).values()];
+  }
+  if (!out.root) die("no :root { --var: … } block found in that theme");
+  return out;
+}
+
+export function applyTheme(existing, blocks, source) {
+  const block = [THEME_START, `/* source: ${source} */`, `:root {\n${blocks.root.join("\n")}\n}`, ...(blocks.dark ? [`.dark {\n${blocks.dark.join("\n")}\n}`] : []), THEME_END].join("\n");
+  const i = existing.indexOf(THEME_START), j = existing.indexOf(THEME_END);
+  if (i !== -1 && j > i) return existing.slice(0, i) + block + existing.slice(j + THEME_END.length);
+  return (existing && !existing.endsWith("\n") ? existing + "\n" : existing) + (existing ? "\n" : "") + block + "\n";
+}
+
+async function getText(url) {
+  const res = await fetch(url, { headers: { "User-Agent": `nvx21st/${VERSION}` } }).catch((e) => die(`cannot reach ${new URL(url).host}: ${e.message}`));
+  if (!res.ok) die(`${new URL(url).host} answered HTTP ${res.status}`);
+  return res.text();
+}
+
+const mask = (t) => [process.env.API_KEY_21ST, process.env.TWENTYFIRST_TOKEN].filter(Boolean).reduce((a, k) => a.split(k).join("***"), t);
+
+async function themeCss(src) {
+  if (/^https:\/\//.test(src)) return getText(src);
+  if (/\.css$/i.test(src)) { if (!existsSync(src)) die(`${src} not found`); return readFileSync(src, "utf8"); }
+  if (!/^[\w-]+$/.test(src)) die("theme must be a 21st theme id, an https:// URL or a .css file");
+  if (!process.env.API_KEY_21ST && !process.env.TWENTYFIRST_TOKEN) die("fetching a 21st theme by id needs API_KEY_21ST (or `npx @21st-dev/cli login`); a URL or .css file works without it");
+  const r = spawnSync("npx", ["--yes", "@21st-dev/cli@1", "theme", src], { encoding: "utf8", maxBuffer: 4_000_000 });
+  if (r.status !== 0) die(`21st theme ${src} failed: ${mask((r.stderr || r.stdout || "").trim().split("\n").pop())}`);
+  return mask(r.stdout);
+}
+
 const commands = {
   async list() {
     log("Templates (nvx21st new <name> -t <template>):");
@@ -156,6 +199,40 @@ const commands = {
     log(`→ npx shadcn@latest add "${shown}"`);
     const r = spawnSync("npx", ["--yes", "shadcn@latest", "add", real], { stdio: "inherit" });
     if (r.status !== 0) die("shadcn add failed (21st installs may need API_KEY_21ST and a 21st membership)");
+  },
+  async theme({ pos, flags }) {
+    const src = pos[0] || die("usage: nvx21st theme <id|https-url|file.css> [--into file.css] [--print]");
+    const blocks = themeBlocks(await themeCss(src));
+    const label = /^https?:/.test(src) ? new URL(src).host + new URL(src).pathname : src;
+    if (flags.print) { log(applyTheme("", blocks, label).trimEnd()); return; }
+    const target = resolve(flags.into || CSS_TARGETS.find((f) => existsSync(f)) || "theme.css");
+    const before = existsSync(target) ? readFileSync(target, "utf8") : "";
+    writeFileSync(target, applyTheme(before, blocks, label));
+    log(`✓ ${relative(process.cwd(), target)}: ${blocks.root.length} :root vars${blocks.dark ? `, ${blocks.dark.length} .dark vars` : ""}${before.includes(THEME_START) ? " (replaced previous theme)" : ""}`);
+    if (!before && /theme\.css$/.test(target)) log('  link it: <link rel="stylesheet" href="theme.css">');
+  },
+  async logo({ pos, flags }) {
+    const q = pos.join(" ").trim() || die("usage: nvx21st logo <query> [--save dir] [--dark] [--wordmark] [--pick n] [--json]");
+    const list = JSON.parse(await getText(`https://api.svgl.app?search=${encodeURIComponent(q)}`));
+    if (!Array.isArray(list) || !list.length) die(`no logo found for "${q}"`);
+    if (flags.json) { log(JSON.stringify(list, null, 2)); return; }
+    const variant = flags.dark ? "dark" : "light";
+    const urlOf = (l) => { const r = flags.wordmark ? l.wordmark : l.route; return typeof r === "string" ? r : r?.[variant]; };
+    if (!flags.save) {
+      list.slice(0, 10).forEach((l, i) => log(`  ${String(i + 1).padStart(2)}. ${l.title.padEnd(24)} ${urlOf(l) || "(no " + (flags.wordmark ? "wordmark" : "icon") + ")"}`));
+      log(`save one: nvx21st logo "${q}" --save public/logos [--pick n] [--dark] [--wordmark]`);
+      return;
+    }
+    const exact = list.find((l) => l.title.toLowerCase() === q.toLowerCase());
+    const pick = (flags.pick ? list[Number(flags.pick) - 1] : exact || list[0]) || die(`--pick must be 1-${list.length}`);
+    const url = urlOf(pick) || die(`${pick.title} has no ${flags.wordmark ? "wordmark" : "icon"} variant`);
+    const svg = await getText(url);
+    if (!/<svg[\s>]/i.test(svg) || /<script|\son\w+\s*=/i.test(svg)) die("downloaded file is not a clean SVG; not saved");
+    const dir = resolve(flags.save === true ? "." : flags.save);
+    mkdirSync(dir, { recursive: true });
+    const file = join(dir, basename(new URL(url).pathname));
+    writeFileSync(file, svg);
+    log(`✓ ${relative(process.cwd(), file)} (${pick.title}${pick.url ? `, ${pick.url}` : ""}). Check the brand's guidelines before use.`);
   },
   async zip({ pos, flags }) {
     const dir = resolve(pos[0] || ".");

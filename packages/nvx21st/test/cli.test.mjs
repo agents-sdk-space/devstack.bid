@@ -10,7 +10,7 @@ const BIN = fileURLToPath(new URL("../bin/nvx21st.mjs", import.meta.url));
 const run = (args, opts = {}) => spawnSync(process.execPath, [BIN, ...args], { encoding: "utf8", ...opts, env: { PATH: process.env.PATH, ...opts.env } });
 
 test("help and list", () => {
-  assert.match(run(["help"]).stdout, /nvx21st 0\.1\.0/);
+  assert.match(run(["help"]).stdout, /nvx21st 0\.2\.0/);
   assert.match(run(["list"]).stdout, /static[\s\S]*worker/);
   assert.match(run(["man"]).stdout, /^# NAME\n\nnvx21st - /);
 });
@@ -48,4 +48,20 @@ test("zip excludes secret files and blocks live keys", () => {
   assert.equal(b.status, 1);
   assert.match(b.stderr, /possible secrets in: leak\.js/);
   assert.equal(existsSync(join(d, "out2.zip")), false);
+});
+
+test("theme merges :root/.dark vars idempotently and logo validates input", async () => {
+  const d = mkdtempSync(join(tmpdir(), "nvx21st-"));
+  writeFileSync(join(d, "t.css"), ":root{--background:0 0% 100%;--foreground:0 0% 0%}\n.dark{--background:0 0% 0%}\nbody{color:red}");
+  writeFileSync(join(d, "styles.css"), "body{margin:0}\n");
+  assert.equal(run(["theme", join(d, "t.css")], { cwd: d }).status, 0);
+  assert.equal(run(["theme", join(d, "t.css")], { cwd: d }).status, 0);
+  const css = execFileSync("cat", [join(d, "styles.css")], { encoding: "utf8" });
+  assert.equal(css.match(/theme:start/g).length, 1);
+  assert.match(css, /^body\{margin:0\}/);
+  assert.match(css, /\.dark \{\n {2}--background: 0 0% 0%;\n\}/);
+  assert.doesNotMatch(css, /color:red/);
+  const k = run(["theme", "abc123"], { cwd: d });
+  assert.match(k.stderr, /needs API_KEY_21ST/);
+  assert.match(run(["logo"]).stderr, /usage: nvx21st logo/);
 });

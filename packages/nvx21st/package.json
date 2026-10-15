@@ -1,6 +1,6 @@
 {
   "name": "nvx21st",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "devstack.bid template CLI: new project zips, 21st components, deploy-ready zips, wrangler deploy.",
   "license": "MIT",
   "type": "module",
