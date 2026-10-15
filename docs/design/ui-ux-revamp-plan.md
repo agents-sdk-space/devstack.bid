@@ -343,3 +343,11 @@ Accessibility rules:
 - Status regions use `aria-live="polite"`.
 - Secret inputs use `type="password"` with `autocomplete="off"` and are cleared after submit.
 - Every control has a visible focus ring.
+
+## DST vector mascot (`src/components/brand/dst-mascot.tsx`, 2026-10-15)
+
+- Original SVG drawn on the NVX master-logo 1024px grid (eye capsules reuse the in-house logo layout). No third-party code or assets copied.
+- Visual reference: the user's own DST mascot artwork (black tile). Reference only.
+- Canvas modes: `black` (dark UI) and `brand` (`--nvx-brand-pink` #fb0fab, light UI). Pink and the letter gradients are decorative mascot art only; controls stay monochrome.
+- Animations (float, yaw, blink) run only under `prefers-reduced-motion: no-preference`. `label` gives `role="img"` + `aria-label`; without it the mascot is `aria-hidden`.
+- Demo: `/design/dst-mascot`.
