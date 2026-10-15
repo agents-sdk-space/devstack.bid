@@ -32,6 +32,8 @@
 | `npm run studio:e2e` | Playwright ของ Studio (flow "build a todo app") กับ `wrangler dev`/preview ที่รันอยู่ | ตรวจ Studio แบบ end-to-end (`STUDIO_BASE_URL`, ค่าเริ่มต้น `http://127.0.0.1:8787`) |
 | `npm run licenses` | `node scripts/third-party-licenses.mjs` อ่าน lockfile ของเว็บและ Studio แล้วเขียน `THIRD_PARTY_LICENSES.md` | หลังเพิ่ม/อัปเดต dependency |
 | `npm run licenses:check` | `node scripts/third-party-licenses.mjs --check` | ตรวจว่าไม่มี license นอกนโยบาย (permissive เท่านั้น) และไฟล์เป็นปัจจุบัน (`npm test` ตรวจให้ด้วย) |
+| `npm run plugins:sync` | `node scripts/sync-plugin-catalog.mjs` | ดึง `catalog/plugins.json` จาก commit ที่ปักไว้ของ devstack-plugins ตรวจ แล้วเขียน `src/data/plugin-catalog.json` (ต้องใช้เน็ต) |
+| `npm run plugins:check` | `node scripts/sync-plugin-catalog.mjs --check` | ตรวจว่า snapshot ตรงกับ commit ที่ปักไว้ |
 
 ## ตัวเลือกของ `npm run export`
 

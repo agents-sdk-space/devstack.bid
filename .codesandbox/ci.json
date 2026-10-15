@@ -1,6 +1,7 @@
 {
-  "installCommand": "install",
+  "installCommand": false,
   "buildCommand": false,
+  "packages": [],
   "node": "20",
   "sandboxes": ["/sandbox-examples/my-button"]
 }

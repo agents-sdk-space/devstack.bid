@@ -58,6 +58,7 @@
   - [api-plan.md](./reference/api-plan.md), [template-schema.md](./reference/template-schema.md), [config-env.md](./reference/config-env.md), [npm-scripts.md](./reference/npm-scripts.md), [file-map.md](./reference/file-map.md)
 - **integrations/** เชื่อม DevStack กับแพลตฟอร์มอื่น
   - [mcp.md](./integrations/mcp.md) Remote MCP, scoped keys, tools, headers, and client configuration
+  - [plugins.md](./integrations/plugins.md) The `/plugins` catalog, its source repo, and how to sync it
 - **[platform.md](./platform.md)** เมนูฟังก์ชันของทั้งแพลตฟอร์ม (ไฟล์ดิบ `/docs/platform.md`)
 - **agents/** สำหรับ AI agent: [AGENT-PLAYBOOK.md](./agents/AGENT-PLAYBOOK.md), [cursor-caretakers.md](./agents/cursor-caretakers.md), [cursor-agents.json](./agents/cursor-agents.json), [platform-manifest.json](./agents/platform-manifest.json)
 - เอกสารเดิม: [UI-FRAMEWORK.md](./UI-FRAMEWORK.md) (ระบบดีไซน์ NVX UI, TH + EN)

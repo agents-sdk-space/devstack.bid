@@ -298,3 +298,17 @@ header มีลิงก์และปุ่ม 20 ชิ้นบนทุก
 - **หน้าแรก**: ช่อง `data-slot="howto-video"` ใต้หัวข้อสามขั้นตอน (สัดส่วน 16:9) สำหรับวิดีโอสั้นประมาณ 30 วินาที ตอนนี้ยังเป็นข้อความ "เร็ว ๆ นี้"
 - **วิดีโอแบบละเอียด**: จะไปอยู่ใน docs หน้า [เริ่มต้นใช้งาน](../user-guide/getting-started.md) ไม่ใส่บนหน้าแรก
 - ไฟล์วิดีโอควรอยู่ใน `public/` ของเราเอง (CSP `media-src 'self'`) ถ้าจะฝังจาก YouTube หรือที่อื่นต้องแก้ `frame-src` และอัปเดต docs นี้กับ api-hardening ก่อน
+
+## 15. แหล่งอ้างอิงดีไซน์จากเจ้าของ (inspiration only)
+
+เจ้าของส่งลิงก์ 21st.dev ต่อไปนี้มาเป็น **แรงบันดาลใจเท่านั้น** เราออกแบบและเขียนโค้ดเองทั้งหมดด้วย NVX UI และ semantic token แบบขาวดำ (phase 0-2) **ไม่ได้คัดลอกโค้ด** ไม่ได้เรียก `get_component` และไม่ได้ติดตั้ง package ของ 21st.dev หรือ shadcn registry จึงไม่มีผลต่อ licence ตาม AGENTS.md ข้อ 9
+
+The owner shared these 21st.dev links as inspiration only. We redesigned everything ourselves with NVX UI and monochrome tokens. No code was copied, `get_component` was not called and nothing was installed.
+
+| Reference (owner link) | What we took as an idea | Our implementation | Used in |
+|---|---|---|---|
+| Floating Dock by @manuarora700 ([21st.dev](https://21st.dev/community/components?q=Plug-i&preview=%2F%40manuarora700%2Fcomponents%2Ffloating-dock)) | A pill-shaped dock of icons fixed at the bottom of the screen that lifts on hover | `src/components/plugins/category-dock.tsx`: monochrome dock with `bg-bg/70` blur, `border-border`, the active item in `bg-fg text-bg`, a CSS-only lift that is off under reduced motion, real toggle buttons with `aria-pressed` and labels, and horizontal scroll on small screens | `/plugins` category quick-switch (shares state with the filter chips) |
+| @nextjsshop library ([21st.dev](https://21st.dev/@nextjsshop/library/nextjsshop)) | A clean card and grid rhythm with simple outline badges | `src/components/plugins/plugin-card.tsx` (outline category badge, mono repo slug, divided action row) | `/plugins`, `/plugins/[name]` |
+| Spinners ([21st.dev](https://21st.dev/community/components/s/spinner)) | A choice between a ring and a dots variant | `Spinner` in `src/components/ui/skeleton.tsx` (extended, not duplicated): `variant="ring" \| "dots"`, `size`, `currentColor`, `role=status` when it has a label | Sandpack loading (`home/live-example.tsx`), chat status (`chat/chat-app.tsx`, dots), login submit (`login-form.tsx`), plus the existing Button `loading`, Factory and the sandbox panel |
+
+ก่อนจะนำโค้ดจากลิงก์เหล่านี้มาใช้จริงในอนาคต ต้องตรวจสัญญาอนุญาตและขออนุมัติตามข้อ 9 ก่อน

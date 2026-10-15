@@ -33,7 +33,9 @@
     "studio:check": "node scripts/sync-studio-brand.mjs --check && npm --prefix studio run lint && npm --prefix studio run typecheck && npm --prefix studio test",
     "studio:e2e": "npm --prefix studio run test:e2e",
     "licenses": "node scripts/third-party-licenses.mjs",
-    "licenses:check": "node scripts/third-party-licenses.mjs --check"
+    "licenses:check": "node scripts/third-party-licenses.mjs --check",
+    "plugins:sync": "node scripts/sync-plugin-catalog.mjs",
+    "plugins:check": "node scripts/sync-plugin-catalog.mjs --check"
   },
   "dependencies": {
     "@codesandbox/sandpack-react": "^2.20.0",
