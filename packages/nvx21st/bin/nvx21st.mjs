@@ -25,6 +25,9 @@ Commands:
   add <user>/<slug> [--print]  Add a 21st.dev component via shadcn
   theme <id|url|file.css>      Apply a theme's :root/.dark CSS variables (--into, --print)
   logo <query> [--save dir]    Search brand SVG logos (svgl via 21st), save one (--dark, --wordmark)
+  search <query> [--type t]    Search 21st (delegates to npx @21st-dev/cli)
+  publish <file> [21st flags]  Publish to 21st (delegates to npx @21st-dev/cli)
+  registry [@ns] [--user u]    Add the 21st shadcn registry to components.json (key by env reference)
   zip [dir] [-o file]          Pack a folder into a deploy-ready zip (secrets excluded)
   deploy [dir] [--dry-run]     Run wrangler deploy with your own Cloudflare login
   whoami                       Show the devstack.bid account for DEVSTACK_KEY
@@ -45,7 +48,7 @@ function parse(argv) {
     const m = a.match(/^--?([a-z-]+)(?:=(.*))?$/i);
     if (!m) { pos.push(a); continue; }
     const k = { t: "template", o: "out", h: "help", v: "version", n: "pick" }[m[1]] || m[1];
-    const valued = ["template", "out", "api", "into", "save", "pick"].includes(k);
+    const valued = ["template", "out", "api", "into", "save", "pick", "user", "library", "type"].includes(k);
     flags[k] = m[2] ?? (valued ? argv[++i] : true);
     if (valued && flags[k] === undefined) die(`--${k} needs a value`);
   }
@@ -164,6 +167,16 @@ async function themeCss(src) {
   return mask(r.stdout);
 }
 
+function run21st(args) {
+  log(`→ npx @21st-dev/cli ${args.join(" ")}`);
+  const r = spawnSync("npx", ["--yes", "@21st-dev/cli@1", ...args], { stdio: "inherit" });
+  if (r.status !== 0) die("21st command failed (sign in with `npx @21st-dev/cli login`, or export API_KEY_21ST)");
+}
+
+export function registryEntry(cfg, ns, user, library) {
+  return { ...cfg, registries: { ...(cfg.registries || {}), [ns]: { url: `https://21st.dev/r/${user}/${library}/{name}.json`, headers: { Authorization: "Bearer ${API_KEY_21ST}" } } } };
+}
+
 const commands = {
   async list() {
     log("Templates (nvx21st new <name> -t <template>):");
@@ -233,6 +246,24 @@ const commands = {
     const file = join(dir, basename(new URL(url).pathname));
     writeFileSync(file, svg);
     log(`✓ ${relative(process.cwd(), file)} (${pick.title}${pick.url ? `, ${pick.url}` : ""}). Check the brand's guidelines before use.`);
+  },
+  async search({ pos, flags }) {
+    if (!pos.length) die('usage: nvx21st search "<query>" [--type component|theme|template]');
+    run21st(["search", pos.join(" "), ...(flags.type ? ["--type", flags.type] : [])]);
+  },
+  async publish({ pos }) {
+    if (!pos[0]) die("usage: nvx21st publish <file> [--to slug --visibility published|private ...] (put 21st flags after --)");
+    run21st(["publish", ...pos]);
+  },
+  async registry({ pos, flags }) {
+    const ns = pos[0] || "@nvx21st";
+    if (!/^@[\w-]+$/.test(ns)) die("namespace must look like @name");
+    const user = flags.user || "thanabartbb", library = flags.library || "default";
+    if (!/^[\w.-]+$/.test(user) || !/^[\w.-]+$/.test(library)) die("invalid --user or --library");
+    const f = resolve("components.json");
+    const cfg = existsSync(f) ? JSON.parse(readFileSync(f, "utf8")) : { $schema: "https://ui.shadcn.com/schema.json" };
+    writeFileSync(f, JSON.stringify(registryEntry(cfg, ns, user, library), null, 2) + "\n");
+    log(`✓ components.json: ${ns} → 21st.dev/r/${user}/${library}/{name}.json (Authorization uses \${API_KEY_21ST}, no key written)\n  use: npx shadcn@latest add ${ns}/<name>`);
   },
   async zip({ pos, flags }) {
     const dir = resolve(pos[0] || ".");

@@ -65,3 +65,14 @@ test("theme merges :root/.dark vars idempotently and logo validates input", asyn
   assert.match(k.stderr, /needs API_KEY_21ST/);
   assert.match(run(["logo"]).stderr, /usage: nvx21st logo/);
 });
+
+test("registry writes an env reference, never a key", () => {
+  const d = mkdtempSync(join(tmpdir(), "nvx21st-"));
+  writeFileSync(join(d, "components.json"), '{"style":"new-york"}');
+  const r = run(["registry", "@devstack", "--library", "design-system"], { cwd: d, env: { API_KEY_21ST: "realsecret123" } });
+  assert.equal(r.status, 0, r.stderr);
+  const cfg = JSON.parse(execFileSync("cat", [join(d, "components.json")], { encoding: "utf8" }));
+  assert.equal(cfg.style, "new-york");
+  assert.deepEqual(cfg.registries["@devstack"], { url: "https://21st.dev/r/thanabartbb/design-system/{name}.json", headers: { Authorization: "Bearer ${API_KEY_21ST}" } });
+  assert.doesNotMatch(JSON.stringify(cfg) + r.stdout, /realsecret/);
+});

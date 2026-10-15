@@ -11,6 +11,9 @@ nvx21st add <user>/<slug> [--print]
 nvx21st add @<registry> [--print]
 nvx21st theme <id|url|file.css> [--into <file.css>] [--print]
 nvx21st logo <query> [--save <dir>] [--pick <n>] [--dark] [--wordmark] [--json]
+nvx21st search <query> [--type component|theme|template]
+nvx21st publish <file> [-- <21st publish flags>]
+nvx21st registry [@ns] [--user <u>] [--library <slug>]
 nvx21st zip [dir] [-o <file>] [--force]
 nvx21st deploy [dir] [--dry-run]
 nvx21st whoami
@@ -57,6 +60,19 @@ public Turnstile test keys only, so a generated project is safe to share.
   login) and list up to 10 matches. `--save` *dir* downloads one (`--pick` *n*;
   default is the exact title match, else the first; `--dark`, `--wordmark` for variants) after checking that it is a
   plain SVG with no scripts. Follow each brand's own usage guidelines.
+
+**search** *query*, **publish** *file*
+: Run the official 21st CLI (`npx @21st-dev/cli`, MIT) for these, so behaviour
+  matches 21st exactly. Sign in with `npx @21st-dev/cli login` or export
+  `API_KEY_21ST`. Pass extra publish flags after `--`, for example
+  `nvx21st publish button.tsx -- --to button --visibility private`.
+
+**registry** [*@ns*]
+: Add a shadcn registry entry to `components.json` (created if missing):
+  `"@ns": {"url": "https://21st.dev/r/<user>/<library>/{name}.json",
+  "headers": {"Authorization": "Bearer ${API_KEY_21ST}"}}`. Only the variable
+  reference is written, never a key. Defaults: `@nvx21st`, `--user thanabartbb`,
+  `--library default`. Then `npx shadcn@latest add @ns/<name>`.
 
 **zip** [*dir*]
 : Pack *dir* (default `.`) into *dir*-deploy.zip next to the folder (so it is never deployed as an asset). `.env*`, `.dev.vars*`, `.git`,
@@ -122,6 +138,8 @@ nvx21st theme https://example.com/theme.css --print
 nvx21st theme ./my-theme.css
 nvx21st logo cloudflare
 nvx21st logo github --save public/logos --dark
+nvx21st search "pricing table"
+nvx21st registry @devstack --library design-system
 nvx21st zip . -o ../my-app-deploy.zip
 nvx21st deploy --dry-run
 nvx21st deploy
