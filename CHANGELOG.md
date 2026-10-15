@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> Deployed to production 2026-10-15 (Cloudflare version `f5c15746-673b-47d7-b7a2-dafeb9b032fa`; rollback `52a9ee18-1001-4ebe-b02e-e11cfb040f01`). See `docs/DEPLOY.md`.
+
 ### Added
 
 - macOS arm64 one-command setup: `curl -fsSL https://devstack.bid/setup.sh | bash -s -- my-app` with a scoped `cli:setup` key from `/settings/cli` (hashed, shown once, revocable); outputs `<name>/` and `<name>-deploy.zip`. New routes `/setup.sh`, `/api/cli/whoami`, `/api/cli/scaffold`, `/api/cli/starter`, `/api/projects/:id/zip`.
