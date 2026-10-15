@@ -39,6 +39,7 @@ const eslintConfig = defineConfig([
     },
   },
   globalIgnores([
+    "sandbox-examples/**",
     ".next/**",
     "out/**",
     "build/**",
