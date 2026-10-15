@@ -1,5 +1,6 @@
 import { connection } from "next/server";
-import { listPullRequests } from "@/lib/auth/github-api";
+import { getRepo, listPullRequests, readTree } from "@/lib/auth/github-api";
+import { resolveProfile } from "@/lib/deploy/templates";
 import { json } from "@/lib/chat/runtime";
 import { loadGithubToken } from "@/lib/connections/credentials";
 import { getProject, projectView } from "@/lib/connections/projects";
@@ -13,10 +14,17 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   const p = await getProject(a.db, a.uid, (await ctx.params).id);
   if (!p) return json({ error: "Not found. / ไม่พบโปรเจกต์", code: "not_found" }, 404);
   let pulls: unknown[] = [];
+  let paths: string[] = [];
+  let repoPrivate: boolean | null = null;
   const token = await loadGithubToken(a.db, a.keys, a.uid);
   if (token && p.repo_full_name) {
     const [o, r] = p.repo_full_name.split("/");
-    pulls = await listPullRequests(token, o, r, "all").catch(() => []);
+    [pulls, paths, repoPrivate] = await Promise.all([
+      listPullRequests(token, o, r, "all").catch(() => []),
+      readTree(token, o, r, p.default_branch ?? "main").then((t) => t.entries.filter((e) => e.type === "blob").map((e) => e.path)).catch(() => []),
+      getRepo(token, o, r).then((x) => x.private).catch(() => null),
+    ]);
   }
-  return json({ project: projectView(p), pulls }, 200, { "Cache-Control": "no-store" });
+  const profile = resolveProfile(p.template_id, paths);
+  return json({ project: projectView(p), pulls, profile, repoPrivate }, 200, { "Cache-Control": "no-store" });
 }

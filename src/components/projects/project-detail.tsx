@@ -4,17 +4,19 @@ import { useEffect, useState } from "react";
 import { ExternalLink, GitPullRequest } from "lucide-react";
 import { Card } from "@/components/ui";
 import { useLang } from "@/components/prefs";
+import type { DeployProfile } from "@/lib/deploy/templates";
 
 export type ProjectView = { id: string; name: string; repo: string | null; repoUrl: string | null; defaultBranch: string | null; templateId: string | null };
 type Pull = { number: number; title: string; state: string; url: string; head: string; base: string };
 
 /** /projects/[id] — repo link and pull requests. Deploy sections are added below (PR-C/D). */
-export function ProjectDetail({ id, children }: { id: string; children?: (p: ProjectView) => React.ReactNode }) {
+export function ProjectDetail({ id, children }: { id: string; children?: (p: ProjectView, extra: { profile: DeployProfile | null; repoPrivate: boolean | null }) => React.ReactNode }) {
   const { lang } = useLang();
   const th = lang === "th";
   const [project, setProject] = useState<ProjectView | null>(null);
   const [pulls, setPulls] = useState<Pull[]>([]);
   const [error, setError] = useState("");
+  const [extra, setExtra] = useState<{ profile: DeployProfile | null; repoPrivate: boolean | null }>({ profile: null, repoPrivate: null });
 
   useEffect(() => {
     let on = true;
@@ -22,7 +24,7 @@ export function ProjectDetail({ id, children }: { id: string; children?: (p: Pro
       .then(async (r) => {
         const b = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(b.error ?? "Not found");
-        if (on) { setProject(b.project); setPulls(b.pulls ?? []); }
+        if (on) { setProject(b.project); setPulls(b.pulls ?? []); setExtra({ profile: b.profile ?? null, repoPrivate: b.repoPrivate ?? null }); }
       })
       .catch((e: unknown) => on && setError(e instanceof Error ? e.message : String(e)));
     return () => { on = false; };
@@ -53,7 +55,7 @@ export function ProjectDetail({ id, children }: { id: string; children?: (p: Pro
           ))}
         </ul>
       </Card>
-      {children?.(project)}
+      {children?.(project, extra)}
     </div>
   );
 }

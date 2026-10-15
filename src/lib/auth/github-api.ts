@@ -260,3 +260,8 @@ export async function getPullRequest(token: string, owner: string, repo: string,
   const { data: files } = await gh<{ filename: string }[]>(token, "GET", `${rp(owner, repo)}/pulls/${number}/files?per_page=100`);
   return { ...pull(data), body: String(data.body ?? "").slice(0, 4000), files: (Array.isArray(files) ? files : []).map((f) => f.filename) };
 }
+
+export async function getRepo(token: string, owner: string, repo: string): Promise<{ private: boolean; defaultBranch: string }> {
+  const { data } = await gh<{ private?: boolean; default_branch?: string }>(token, "GET", rp(owner, repo));
+  return { private: Boolean(data.private), defaultBranch: data.default_branch ?? "main" };
+}
