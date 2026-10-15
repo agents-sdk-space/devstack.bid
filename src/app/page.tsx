@@ -8,14 +8,56 @@ import { T } from "@/components/prefs";
 import { Badge, buttonClasses, Card } from "@/components/ui";
 import type { DictKey } from "@/lib/i18n";
 
-const HOME_DESCRIPTION = "Pick a template or describe your app. Get every setup command, in the right order, ready to copy.";
+const HOME_DESCRIPTION =
+  "DevStack (devstack.bid) — NVX Stack Builder developer tools: pick a template or describe your app and get every setup command, in the right order, ready to copy.";
 
 /** Home overrides the site-wide description and keywords: the home page carries no version-manager commands. */
 export const metadata: Metadata = {
   description: HOME_DESCRIPTION,
-  keywords: ["npm", "npx", "pip", "PyPI", "Next.js", "Python", "scaffold", "stack template", "AI agent"],
-  openGraph: { type: "website", siteName: "NVX Stack Builder", title: "NVX Stack Builder", description: HOME_DESCRIPTION, url: "/" },
-  twitter: { card: "summary_large_image", title: "NVX Stack Builder", description: HOME_DESCRIPTION },
+  keywords: ["devstack.bid", "NVX Stack Builder", "developer tools", "npm", "npx", "pip", "PyPI", "stack template", "AI agent", "MCP"],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "NVX Stack Builder",
+    title: "NVX Stack Builder — DevStack developer tools",
+    description: HOME_DESCRIPTION,
+    url: "/",
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "NVX Stack Builder on devstack.bid" }],
+  },
+  twitter: { card: "summary_large_image", title: "NVX Stack Builder — DevStack", description: HOME_DESCRIPTION, images: ["/opengraph-image.png"] },
+};
+
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      name: "NVX Stack Builder",
+      alternateName: "DevStack",
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Web",
+      url: "https://devstack.bid/",
+      description: HOME_DESCRIPTION,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+    {
+      "@type": "Organization",
+      name: "DevStack",
+      url: "https://devstack.bid/",
+      sameAs: ["https://github.com/agents-sdk-space/devstack.bid"],
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        email: "devstack.sdk@gmail.com",
+        url: "https://devstack.bid/contact",
+      },
+      address: {
+        "@type": "PostalAddress",
+        addressCountry: "TH",
+        addressLocality: "Bangkok",
+      },
+    },
+  ],
 };
 
 /** Home hero sample. Deliberately has no version-manager step: home shows the shortest path. */
@@ -43,6 +85,7 @@ function H2({ id, k }: { id: string; k: DictKey }) {
 export default function Home() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <section className="hero-glow border-b border-border">
         <div className="mx-auto grid max-w-content grid-cols-1 items-center gap-8 [&>*]:min-w-0 px-4 py-12 sm:py-section-sm lg:grid-cols-[1.1fr_1fr] lg:gap-12 lg:py-section">
           <div>

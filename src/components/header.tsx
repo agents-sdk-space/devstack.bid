@@ -209,6 +209,9 @@ const FOOTER: { heading: "footer.product" | "footer.resources" | "footer.develop
     heading: "footer.developers",
     links: [
       { href: "/docs/platform", key: "nav.functions" },
+      { href: "/openapi.json", key: "nav.openapi" },
+      { href: "/llms.txt", key: "docs.forAgents" },
+      { href: "/settings/mcp", key: "nav.mcpSettings" },
       { href: "/chat/dev", key: "nav.devChat" },
       { href: "/factory", key: "nav.factory" },
       { href: "/docs/agents/cursor-caretakers", key: "nav.agents" },
@@ -217,6 +220,8 @@ const FOOTER: { heading: "footer.product" | "footer.resources" | "footer.develop
 ];
 
 const LEGAL: { href: string; key: DictKey }[] = [
+  { href: "/about", key: "nav.about" },
+  { href: "/contact", key: "nav.contact" },
   { href: "/support", key: "footer.support" },
   { href: "/status", key: "footer.status" },
   { href: "/careers", key: "footer.careers" },
