@@ -7,8 +7,9 @@ export function wantsMarkdown(req: Request): boolean {
 
 export const MARKDOWN_NEGOTIATION_HEADERS = {
   "Content-Type": "text/markdown; charset=utf-8",
-  "Cache-Control": "public, max-age=300, s-maxage=3600",
+  "Cache-Control": "private, max-age=300",
   "Vary": "Accept",
+  "X-Content-Type-Options": "nosniff",
 } as const;
 
 export function markdownResponse(body: string, status = 200, extra: Record<string, string> = {}): Response {

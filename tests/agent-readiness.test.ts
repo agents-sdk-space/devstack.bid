@@ -101,3 +101,12 @@ describe("route coverage", () => {
     }
   });
 });
+
+describe("markdown cache headers", () => {
+  it("markdown variants are private so shared caches never serve them to browsers", () => {
+    const res = markdownResponse("# x");
+    expect(res.headers.get("cache-control")).toMatch(/^private/);
+    expect(res.headers.get("vary")).toBe("Accept");
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+  });
+});
