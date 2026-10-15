@@ -18,7 +18,7 @@ export async function GET(req: Request, ctx: Ctx) {
   return json({ deployments: (await listDeployments(a.db, a.uid, p.id)).map(deploymentView) }, 200, { "Cache-Control": "no-store" });
 }
 
-/** POST /api/projects/:id/deploy {ref?} — direct deploy into the customer's Cloudflare account (20/day, one in flight). Always a user click. */
+/** POST /api/projects/:id/deploy {ref?} — direct deploy into the customer's Cloudflare account (capacity-derived daily quota). Always a user click. */
 export async function POST(req: Request, ctx: Ctx) {
   await connection();
   const a = await gate(req, { write: true, burstKey: "dep-new", perMinute: 4 });

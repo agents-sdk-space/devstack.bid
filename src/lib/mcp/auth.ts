@@ -9,6 +9,7 @@ export const MCP_SCOPES = [
   "factory:write",
   "github:read",
   "github:write",
+  "cli:setup",
 ] as const;
 export type McpScope = (typeof MCP_SCOPES)[number];
 

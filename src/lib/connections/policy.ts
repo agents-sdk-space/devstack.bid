@@ -1,14 +1,10 @@
 /** Pure checks for customer repo writes and deploys (no network, no secrets). */
 import type { FileChange } from "@/lib/auth/github-api";
 
-export const LIMITS = {
-  reposPerDay: 5,
-  prsPerDay: 30,
-  deploysPerDay: 20,
-  maxFiles: 200,
-  maxBundleBytes: 10 * 1024 * 1024,
-  maxFixAttempts: 3,
-} as const;
+import { CAPACITY } from "@/lib/limits/capacity";
+
+/** Capacity-derived limits (src/lib/limits/capacity.ts, docs/limits.md). */
+export const LIMITS = CAPACITY;
 
 /** Paths the bot must never write: CI workflows (could exfiltrate repo secrets) and git internals. */
 const BLOCKED = [/^\.github\/workflows(\/|$)/i, /^\.git(\/|$)/i, /(^|\/)\.git\//i];

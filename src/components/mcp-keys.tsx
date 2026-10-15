@@ -32,7 +32,7 @@ export function McpKeys() {
     const response = await fetch("/api/mcp/keys", { cache: "no-store" });
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(body.error ?? (th ? "โหลดคีย์ไม่สำเร็จ" : "Could not load keys"));
-    setClients(body.clients ?? []);
+    setClients(((body.clients ?? []) as Client[]).filter((c) => !c.scopes.includes("cli:setup")));
   }
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export function McpKeys() {
       .then(async (response) => {
         const body = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(body.error ?? (th ? "โหลดคีย์ไม่สำเร็จ" : "Could not load keys"));
-        if (active) setClients(body.clients ?? []);
+        if (active) setClients(((body.clients ?? []) as Client[]).filter((c) => !c.scopes.includes("cli:setup")));
       })
       .catch((e: unknown) => { if (active) setError(e instanceof Error ? e.message : String(e)); });
     return () => { active = false; };

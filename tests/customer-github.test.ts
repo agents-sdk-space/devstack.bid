@@ -51,15 +51,15 @@ describe("path validation", () => {
 });
 
 describe("customer rate limits", () => {
-  it("5 repos / 30 PRs / 20 deploys per user per day", async () => {
+  it("capacity-derived repo / PR / deploy limits per user per day", async () => {
     const db = counterD1();
     const L = { repo: LIMITS.reposPerDay, pr: LIMITS.prsPerDay, deploy: LIMITS.deploysPerDay };
-    for (let i = 0; i < 5; i++) expect((await consume(db, customerRules("u1", "repo", L))).ok).toBe(true);
+    for (let i = 0; i < LIMITS.reposPerDay; i++) expect((await consume(db, customerRules("u1", "repo", L))).ok).toBe(true);
     expect(await consume(db, customerRules("u1", "repo", L))).toMatchObject({ ok: false, exceeded: "repo_user_day" });
     expect((await consume(db, customerRules("u2", "repo", L))).ok).toBe(true);
-    for (let i = 0; i < 20; i++) await consume(db, customerRules("u1", "deploy", L));
+    for (let i = 0; i < LIMITS.deploysPerDay; i++) await consume(db, customerRules("u1", "deploy", L));
     expect((await consume(db, customerRules("u1", "deploy", L))).ok).toBe(false);
-    expect(customerRules("u1", "pr", L)[0].limit).toBe(30);
+    expect(customerRules("u1", "pr", L)[0].limit).toBe(LIMITS.prsPerDay);
   });
 });
 

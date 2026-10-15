@@ -10,7 +10,8 @@ export type AuditEvent =
   | "deploy.started"
   | "deploy.live"
   | "deploy.failed"
-  | "fix.committed";
+  | "fix.committed"
+  | "cli.scaffold";
 
 export async function audit(db: D1Like, userId: string, event: AuditEvent, subject?: string): Promise<void> {
   try {

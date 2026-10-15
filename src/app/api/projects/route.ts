@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   return json({ projects: (await listProjects(a.db, a.uid).catch(() => [])).map(projectView) }, 200, { "Cache-Control": "no-store" });
 }
 
-/** POST /api/projects {name, private, templateId?, files?[]} — create a repo in the customer's GitHub (5/day). */
+/** POST /api/projects {name, private, templateId?, files?[]} — create a repo in the customer's GitHub (capacity-derived daily quota). */
 export async function POST(req: Request) {
   await connection();
   const a = await gate(req, { write: true, burstKey: "proj-new", perMinute: 4 });
