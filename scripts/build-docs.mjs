@@ -60,7 +60,7 @@ export const SECTIONS = [
   {
     id: "operations",
     label: { th: "การดูแลระบบ", en: "Operations" },
-    files: [...["local-dev", "env-secrets", "deploy-cloudflare", "rollback", "monitoring", "rate-limits-cost", "custom-domain", "d1-database"].map((f) => `operations/${f}.md`), "DEPLOY.md", "deploy-templates.md", "limits.md", "cli-setup.md"],
+    files: [...["local-dev", "env-secrets", "deploy-cloudflare", "rollback", "monitoring", "rate-limits-cost", "custom-domain", "d1-database"].map((f) => `operations/${f}.md`), "DEPLOY.md", "deploy-templates.md", "limits.md", "cli-setup.md", "verification/cli-zip-rounds.md"],
   },
   {
     id: "contributing",
