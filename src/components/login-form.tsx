@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { buttonClasses, Field, Input, Spinner } from "@/components/ui";
 import type { DictKey } from "@/lib/i18n";
 import { useLang } from "./prefs";
@@ -25,11 +25,32 @@ function notice(auth: string, provider: string): { title: DictKey; body: DictKey
   return null;
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Client-side check mirroring the server (`normalizeEmail`, `acceptPassword`: 10–200 chars). */
+export function loginFormProblem(email: string, password: string): { field: "email" | "password"; message: DictKey } | null {
+  const e = email.trim();
+  if (!e || e.length > 200 || !EMAIL_RE.test(e)) return { field: "email", message: "auth.emailInvalid" };
+  if (password.length < 10 || password.length > 200) return { field: "password", message: "auth.weak" };
+  return null;
+}
+
 /** Four sign-in methods: Cursor, Google, GitHub, and a DevStack email account. */
 export function LoginForm({ next, auth, provider }: { next: string; auth: string; provider: string }) {
   const { t } = useLang();
   const alert = notice(auth, provider);
   const [pending, setPending] = useState<string | null>(null);
+  const [problem, setProblem] = useState<DictKey | null>(null);
+
+  // Back/forward cache restores the page with the old "pending" state; reset it so the buttons work again.
+  useEffect(() => {
+    const reset = (e: PageTransitionEvent) => {
+      if (e.persisted) setPending(null);
+    };
+    window.addEventListener("pageshow", reset);
+    return () => window.removeEventListener("pageshow", reset);
+  }, []);
+
   return (
     <div className="mx-auto w-full max-w-md px-4 py-10 sm:py-16">
       <h1 className="text-3xl font-semibold tracking-tight text-fg">{t("auth.title")}</h1>
@@ -55,12 +76,35 @@ export function LoginForm({ next, auth, provider }: { next: string; auth: string
         action="/api/auth/password"
         className="mt-8 space-y-4 border-t border-border pt-6"
         aria-busy={pending !== null}
+        noValidate
         onSubmit={(e) => {
+          // Native constraint bubbles are easy to miss (in-app browsers, mobile) and made "Create account" look dead.
+          // Validate here and always show a visible, translated message instead.
+          if (pending !== null) {
+            e.preventDefault();
+            return;
+          }
+          const form = e.currentTarget;
+          const issue = loginFormProblem(String(new FormData(form).get("email") ?? ""), String(new FormData(form).get("password") ?? ""));
+          if (issue) {
+            e.preventDefault();
+            setProblem(issue.message);
+            form.querySelector<HTMLInputElement>(`input[name="${issue.field}"]`)?.focus();
+            return;
+          }
+          setProblem(null);
           const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
           setPending(submitter?.value ?? "login");
         }}
       >
         <h2 className="text-base font-semibold text-fg">{t("auth.ownHeading")}</h2>
+        <div aria-live="assertive">
+          {problem && (
+            <p role="alert" data-testid="login-problem" className="rounded-lg border border-fg/40 px-3 py-2 text-sm text-fg">
+              {t(problem)}
+            </p>
+          )}
+        </div>
         <input type="hidden" name="next" value={next} />
         <Field label={t("auth.email")}>
           {(props) => <Input {...props} name="email" type="email" autoComplete="username" autoCapitalize="none" spellCheck={false} required maxLength={200} />}
