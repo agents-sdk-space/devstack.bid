@@ -39,6 +39,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   // The black theme is the default for everyone, regardless of the OS preference.
   themeColor: "#000000",
+  // Full-height app pages (/chat) use 100dvh + safe-area insets; the on-screen keyboard shrinks the layout instead of covering the composer.
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 // Runs before first paint: apply saved theme + language without a flash.
@@ -51,7 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: PREFS_SCRIPT }} />
       </head>
-      <body className="flex min-h-full flex-col font-sans">
+      <body className="flex min-h-full flex-col overflow-x-clip font-sans">
         <Providers>
           <Header />
           <main id="main" tabIndex={-1} className="flex-1 outline-none">

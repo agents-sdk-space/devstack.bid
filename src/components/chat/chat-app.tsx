@@ -515,8 +515,8 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
         byok
           ? "lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_400px]"
           : dev
-            ? "h-[calc(100dvh-3.5rem)] px-3 py-3 sm:px-4 lg:grid-cols-[240px_minmax(0,1fr)_340px] xl:grid-cols-[260px_minmax(0,1fr)_380px]"
-            : "h-[calc(100dvh-3.5rem)] max-w-[1240px] px-3 py-3 sm:px-4 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]",
+            ? "h-[calc(100dvh-3.5rem-1px)] px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-4 lg:grid-cols-[240px_minmax(0,1fr)_340px] xl:grid-cols-[260px_minmax(0,1fr)_380px]"
+            : "h-[calc(100dvh-3.5rem-1px)] max-w-[1240px] px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-4 sm:pt-3 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]",
         className
       )}
     >
@@ -557,7 +557,34 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
         {dev && mobileTab === "sandbox" && <div className="flex min-h-0 flex-1 p-2 lg:hidden">{sandbox("flex-1 rounded-xl")}</div>}
 
         <div className={cn("flex min-h-0 flex-1 flex-col", mobileTab === "sandbox" && "hidden lg:flex")}>
-          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">
+            {!dev && (
+              <div role="radiogroup" aria-label={t("chat.modelPicker")} className="mx-auto mb-4 flex max-w-3xl flex-wrap items-center justify-center gap-1.5">
+                {(info?.models ?? DEFAULT_USER_MODELS).map((m) => {
+                  const selected = m.mode === "gateway" ? mode === "gateway" && gatewayModel === m.model : mode === m.mode;
+                  const vendor = m.provider === "vercel" ? "Vercel AI Gateway" : m.provider === "huggingface" ? "Hugging Face" : "Cloudflare Workers AI";
+                  return (
+                    <Tooltip key={`${m.mode}:${m.model}`} content={`${vendor} · ${m.model}`}>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        disabled={!m.available || busy}
+                        onClick={() => selectModel(m)}
+                        className={cn(
+                          "focus-ring motion-fast inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] disabled:opacity-40",
+                          selected ? "border-primary bg-primary-soft/40 text-fg" : "border-border text-muted hover:text-fg"
+                        )}
+                      >
+                        {m.mode === "image" && <ImageIcon className="h-3.5 w-3.5" aria-hidden />}
+                        {modelLabel(m, lang, t)}
+                        <span className="font-mono text-[10.5px] text-subtle">{providerMark(m.provider)}</span>
+                      </button>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+            )}
             {messages.length === 0 ? (
               <div className="mx-auto flex max-w-2xl flex-col items-center pt-6 text-center sm:pt-12">
                 <Mascot size={56} />
@@ -676,33 +703,6 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
               <p role="status" className="mx-auto mb-2 max-w-3xl rounded-xl border border-border bg-surface-2 px-3 py-2 text-[13px] text-muted">
                 {info?.unavailable?.message ?? t("chat.unavailable")}
               </p>
-            )}
-            {!dev && (
-              <div role="radiogroup" aria-label={t("chat.modelPicker")} className="mx-auto mb-2 flex max-w-3xl flex-wrap items-center gap-1.5">
-                {(info?.models ?? DEFAULT_USER_MODELS).map((m) => {
-                  const selected = m.mode === "gateway" ? mode === "gateway" && gatewayModel === m.model : mode === m.mode;
-                  const vendor = m.provider === "vercel" ? "Vercel AI Gateway" : m.provider === "huggingface" ? "Hugging Face" : "Cloudflare Workers AI";
-                  return (
-                    <Tooltip key={`${m.mode}:${m.model}`} content={`${vendor} · ${m.model}`}>
-                      <button
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        disabled={!m.available || busy}
-                        onClick={() => selectModel(m)}
-                        className={cn(
-                          "focus-ring motion-fast inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] disabled:opacity-40",
-                          selected ? "border-primary bg-primary-soft/40 text-fg" : "border-border text-muted hover:text-fg"
-                        )}
-                      >
-                        {m.mode === "image" && <ImageIcon className="h-3.5 w-3.5" aria-hidden />}
-                        {modelLabel(m, lang, t)}
-                        <span className="font-mono text-[10.5px] text-subtle">{providerMark(m.provider)}</span>
-                      </button>
-                    </Tooltip>
-                  );
-                })}
-              </div>
             )}
             <form
               className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-border-strong bg-bg p-2 focus-within:ring-2 focus-within:ring-ring"

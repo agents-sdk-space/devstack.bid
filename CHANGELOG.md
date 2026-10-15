@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **/chat is a full-height app layout.** The page fills `100dvh` (with safe-area insets and `interactive-widget=resizes-content`, so the on-screen keyboard shrinks the layout instead of covering the input). The model picker, intro, suggestions and messages share one scroll area, and the composer stays pinned at the bottom. The site footer (with the terminal signature) is not shown on `/chat` and `/chat/dev`; every other page keeps it.
+- The page body clips horizontal overflow, so nothing on `/login` or the mobile menu can push the page sideways at 320–414px.
 - The homepage **Ask the AI agent** button opens `/learn`.
 - Header links for Dev Chat, Factory, Agents, Studio and Design stay in the menu until the window is wide enough that the bar does not scroll sideways. The command-palette control stays an icon until 1720px. **Setup Cursor** is an icon button in the bar; the menu and `/learn` show the full “create or ask” label.
 - Clarified the homepage headline in English and Thai to describe Stack Templates as ready to run.

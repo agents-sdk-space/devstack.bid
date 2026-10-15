@@ -40,3 +40,14 @@ describe("TerminalSignature", () => {
     expect(container.querySelector("footer .sig")).not.toBeNull();
   });
 });
+
+describe("app-style pages", () => {
+  it("drop the footer only on /chat", async () => {
+    const { hidesFooter } = await import("@/components/header");
+    expect(hidesFooter("/chat")).toBe(true);
+    expect(hidesFooter("/chat/dev")).toBe(true);
+    expect(hidesFooter("/chatter")).toBe(false);
+    expect(hidesFooter("/login")).toBe(false);
+    expect(hidesFooter(null)).toBe(false);
+  });
+});
