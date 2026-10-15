@@ -693,8 +693,8 @@ export function DesignSystem() {
             id="mascot"
             title={SECTIONS[18].title}
             description={{
-              en: "The pink blob is the NVX logo and a living character: it floats and breathes, blinks now and then, follows the cursor with its eyes (mouse only) and squishes when hovered or clicked. Everything stops under reduced motion. Its pink (--nvx-brand-pink #fb0fab) is decorative only, used for the mascot glow and the OG card. Buttons, links and focus stay blue.",
-              th: "ก้อนสีชมพูคือโลโก้ NVX และเป็นตัวละครที่มีชีวิต: ลอยขึ้นลงและหายใจ กะพริบตาเป็นระยะ กลอกตามองตามเคอร์เซอร์ (เฉพาะเมาส์) และเด้งยุบเมื่อชี้หรือคลิก ทุกอย่างหยุดนิ่งเมื่อผู้ใช้ตั้ง reduced motion สีชมพู (--nvx-brand-pink #fb0fab) ใช้ตกแต่งเท่านั้น เช่น แสงเรืองรอบมาสคอตและภาพ OG ส่วนปุ่ม ลิงก์ และวงโฟกัสยังเป็นสีฟ้า",
+              en: "The pink blob is the NVX logo and a living character: it floats and breathes, blinks now and then, follows the cursor with its eyes (mouse only) and squishes when hovered or clicked. Everything stops under reduced motion. Its pink (--nvx-brand-pink #fb0fab) is decorative only, used for the mascot glow and the OG card. Buttons, links and focus are monochrome (v0.9).",
+              th: "ก้อนสีชมพูคือโลโก้ NVX และเป็นตัวละครที่มีชีวิต: ลอยขึ้นลงและหายใจ กะพริบตาเป็นระยะ กลอกตามองตามเคอร์เซอร์ (เฉพาะเมาส์) และเด้งยุบเมื่อชี้หรือคลิก ทุกอย่างหยุดนิ่งเมื่อผู้ใช้ตั้ง reduced motion สีชมพู (--nvx-brand-pink #fb0fab) ใช้ตกแต่งเท่านั้น เช่น แสงเรืองรอบมาสคอตและภาพ OG ส่วนปุ่ม ลิงก์ และวงโฟกัสเป็นขาวดำ (v0.9)",
             }}
             usage={`import { Mascot } from "@/components/brand/mascot";\n<Mascot size={28} />                 // header: float + blink only, decorative\n<Mascot size={112} interactive />    // hero: + eyes follow cursor, squish on hover/click\n<Mascot size={64} label="NVX" />     // role="img" with an accessible name`}
           >

@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **UI revamp phase 2: home page.** The home page has been rebuilt following `docs/design/ui-ux-revamp-plan.md` section 14.
+  - **Copy:** new hero text in English and Thai ("Start any project in minutes").
+  - **No nvm on home:** all nvm commands and mentions are gone from the home page, including the hero code sample, the copy, and the page's meta description and keywords. Shared template data, the builder and other pages are unchanged.
+  - **Layout:**
+    - a three-step "How it works" row;
+    - a two-column "Why DevStack" FAQ built on native `<details>`;
+    - a corner-bracket focus frame around the hero code window only, which stays still under reduced motion;
+    - three featured templates plus a "See all templates" link instead of six full cards.
+  - **Additions:** a "Try it live" block and a placeholder slot for a 30-second how-to video (`data-slot="howto-video"`).
+  - **Mobile height:** at 390px the home page is 4,315px tall with the live editor, down from 6,034px (about 28% shorter).
+  - **Live example (Sandpack):** a react.dev-style "Try it live" editor built on Sandpack (`@codesandbox/sandpack-react` 2.20.0, Apache-2.0).
+    - It uses the same files as the owner's reference sandbox: `src/App.tsx` (the MyButton example), a re-exporting `App.js`, `index.js` and `styles.css`.
+    - Editable tabs (App.tsx, styles.css) sit next to the live preview, with Reset, Open in CodeSandbox and refresh buttons.
+    - The theme is monochrome and follows light and dark. The editor is lazy-loaded and stacks above the preview on mobile.
+    - Code runs in a cross-origin `*.codesandbox.io` iframe in the visitor's browser. That iframe sends its own telemetry to `col.csbops.io`.
+  - **CSP (site, not /studio):** `frame-src 'none'` is now `frame-src https://*.codesandbox.io`, and `form-action` adds `https://codesandbox.io` for Open in CodeSandbox. COEP is still `/studio/*` only.
+  - **Licence exception:** `@codesandbox/nodebox` (Sustainable Use License, not permissive) is required by Sandpack. It is an explicit owner-approved exception to AGENTS.md rule 9, dated 2026-10-15, and is listed by name in `scripts/third-party-licenses.mjs` and `THIRD_PARTY_LICENSES.md`. `intersection-observer` (W3C licence, permissive) is also listed.
+  - **Docs:** the deploy smoke test now checks that home has `create-next-app` and no `nvm`.
+  - **Screenshots:** `screenshots/v0.9/phase2-*`, including `phase2-sandpack-{1440,390}-{light,dark}.png`.
+- **UI revamp phases 0–1 (monochrome).** Following `docs/design/ui-ux-revamp-plan.md`:
+  - **Colours:** the light theme is now white and the dark theme black, both built from neutral greys only. Buttons are black or white pills, links share the text colour and are always underlined, and the focus ring is grey. Status colours and the pink mascot image are unchanged.
+  - **Tokens:** new spacing and type tokens: `py-section`, `py-section-sm`, `mt-block`, `max-w-content`, `max-w-measure`, `text-h2`, `text-h3`, `text-lead` and `text-caption`.
+  - **Header:** four links (Templates, Builder, Chat, Docs), search with a `⌘K`/`Ctrl K` hint, Sign in, **Start building**, and a menu that holds every other page plus Setup Cursor. Below 640px the language and theme switches move into the menu.
+  - **Account button:** shows the profile picture, or initials when there is none.
+  - **Footer:** a smaller signature beside three link columns.
+  - **Design references:** patterns come from the owner's 21st.dev bookmarks (Combo Kbd, Avatar). Each was rebuilt on NVX UI, with no copied code and no new dependencies.
+  - **Screenshots:** before and after, light and dark, at 1440px and 390px, in `screenshots/v0.9/`.
 - **/chat is a full-height app layout.** The page fills `100dvh` (with safe-area insets and `interactive-widget=resizes-content`, so the on-screen keyboard shrinks the layout instead of covering the input). The model picker, intro, suggestions and messages share one scroll area, and the composer stays pinned at the bottom. The site footer (with the terminal signature) is not shown on `/chat` and `/chat/dev`; every other page keeps it.
 - The page body clips horizontal overflow, so nothing on `/login` or the mobile menu can push the page sideways at 320–414px.
 - The homepage **Ask the AI agent** button opens `/learn`.

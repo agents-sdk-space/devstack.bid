@@ -277,3 +277,31 @@
     }
   }
 }
+
+/* Focus Frame Border (21st.dev bookmark 29885, rebuilt): corner brackets around the
+   home hero code window only. Monochrome; the drift animation is off for reduced motion. */
+.focus-frame {
+  position: relative;
+  padding: 0.75rem;
+}
+.focus-frame-corner {
+  position: absolute;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-color: var(--nvx-border-strong);
+  border-style: solid;
+  border-width: 0;
+  pointer-events: none;
+  animation: focus-frame-breathe 4s var(--nvx-ease-standard) infinite alternate;
+}
+.focus-frame-corner[data-c="tl"] { top: 0; left: 0; border-top-width: 2px; border-left-width: 2px; }
+.focus-frame-corner[data-c="tr"] { top: 0; right: 0; border-top-width: 2px; border-right-width: 2px; }
+.focus-frame-corner[data-c="bl"] { bottom: 0; left: 0; border-bottom-width: 2px; border-left-width: 2px; }
+.focus-frame-corner[data-c="br"] { bottom: 0; right: 0; border-bottom-width: 2px; border-right-width: 2px; }
+@keyframes focus-frame-breathe {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .focus-frame-corner { animation: none; }
+}

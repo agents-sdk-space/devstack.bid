@@ -1,0 +1,6 @@
+{
+  "installCommand": "install",
+  "buildCommand": false,
+  "node": "20",
+  "sandboxes": ["/sandbox-examples/my-button"]
+}

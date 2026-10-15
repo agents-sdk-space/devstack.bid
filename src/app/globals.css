@@ -70,6 +70,24 @@
   --ease-standard: var(--nvx-ease-standard);
   --ease-emphasized: var(--nvx-ease-emphasized);
 
+  /* v0.9 layout scale (nextjs.org-style whitespace). py-section / mt-block / max-w-content. */
+  --spacing-section: 8rem;
+  --spacing-section-sm: 5rem;
+  --spacing-block: 3rem;
+  --container-content: 70rem;
+  --container-measure: 60ch;
+
+  /* v0.9 type scale: display, h2, h3, lead, body, small, caption. Thai keeps line-height >= 1.6 for body. */
+  --text-h2: 2.5rem;
+  --text-h2--line-height: 1.1;
+  --text-h2--letter-spacing: -0.03em;
+  --text-h3: 1.25rem;
+  --text-h3--line-height: 1.3;
+  --text-lead: 1.25rem;
+  --text-lead--line-height: 1.5;
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.4;
+
   --text-display: 4rem;
   --text-display--line-height: 1.05;
   --text-display--letter-spacing: -0.035em;
@@ -159,14 +177,17 @@ samp {
   font-family: var(--font-mono);
 }
 
-/* Blue text links, underline on hover (Apple Developer style). */
+/* Monochrome links: always underlined (colour alone does not mark a link), stronger on hover. */
 @utility link {
   color: var(--nvx-link);
+  text-decoration: underline;
+  text-decoration-color: var(--nvx-border-strong);
   text-underline-offset: 3px;
   &:hover {
-    text-decoration: underline;
+    text-decoration-color: currentColor;
   }
 }
+
 
 /* Hero: soft blue/purple glow from the top instead of a flat block. */
 .hero-glow {
@@ -823,4 +844,32 @@ samp {
       transition: none;
     }
   }
+}
+
+/* Focus Frame Border (21st.dev bookmark 29885, rebuilt): corner brackets around the
+   home hero code window only. Monochrome; the drift animation is off for reduced motion. */
+.focus-frame {
+  position: relative;
+  padding: 0.75rem;
+}
+.focus-frame-corner {
+  position: absolute;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-color: var(--nvx-border-strong);
+  border-style: solid;
+  border-width: 0;
+  pointer-events: none;
+  animation: focus-frame-breathe 4s var(--nvx-ease-standard) infinite alternate;
+}
+.focus-frame-corner[data-c="tl"] { top: 0; left: 0; border-top-width: 2px; border-left-width: 2px; }
+.focus-frame-corner[data-c="tr"] { top: 0; right: 0; border-top-width: 2px; border-right-width: 2px; }
+.focus-frame-corner[data-c="bl"] { bottom: 0; left: 0; border-bottom-width: 2px; border-left-width: 2px; }
+.focus-frame-corner[data-c="br"] { bottom: 0; right: 0; border-bottom-width: 2px; border-right-width: 2px; }
+@keyframes focus-frame-breathe {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .focus-frame-corner { animation: none; }
 }

@@ -32,7 +32,7 @@ export const COLOR_GROUPS: { id: string; en: string; th: string; tokens: TokenIn
     en: "Brand",
     th: "แบรนด์",
     tokens: [
-      { name: "primary", utility: "bg-primary", en: "Filled call-to-action (blue pill)", th: "ปุ่มหลัก (แคปซูลสีฟ้า)" },
+      { name: "primary", utility: "bg-primary", en: "Filled call-to-action (black/white pill)", th: "ปุ่มหลัก (แคปซูลดำ/ขาว)" },
       { name: "link", utility: "text-link", en: "Links, active text", th: "ลิงก์ ข้อความที่เลือก" },
       { name: "primary-hover", utility: "hover:bg-primary-hover", en: "Primary hover", th: "ปุ่มหลักตอน hover" },
       { name: "primary-soft", utility: "bg-primary-soft", en: "Selected, soft fills", th: "สถานะเลือก พื้นอ่อน" },
@@ -71,16 +71,29 @@ export const RADII = [
 
 export const SPACING = [1, 2, 3, 4, 6, 8, 12, 16] as const; // × 4px
 
+/** v0.9 layout tokens (globals.css @theme): section rhythm and content width. */
+export const LAYOUT = [
+  { utility: "py-section", value: "128px", en: "Space between page sections (desktop)", th: "ระยะระหว่าง section (เดสก์ท็อป)" },
+  { utility: "py-section-sm", value: "80px", en: "Space between page sections (mobile)", th: "ระยะระหว่าง section (มือถือ)" },
+  { utility: "mt-block", value: "48px", en: "Section heading to content", th: "หัวข้อ section ถึงเนื้อหา" },
+  { utility: "max-w-content", value: "1120px", en: "Content width on marketing pages", th: "ความกว้างเนื้อหาหน้าการตลาด" },
+  { utility: "max-w-measure", value: "60ch", en: "Paragraph width", th: "ความกว้างย่อหน้า" },
+] as const;
+
 export const SHADOWS = ["sm", "md", "lg"] as const;
 
 export const TYPE_SCALE = [
   { utility: "text-display", px: 64, en: "Display — hero headline", th: "Display — หัวข้อหลักหน้าแรก" },
+  { utility: "text-h2", px: 40, en: "Section title (h2, v0.9)", th: "หัวข้อ section (h2, v0.9)" },
   { utility: "text-4xl", px: 36, en: "Page title (h1)", th: "หัวข้อหน้า (h1)" },
   { utility: "text-2xl", px: 24, en: "Section title (h2)", th: "หัวข้อส่วน (h2)" },
+  { utility: "text-h3", px: 20, en: "Sub-section title (h3)", th: "หัวข้อย่อย (h3)" },
+  { utility: "text-lead", px: 20, en: "Lead paragraph under a headline", th: "ย่อหน้านำใต้หัวข้อ" },
   { utility: "text-xl", px: 20, en: "Stage / card group title", th: "หัวข้อขั้นตอน / กลุ่มการ์ด" },
   { utility: "text-base", px: 16, en: "Body, card titles", th: "เนื้อหา หัวข้อการ์ด" },
   { utility: "text-sm", px: 14, en: "UI text, descriptions", th: "ข้อความ UI คำอธิบาย" },
-  { utility: "text-xs", px: 12, en: "Captions, badges, hints", th: "คำบรรยาย ป้าย คำใบ้" },
+  { utility: "text-caption", px: 13, en: "Captions, keyboard hints", th: "คำบรรยาย ปุ่มลัด" },
+  { utility: "text-xs", px: 12, en: "Badges, metadata", th: "ป้าย ข้อมูลประกอบ" },
 ] as const;
 
 export const MOTION = [

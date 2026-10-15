@@ -51,3 +51,12 @@ describe("app-style pages", () => {
     expect(hidesFooter(null)).toBe(false);
   });
 });
+
+describe("account avatar fallback", () => {
+  it("builds initials from a login or email", async () => {
+    const { initials } = await import("@/components/account-button");
+    expect(initials("jane@example.com")).toBe("JA");
+    expect(initials("octo-cat")).toBe("OC");
+    expect(initials("x")).toBe("X");
+  });
+});

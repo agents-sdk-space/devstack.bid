@@ -25,6 +25,12 @@ export const ALLOWED = new Set([
 /** Per-package exceptions: name -> license, with the reason shown in the report. */
 export const EXCEPTIONS = {
   "caniuse-lite": { license: "CC-BY-4.0", reason: "browser-support data used at build time by Next.js/browserslist; not shipped; attribution below" },
+  // Owner-approved exception to AGENTS.md rule 9, 2026-10-15: Sandpack (Apache-2.0) requires nodebox.
+  "@codesandbox/nodebox": {
+    license: "SEE LICENSE IN ./LICENSE",
+    reason: "Sustainable Use License 1.0 (NOT permissive: internal, non-commercial or personal use; free non-commercial redistribution). Required by @codesandbox/sandpack-client for the home live example. Explicit owner-approved exception to AGENTS.md rule 9, dated 2026-10-15",
+  },
+  "intersection-observer": { license: "W3C-20150513", reason: "W3C Software and Document License (OSI-approved, permissive); polyfill pulled in by Sandpack" },
 };
 
 /** Packages that ship non-npm code inside them (credited in their own section). */

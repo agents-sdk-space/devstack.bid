@@ -16,9 +16,12 @@ export function contentSecurityPolicy(dev = false): string {
     "media-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'",
+    // "Open in CodeSandbox" on the home live example posts the visitor's files to codesandbox.io.
+    "form-action 'self' https://codesandbox.io",
     "frame-ancestors 'none'",
-    "frame-src 'none'",
+    // Home live example (Sandpack, Apache-2.0): its bundler runs in a cross-origin
+    // *.codesandbox.io iframe in the visitor's browser. The only third-party frame we allow.
+    "frame-src https://*.codesandbox.io",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
   ].join("; ");

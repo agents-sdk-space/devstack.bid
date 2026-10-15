@@ -16,7 +16,7 @@ describe("learn page", () => {
     learn.unmount();
 
     render(<Home />);
-    expect(screen.getByRole("link", { name: "Ask the AI agent" }).getAttribute("href")).toBe("/learn");
+    for (const a of screen.getAllByRole("link", { name: /Start building/ })) expect(a.getAttribute("href")).toBe("/learn");
   });
 
   it("opens create or ask from the header control", async () => {

@@ -16,6 +16,9 @@ describe("third-party license policy", () => {
     expect(isAllowed("UNKNOWN", "x")).toBe(false);
     expect(isAllowed("CC-BY-4.0", "caniuse-lite")).toBe(true);
     expect(isAllowed("CC-BY-4.0", "other")).toBe(false);
+    // Owner-approved 2026-10-15: only nodebox may use its Sustainable Use License.
+    expect(isAllowed("SEE LICENSE IN ./LICENSE", "@codesandbox/nodebox")).toBe(true);
+    expect(isAllowed("SEE LICENSE IN ./LICENSE", "other")).toBe(false);
   });
 
   it("every production dependency of the site and the Studio is allowed", () => {

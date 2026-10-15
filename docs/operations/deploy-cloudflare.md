@@ -27,6 +27,8 @@ BASE=https://devstack.bid   # production; สำรอง https://nvx-stack-buil
 for p in / /templates /templates/nextjs-dashboard /builder /design; do curl -s -o /dev/null -w "$p %{http_code}\n" $BASE$p; done
 curl -s -o /dev/null -w "404 check %{http_code}\n" $BASE/templates/does-not-exist     # ต้อง 404
 curl -sI $BASE/ | grep -iE 'strict-transport|content-security|x-frame'
+curl -s $BASE/ | grep -c 'create-next-app'                                           # หน้าแรกต้องมีคำสั่งตัวอย่าง (>0)
+curl -s $BASE/ | grep -cw 'nvm'                                                      # ตั้งแต่ v0.9 phase 2 หน้าแรกไม่มี nvm แล้ว (ต้องได้ 0)
 curl -s $BASE/api/plan                                                               # serverKeyConfigured: true
 curl -s -X POST $BASE/api/plan -H 'content-type: application/json' \
   -d '{"prompt":"แดชบอร์ดยอดขาย Next.js","lang":"th"}' | head -c 300                  # source: openai

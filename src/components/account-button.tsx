@@ -48,6 +48,24 @@ function viaKey(provider: ChatAccount["provider"]): DictKey {
   return "auth.via.github";
 }
 
+/** Initials from a login or email: "jane@example.com" -> "JA", "octo-cat" -> "OC". */
+export function initials(login: string): string {
+  const base = login.split("@")[0] ?? login;
+  const parts = base.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  const letters = parts.length >= 2 ? parts[0][0] + parts[1][0] : base.replace(/[^\p{L}\p{N}]/gu, "").slice(0, 2);
+  return (letters || "?").toUpperCase();
+}
+
+/** Profile image with an initials fallback (pattern from the owner's 21st.dev Avatar bookmark, rebuilt on NVX tokens). */
+function AccountAvatar({ url, login }: { url: string | null; login: string }) {
+  if (url) return <img src={url} alt="" width={28} height={28} className="h-7 w-7 rounded-full border border-border" />;
+  return (
+    <span aria-hidden className="grid h-7 w-7 place-items-center rounded-full border border-border bg-surface-2 text-[11px] font-semibold text-fg">
+      {initials(login)}
+    </span>
+  );
+}
+
 /** Header control: sign-in link, or the current account and a sign-out button. */
 export function AccountButton({ next, full, onNavigate }: { next: string; full?: boolean; onNavigate?: () => void }) {
   const { t, lang } = useLang();
@@ -56,7 +74,7 @@ export function AccountButton({ next, full, onNavigate }: { next: string; full?:
 
   if (!current) {
     return (
-      <a href={href} onClick={onNavigate} className={buttonClasses("secondary", "sm", full ? "w-full justify-start" : "px-2.5 sm:px-3.5")}>
+      <a href={href} onClick={onNavigate} className={buttonClasses(full ? "secondary" : "ghost", "sm", full ? "w-full justify-start" : "px-2.5 sm:px-3")}>
         <LogIn className="h-4 w-4" aria-hidden />
         <span className={full ? "" : "max-[380px]:sr-only"}>{t("auth.signIn")}</span>
       </a>
@@ -70,9 +88,7 @@ export function AccountButton({ next, full, onNavigate }: { next: string; full?:
 
   return (
     <div className={full ? "flex items-center gap-2" : "flex items-center gap-1"}>
-      {current.avatarUrl ? (
-        <img src={current.avatarUrl} alt="" width={28} height={28} className="h-7 w-7 rounded-full" />
-      ) : null}
+      <AccountAvatar url={current.avatarUrl} login={current.login} />
       <span className="max-w-[7rem] truncate text-[13px] font-medium text-fg" title={t(viaKey(current.provider))}>
         {current.login}
       </span>
