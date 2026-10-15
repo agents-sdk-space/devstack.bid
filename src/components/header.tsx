@@ -208,11 +208,19 @@ const FOOTER: { heading: "footer.product" | "footer.resources" | "footer.develop
     heading: "footer.developers",
     links: [
       { href: "/docs/platform", key: "nav.functions" },
+      { href: "/openapi.json", key: "nav.openapi" },
+      { href: "/llms.txt", key: "docs.forAgents" },
+      { href: "/settings/mcp", key: "nav.mcpSettings" },
       { href: "/chat/dev", key: "nav.devChat" },
       { href: "/factory", key: "nav.factory" },
-      { href: "/docs/agents/cursor-caretakers", key: "nav.agents" },
     ],
   },
+];
+
+const FOOTER_LEGAL: { href: string; key: DictKey }[] = [
+  { href: "/about", key: "nav.about" },
+  { href: "/contact", key: "nav.contact" },
+  { href: "/privacy", key: "nav.privacy" },
 ];
 
 /** App-style pages (/chat, /chat/dev) fill the viewport, so they have no footer. */
@@ -251,6 +259,13 @@ export function Footer() {
           </nav>
         ))}
       </div>
+      <nav aria-label={t("footer.legal")} className="mx-auto flex max-w-content flex-wrap gap-x-4 gap-y-2 border-t border-border px-5 py-4 text-caption">
+        {FOOTER_LEGAL.map((l) => (
+          <Link key={l.href} href={l.href} className="focus-ring rounded-sm text-muted hover:text-fg">
+            {t(l.key)}
+          </Link>
+        ))}
+      </nav>
       <p className="mx-auto max-w-content border-t border-border px-5 py-6 text-caption leading-relaxed text-muted">{t("footer.text")}</p>
     </footer>
   );
