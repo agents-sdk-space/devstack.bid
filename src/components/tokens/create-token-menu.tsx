@@ -51,7 +51,7 @@ export function CreateTokenMenu({ primary, className }: { primary?: TokenProvide
   }
 
   return (
-    <div ref={root} className={cn("relative inline-block", className)} onKeyDown={onKey}>
+    <div ref={root} className={cn("relative inline-flex shrink-0", className)} onKeyDown={onKey}>
       <button
         ref={button}
         type="button"

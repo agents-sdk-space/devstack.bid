@@ -226,6 +226,7 @@ const LEGAL: { href: string; key: DictKey }[] = [
   { href: "/status", key: "footer.status" },
   { href: "/careers", key: "footer.careers" },
   { href: "/terms", key: "footer.terms" },
+  { href: "/terms/api", key: "footer.apiPolicy" },
   { href: "/security", key: "footer.security" },
   { href: "/privacy", key: "footer.privacy" },
 ];

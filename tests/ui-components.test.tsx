@@ -33,7 +33,7 @@ describe("Button", () => {
     const btn = screen.getByRole("button", { name: "Delete" });
     expect(btn.getAttribute("type")).toBe("button");
     expect(btn.className).toContain("bg-danger");
-    expect(btn.className).toContain("h-8");
+    expect(btn.className).toContain("sm:h-7");
   });
 
   it("loading disables the button and sets aria-busy", async () => {

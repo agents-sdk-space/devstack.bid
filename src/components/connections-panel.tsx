@@ -112,7 +112,7 @@ export function ConnectionsPanel() {
               <button disabled={busy === "cloudflare" || !cf.token || !cf.accountId} className={buttonClasses("primary", "sm")}>{rememberCf ? (th ? "ตรวจสอบและบันทึก" : "Verify & save") : th ? "ตรวจสอบ" : "Verify"}</button>
               <CreateTokenMenu primary="cloudflare" />
               {cfc && <button type="button" onClick={() => call("cloudflare", "DELETE")} className={buttonClasses("ghost", "sm")}>{th ? "ลบ" : "Remove"}</button>}
-              <a href="/docs/user-guide/customer-deploy#cloudflare-token" className="text-xs text-subtle underline underline-offset-4 hover:text-fg">{th ? "วิธีสร้าง token (Workers Scripts: Edit + Account Settings: Read)" : "How to create a token (Workers Scripts: Edit + Account Settings: Read)"}</a>
+              <a href="/docs/user-guide/customer-deploy#cloudflare-token" className="basis-full text-xs text-subtle underline underline-offset-4 hover:text-fg">{th ? "วิธีสร้าง token (Workers Scripts: Edit + Account Settings: Read)" : "How to create a token (Workers Scripts: Edit + Account Settings: Read)"}</a>
             </div>
           </form>
         </Card>
@@ -120,7 +120,7 @@ export function ConnectionsPanel() {
         <Card className="p-5">
           <Row icon={<KeyRound className="h-5 w-5" aria-hidden />} title="OpenAI" status={oc ? oc.masked : th ? "ไม่บังคับ" : "Optional"} />
           <form className="mt-4 flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); call("openai", "PUT", { key: oai, remember: rememberOai }); }}>
-            <label className="min-w-64 flex-1 text-sm font-medium text-fg">API key<input type="password" autoComplete="off" value={oai} onChange={(e) => setOai(e.target.value)} className={input} placeholder="sk-…" /></label>
+            <label className="min-w-0 basis-full text-sm font-medium text-fg sm:basis-64 sm:flex-1">API key<input type="password" autoComplete="off" value={oai} onChange={(e) => setOai(e.target.value)} className={input} placeholder="sk-…" /></label>
             <RememberToggle checked={rememberOai} onCheckedChange={setRememberOai} />
             <button disabled={busy === "openai" || !oai} className={buttonClasses("primary", "sm")}>{rememberOai ? (th ? "ตรวจสอบและบันทึก" : "Verify & save") : th ? "ตรวจสอบ" : "Verify"}</button>
             <CreateTokenMenu primary="openai" />

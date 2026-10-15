@@ -30,6 +30,7 @@ const STATIC = new Set([
   "/status",
   "/careers",
   "/terms",
+  "/terms/api",
   "/security",
   "/settings/cli",
   "/settings/connections",
