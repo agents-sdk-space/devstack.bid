@@ -280,7 +280,7 @@ header มีลิงก์และปุ่ม 20 ชิ้นบนทุก
 
 ## 14. Phase 2: หน้าแรก (สถานะ)
 
-ทำแล้วบน branch `feat/ui-revamp-phase-2`:
+ทำแล้วและ merge เข้า `main` (PR #13) แล้ว deploy เป็น Worker `56a64535` บน https://devstack.bid (2026-10-15):
 
 - เอาคำสั่งและคำว่า nvm ออกจากหน้าแรกทั้งหมด (โค้ดตัวอย่างใน hero และ `hero.subtitle`) ข้อมูลเทมเพลตที่ใช้ร่วมกัน (ขั้น `node-nvm` ใน composer) และหน้า builder ไม่ได้แก้
 - Hero ใช้ข้อความใหม่จากหัวข้อ 8 กรอบมุม Focus Frame (bookmark 29885) ใช้กับหน้าต่างโค้ดใน hero เท่านั้น (`.focus-frame` ใน globals.css และหยุด animation เมื่อผู้ใช้ตั้ง reduced motion)
