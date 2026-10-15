@@ -1,9 +1,20 @@
 import "server-only";
+import { revokeGrant } from "@/lib/auth/github-api";
 import { deleteGithubCredential, type D1Like } from "@/lib/chat/store";
-import type { SealKeys } from "./credentials";
+import { serverEnv } from "@/lib/server/env";
+import { loadGithubToken, type SealKeys } from "./credentials";
 
-/** Disconnect GitHub: delete the stored token. (PR-E adds revoking the OAuth grant at GitHub.) */
-export async function revokeGithub(db: D1Like, _keys: SealKeys, userId: string): Promise<{ grantRevoked: boolean }> {
+/**
+ * Disconnect GitHub: revoke the OAuth grant at GitHub (so the token stops working everywhere),
+ * then delete the stored token. A failed remote revoke still deletes locally.
+ */
+export async function revokeGithub(db: D1Like, keys: SealKeys, userId: string, f: typeof fetch = fetch): Promise<{ grantRevoked: boolean }> {
+  let grantRevoked = false;
+  const token = await loadGithubToken(db, keys, userId).catch(() => null);
+  const server = serverEnv();
+  if (token && server.GITHUB_CLIENT_ID && server.GITHUB_CLIENT_SECRET) {
+    grantRevoked = await revokeGrant({ clientId: server.GITHUB_CLIENT_ID, clientSecret: server.GITHUB_CLIENT_SECRET, token }, f).catch(() => false);
+  }
   await deleteGithubCredential(db, userId);
-  return { grantRevoked: false };
+  return { grantRevoked };
 }

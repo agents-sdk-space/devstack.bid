@@ -328,3 +328,18 @@ The owner shared these 21st.dev links as inspiration only. We redesigned everyth
 | เลื่อนตามข้อความ | `chat-app.tsx` เลื่อนเฉพาะเมื่อผู้ใช้อยู่ใกล้ล่าง; ปุ่ม “Jump to latest” (`chat.jumpToLatest`) |
 
 SSE / รูปแบบ `UiEvent` ฝั่งเซิร์ฟเวอร์ไม่เปลี่ยน
+
+## 17. Customer connections, projects and deploys (PR-A to PR-E)
+
+Pages: `/settings/connections`, `/projects`, `/projects/[id]`, plus the deploy card in chat. Every one uses NVX UI with monochrome tokens: `border-border`, `text-fg`, `text-subtle`, and `bg-fg text-bg` for the strongest state. No colour is used for status; the shape and fill of the pill carry it. No code was copied. These are bookmark references from section 13, used as ideas only:
+
+| Reference | Idea taken | Our implementation |
+|---|---|---|
+| Process Timeline by shadcnui-blocks (21st.dev id 28381) | A vertical connector line with a dot per step | `src/components/projects/direct-deploy-panel.tsx`: a `border-l` rail with an outlined dot per deployment; `StatusPill` in `src/components/deploy/deploy-status.tsx` uses outline for live, solid fg for failed and a Spinner while running |
+| Dismissible Alert Stack by olewandowski1 (id 26527) | Inline, low-noise alerts | Connections and project errors render as a `role="alert"` outline box (`border-fg/40`), not a red banner |
+| nextjs.org settings tabs (visual reference) | An underline tab row | `src/components/settings-nav.tsx`: MCP, Connections and Projects tabs with `aria-current` |
+
+Accessibility rules:
+- Status regions use `aria-live="polite"`.
+- Secret inputs use `type="password"` with `autocomplete="off"` and are cleared after submit.
+- Every control has a visible focus ring.

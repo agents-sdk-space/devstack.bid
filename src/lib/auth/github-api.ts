@@ -26,15 +26,35 @@ function headers(token: string, extra: Record<string, string> = {}) {
   };
 }
 
-export async function exchangeCode(opts: { clientId: string; clientSecret: string; code: string; redirectUri: string }): Promise<string> {
+export async function exchangeCodeWithScope(opts: { clientId: string; clientSecret: string; code: string; redirectUri: string }): Promise<{ token: string; scope: string | null }> {
   const res = await fetch("https://github.com/login/oauth/access_token", {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json", "User-Agent": UA },
     body: JSON.stringify({ client_id: opts.clientId, client_secret: opts.clientSecret, code: opts.code, redirect_uri: opts.redirectUri }),
   });
-  const body = (await res.json().catch(() => ({}))) as { access_token?: string };
+  const body = (await res.json().catch(() => ({}))) as { access_token?: string; scope?: string };
   if (!res.ok || !body.access_token) throw new GithubApiError("GitHub did not return an access token", res.status || 502);
-  return body.access_token;
+  return { token: body.access_token, scope: typeof body.scope === "string" ? body.scope : null };
+}
+
+export async function exchangeCode(opts: { clientId: string; clientSecret: string; code: string; redirectUri: string }): Promise<string> {
+  return (await exchangeCodeWithScope(opts)).token;
+}
+
+/** Revoke this app's OAuth grant for the user at GitHub (Basic auth with the app's client id/secret). */
+export async function revokeGrant(opts: { clientId: string; clientSecret: string; token: string }, f: typeof fetch = fetch): Promise<boolean> {
+  const res = await f(`${API}/applications/${encodeURIComponent(opts.clientId)}/grant`, {
+    method: "DELETE",
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Basic ${btoa(`${opts.clientId}:${opts.clientSecret}`)}`,
+      "Content-Type": "application/json",
+      "User-Agent": UA,
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+    body: JSON.stringify({ access_token: opts.token }),
+  });
+  return res.status === 204 || res.status === 404;
 }
 
 export interface GhProfile {
