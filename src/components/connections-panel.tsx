@@ -24,6 +24,15 @@ export function ConnectionsPanel() {
   const [busy, setBusy] = useState("");
   const [cf, setCf] = useState({ token: "", accountId: "" });
   const [oai, setOai] = useState("");
+  const [events, setEvents] = useState<{ event: string; subject: string | null; at: number }[]>([]);
+  const [showAudit, setShowAudit] = useState(false);
+
+  async function loadAudit() {
+    setShowAudit((v) => !v);
+    const r = await fetch("/api/connections/audit", { cache: "no-store" });
+    const b = await r.json().catch(() => ({}));
+    if (r.ok) setEvents(b.events ?? []);
+  }
 
   const refresh = useCallback(async () => {
     const b = await loadConnections();
@@ -70,7 +79,8 @@ export function ConnectionsPanel() {
         {th
           ? "คีย์ถูกตรวจกับผู้ให้บริการก่อนบันทึก เก็บแบบเข้ารหัส (AES-GCM) ฝั่งเซิร์ฟเวอร์ แสดงแค่ 4 ตัวท้าย และลบได้ทุกเมื่อ ไม่มีการส่งคีย์กลับมาที่เบราว์เซอร์"
           : "Keys are verified with the provider before saving, stored encrypted (AES-GCM) on the server, shown only as the last 4 characters, and can be removed at any time. Keys are never sent back to the browser."}
-        {encryption === "v1" && <span className="font-mono"> (legacy key mode)</span>}
+        {encryption === "v1" && <span className="font-mono"> (legacy key mode)</span>}{" "}
+        <a href="/docs/user-guide/customer-deploy#privacy--ความเป็นส่วนตัว" className="underline underline-offset-4 hover:text-fg">{th ? "นโยบายความเป็นส่วนตัว" : "Privacy"}</a>
       </p>
 
       <div aria-live="polite" className="mt-4 min-h-5 text-sm">
@@ -96,7 +106,7 @@ export function ConnectionsPanel() {
             <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
               <button disabled={busy === "cloudflare" || !cf.token || !cf.accountId} className={buttonClasses("primary", "sm")}>{th ? "ตรวจสอบและบันทึก" : "Verify & save"}</button>
               {cfc && <button type="button" onClick={() => call("cloudflare", "DELETE")} className={buttonClasses("ghost", "sm")}>{th ? "ลบ" : "Remove"}</button>}
-              <a href="/docs/customer-deploy#cloudflare-token" className="text-xs text-subtle underline underline-offset-4 hover:text-fg">{th ? "วิธีสร้าง token (Workers Scripts: Edit + Account Settings: Read)" : "How to create a token (Workers Scripts: Edit + Account Settings: Read)"}</a>
+              <a href="/docs/user-guide/customer-deploy#cloudflare-token" className="text-xs text-subtle underline underline-offset-4 hover:text-fg">{th ? "วิธีสร้าง token (Workers Scripts: Edit + Account Settings: Read)" : "How to create a token (Workers Scripts: Edit + Account Settings: Read)"}</a>
             </div>
           </form>
         </Card>
@@ -109,6 +119,24 @@ export function ConnectionsPanel() {
             {oc && <button type="button" onClick={() => call("openai", "DELETE")} className={buttonClasses("ghost", "sm")}>{th ? "ลบ" : "Remove"}</button>}
           </form>
         </Card>
+      </div>
+
+      <div className="mt-8">
+        <button type="button" onClick={loadAudit} aria-expanded={showAudit} className="text-sm text-subtle underline underline-offset-4 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fg">
+          {th ? "ประวัติการใช้งาน (audit log)" : "Activity (audit log)"}
+        </button>
+        {showAudit && (
+          <ul className="mt-3 divide-y divide-border rounded-xl border border-border font-mono text-xs">
+            {events.length === 0 && <li className="px-3 py-2 text-subtle">—</li>}
+            {events.map((e, i) => (
+              <li key={`${e.at}-${i}`} className="flex gap-3 px-3 py-2">
+                <span className="text-subtle">{new Date(e.at).toLocaleString()}</span>
+                <span className="text-fg">{e.event}</span>
+                <span className="truncate text-subtle">{e.subject}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
