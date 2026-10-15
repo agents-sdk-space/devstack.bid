@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { McpKeys } from "@/components/mcp-keys";
+import { SettingsNav } from "@/components/settings-nav";
 
 export const metadata: Metadata = {
   title: "MCP integrations",
@@ -7,5 +8,10 @@ export const metadata: Metadata = {
 };
 
 export default function McpSettingsPage() {
-  return <McpKeys />;
+  return (
+    <>
+      <SettingsNav />
+      <McpKeys />
+    </>
+  );
 }
