@@ -21,7 +21,7 @@ describe("Cline MCP configuration", () => {
   });
 
   it("points at the same endpoint the server advertises", async () => {
-    const body = await discovery().json();
+    const body = await (await discovery()).json();
     expect(body.endpoint).toBe(MCP_ENDPOINT);
     expect(body.clients.cline.configType).toBe("streamableHttp");
   });
