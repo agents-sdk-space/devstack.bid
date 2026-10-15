@@ -1,4 +1,5 @@
 import type { RawEvent } from "./agents-api";
+import { CUSTOMER_TOOL_LABELS } from "./customer-tool-defs";
 
 /**
  * Translate Agents API session events into the small, secret-free event vocabulary the /chat UI
@@ -42,6 +43,7 @@ export const FUNCTION_LABELS: Record<string, { label: string; kind: ActivityKind
   generate_ai_agents_website: { label: "Stack Builder: site plan", kind: "tool" },
   get_agents_sdk_info: { label: "Docs lookup (devstack.bid)", kind: "tool" },
   generate_image: { label: "Image generation", kind: "image" },
+  ...Object.fromEntries(Object.entries(CUSTOMER_TOOL_LABELS).map(([k, label]) => [k, { label, kind: "tool" as ActivityKind }])),
 };
 
 export interface MapperState {
