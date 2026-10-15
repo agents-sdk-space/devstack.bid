@@ -312,3 +312,19 @@ The owner shared these 21st.dev links as inspiration only. We redesigned everyth
 | Spinners ([21st.dev](https://21st.dev/community/components/s/spinner)) | A choice between a ring and a dots variant | `Spinner` in `src/components/ui/skeleton.tsx` (extended, not duplicated): `variant="ring" \| "dots"`, `size`, `currentColor`, `role=status` when it has a label | Sandpack loading (`home/live-example.tsx`), chat status (`chat/chat-app.tsx`, dots), login submit (`login-form.tsx`), plus the existing Button `loading`, Factory and the sandbox panel |
 
 ก่อนจะนำโค้ดจากลิงก์เหล่านี้มาใช้จริงในอนาคต ต้องตรวจสัญญาอนุญาตและขออนุมัติตามข้อ 9 ก่อน
+
+## 16. Chat streaming และ thought chain (2026-10-15)
+
+**แหล่งอ้างอิง (inspiration only):** [AI chat · thought chain on 21st.dev](https://21st.dev/community/components/s/ai-chat?preview=%2F%40odysseyui%2Fcomponents%2Fcomponents-ai-thought-chain) — ใช้เป็นแนวทางเรื่องลำดับขั้นตอนแนวตั้งและการยุบหลังตอบเสร็จ **ไม่ได้คัดลอกโค้ด** ไม่ได้เรียก `get_component`
+
+**ที่เราทำเอง (monochrome / nextjs.org-like):**
+
+| ไอเดียจาก reference | การ implement ของเรา |
+|---|---|
+| แถบขั้นตอน / chain เหนือข้อความตอบ | `src/components/chat/thought-chain.tsx` — รายการแนวตั้งเหนือ reply, ไอคอนตาม `ActivityKind`, `Spinner` ตอน `running`, ✓/✗ ตอน `done`/`failed`, ไม่แสดง `reasoning` |
+| ข้อความไหลทีละส่วน | `src/components/chat/stream-text.tsx` + `src/lib/chat/stream-buffer.ts` — buffer ด้วย `Intl.Segmenter` (grapheme), ปล่อยด้วย `requestAnimationFrame`, Markdown ผ่าน `markdown-view` ไม่เกิน ~30fps, ตัดที่ fence code ที่ยังไม่ปิด |
+| Caret ระหว่างสตรีม | แถบ caret สี `bg-fg` กะพริบ (ปิดเมื่อ `prefers-reduced-motion`) |
+| ยุบ chain หลังเสร็จ | `ThoughtChain` ยุบอัตโนมัติ ~600ms หลัง reply ไม่ `pending` และไม่มี step `running` |
+| เลื่อนตามข้อความ | `chat-app.tsx` เลื่อนเฉพาะเมื่อผู้ใช้อยู่ใกล้ล่าง; ปุ่ม “Jump to latest” (`chat.jumpToLatest`) |
+
+SSE / รูปแบบ `UiEvent` ฝั่งเซิร์ฟเวอร์ไม่เปลี่ยน
