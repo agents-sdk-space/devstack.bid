@@ -32,7 +32,23 @@ export type UiEvent =
   | { t: "usage"; input: number; output: number }
   | { t: "quota"; messagesLeft?: number; imagesLeft?: number; agentLeft?: number }
   | { t: "done"; messageId: string }
-  | { t: "error"; code: string; message: string };
+  | { t: "error"; code: string; message: string }
+  | { t: "deploy"; d: DeployCardData };
+
+/** Deploy status card in chat (self-heal). No secrets: status, sanitized code, public URL. */
+export interface DeployCardData {
+  id: string;
+  projectId: string;
+  repo: string | null;
+  status: string;
+  url: string | null;
+  errorCode: string | null;
+  fixAttempts: number;
+  maxFixAttempts: number;
+  /** Branch the customer's "Retry deploy" click will deploy. */
+  retryRef: string | null;
+  canRetry: boolean;
+}
 
 const clip = (s: unknown, n = 160) => {
   const v = typeof s === "string" ? s : s == null ? "" : JSON.stringify(s);
