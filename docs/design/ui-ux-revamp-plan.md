@@ -138,10 +138,20 @@ header มีลิงก์และปุ่ม 20 ชิ้นบนทุก
 
 ## 7. หน้าเข้าสู่ระบบ `/login`
 
-**แหล่งอ้างอิง**: ลิงก์ bookmarks ของเจ้าของบน 21st.dev (`qs=bookmarks`) ต้องล็อกอินจึงจะเห็น การดึงหน้าเว็บได้แค่รายการค้นหา "sign-in" แบบสาธารณะ (78 คอมโพเนนต์) **จึงยังไม่เห็นรายการที่เจ้าของบุ๊กมาร์กไว้จริง** แผนนี้อิงรูปแบบที่ซ้ำกันในคอมโพเนนต์สาธารณะ เช่น "Clean & Minimal sign in", "Centered Social Login", "Sign In Card", "Split Login", "Minimal Auth Page" และ "Login & Signup" ต้องให้เจ้าของส่งชื่อคอมโพเนนต์หรือภาพหน้าจอที่ชอบมาเพื่อยืนยัน
+**แหล่งอ้างอิง**: ตรวจผ่าน connector 21st.dev ของเจ้าของ (`list_bookmarks` ทุกชนิด, `list_bookmark_lists`, `get_bookmark_list`) เมื่อ 15 ต.ค. 2026 พบ bookmark คอมโพเนนต์ 13 ชิ้น ใน list เดียวชื่อ "List" (13 ชิ้นเดียวกัน) ไม่มี theme หรือ template ที่บันทึกไว้ และ **ไม่มีคอมโพเนนต์ sign-in ใน bookmark เลย** การออกแบบหน้านี้จึงอิงคอมโพเนนต์ sign-in **สาธารณะ** ที่ใกล้เคียงที่สุด (ระบุไว้ชัดว่าไม่ได้มาจาก bookmark) ร่วมกับคอมโพเนนต์ใน bookmark ที่ใช้ประกอบได้ ดูตารางในหัวข้อ 13
+
+| ใช้เป็น | คอมโพเนนต์ (id) | ที่มา | เหตุผล |
+|---|---|---|---|
+| โครงหลัก | Identifier First Login (37470) | สาธารณะ | ช่องอีเมลช่องเดียวก่อน แล้วค่อยเสนอวิธีที่เหมาะ (รหัสผ่าน หรือ GitHub/Google/Cursor) ตรงกับที่ DevStack มีทั้งบัญชีรหัสผ่านและ OAuth ลดปุ่มที่เห็นพร้อมกัน |
+| ความเรียบ | Login (2426) | สาธารณะ | การ์ดเรียบกึ่งกลาง ใกล้สไตล์ nextjs.org ใช้เป็นแนวระยะห่างและขนาดตัวอักษร |
+| ไม่เลือก | Split Login (28369) | สาธารณะ | split screen หนักเกินไปบนมือถือ และออกแบบมาสำหรับ GitHub อย่างเดียว |
+| แจ้งผล | Dismissible Alert Stack (26527) | bookmark | รูปแบบ alert ตามระดับ (error/warning/info) สำหรับ `auth=invalid|taken|weak|error|missing` |
+| ปุ่ม | Button (3507) | bookmark | สถานะ loading/disabled ในปุ่มระหว่างส่งฟอร์ม |
+| หลังล็อกอิน | Avatar (34164) | bookmark | รูปโปรไฟล์และ fallback ตัวย่อใน `AccountButton` แทนตัวอักษรย่อของผู้ให้บริการ |
 
 ข้อเสนอ (การ์ดกึ่งกลาง แบบ "Clean & Minimal" / "Centered Social Login"):
 
+0. **ขั้นแรกแบบ identifier-first** (จาก 37470): แสดงช่องอีเมลกับปุ่ม "ดำเนินการต่อ" และปุ่มโลโก้ผู้ให้บริการ 3 ปุ่มด้านล่าง เมื่อกดต่อจึงแสดงช่องรหัสผ่าน (เข้าสู่ระบบ) หรือช่องรหัสผ่านพร้อมยืนยัน (สร้างบัญชี) ฝั่งเซิร์ฟเวอร์ไม่บอกว่าอีเมลนี้มีบัญชีหรือไม่ เพื่อกันการเดาอีเมล ผู้ใช้จึงเลือกแท็บเองตามข้อ 2
 1. การ์ดกว้าง 400px กึ่งกลางจอ มีมาสคอตขนาด 40px, หัวข้อ "Sign in to DevStack" และบรรทัดรอง 1 บรรทัด
 2. **แท็บ Sign in / Create account** แยกกัน (ตอนนี้เป็นสองปุ่มในฟอร์มเดียว) แท็บ Create account มีช่องยืนยันรหัสผ่านและข้อความเงื่อนไขรหัสผ่านใต้ช่อง ส่วนค่า `action` ยังส่งไป `POST /api/auth/password` ตัวเดิม
 3. ช่องอีเมลและรหัสผ่านอยู่บนสุด และมีปุ่มแสดงหรือซ่อนรหัสผ่าน
@@ -218,10 +228,10 @@ header มีลิงก์และปุ่ม 20 ชิ้นบนทุก
 |---|---|---|---|
 | 0 | Tokens | ระยะห่าง, type scale, container, ลด `text-subtle` ในเนื้อความ, หน้า `/design` แสดง scale ใหม่ | ไม่ |
 | 1 | Header + footer | ลิงก์หลัก 4 อัน, เมนู More, ปุ่ม Start building, footer แบบลิงก์ ย้ายซิกเนเจอร์ | ใช่ |
-| 2 | หน้าแรก + ข้อความ | hero กึ่งกลาง, 5 section, ข้อความใหม่ใน `src/lib/i18n.ts` | ใช่ |
-| 3 | `/login` | แท็บ Sign in/Create, โลโก้ผู้ให้บริการ, ยืนยันรหัสผ่าน (API เดิม) | ใช่ |
+| 2 | หน้าแรก + ข้อความ | hero กึ่งกลาง, 5 section + FAQ, ข้อความใหม่ใน `src/lib/i18n.ts`, How It Works Steps (26891), Two-Column FAQ (26910) | ใช่ |
+| 3 | `/login` | identifier-first (37470), แท็บ Sign in/Create, โลโก้ผู้ให้บริการ, ยืนยันรหัสผ่าน (API เดิม), Alert Stack (26527) | ใช่ |
 | 4 | `/templates` + การ์ด | การ์ดแบบย่อ, ตัวกรอง runtime | ใช่ |
-| 5 | `/builder` + `/chat` | stepper บาง, drawer current stack, dropdown โมเดล | ใช่ |
+| 5 | `/builder` + `/chat` | Process Timeline (28381) / Progress (3422), drawer current stack, Combobox โมเดล (9020) | ใช่ |
 | 6 | `/docs` + `/learn` | sidebar ยุบได้, learn แบบรายการ | ใช่ |
 
 ## 12. สิ่งที่จะวัด
@@ -230,3 +240,40 @@ header มีลิงก์และปุ่ม 20 ชิ้นบนทุก
 - **ความเข้าใจ**: ทดสอบ 5 วินาทีกับผู้ใช้ไทย 5 คน ("เว็บนี้ทำอะไร") ก่อนและหลังเฟส 2
 - **การใช้งานจริง** (ถ้าเปิด Cloudflare Web Analytics ได้โดยไม่มีค่าใช้จ่าย): สัดส่วนคนที่กด CTA หลักจากหน้าแรก, สัดส่วนคนที่เริ่ม `/builder` แล้วไปถึงขั้น Export และอัตราสมัครหรือล็อกอินสำเร็จที่ `/login`
 - **คุณภาพ**: Lighthouse (Performance, Accessibility ≥ 95) ทั้งมือถือและเดสก์ท็อป และ CLS < 0.05
+
+## 13. คอมโพเนนต์จาก 21st.dev (bookmark ของเจ้าของ)
+
+ข้อมูลจาก connector 21st.dev (metadata เท่านั้น ยังไม่ได้ดึงโค้ด เพราะ `get_component` ใช้โควตาแบบเสียเงิน) ใช้เป็น **แบบอ้างอิง** แล้วสร้างใหม่ด้วย NVX UI (`src/components/ui`, Radix) และ semantic token ไม่ติดตั้ง shadcn registry ทั้งชุด ก่อนนำโค้ดมาใช้ต้องตรวจสัญญาอนุญาตให้ผ่าน AGENTS.md ข้อ 9 (permissive เท่านั้น) และห้ามใช้ `API_KEY_21ST` ใน build
+
+### bookmark ทั้งหมด (13) และหน้าที่ใช้
+
+| คอมโพเนนต์ (id) | ผู้สร้าง | ใช้ที่ | เหตุผล |
+|---|---|---|---|
+| How It Works Steps (26891) | ln-dev7 | หน้าแรก section "สามขั้นตอน" | วงกลมตัวเลข 3 ขั้น เส้นเชื่อม และปุ่ม CTA กลาง ไม่มีไอคอน ตรงหลัก "ตัวอักษรทำงานแทน" และแทนการ์ด 3 ใบเดิม |
+| Two-Column FAQ (26910) | ln-dev7 | หน้าแรก (ก่อน CTA ปิดท้าย) และ `/learn` | คำถามที่พบบ่อยแบบ accordion ฝั่งขวา คำอธิบายฝั่งซ้ายติดอยู่กับที่ ช่วยย้ายข้อความอธิบายยาว ๆ (ความปลอดภัย, โหมดออฟไลน์, ใช้ฟรีไหม) ออกจาก hero และการ์ด |
+| Process Timeline (28381) | shadcnui-blocks | `/builder` stepper และหน้า template detail | timeline แนวตั้งที่มีเครื่องหมายถูกสำหรับขั้นที่เสร็จ แทน stepper 4 ช่องแนวนอนที่แน่น และใช้แสดงขั้นตอนของเทมเพลต |
+| Progress (3422) | sean0205 | `/builder` (มือถือ) และโควตาใน `/chat` | แถบความคืบหน้าบางแทน stepper บนจอแคบ และแสดงข้อความหรือรูปที่เหลือต่อวันแทนข้อความตัวเล็ก |
+| Combobox (9020) | clevision | `/chat` ตัวเลือกโมเดล, ตัวกรอง `/templates` | dropdown ค้นหาได้หนึ่งอัน แทนชิปโมเดล 12 อันและชิปหมวด 10 อัน รองรับตัวเลือกที่ปิดใช้ (โมเดลที่ไม่พร้อม) |
+| Combo Kbd (28308) | ai2 | header (ช่องค้นหา `⌘K`), `/chat` hint, `/docs` | ป้ายคีย์ลัดแบบเดียวกันทั้งเว็บ แทน `Kbd` ที่ใช้ปนกันอยู่ |
+| Dismissible Alert Stack (26527) | olewandowski1 | `/login`, `/chat` (banner โควตาหรือปิดบริการ), `/builder` | alert ตามระดับที่ปิดได้ แทนกล่องข้อความหลายแบบ |
+| Changelog List (28443) | shadcnstore | หน้าใหม่ `/changelog` (ทางเลือก) หรือหัวข้อใน `/learn` | รายการ release พร้อมป้าย Added/Improved/Fixed อ่านจาก CHANGELOG.md เพื่อลดข้อความ "อัปเดตล่าสุด" ที่กระจายอยู่ใน docs (ต้องได้อนุญาต เพราะเป็นหน้าใหม่) |
+| Avatar (34164) | appica-dev | `AccountButton` ใน header และเมนูมือถือ | รูปโปรไฟล์ GitHub/Google และ fallback ตัวย่อสำหรับบัญชีรหัสผ่าน |
+| Button (3507) | sean0205 | ทุกหน้า (อ้างอิงสถานะ) | สถานะ loading/disabled ที่ชัดเจน เทียบกับ `buttonClasses` เดิม เพิ่มเฉพาะสถานะที่ยังขาด |
+| Focus Frame Border (29885) | shadcnspace | hero หน้าแรก (หน้าต่างโค้ด) เท่านั้น | มุมเรืองแสง 4 มุมรอบหน้าต่างโค้ด เป็นจุดเด่นเดียวของหน้า ใช้ที่เดียวเพื่อไม่ให้รก และปิดเมื่อ `prefers-reduced-motion` |
+| Experience Timeline (28334) | shadcnui-blocks | ไม่ใช้ตอนนี้ | ออกแบบสำหรับประวัติการทำงาน ไม่มีหน้าที่ตรง อาจใช้กับ `/learn` ส่วนประวัติแพลตฟอร์มภายหลัง |
+| Regex Tester (36190) | astralyxdev | ไม่อยู่ในขอบเขต revamp | เป็นเครื่องมือ ไม่ใช่ส่วน UI อาจเป็นไอเดียสำหรับ Studio หรือ MCP tool ภายหลัง |
+
+### ต่อหน้า (สรุป)
+
+- **หน้าแรก**: How It Works Steps (26891), Two-Column FAQ (26910), Focus Frame Border (29885) และ Combo Kbd (28308) ในบรรทัดคำสั่งของ hero
+- **Header**: Combo Kbd (28308) ในช่องค้นหา และ Avatar (34164) ในปุ่มบัญชี
+- **`/templates`**: Combobox (9020) เป็นตัวกรองหมวด และ Process Timeline (28381) ในหน้า detail
+- **`/builder`**: Process Timeline (28381) บนเดสก์ท็อป, Progress (3422) บนมือถือ และ Dismissible Alert Stack (26527)
+- **`/chat`**: Combobox (9020) ตัวเลือกโมเดล, Progress (3422) โควตา, Dismissible Alert Stack (26527) และ Combo Kbd (28308)
+- **`/login`**: ดูหัวข้อ 7 (Identifier First Login 37470 และ Login 2426 จากคอมโพเนนต์สาธารณะ ส่วน Alert Stack 26527, Button 3507 และ Avatar 34164 จาก bookmark)
+- **`/docs`**: Combo Kbd (28308)
+- **`/learn`**: Two-Column FAQ (26910) และ Changelog List (28443)
+
+### คอมโพเนนต์สาธารณะที่พิจารณาสำหรับ sign-in (ไม่อยู่ใน bookmark)
+
+ค้นด้วยคำว่า "sign-in" เจอ Auth UI (2624), Identifier First Login (37470), Sign In (2133), Login (2426), Sign In Flo (2553), Split Login (28369), Sign-in (4727), Modern Animated Sign In (2034), Sign In (3197) และ Modern & Stunning sign in (2060) เลือก 37470 กับ 2426 ด้วยเหตุผลในหัวข้อ 7 ส่วนแบบที่มีแอนิเมชันหนัก (2034, 2060, 2553) ขัดกับหลักการเรื่องความเรียบ ถ้าเจ้าของชอบชิ้นอื่น ให้ bookmark ไว้แล้วจะปรับหัวข้อ 7 ตาม
