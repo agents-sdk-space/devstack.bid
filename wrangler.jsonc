@@ -26,7 +26,14 @@
   ],
   // D1 (SQLite) for chat history. Created 2026-10-11 (region WNAM). Schema: migrations/ and
   // docs/reference/d1-schema.md. Apply with `npm run db:migrate:remote` (approval required).
-  // R2 binding ASSETS_BUCKET (bucket nvx-assets) is NOT added yet: R2 is not enabled on the account.
+  // R2 bucket for chat stream persistence (streamed text + thinking steps per turn). Owner enabled R2
+  // 2026-10-15; the bucket must exist before the next deploy (`wrangler r2 bucket create nvx-chat-streams`).
+  "r2_buckets": [{ "binding": "CHAT_STREAMS", "bucket_name": "nvx-chat-streams" }],
+  // CREDENTIALS_KEY (32 random bytes, base64) lives in Cloudflare Secrets Store, not as a Worker secret.
+  // Code reads it with `await env.CREDENTIALS_KEY.get()` (src/lib/connections/credentials.ts).
+  "secrets_store_secrets": [
+    { "binding": "CREDENTIALS_KEY", "store_id": "b56dddabe7d74172932cf26f4a2ab03f", "secret_name": "CREDENTIALS_KEY" }
+  ],
   // Workers AI (User Chat on /chat). Always runs remotely, also in `wrangler dev`/preview.
   "ai": { "binding": "AI" },
   "d1_databases": [

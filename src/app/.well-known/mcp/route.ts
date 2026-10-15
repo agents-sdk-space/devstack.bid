@@ -6,7 +6,11 @@ export async function GET() {
     description: "Tools for DevStack templates, setup planning, documentation, privacy and personal-safety recommendations, chat, sandbox sessions, and GitHub integration.",
     endpoint: `${SITE_URL}/mcp`,
     transport: "streamable-http",
+    transports: [{ type: "streamable-http", url: `${SITE_URL}/mcp` }],
     protocolVersions: ["2025-11-25", "2025-06-18", "2025-03-26"],
+    openapi: `${SITE_URL}/openapi.json`,
+    oauthAuthorizationServer: `${SITE_URL}/.well-known/oauth-authorization-server`,
+    protectedResourceMetadata: `${SITE_URL}/.well-known/oauth-protected-resource`,
     authentication: {
       type: "bearer",
       keyPage: `${SITE_URL}/settings/mcp`,

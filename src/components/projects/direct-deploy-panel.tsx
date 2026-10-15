@@ -5,13 +5,18 @@ import { Rocket } from "lucide-react";
 import { Card, copyText } from "@/components/ui";
 import { useLang } from "@/components/prefs";
 import type { DeployProfile } from "@/lib/deploy/templates";
+import { CreateTokenMenu } from "@/components/tokens/create-token-menu";
+import { RememberToggle } from "@/components/tokens/remember-toggle";
 import { LiveUrl, RetryButton, StatusPill, type DeploymentView } from "../deploy/deploy-status";
+
+const input = "mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm text-fg outline-none focus:border-fg";
 
 /** Option A: direct deploy into the customer's Cloudflare account + deployments timeline. */
 export function DirectDeployPanel({ projectId, profile }: { projectId: string; profile: DeployProfile }) {
   const { lang } = useLang();
   const th = lang === "th";
   const [items, setItems] = useState<DeploymentView[]>([]);
+  const [once, setOnce] = useState({ token: "", accountId: "", remember: false });
   const load = useCallback(async () => {
     const r = await fetch(`/api/projects/${encodeURIComponent(projectId)}/deploy`, { cache: "no-store" });
     const b = await r.json().catch(() => ({}));
@@ -41,7 +46,20 @@ export function DirectDeployPanel({ projectId, profile }: { projectId: string; p
         <h2 className="text-base font-semibold text-fg">{th ? "Deploy ตรงเข้าบัญชี Cloudflare ของคุณ" : "Direct deploy to your Cloudflare account"}</h2>
       </div>
       {direct ? (
-        <div className="mt-3"><RetryButton projectId={projectId} refName={null} onStarted={refresh} label={th ? "Deploy" : "Deploy"} /></div>
+        <div className="mt-3 space-y-3">
+          <details className="rounded-lg border border-border px-3 py-2 text-sm">
+            <summary className="cursor-pointer text-fg">{th ? "ใช้ token อื่นสำหรับรอบนี้ (ไม่บังคับ)" : "Use a different token for this deploy (optional)"}</summary>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="text-sm font-medium text-fg">API token<input type="password" autoComplete="off" spellCheck={false} value={once.token} onChange={(e) => setOnce({ ...once, token: e.target.value })} className={input} placeholder="••••" /></label>
+              <label className="text-sm font-medium text-fg">Account ID<input value={once.accountId} onChange={(e) => setOnce({ ...once, accountId: e.target.value })} className={input} placeholder="32 hex characters" /></label>
+              <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+                <RememberToggle checked={once.remember} onCheckedChange={(remember) => setOnce({ ...once, remember })} />
+                <CreateTokenMenu primary="cloudflare" />
+              </div>
+            </div>
+          </details>
+          <RetryButton projectId={projectId} refName={null} once={once.token ? once : null} onStarted={(id) => { setOnce({ token: "", accountId: once.accountId, remember: false }); refresh(); void id; }} label="Deploy" />
+        </div>
       ) : (
         <p className="mt-3 text-sm text-subtle">{th ? "โปรเจกต์นี้ต้อง build ก่อน จึงใช้ปุ่ม Deploy to Cloudflare / Workers Builds ด้านบน" : "This project needs a build step — use Deploy to Cloudflare / Workers Builds above."}</p>
       )}

@@ -4,7 +4,7 @@ import { GithubApiError, listWritableRepos } from "@/lib/auth/github-api";
 import { chatEnv } from "@/lib/chat/config";
 
 import { chatRuntime, json } from "@/lib/chat/runtime";
-import { loadGithubToken, sealKeys } from "@/lib/connections/credentials";
+import { loadGithubToken, resolveSealKeys } from "@/lib/connections/credentials";
 import { clientIp } from "@/lib/server/http";
 import { checkRateLimit } from "@/lib/server/rate-limit";
 
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   if (!actor.authenticated || !actor.uid) return json({ error: "Sign in with GitHub first. / เข้าสู่ระบบด้วย GitHub ก่อน", code: "unauthorized" }, 401);
   const { db } = await chatRuntime();
   if (!db) return json({ error: "Storage unavailable. / ระบบจัดเก็บไม่พร้อม", code: "no_database" }, 503);
-  const token = await loadGithubToken(db, sealKeys(env.CHAT_COOKIE_SECRET), actor.uid);
+  const token = await loadGithubToken(db, await resolveSealKeys(env.CHAT_COOKIE_SECRET), actor.uid);
   if (!token) return json({ error: "Sign in with GitHub again to push code. / เข้าสู่ระบบ GitHub อีกครั้งเพื่อส่งโค้ด", code: "reauth" }, 401);
   try {
     const repos = await listWritableRepos(token);

@@ -309,7 +309,6 @@ const dict = {
     en: "Sent over HTTPS with each request only. Never stored or logged on our server; calls are billed to your account.",
     th: "ส่งผ่าน HTTPS เฉพาะตอนส่งคำขอแต่ละครั้ง ไม่ถูกเก็บหรือบันทึก log บนเซิร์ฟเวอร์ของเรา ค่าใช้จ่ายคิดกับบัญชีของคุณ",
   },
-  "factory.remember": { en: "Remember for this tab (sessionStorage)", th: "จำไว้เฉพาะแท็บนี้ (sessionStorage)" },
   "factory.scopes": { en: "Required key permissions", th: "สิทธิ์ที่ key ต้องมี" },
   "factory.envKeyNote": {
     en: "Self-hosted sandboxes also need an environment key (Agents tab in the OpenAI dashboard, same project, other permissions None). It goes only to your machine as CODEX_API_KEY — never paste it here.",
@@ -386,6 +385,10 @@ const dict = {
   "footer.product": { en: "Product", th: "ผลิตภัณฑ์" },
   "footer.resources": { en: "Resources", th: "แหล่งข้อมูล" },
   "footer.developers": { en: "Developers", th: "นักพัฒนา" },
+  "nav.about": { en: "About", th: "เกี่ยวกับเรา" },
+  "nav.contact": { en: "Contact", th: "ติดต่อ" },
+  "nav.openapi": { en: "OpenAPI", th: "OpenAPI" },
+  "nav.mcpSettings": { en: "MCP API keys", th: "คีย์ MCP" },
   "nav.close": { en: "Close", th: "ปิด" },
   "nav.mainMenu": { en: "Menu", th: "เมนู" },
   "palette.open": { en: "Search or jump to…", th: "ค้นหาหรือไปที่…" },

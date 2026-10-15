@@ -29,8 +29,8 @@ async function binding(name: LimiterName): Promise<RateLimitBinding | null> {
   }
 }
 
-export async function checkRateLimit(name: LimiterName, key: string, fallbackPerMinute: number): Promise<{ ok: boolean; backend: "workers" | "memory" }> {
-  const b = await binding(name);
+export async function checkRateLimit(name: LimiterName, key: string, fallbackPerMinute: number, opts: { memoryOnly?: boolean } = {}): Promise<{ ok: boolean; backend: "workers" | "memory" }> {
+  const b = opts.memoryOnly ? null : await binding(name);
   if (b) {
     try {
       const { success } = await b.limit({ key });
