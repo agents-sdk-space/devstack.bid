@@ -4,7 +4,7 @@ import { handleChanges } from "@/lib/connections/changes-route";
 import { getProject } from "@/lib/connections/projects";
 import { gate, isResponse } from "@/lib/connections/route-kit";
 
-/** POST /api/projects/:id/changes {files[{path,content|delete}], branch?, title, body} → multi-file commit on a new branch + PR (30/day). */
+/** POST /api/projects/:id/changes {files[{path,content|delete}], branch?, title, body} → multi-file commit on a new branch + PR (capacity-derived daily quota). */
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   await connection();
   const a = await gate(req, { write: true, burstKey: "proj-chg", perMinute: 6 });

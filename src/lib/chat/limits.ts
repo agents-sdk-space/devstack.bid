@@ -22,7 +22,9 @@ export type LimitKind =
   | "studio_global_day"
   | "repo_user_day"
   | "pr_user_day"
-  | "deploy_user_day";
+  | "deploy_user_day"
+  | "cli_user_day"
+  | "upload_user_day";
 
 export interface LimitRule {
   scope: string;

@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- macOS arm64 one-command setup: `curl -fsSL https://devstack.bid/setup.sh | bash -s -- my-app` with a scoped `cli:setup` key from `/settings/cli` (hashed, shown once, revocable); outputs `<name>/` and `<name>-deploy.zip`. New routes `/setup.sh`, `/api/cli/whoami`, `/api/cli/scaffold`, `/api/cli/starter`, `/api/projects/:id/zip`.
+- One shared deploy-zip builder (`src/lib/deploy/bundle.ts`) for CLI and web "Download zip": wrangler.jsonc per `templates.ts`, `package.json` `deploy` script, `DEPLOY.txt` (env var names only), `NOTICE`; secret files are never included.
+- Zip upload → deploy in /projects ("Deploy from a zip"): validates bundle structure, size/file limits, paths and zip-slip, strips env files, rejects key files and secret-looking content; stores files in D1 (`project_files`, migration 0011) and deploys with the existing Cloudflare provider; Retry and chat self-heal (`apply_fix`) work for upload projects.
+- "Download deploy zip" in Studio (Export dialog) and on chat results, via `POST /api/projects/bundle` (same `bundle.ts`).
+- Verification runner `scripts/verify/` and results in `docs/verification/cli-zip-rounds.md`.
+- Starters vendored from cloudflare/workers-sdk @ad01099 (MIT OR Apache-2.0); `THIRD_PARTY_NOTICES.md`.
+
+### Changed
+
+- Per-user daily limits are now derived from GitHub, Cloudflare and D1 capacity in `src/lib/limits/capacity.ts` with env overrides (Workers Paid defaults: 11 repos, 35 PRs, 100 deploys, 3 self-heal attempts, 200 CLI setups, 6 zip uploads; all figures verified against official docs). See `docs/limits.md`.
+
 - **Revoke, least-privilege scope, audit log, docs (PR-E).**
   - **Revoke:** disconnecting GitHub now revokes the OAuth grant at GitHub (`DELETE /applications/{client_id}/grant`) before deleting the stored token.
   - **Least-privilege scope:** `/api/auth/github?scope=public` requests `public_repo` instead of `repo`. The callback stores the scopes GitHub actually granted.

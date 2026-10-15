@@ -79,3 +79,34 @@ export function downloadBlob(blob: Blob, filename: string): void {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 5_000);
 }
+
+/**
+ * "Download deploy zip": send the project source to DevStack's shared bundle builder
+ * (POST /api/projects/bundle, same code path as the CLI) and save the Workers-ready zip.
+ */
+export async function buildDeployZipViaServer(fs: SandboxFs, name: string): Promise<{ blob: Blob; filename: string }> {
+  const paths = (await fs.listFiles()).filter(
+    (p) => !p.split('/').includes('node_modules') && !/(^|\/)\.(env|dev\.vars)($|\.)(?!example)/.test(p) && p !== 'wrangler.toml',
+  );
+  const files: ({ path: string; content: string } | { path: string; base64: string })[] = [];
+  for (const path of paths) {
+    if (isBinaryPath(path)) {
+      const bytes = await fs.readBinary(path);
+      let bin = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      files.push({ path, base64: btoa(bin) });
+    } else files.push({ path, content: await fs.readFile(path) });
+  }
+  const r = await fetch('/api/projects/bundle', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({ name, templateId: 'studio', files }),
+  });
+  if (!r.ok) {
+    const b = (await r.json().catch(() => ({}))) as { error?: string; code?: string };
+    throw new Error(b.code === 'unauthorized' || b.code === 'account_required' ? 'Sign in on devstack.bid to download a deploy zip.' : (b.error ?? 'Could not build the deploy zip.'));
+  }
+  const filename = /filename="([^"]+)"/.exec(r.headers.get('content-disposition') ?? '')?.[1] ?? `${name}-deploy.zip`;
+  return { blob: await r.blob(), filename };
+}

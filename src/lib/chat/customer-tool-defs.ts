@@ -12,7 +12,7 @@ export const CUSTOMER_GITHUB_TOOLS = [
   fn("github_list_repositories", "List repositories the signed-in customer can push to (their own GitHub account).", {}, []),
   fn("github_read_tree", "List files in a repository at a branch/ref (recursive).", { ...repoArg, ref: { type: "string" } }, ["repo", "ref"]),
   fn("github_read_file", "Read one text file from a repository.", { ...repoArg, path: { type: "string" }, ref: { type: "string" } }, ["repo", "path", "ref"]),
-  fn("github_create_repo", "Create a new repository in the customer's GitHub account (5/day). Optionally seed files.", {
+  fn("github_create_repo", "Create a new repository in the customer's GitHub account (daily quota, see docs/limits.md). Optionally seed files.", {
     name: { type: "string" },
     private: { type: "boolean" },
     description: { type: "string" },
@@ -31,7 +31,7 @@ export const CUSTOMER_GITHUB_TOOLS = [
     },
     ["repo", "branch", "message", "files"]
   ),
-  fn("github_open_pull_request", "Open a pull request (30/day).", { ...repoArg, head: { type: "string" }, base: { type: "string" }, title: { type: "string" }, body: { type: "string" } }, ["repo", "head", "base", "title"]),
+  fn("github_open_pull_request", "Open a pull request (daily quota, see docs/limits.md).", { ...repoArg, head: { type: "string" }, base: { type: "string" }, title: { type: "string" }, body: { type: "string" } }, ["repo", "head", "base", "title"]),
   fn("github_list_pull_requests", "List pull requests.", { ...repoArg, state: { type: "string", enum: ["open", "closed", "all"] } }, ["repo"]),
   fn("github_get_pull_request", "Read one pull request: title, state, body and changed files.", { ...repoArg, number: { type: "integer" } }, ["repo", "number"]),
   fn(
@@ -42,7 +42,7 @@ export const CUSTOMER_GITHUB_TOOLS = [
   ),
   fn(
     "apply_fix",
-    "Self-heal: commit a fix for a FAILED deployment to its branch (or a devstack/fix-* branch; never the default branch). Max 3 attempts per deployment. Does NOT redeploy: the customer must click 'Retry deploy'.",
+    "Self-heal: commit a fix for a FAILED deployment to its branch (or a devstack/fix-* branch; never the default branch). Limited attempts per deployment (see docs/limits.md). Does NOT redeploy: the customer must click 'Retry deploy'.",
     {
       deployment_id: { type: "string" },
       message: { type: "string" },

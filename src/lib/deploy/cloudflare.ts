@@ -8,7 +8,12 @@ import type { DeployProfile } from "./templates";
  * Flow: assets-upload-session → upload buckets → PUT script (multipart) → enable workers.dev.
  */
 
-const CF = "https://api.cloudflare.com/client/v4";
+/** Local verification only: a 127.0.0.1 mock may replace the API outside production (never in a deployed Worker). */
+export function cfApiBase(env: Record<string, string | undefined> = typeof process !== "undefined" ? process.env : {}): string {
+  const dev = env.DEVSTACK_DEV_CF_API_BASE;
+  return env.NODE_ENV !== "production" && dev && /^http:\/\/127\.0\.0\.1:\d+\/client\/v4$/.test(dev) ? dev : "https://api.cloudflare.com/client/v4";
+}
+const CF = cfApiBase();
 export const COMPAT_DATE = "2026-10-01";
 
 /** Tiny module that serves the uploaded assets (asset-only Workers still need an entry via the API). */

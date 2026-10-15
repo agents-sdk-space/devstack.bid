@@ -10,6 +10,7 @@ import { Mascot } from "../brand/mascot";
 import { useLang } from "../prefs";
 import { DeployCard } from "./deploy-card";
 import { GithubPublish } from "./github-publish";
+import { DeployZipButton } from "./deploy-zip-button";
 import { StreamText } from "./stream-text";
 import { ThoughtChain } from "./thought-chain";
 import { SandboxPanel, StatusDot } from "./sandbox-panel";
@@ -697,6 +698,7 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
                         )}
                         {m.deploys?.map((d) => <DeployCard key={d.id} card={d} />)}
                         {!dev && !byok && m.content && !m.pending && <GithubPublish text={m.content} signedIn={info?.account?.provider === "github"} />}
+                        {!dev && !byok && m.content && !m.pending && <DeployZipButton text={m.content} signedIn={Boolean(info?.account)} />}
                         {dev && m.activities.filter((a) => a.kind !== "reasoning").length > 0 && (
                           <button
                             type="button"

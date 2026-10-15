@@ -78,6 +78,18 @@ export default function ExportModal() {
           </button>
           <button
             type="button"
+            data-testid="download-deploy-zip"
+            disabled={exporting}
+            onClick={() => {
+              setError(null);
+              rt.exportDeployZip().catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));
+            }}
+            className="rounded-md border border-devstack-border px-4 py-2 text-sm font-semibold hover:bg-white/5 disabled:opacity-60"
+          >
+            Download deploy zip
+          </button>
+          <button
+            type="button"
             data-testid="download-zip"
             disabled={exporting}
             onClick={() => {

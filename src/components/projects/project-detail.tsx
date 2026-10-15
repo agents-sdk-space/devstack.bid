@@ -42,7 +42,7 @@ export function ProjectDetail({ id, children }: { id: string; children?: (p: Pro
           {project.repo} <ExternalLink className="h-3.5 w-3.5" aria-hidden />
         </a>
       )}
-      <Card className="mt-6 p-5">
+      {project.repo && <Card className="mt-6 p-5">
         <h2 className="text-base font-semibold text-fg">Pull requests</h2>
         <ul className="mt-3 space-y-2">
           {pulls.length === 0 && <li className="text-sm text-subtle">{th ? "ยังไม่มี PR — ให้แชตเปิด PR ให้ได้" : "No pull requests yet — ask the chat to open one."}</li>}
@@ -54,7 +54,8 @@ export function ProjectDetail({ id, children }: { id: string; children?: (p: Pro
             </li>
           ))}
         </ul>
-      </Card>
+      </Card>}
+      {!project.repo && <p className="mt-1 text-sm text-subtle">{th ? "โปรเจกต์จากไฟล์ zip (ไม่มี GitHub repo)" : "Uploaded from a zip (no GitHub repo)."}</p>}
       {children?.(project, extra)}
     </div>
   );

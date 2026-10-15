@@ -11,7 +11,8 @@ import { isAssetFile } from "./cloudflare";
 import { DeployError, type DeployFile } from "./provider";
 import { pickProvider } from "./providers";
 import { sanitizeLog } from "./sanitize";
-import { resolveProfile, type DeployProfile } from "./templates";
+import { profileById, resolveProfile, type DeployProfile } from "./templates";
+import { loadProjectFiles, uploadProfile } from "./upload";
 
 export type DeployStatus = "queued" | "uploading" | "live" | "failed";
 
@@ -118,37 +119,43 @@ export async function startDeploy(
   waitUntil: (p: Promise<unknown>) => void,
   f: typeof fetch = fetch
 ): Promise<DeploymentRow> {
-  const ref = safeBranch(rawRef || project.default_branch || "main");
-  if (!ref || !project.repo_full_name) throw new ServiceError("invalid", "Invalid ref. / ref ไม่ถูกต้อง");
+  const upload = !project.repo_full_name;
+  const ref = upload ? "upload" : safeBranch(rawRef || project.default_branch || "main");
+  if (!ref) throw new ServiceError("invalid", "Invalid ref. / ref ไม่ถูกต้อง");
   const inflight = await db.prepare("SELECT id FROM deployments WHERE project_id = ?1 AND status IN ('queued','uploading') AND created_at > ?2").bind(project.id, Date.now() - 15 * 60_000).first<{ id: string }>();
   if (inflight) throw new ServiceError("conflict", "A deploy is already running for this project. / มี deploy กำลังทำงานอยู่", 409);
-  const gh = await loadGithubToken(db, keys, uid);
-  if (!gh) throw new ServiceError("reauth", "Connect GitHub first. / เชื่อมต่อ GitHub ก่อน", 401);
+  const gh = upload ? null : await loadGithubToken(db, keys, uid);
+  if (!upload && !gh) throw new ServiceError("reauth", "Connect GitHub first. / เชื่อมต่อ GitHub ก่อน", 401);
   const cred = await loadCredential(db, keys, uid, "cloudflare");
   if (!cred) throw new ServiceError("reauth", "Connect Cloudflare in /settings/connections first. / เชื่อมต่อ Cloudflare ก่อน", 401);
-  const [owner, repo] = project.repo_full_name.split("/");
-  const tree = await readTree(gh, owner, repo, ref);
-  const profile = resolveProfile(project.template_id, tree.entries.filter((e) => e.type === "blob").map((e) => e.path));
+  const [owner, repo] = upload ? ["", ""] : project.repo_full_name!.split("/");
+  const tree = upload ? null : await readTree(gh!, owner, repo, ref);
+  const uploaded = upload ? await loadProjectFiles(db, project.id) : null;
+  if (upload && !uploaded!.length) throw new ServiceError("invalid", "Upload a deploy zip first. / อัปโหลด zip ก่อน", 422);
+  const profile = upload ? profileById(project.template_id) ?? uploadProfile(uploaded!) : resolveProfile(project.template_id, tree!.entries.filter((e) => e.type === "blob").map((e) => e.path));
   const provider = pickProvider(profile, "cloudflare", f);
   if (!provider) throw new ServiceError("invalid", profile.path === "none" ? ERROR_HINTS.not_deployable : ERROR_HINTS.needs_build, 422);
   await takeQuota(db, uid, "deploy");
   const id = crypto.randomUUID();
   await db.prepare("INSERT INTO deployments (id, project_id, user_id, ref, target, status) VALUES (?1, ?2, ?3, ?4, ?5, 'queued')").bind(id, project.id, uid, ref, provider.target).run();
-  await audit(db, uid, "deploy.started", `${project.repo_full_name}@${ref}`);
+  await audit(db, uid, "deploy.started", `${project.repo_full_name ?? `upload:${project.id}`}@${ref}`);
   const name = safeWorkerName(project.name) ?? `devstack-${id.slice(0, 8)}`;
 
   waitUntil(
     (async () => {
       try {
         const files: DeployFile[] = [];
-        for (const e of selectFiles(profile, tree.entries)) files.push({ path: e.path, bytes: await readBlob(gh, owner, repo, e.sha!) });
+        if (uploaded) {
+          const keep = new Set(selectFiles(profile, uploaded.map((u) => ({ path: u.path, type: "blob", size: u.bytes.length, sha: "local" }))).map((e) => e.path));
+          for (const u of uploaded) if (keep.has(u.path)) files.push(u);
+        } else for (const e of selectFiles(profile, tree!.entries)) files.push({ path: e.path, bytes: await readBlob(gh!, owner, repo, e.sha!) });
         const out = await provider.deploy({ name, profile, files, credential: cred }, (s) => setStatus(db, id, { status: s }));
         await setStatus(db, id, { status: "live", url: out.url, cf_version_id: out.versionId }, true);
         await audit(db, uid, "deploy.live", id);
       } catch (err) {
         const code = err instanceof DeployError ? err.code : (err as { status?: number })?.status ? "github" : "internal";
         const detail = err instanceof DeployError ? err.detail : String((err as Error)?.message ?? err);
-        await setStatus(db, id, { status: "failed", error_code: code, error_log: sanitizeLog(`${detail}\nHint: ${ERROR_HINTS[code] ?? ""}`, [cred.secret, gh]) }, true).catch(() => undefined);
+        await setStatus(db, id, { status: "failed", error_code: code, error_log: sanitizeLog(`${detail}\nHint: ${ERROR_HINTS[code] ?? ""}`, gh ? [cred.secret, gh] : [cred.secret]) }, true).catch(() => undefined);
         await audit(db, uid, "deploy.failed", `${id}:${code}`);
         console.warn(JSON.stringify({ at: "deploy", event: "failed", code }));
       }
