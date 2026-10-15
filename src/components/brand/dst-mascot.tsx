@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useId, useSyncExternalStore } from "react";
 import { cn } from "@/components/ui";
 
 /** Eye capsules on the 1024px art grid (same layout as the NVX master logo). */
@@ -186,22 +186,18 @@ export interface DstMascotThemedProps extends Omit<DstMascotProps, "canvas" | "o
   colorScheme?: "light" | "dark";
 }
 
+function subscribeHtmlClass(onChange: () => void) {
+  const obs = new MutationObserver(onChange);
+  obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  return () => obs.disconnect();
+}
+const readHtmlScheme = (): "light" | "dark" =>
+  document.documentElement.classList.contains("dark") ? "dark" : "light";
+const serverScheme = (): "light" | "dark" => "dark";
+
 /** Picks `canvas="black"` in dark mode and `canvas="brand"` in light mode. */
 export function DstMascotThemed({ colorScheme, ...props }: DstMascotThemedProps) {
-  const [scheme, setScheme] = useState<"light" | "dark">(colorScheme ?? "dark");
-
-  useEffect(() => {
-    if (colorScheme) {
-      setScheme(colorScheme);
-      return;
-    }
-    const root = document.documentElement;
-    const read = () => setScheme(root.classList.contains("dark") ? "dark" : "light");
-    read();
-    const obs = new MutationObserver(read);
-    obs.observe(root, { attributes: true, attributeFilter: ["class"] });
-    return () => obs.disconnect();
-  }, [colorScheme]);
-
+  const detected = useSyncExternalStore(subscribeHtmlClass, readHtmlScheme, serverScheme);
+  const scheme = colorScheme ?? detected;
   return <DstMascot {...props} canvas={dstMascotCanvasFromColorScheme(scheme)} />;
 }
