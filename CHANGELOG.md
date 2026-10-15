@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> Deployed to production 2026-10-15 (Cloudflare version `f5c15746-673b-47d7-b7a2-dafeb9b032fa`; rollback `52a9ee18-1001-4ebe-b02e-e11cfb040f01`). See `docs/DEPLOY.md`.
+> Deployed to production 2026-10-15 22:10 ICT (Cloudflare version `46d66baf-d1a1-4875-b603-1a395b067c6e`, PRs #26–#29, migration 0012; rollback `f5c15746-673b-47d7-b7a2-dafeb9b032fa`). Earlier the same day: `f5c15746` (PRs #16–#24). See `docs/DEPLOY.md`.
 
 ### Added
 
