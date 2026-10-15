@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Sign-up looked dead.** On `/login`, "Create a DevStack account" relied on the browser's native validation (`required`, `type=email`, `minLength=10`). When the email or a password under 10 characters was invalid, the browser blocked the POST and only showed a native bubble, in English, which is easy to miss and missing in some in-app or mobile browsers. The form now uses `noValidate` and checks its own rules, matching the server (valid email, 10–200 characters). It always shows a visible TH/EN message and focuses the field. A double submit is ignored, and the pending state resets after back/forward navigation. Regression test: `tests/login-form.test.tsx`.
 - `/api/connections`, `/api/projects`, `/api/deployments` and `/api/environment` reads were throttled by the fixed 4 / 60 s `NVX_CHAT_LIMITER` binding (deploy-status polling every 3 s returned 429). Reads now use the per-isolate limiter at each route's `perMinute`; writes keep the shared binding.
 - Secrets Store `get()` result is wrapped in a native Promise (the dev platform proxy returns a non-native thenable).
 

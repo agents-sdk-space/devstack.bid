@@ -265,6 +265,7 @@ const dict = {
   "auth.takenTitle": { en: "That email already has a DevStack account", th: "อีเมลนี้มีบัญชี DevStack แล้ว" },
   "auth.taken": { en: "Sign in with the password for this email. It is not linked to Google, GitHub or Cursor.", th: "เข้าสู่ระบบด้วยรหัสผ่านของอีเมลนี้ บัญชีนี้ไม่เชื่อมกับ Google, GitHub หรือ Cursor" },
   "auth.weakTitle": { en: "Use a longer password", th: "ใช้รหัสผ่านที่ยาวกว่านี้" },
+  "auth.emailInvalid": { en: "Enter a valid email address.", th: "กรอกอีเมลให้ถูกต้อง" },
   "auth.weak": { en: "Passwords need 10 to 200 characters, with no control characters.", th: "รหัสผ่านต้องมี 10 ถึง 200 ตัวอักษร และไม่มีอักขระควบคุม" },
   "auth.historyEmpty": { en: "Chats on this account show up here.", th: "แชตของบัญชีนี้จะแสดงที่นี่" },
   "auth.privacy": {
