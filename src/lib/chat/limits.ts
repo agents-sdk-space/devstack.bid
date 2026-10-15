@@ -19,7 +19,10 @@ export type LimitKind =
   | "factory_turn_ip_hour"
   | "studio_user_day"
   | "studio_ip_day"
-  | "studio_global_day";
+  | "studio_global_day"
+  | "repo_user_day"
+  | "pr_user_day"
+  | "deploy_user_day";
 
 export interface LimitRule {
   scope: string;
@@ -112,6 +115,11 @@ export async function quotaStatus(db: D1Like, ipKey: string, uid: string | null,
 /** Sandbox Factory: per-IP hourly anti-abuse buckets (the user's own key pays, so no global caps). */
 export function factoryRules(ipKey: string, kind: "session" | "turn", limit: number, now = new Date()): LimitRule[] {
   return [{ scope: `factory:${kind}:ip:${ipKey}`, bucket: windows(now).hour, limit, kind: kind === "session" ? "factory_session_ip_hour" : "factory_turn_ip_hour" }];
+}
+
+/** Customer repo/PR/deploy actions (their own accounts): per-user daily caps from the deploy plan. */
+export function customerRules(uid: string, kind: "repo" | "pr" | "deploy", limits: { repo: number; pr: number; deploy: number }, now = new Date()): LimitRule[] {
+  return [{ scope: `cust:${kind}:u:${uid}`, bucket: windows(now).day, limit: limits[kind], kind: `${kind}_user_day` as LimitKind }];
 }
 
 export async function readCounts(db: D1Like, rules: LimitRule[]): Promise<number[]> {
