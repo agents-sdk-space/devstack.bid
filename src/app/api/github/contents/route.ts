@@ -1,9 +1,10 @@
 import { connection } from "next/server";
+import { resolveSignedIn } from "@/lib/auth/session";
 import { GithubApiError, putFile } from "@/lib/auth/github-api";
 import { MAX_FILE_CHARS, parseRepo, safeBranch, safeCommitMessage, safeRepoPath, sameOrigin } from "@/lib/auth/github-policy";
 import { openSecret } from "@/lib/auth/token-box";
 import { chatEnv } from "@/lib/chat/config";
-import { resolveActor } from "@/lib/chat/identity";
+
 import { chatRuntime, json } from "@/lib/chat/runtime";
 import { githubTokenEnc } from "@/lib/chat/store";
 import { HttpError, clientIp, readJsonBody } from "@/lib/server/http";
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
   if (!env.CHAT_COOKIE_SECRET) return json({ error: "Not signed in. / ยังไม่ได้เข้าสู่ระบบ", code: "unauthorized" }, 401);
   const burst = await checkRateLimit("NVX_CHAT_LIMITER", `ghput:${clientIp(req)}`, 8);
   if (!burst.ok) return json({ error: "Too many commits — wait a minute. / ส่ง commit ถี่เกินไป กรุณารอสักครู่", code: "rate_limited" }, 429, { "Retry-After": "60" });
-  const actor = await resolveActor(req, env.CHAT_COOKIE_SECRET);
+  const actor = await resolveSignedIn(req, env.CHAT_COOKIE_SECRET);
   if (!actor.authenticated || !actor.uid) return json({ error: "Sign in with GitHub first. / เข้าสู่ระบบด้วย GitHub ก่อน", code: "unauthorized" }, 401);
 
   let body: { repo?: unknown; path?: unknown; message?: unknown; content?: unknown; branch?: unknown };

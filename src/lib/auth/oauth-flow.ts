@@ -86,9 +86,12 @@ export function oauthFail(origin: string, secure: boolean, code: string, provide
   return new Response(null, { status: 302, headers });
 }
 
-export function signedInRedirect(origin: string, secure: boolean, next: string, signedUid: string, status = 302): Response {
+/** 30 days, the same as `auth_sessions.expires_at`. */
+export const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+
+export function signedInRedirect(origin: string, secure: boolean, next: string, sessionValue: string, status = 302): Response {
   const headers = new Headers({ Location: new URL(next, origin).toString(), "Cache-Control": "no-store" });
-  headers.append("Set-Cookie", namedCookie(AUTH_COOKIE, signedUid, secure));
+  headers.append("Set-Cookie", namedCookie(AUTH_COOKIE, sessionValue, secure, AUTH_COOKIE_MAX_AGE));
   headers.append("Set-Cookie", clearCookie(OAUTH_STATE_COOKIE, secure, OAUTH_COOKIE_PATH));
   return new Response(null, { status, headers });
 }

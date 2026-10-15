@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { resolveSignedIn } from "@/lib/auth/session";
 import { sameOrigin } from "@/lib/auth/github-policy";
-import { resolveActor } from "@/lib/chat/identity";
+
 import { chatEnv, chatRuntime, json } from "@/lib/chat/runtime";
 import { getAccount } from "@/lib/chat/store";
 import { hashMcpKey, isMcpScope, MCP_SCOPES, mintMcpKey } from "@/lib/mcp/auth";
@@ -15,7 +16,7 @@ async function signedIn(req: Request) {
   const env = chatEnv();
   const { db } = await chatRuntime();
   if (!env.CHAT_COOKIE_SECRET || !db) return { response: json({ error: "Storage unavailable. / ระบบจัดเก็บไม่พร้อม", code: "unavailable" }, 503) } as const;
-  const actor = await resolveActor(req, env.CHAT_COOKIE_SECRET);
+  const actor = await resolveSignedIn(req, env.CHAT_COOKIE_SECRET);
   if (!actor.authenticated || !actor.uid) return { response: json({ error: "Sign in first. / กรุณาเข้าสู่ระบบก่อน", code: "unauthorized" }, 401) } as const;
   return { env, db, uid: actor.uid } as const;
 }

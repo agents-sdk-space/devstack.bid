@@ -1,11 +1,15 @@
 import { connection } from "next/server";
 import { sameOrigin } from "@/lib/auth/github-policy";
 import { chatEnv } from "@/lib/chat/config";
-import { AUTH_COOKIE, CHAT_COOKIE, clearCookie, readCookie, verifyUid } from "@/lib/chat/identity";
+import { revokeSessions } from "@/lib/auth/session";
+import { AUTH_COOKIE, CHAT_COOKIE, clearCookie, readCookie, readSession, verifyUid } from "@/lib/chat/identity";
 import { chatRuntime } from "@/lib/chat/runtime";
 import { deleteGithubCredential } from "@/lib/chat/store";
 
-/** POST /api/auth/logout — drop the session and the saved GitHub token. Chats stay on the account. */
+/**
+ * POST /api/auth/logout — delete this browser's session row (or every session with `?everywhere=1`)
+ * and the saved GitHub token. Chats stay on the account.
+ */
 export async function POST(req: Request) {
   await connection();
   if (!sameOrigin(req)) {
@@ -16,11 +20,17 @@ export async function POST(req: Request) {
   const headers = new Headers({ "Cache-Control": "no-store", "Content-Type": "application/json; charset=utf-8" });
   const secret = env.CHAT_COOKIE_SECRET;
   if (secret) {
-    const uid = await verifyUid(readCookie(req.headers.get("cookie"), AUTH_COOKIE), secret);
+    const raw = readCookie(req.headers.get("cookie"), AUTH_COOKIE);
+    const session = await readSession(raw, secret);
+    const uid = session?.uid ?? (await verifyUid(raw, secret));
+    const everywhere = new URL(req.url).searchParams.get("everywhere") === "1";
     const anon = await verifyUid(readCookie(req.headers.get("cookie"), CHAT_COOKIE), secret);
     if (uid) {
       const { db } = await chatRuntime();
-      if (db) await deleteGithubCredential(db, uid).catch(() => undefined);
+      if (db) {
+        await revokeSessions(db, uid, session?.sid ?? null, everywhere).catch(() => undefined);
+        await deleteGithubCredential(db, uid).catch(() => undefined);
+      }
     }
     headers.append("Set-Cookie", clearCookie(AUTH_COOKIE, secure));
     if (uid && anon === uid) headers.append("Set-Cookie", clearCookie(CHAT_COOKIE, secure));

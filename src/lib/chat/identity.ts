@@ -5,7 +5,7 @@
  */
 
 export const CHAT_COOKIE = "nvx_chat_uid";
-/** Signed user id after Cursor, Google, GitHub or DevStack sign-in. Same HMAC format as the anonymous cookie. */
+/** Sign-in session after Cursor, Google, GitHub or DevStack sign-in: `<uid>.<sid>.<HMAC>` backed by `auth_sessions` (0009). */
 export const AUTH_COOKIE = "nvx_auth";
 /** Short-lived CSRF state for OAuth callbacks. Path is /api/auth so every provider can read it. */
 export const OAUTH_STATE_COOKIE = "nvx_oauth_state";
@@ -97,16 +97,42 @@ export async function verifyPayload(value: string | undefined, secret: string): 
   return b64urlDecode(body);
 }
 
+/** Session cookie value: `<uid>.<sid>.<HMAC(uid.sid)>`. The sid must also exist in D1 (`auth_sessions`). */
+export async function signSession(uid: string, sid: string, secret: string): Promise<string> {
+  return `${uid}.${sid}.${await hmac(secret, `${uid}.${sid}`)}`;
+}
+
+export async function readSession(value: string | undefined, secret: string): Promise<{ uid: string; sid: string } | null> {
+  if (!value) return null;
+  const parts = value.split(".");
+  if (parts.length !== 3) return null;
+  const [uid, sid, sig] = parts;
+  if (!UUID.test(uid) || !UUID.test(sid) || !sig) return null;
+  return timingSafeEqual(sig, await hmac(secret, `${uid}.${sid}`)) ? { uid, sid } : null;
+}
+
+/** Checks that a session id is still live for this user. Absent means session cookies are refused. */
+export type SessionCheck = (uid: string, sid: string) => Promise<boolean>;
+
+/** The signed-in uid from `nvx_auth`: a live session, or a legacy `<uid>.<HMAC>` value. */
+export async function readAuthCookie(req: Request, secret: string, check?: SessionCheck): Promise<string | null> {
+  const raw = readCookie(req.headers.get("cookie"), AUTH_COOKIE);
+  const session = await readSession(raw, secret);
+  if (session) return check && (await check(session.uid, session.sid).catch(() => false)) ? session.uid : null;
+  return verifyUid(raw, secret);
+}
+
 /**
  * Chat identity. A valid sign-in session wins over the anonymous cookie.
  * `issue` mints an anonymous cookie when neither is present (POST turns). GETs pass `issue: false`.
+ * `check` validates revocable sessions against D1; server routes get it from `resolveSignedIn`.
  */
 export async function resolveActor(
   req: Request,
   secret: string,
-  opts: { issue?: boolean } = {}
+  opts: { issue?: boolean; check?: SessionCheck } = {}
 ): Promise<{ uid: string | null; setCookie: string | null; authenticated: boolean }> {
-  const session = await verifyUid(readCookie(req.headers.get("cookie"), AUTH_COOKIE), secret);
+  const session = await readAuthCookie(req, secret, opts.check);
   if (session) return { uid: session, setCookie: null, authenticated: true };
   const anon = await verifyUid(readCookie(req.headers.get("cookie"), CHAT_COOKIE), secret);
   if (anon) return { uid: anon, setCookie: null, authenticated: false };

@@ -1,3 +1,4 @@
+import { issueSession } from "@/lib/auth/session";
 import { connection } from "next/server";
 import { exchangeCode, fetchProfile } from "@/lib/auth/github-api";
 import { GITHUB_SCOPES } from "@/lib/auth/github-policy";
@@ -5,7 +6,7 @@ import { planSignIn } from "@/lib/auth/link-account";
 import { oauthFail, readOAuthState, signedInRedirect } from "@/lib/auth/oauth-flow";
 import { sealSecret } from "@/lib/auth/token-box";
 import { chatEnv } from "@/lib/chat/config";
-import { OAUTH_STATE_COOKIE, readCookie, signUid } from "@/lib/chat/identity";
+import { OAUTH_STATE_COOKIE, readCookie } from "@/lib/chat/identity";
 import { chatRuntime } from "@/lib/chat/runtime";
 import { saveOAuthAccount } from "@/lib/chat/store";
 import { serverEnv } from "@/lib/server/env";
@@ -46,7 +47,7 @@ export async function GET(req: Request) {
       { tokenEnc: await sealSecret(secret, token), scope: GITHUB_SCOPES }
     );
     console.warn(JSON.stringify({ at: "api/auth/github", event: "linked", login: profile.login }));
-    return signedInRedirect(url.origin, secure, opened.next, await signUid(plan.userId, secret));
+    return signedInRedirect(url.origin, secure, opened.next, await issueSession(db, plan.userId, secret));
   } catch (err) {
     console.warn(JSON.stringify({ at: "api/auth/github", event: "failed", name: (err as Error)?.name, status: (err as { status?: number }).status }));
     return oauthFail(url.origin, secure, "error", "github");

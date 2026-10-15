@@ -14,8 +14,8 @@
 | `/api/auth/google/callback` | GET | แลก code, อ่าน userinfo, ไม่เก็บ access token |
 | `/api/auth/cursor` | GET | พาไปติดตั้งแอป Cursor Origin ถ้ายังไม่มี `CURSOR_APP_ID` จะพากลับ `/login?auth=missing&provider=cursor` |
 | `/api/auth/cursor/callback` | GET | ตรวจใบเสร็จติดตั้ง (EdDSA) แล้วตั้ง session จาก `installedBy` |
-| `/api/auth/password` | POST | ฟอร์ม `email`, `password`, `action=login\|register`, `next` สร้างหรือเข้าบัญชี DevStack (ต้องมาจาก origin เดียวกัน) |
-| `/api/auth/logout` | POST | ลบ token GitHub ที่เข้ารหัสไว้และล้าง session (ต้องมาจาก origin เดียวกัน) |
+| `/api/auth/password` | POST | ฟอร์ม `email`, `password`, `action=login\|register`, `next` สร้างหรือเข้าบัญชี DevStack (ต้องมาจาก origin เดียวกัน) จำกัดอัตราทั้งต่อ IP และต่ออีเมล (key เป็น SHA-256 ของอีเมล) เกินแล้วตอบ `auth=error` |
+| `/api/auth/logout` | POST | ลบแถว `auth_sessions` ของเบราว์เซอร์นี้ (`?everywhere=1` ลบทุก session ของบัญชี), ลบ token GitHub ที่เข้ารหัสไว้และล้าง cookie (ต้องมาจาก origin เดียวกัน) |
 | `/api/github/repos` | GET | รายการ repo ที่บัญชีที่เข้าสู่ระบบ push ได้ |
 | `/api/github/contents` | POST | `{ repo, path, message, content, branch? }` สร้างหรืออัปเดตไฟล์ผ่าน GitHub Contents API ไม่รันไฟล์ |
 | `/api/chat/dev/turn` | POST | Dev Chat: `{ message, conversationId? }` → SSE |

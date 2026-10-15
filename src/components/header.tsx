@@ -168,8 +168,15 @@ export function Header() {
   );
 }
 
+/** App-style pages (/chat, /chat/dev) fill the viewport, so they have no footer. */
+export function hidesFooter(pathname: string | null): boolean {
+  return !!pathname && (pathname === "/chat" || pathname.startsWith("/chat/"));
+}
+
 export function Footer() {
   const { t } = useLang();
+  const pathname = usePathname();
+  if (hidesFooter(pathname)) return null;
   return (
     <footer className="mt-20 border-t border-border bg-surface py-10 text-center text-xs leading-relaxed text-subtle">
       {/* DevStack signature: on every page, above the existing footer line. */}

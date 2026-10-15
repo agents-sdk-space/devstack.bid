@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **/chat is a full-height app layout.** The page fills `100dvh` (with safe-area insets and `interactive-widget=resizes-content`, so the on-screen keyboard shrinks the layout instead of covering the input). The model picker, intro, suggestions and messages share one scroll area, and the composer stays pinned at the bottom. The site footer (with the terminal signature) is not shown on `/chat` and `/chat/dev`; every other page keeps it.
+- The page body clips horizontal overflow, so nothing on `/login` or the mobile menu can push the page sideways at 320–414px.
 - The homepage **Ask the AI agent** button opens `/learn`.
 - Header links for Dev Chat, Factory, Agents, Studio and Design stay in the menu until the window is wide enough that the bar does not scroll sideways. The command-palette control stays an icon until 1720px. **Setup Cursor** is an icon button in the bar; the menu and `/learn` show the full “create or ask” label.
 - Clarified the homepage headline in English and Thai to describe Stack Templates as ready to run.
@@ -16,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Revocable sign-in sessions** for every sign-in method, including DevStack email and password accounts. D1 migration `0009_auth_sessions` adds `auth_sessions`. The `nvx_auth` cookie is now `<user id>.<session id>.<HMAC>`, lasts 30 days, and stops working after sign-out. `POST /api/auth/logout?everywhere=1` signs out every browser. Older `<user id>.<HMAC>` cookies are still accepted. **Not applied on remote `nvx-db` yet**: apply `0009` before deploying this code, or new sign-ins fail with `auth=error`. No new secret.
+- DevStack password sign-in is also rate limited per email (SHA-256 key on `NVX_CHAT_LIMITER`), on top of the per-IP limit.
 - **Optional Cloudflare AI Gateway for Workers AI.** New var `CF_AI_GATEWAY_ID` (empty by default, so nothing changes until it is set) sends `/chat` and `/studio` Workers AI calls, text and images, through that gateway for logs, analytics and rate limits. Replies are never cached (`skipCache: true`). Streaming is unchanged: the existing SSE path keeps streaming deltas. See `docs/reference/config-env.md`.
 - **Cline support for the MCP server.** `/settings/mcp` shows a copy-ready `cline_mcp_settings.json` entry (with `"type": "streamableHttp"`, which Cline requires for a remote server) right after a key is created. `docs/integrations/mcp.md` has a Thai and English Cline section, and `/.well-known/mcp` lists a `clients.cline` hint. The snippet leaves `autoApprove` empty so Cline asks before tools that use quota or commit to GitHub. No new endpoint or scope; the `/mcp` server is unchanged.
 - **Learn page** at `/learn`: a launch presentation of the whole system, credited to the creator devstack.sdk@gmail.com and Cursor. The homepage **Ask the AI agent** button opens it. Every page header (and the Studio nav) can **Setup Cursor** — create a project or ask a question through `https://cursor.com/link/prompt`, which the person confirms in Cursor before it runs.

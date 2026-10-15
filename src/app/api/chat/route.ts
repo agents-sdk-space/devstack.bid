@@ -1,10 +1,11 @@
 import { connection } from "next/server";
+import { resolveSignedIn } from "@/lib/auth/session";
 import { GATEWAY_MODELS } from "@/lib/ai/gateway-models";
 import { publicLimits, quotaConfig } from "@/lib/chat/config";
 import { quotaStatus } from "@/lib/chat/limits";
 import { serverEnv } from "@/lib/server/env";
 import { clientIp } from "@/lib/server/http";
-import { resolveActor } from "@/lib/chat/identity";
+
 import { chatEnv, chatRuntime, json, unavailable } from "@/lib/chat/runtime";
 import { getAccount, listConversations } from "@/lib/chat/store";
 import { AGENT_NAME } from "@/lib/chat/agent-config";
@@ -40,7 +41,7 @@ export async function GET(req: Request) {
   const storageOk = Boolean(db && env.CHAT_COOKIE_SECRET && env.CHAT_ENABLED === "true");
   const why = channel === "dev" ? agentWhy : storageOk ? null : { code: "unavailable", message: "Chat is unavailable right now. / ตอนนี้ใช้งานแชตไม่ได้" };
   if (why || !storageOk) return json({ enabled: false, unavailable: why ?? { code: "unavailable", message: "Chat is unavailable right now. / ตอนนี้ใช้งานแชตไม่ได้" }, ...base, conversations: [] });
-  const actor = await resolveActor(req, env.CHAT_COOKIE_SECRET!);
+  const actor = await resolveSignedIn(req, env.CHAT_COOKIE_SECRET!);
   const conversations = actor.uid ? await listConversations(db!, actor.uid, 50, "chat", channel) : [];
   const quota = await quotaStatus(db!, clientIp(req), actor.uid, quotaConfig(env), channel);
   const account = actor.authenticated && actor.uid ? await getAccount(db!, actor.uid) : null;
