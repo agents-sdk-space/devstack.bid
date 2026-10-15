@@ -2,17 +2,18 @@ import "server-only";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { chatEnv, type ChatEnv } from "./config";
 import type { D1Like } from "./store";
+import type { R2Like } from "./stream-archive";
 import { NO_STORE } from "@/lib/server/http";
 
 /** Cloudflare bindings for /chat (D1 + waitUntil). Returns nulls outside Workers. */
-export async function chatRuntime(): Promise<{ db: D1Like | null; waitUntil: (p: Promise<unknown>) => void }> {
+export async function chatRuntime(): Promise<{ db: D1Like | null; streams: R2Like | null; waitUntil: (p: Promise<unknown>) => void }> {
   try {
     const cf = await getCloudflareContext({ async: true });
-    const env = cf.env as unknown as { DB?: D1Like };
-    return { db: env.DB ?? null, waitUntil: (p) => cf.ctx.waitUntil(p) };
+    const env = cf.env as unknown as { DB?: D1Like; CHAT_STREAMS?: R2Like };
+    return { db: env.DB ?? null, streams: env.CHAT_STREAMS ?? null, waitUntil: (p) => cf.ctx.waitUntil(p) };
   } catch (err) {
     console.warn("[chat] no Cloudflare context:", (err as Error)?.name);
-    return { db: null, waitUntil: () => undefined };
+    return { db: null, streams: null, waitUntil: () => undefined };
   }
 }
 

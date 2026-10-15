@@ -9,6 +9,7 @@ import { clientIp, HttpError, readJsonBody } from "@/lib/server/http";
 import { checkRateLimit } from "@/lib/server/rate-limit";
 import { AgentsApi } from "./agents-api";
 import { quotaConfig } from "./config";
+import { createRecorder, saveArchive } from "./stream-archive";
 import type { UiEvent } from "./events";
 import { agentRules, consume, imageRules, messageRules, pruneCounters, refund, spentToday, type LimitResult } from "./limits";
 import { runImageTurn, runPlainTurn, USER_MODES, type UserMode } from "./plain-turn";
@@ -70,7 +71,7 @@ const min = (...v: (number | undefined)[]) => Math.min(...v.map((x) => x ?? 0));
 export async function handleTurn(req: Request, channel: "user" | "dev"): Promise<Response> {
   const env = chatEnv();
   const server = serverEnv();
-  const { db, waitUntil } = await chatRuntime();
+  const { db, streams, waitUntil } = await chatRuntime();
 
   if (channel === "dev") {
     const why = unavailable(env, db);
@@ -163,7 +164,9 @@ export async function handleTurn(req: Request, channel: "user" | "dev"): Promise
   const stream = new TransformStream<Uint8Array, Uint8Array>();
   const writer = stream.writable.getWriter();
   let open = true;
+  const recorder = createRecorder();
   const emit = (e: UiEvent) => {
+    recorder.record(e);
     if (!open) return;
     writer.write(encoder.encode(`data: ${JSON.stringify(e)}\n\n`)).catch(() => (open = false));
   };
@@ -185,9 +188,10 @@ export async function handleTurn(req: Request, channel: "user" | "dev"): Promise
         log("turn_crashed", req, { channel, mode, name: (err as Error)?.name });
         emit({ t: "error", code: "internal", message: "Something went wrong. / เกิดข้อผิดพลาด" });
       })
-      .finally(() => {
+      .finally(async () => {
         open = false;
         writer.close().catch(() => undefined);
+        await saveArchive(streams, uid, recorder.snapshot(conversation.id, assistantMessageId));
       });
 
   const base = { db: database, env, server, ai, userText: message, assistantMessageId, conversationId: conversation.id, emit };

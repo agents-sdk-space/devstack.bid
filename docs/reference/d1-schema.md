@@ -141,3 +141,7 @@ bucket ของ `usage_counters`: `d:YYYYMMDD` = วันตามเวลา
 ## ตารางของระบบ
 
 `d1_migrations` สร้างโดย wrangler เพื่อจำว่า migration ไหน apply ไปแล้ว ห้ามแก้ด้วยมือ
+
+## `user_env` (migration 0012)
+
+Per-user Environment: secrets the user ticked "Remember" for. PK `(user_id, name)`; `name` is UPPER_SNAKE_CASE (2–64); `secret_enc` is sealed with CREDENTIALS_KEY v2 (HKDF info `env:NAME:user_id`); `provider`, `created_at`, `updated_at`, `last_used_at`. At most 50 entries per user. Only name and dates leave the server (`GET /api/environment`). Code: `src/lib/connections/environment.ts`.

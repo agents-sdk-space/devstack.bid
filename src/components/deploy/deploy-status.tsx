@@ -62,19 +62,26 @@ export function LiveUrl({ url }: { url: string }) {
 }
 
 /** Start a deploy (always an explicit user click). Returns the new deployment id. */
-export async function requestDeploy(projectId: string, ref: string | null): Promise<string> {
-  const r = await fetch(`/api/projects/${encodeURIComponent(projectId)}/deploy`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(ref ? { ref } : {}) });
+export interface OnceToken {
+  token: string;
+  accountId: string;
+  remember: boolean;
+}
+
+export async function requestDeploy(projectId: string, ref: string | null, once?: OnceToken | null): Promise<string> {
+  const body = { ...(ref ? { ref } : {}), ...(once?.token ? once : {}) };
+  const r = await fetch(`/api/projects/${encodeURIComponent(projectId)}/deploy`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   const b = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(b.error ?? "Deploy failed to start");
   return b.deployment.id as string;
 }
 
-export function RetryButton({ projectId, refName, onStarted, label = "Retry deploy" }: { projectId: string; refName: string | null; onStarted: (id: string) => void; label?: string }) {
+export function RetryButton({ projectId, refName, onStarted, label = "Retry deploy", once }: { projectId: string; refName: string | null; onStarted: (id: string) => void; label?: string; once?: OnceToken | null }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   async function go() {
     setBusy(true); setErr("");
-    try { onStarted(await requestDeploy(projectId, refName)); } catch (e) { setErr(e instanceof Error ? e.message : String(e)); } finally { setBusy(false); }
+    try { onStarted(await requestDeploy(projectId, refName, once)); } catch (e) { setErr(e instanceof Error ? e.message : String(e)); } finally { setBusy(false); }
   }
   return (
     <span className="inline-flex flex-wrap items-center gap-2">

@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { getTemplate } from "@/data/templates";
 import type { AgentPlan } from "@/lib/ai/types";
 import { applyEdits, composeSteps, configForTemplate, flattenCommands } from "@/lib/composer";
+import { CreateTokenMenu } from "@/components/tokens/create-token-menu";
+import { RememberToggle } from "@/components/tokens/remember-toggle";
+import { rememberSecret } from "@/components/tokens/remember-secret";
 import { Badge, Button, Card, Checkbox, EmptyState, Input, Skeleton, Textarea } from "@/components/ui";
 import { CodeBlock } from "./copy-button";
 import { useLang } from "./prefs";
@@ -37,6 +40,7 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
   const [error, setError] = useState("");
   const [useOwnKey, setUseOwnKey] = useState(false);
   const [apiKey, setApiKey] = useState("");
+  const [rememberKey, setRememberKey] = useState(false);
   const [lastMode, setLastMode] = useState<"auto" | "fallback">("auto");
   const [server, setServer] = useState<{ serverKeyConfigured: boolean; model: string } | null>(null);
 
@@ -63,6 +67,10 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? t("agent.error"));
       setPlan(data as AgentPlan);
+      if (mode === "auto" && useOwnKey && rememberKey && apiKey.trim()) {
+        const saved = await rememberSecret("OPENAI_API_KEY", apiKey.trim(), "openai");
+        if (!saved.ok) setError(saved.error ?? "");
+      }
       requestAnimationFrame(() => document.getElementById("agent-result")?.focus({ preventScroll: false }));
     } catch (e) {
       setError((e as Error).message || t("agent.error"));
@@ -150,6 +158,10 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
               />
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <RememberToggle checked={rememberKey} onCheckedChange={setRememberKey} />
+                <CreateTokenMenu primary="openai" />
+              </div>
             </div>
           )}
           <div className="flex flex-wrap gap-2">

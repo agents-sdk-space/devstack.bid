@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Cloud, GitBranch, KeyRound, ShieldCheck } from "lucide-react";
 import { buttonClasses, Card } from "@/components/ui";
 import { useLang } from "@/components/prefs";
+import { CreateTokenMenu } from "@/components/tokens/create-token-menu";
+import { RememberToggle } from "@/components/tokens/remember-toggle";
 
 type Conn = { kind: string; label: string; masked: string; last4: string; scopes: string[]; accountId?: string; verifiedAt: number | null };
 
@@ -24,6 +26,8 @@ export function ConnectionsPanel() {
   const [busy, setBusy] = useState("");
   const [cf, setCf] = useState({ token: "", accountId: "" });
   const [oai, setOai] = useState("");
+  const [rememberCf, setRememberCf] = useState(false);
+  const [rememberOai, setRememberOai] = useState(false);
   const [events, setEvents] = useState<{ event: string; subject: string | null; at: number }[]>([]);
   const [showAudit, setShowAudit] = useState(false);
 
@@ -54,7 +58,7 @@ export function ConnectionsPanel() {
       const r = await fetch(`/api/connections/${kind}`, { method, headers: body ? { "Content-Type": "application/json" } : undefined, body: body ? JSON.stringify(body) : undefined });
       const b = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(b.error ?? "Request failed");
-      setNotice(method === "PUT" ? (th ? "ตรวจสอบและบันทึกแล้ว" : "Verified and saved") : (th ? "ยกเลิกการเชื่อมต่อแล้ว" : "Disconnected"));
+      setNotice(method === "DELETE" ? (th ? "ยกเลิกการเชื่อมต่อแล้ว" : "Disconnected") : b.remembered ? (th ? "ตรวจสอบและบันทึกแล้ว" : "Verified and saved") : (th ? "ตรวจสอบแล้ว ไม่ได้บันทึก (ติ๊ก “จำไว้” เพื่อเก็บ)" : "Verified, not saved (tick “Remember” to keep it)"));
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -100,11 +104,13 @@ export function ConnectionsPanel() {
 
         <Card className="p-5">
           <Row icon={<Cloud className="h-5 w-5" aria-hidden />} title="Cloudflare" status={cfc ? `${cfc.label} · ${cfc.accountId ?? ""} · ${cfc.masked}` : th ? "ยังไม่เชื่อมต่อ" : "Not connected"} />
-          <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); call("cloudflare", "PUT", cf); }}>
+          <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); call("cloudflare", "PUT", { ...cf, remember: rememberCf }); }}>
             <label className="text-sm font-medium text-fg">API token<input type="password" autoComplete="off" value={cf.token} onChange={(e) => setCf({ ...cf, token: e.target.value })} className={input} placeholder="••••" /></label>
             <label className="text-sm font-medium text-fg">Account ID<input value={cf.accountId} onChange={(e) => setCf({ ...cf, accountId: e.target.value })} className={input} placeholder="32 hex characters" /></label>
             <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
-              <button disabled={busy === "cloudflare" || !cf.token || !cf.accountId} className={buttonClasses("primary", "sm")}>{th ? "ตรวจสอบและบันทึก" : "Verify & save"}</button>
+              <RememberToggle checked={rememberCf} onCheckedChange={setRememberCf} />
+              <button disabled={busy === "cloudflare" || !cf.token || !cf.accountId} className={buttonClasses("primary", "sm")}>{rememberCf ? (th ? "ตรวจสอบและบันทึก" : "Verify & save") : th ? "ตรวจสอบ" : "Verify"}</button>
+              <CreateTokenMenu primary="cloudflare" />
               {cfc && <button type="button" onClick={() => call("cloudflare", "DELETE")} className={buttonClasses("ghost", "sm")}>{th ? "ลบ" : "Remove"}</button>}
               <a href="/docs/user-guide/customer-deploy#cloudflare-token" className="text-xs text-subtle underline underline-offset-4 hover:text-fg">{th ? "วิธีสร้าง token (Workers Scripts: Edit + Account Settings: Read)" : "How to create a token (Workers Scripts: Edit + Account Settings: Read)"}</a>
             </div>
@@ -113,9 +119,11 @@ export function ConnectionsPanel() {
 
         <Card className="p-5">
           <Row icon={<KeyRound className="h-5 w-5" aria-hidden />} title="OpenAI" status={oc ? oc.masked : th ? "ไม่บังคับ" : "Optional"} />
-          <form className="mt-4 flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); call("openai", "PUT", { key: oai }); }}>
+          <form className="mt-4 flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); call("openai", "PUT", { key: oai, remember: rememberOai }); }}>
             <label className="min-w-64 flex-1 text-sm font-medium text-fg">API key<input type="password" autoComplete="off" value={oai} onChange={(e) => setOai(e.target.value)} className={input} placeholder="sk-…" /></label>
-            <button disabled={busy === "openai" || !oai} className={buttonClasses("primary", "sm")}>{th ? "ตรวจสอบและบันทึก" : "Verify & save"}</button>
+            <RememberToggle checked={rememberOai} onCheckedChange={setRememberOai} />
+            <button disabled={busy === "openai" || !oai} className={buttonClasses("primary", "sm")}>{rememberOai ? (th ? "ตรวจสอบและบันทึก" : "Verify & save") : th ? "ตรวจสอบ" : "Verify"}</button>
+            <CreateTokenMenu primary="openai" />
             {oc && <button type="button" onClick={() => call("openai", "DELETE")} className={buttonClasses("ghost", "sm")}>{th ? "ลบ" : "Remove"}</button>}
           </form>
         </Card>

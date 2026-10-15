@@ -104,6 +104,9 @@ Studio (`/studio`) ไม่มี secret ของตัวเอง ใช้ 
 | `NVX_FACTORY_LIMITER` | ratelimit (namespace `4714`) | 10 / 60 วินาที | burst ของ `/api/factory/*` |
 | `NVX_STUDIO_LIMITER` | ratelimit (namespace `4715`) | 20 / 60 วินาที | burst ของ `/api/studio/llm/chat` และ `/api/studio/image` (เพิ่มใน v0.8.0-rc, ยังไม่เคย deploy) |
 
+| `CHAT_STREAMS` | R2 bucket `nvx-chat-streams` | — | เก็บข้อความที่สตรีมและขั้นตอน thinking (ไม่รวม reasoning ดิบ) ของแต่ละ turn เป็น `chat/<uid>/<conversationId>/<messageId>.json` ข้อมูลเดิมใน D1 ไม่เปลี่ยน ต้องสร้าง bucket ก่อน deploy: `wrangler r2 bucket create nvx-chat-streams` |
+| `CREDENTIALS_KEY` | Secrets Store (`default_secrets_store` `b56dddabe7d74172932cf26f4a2ab03f`, secret `CREDENTIALS_KEY`) | 32 ไบต์ base64 | คีย์เข้ารหัส v2 ของ token ลูกค้า (connections, Environment) โค้ดอ่านด้วย `await env.CREDENTIALS_KEY.get()` ถ้าไม่มี binding จะใช้ Worker secret ชื่อเดียวกัน แล้วค่อยถอยไป v1 ไม่มีสำเนาสำรอง (เจ้าของตัดสินใจ 2026-10-15) ถ้าคีย์หาย ลูกค้าต้องผูกบัญชีใหม่ |
+
 `ASSETS_BUCKET` (R2 bucket `nvx-assets`) **ยังไม่ได้เพิ่ม** เพราะบัญชียังไม่เปิด R2 ขั้นตอนอยู่ที่ [d1-database.md](../operations/d1-database.md) อย่าใส่ binding ก่อนมี bucket จริง เพราะ deploy จะล้ม
 
 ## การตั้งค่าอื่นใน wrangler.jsonc

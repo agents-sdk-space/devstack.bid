@@ -6,6 +6,7 @@ import { cn } from "@/components/ui/cn";
 const ITEMS = [
   { href: "/settings/mcp", label: "MCP" },
   { href: "/settings/connections", label: "Connections" },
+  { href: "/settings/environment", label: "Environment" },
   { href: "/settings/cli", label: "CLI" },
   { href: "/projects", label: "Projects" },
 ];
