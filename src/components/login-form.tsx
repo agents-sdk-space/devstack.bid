@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { buttonClasses, Field, Input, Spinner } from "@/components/ui";
 import type { DictKey } from "@/lib/i18n";
 import { useLang } from "./prefs";
+import { TurnstileWidget } from "./turnstile-widget";
+
+/** Must match TURNSTILE_ACTION in src/lib/auth/turnstile.ts (checked by Siteverify). */
+export const TURNSTILE_ACTION = "password_auth";
 
 const PROVIDERS = [
   { id: "cursor", href: "cursor", label: "auth.withCursor" },
@@ -21,6 +25,7 @@ function notice(auth: string, provider: string): { title: DictKey; body: DictKey
   if (auth === "denied") return { title: "auth.deniedTitle", body: "auth.denied" };
   if (auth === "invalid") return { title: "auth.invalidTitle", body: "auth.invalid" };
   if (auth === "taken") return { title: "auth.takenTitle", body: "auth.taken" };
+  if (auth === "captcha") return { title: "auth.captchaTitle", body: "auth.captcha" };
   if (auth === "weak") return { title: "auth.weakTitle", body: "auth.weak" };
   return null;
 }
@@ -36,8 +41,9 @@ export function loginFormProblem(email: string, password: string): { field: "ema
 }
 
 /** Four sign-in methods: Cursor, Google, GitHub, and a DevStack email account. */
-export function LoginForm({ next, auth, provider }: { next: string; auth: string; provider: string }) {
-  const { t } = useLang();
+export function LoginForm({ next, auth, provider, turnstileSiteKey = "" }: { next: string; auth: string; provider: string; turnstileSiteKey?: string }) {
+  const { t, lang } = useLang();
+  const [captcha, setCaptcha] = useState<string | null>(null);
   const alert = notice(auth, provider);
   const [pending, setPending] = useState<string | null>(null);
   const [problem, setProblem] = useState<DictKey | null>(null);
@@ -92,6 +98,11 @@ export function LoginForm({ next, auth, provider }: { next: string; auth: string
             form.querySelector<HTMLInputElement>(`input[name="${issue.field}"]`)?.focus();
             return;
           }
+          if (turnstileSiteKey && !captcha) {
+            e.preventDefault();
+            setProblem("auth.captcha");
+            return;
+          }
           setProblem(null);
           const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
           setPending(submitter?.value ?? "login");
@@ -112,6 +123,7 @@ export function LoginForm({ next, auth, provider }: { next: string; auth: string
         <Field label={t("auth.password")} hint={t("auth.passwordHint")}>
           {(props) => <Input {...props} name="password" type="password" autoComplete="current-password" required minLength={10} maxLength={200} />}
         </Field>
+        {turnstileSiteKey && <TurnstileWidget siteKey={turnstileSiteKey} action={TURNSTILE_ACTION} lang={lang} onToken={setCaptcha} />}
         <div className="flex flex-col gap-2 sm:flex-row">
           <button type="submit" name="action" value="login" className={buttonClasses("primary", "md", "w-full")} aria-disabled={pending !== null}>
             {pending === "login" && <Spinner size="md" />}

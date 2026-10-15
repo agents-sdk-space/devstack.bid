@@ -112,7 +112,7 @@ describe("security headers", () => {
   });
   it("CSP allows exactly one third-party frame origin: the Sandpack bundler on home (plus its Open in CodeSandbox form)", () => {
     const frame = contentSecurityPolicy(false).split("; ").find((d) => d.startsWith("frame-src"));
-    expect(frame).toBe("frame-src https://*.codesandbox.io");
+    expect(frame).toBe("frame-src https://*.codesandbox.io https://challenges.cloudflare.com");
     expect(contentSecurityPolicy(false)).toContain("form-action 'self' https://codesandbox.io");
     expect(contentSecurityPolicy(false)).not.toMatch(/Cross-Origin-Embedder/);
   });

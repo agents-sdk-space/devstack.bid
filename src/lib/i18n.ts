@@ -264,6 +264,8 @@ const dict = {
   "auth.invalid": { en: "Check the email and password, or create a DevStack account.", th: "ตรวจอีเมลกับรหัสผ่าน หรือสร้างบัญชี DevStack" },
   "auth.takenTitle": { en: "That email already has a DevStack account", th: "อีเมลนี้มีบัญชี DevStack แล้ว" },
   "auth.taken": { en: "Sign in with the password for this email. It is not linked to Google, GitHub or Cursor.", th: "เข้าสู่ระบบด้วยรหัสผ่านของอีเมลนี้ บัญชีนี้ไม่เชื่อมกับ Google, GitHub หรือ Cursor" },
+  "auth.captchaTitle": { en: "Verification failed", th: "การยืนยันไม่ผ่าน" },
+  "auth.captcha": { en: "We couldn't confirm you're human. Wait for the check to finish, then try again.", th: "ยืนยันไม่ได้ว่าคุณเป็นมนุษย์ รอให้การตรวจสอบเสร็จ แล้วลองอีกครั้ง" },
   "auth.weakTitle": { en: "Use a longer password", th: "ใช้รหัสผ่านที่ยาวกว่านี้" },
   "auth.emailInvalid": { en: "Enter a valid email address.", th: "กรอกอีเมลให้ถูกต้อง" },
   "auth.weak": { en: "Passwords need 10 to 200 characters, with no control characters.", th: "รหัสผ่านต้องมี 10 ถึง 200 ตัวอักษร และไม่มีอักขระควบคุม" },
