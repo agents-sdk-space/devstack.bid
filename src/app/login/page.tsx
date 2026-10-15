@@ -3,13 +3,14 @@ import type { Metadata } from "next";
 import { LoginForm } from "@/components/login-form";
 import { safeNext } from "@/lib/auth/github-policy";
 import { isAuthProvider } from "@/lib/auth/oauth-flow";
+import { turnstileSiteKey } from "@/lib/auth/turnstile";
 
 export const metadata: Metadata = {
   title: "Sign in",
   description: "Sign in to DevStack with Cursor, Google, GitHub, or a DevStack password so chat history stays on your account.",
 };
 
-const NOTICES = new Set(["missing", "error", "denied", "invalid", "taken", "weak"]);
+const NOTICES = new Set(["missing", "error", "denied", "invalid", "taken", "weak", "captcha"]);
 
 type LoginQuery = { next?: string | string[]; auth?: string | string[]; provider?: string | string[] };
 
@@ -26,5 +27,5 @@ async function LoginFromQuery({ searchParams }: { searchParams: Promise<LoginQue
   const nextRaw = typeof query.next === "string" ? query.next : null;
   const authRaw = typeof query.auth === "string" ? query.auth : "";
   const providerRaw = typeof query.provider === "string" ? query.provider : "";
-  return <LoginForm next={safeNext(nextRaw)} auth={NOTICES.has(authRaw) ? authRaw : ""} provider={isAuthProvider(providerRaw) ? providerRaw : ""} />;
+  return <LoginForm next={safeNext(nextRaw)} auth={NOTICES.has(authRaw) ? authRaw : ""} provider={isAuthProvider(providerRaw) ? providerRaw : ""} turnstileSiteKey={turnstileSiteKey()} />;
 }

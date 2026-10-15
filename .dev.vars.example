@@ -20,3 +20,7 @@ CURSOR_APP_ID=
 # Vercel AI Gateway (model picker on /chat).
 AI_GATEWAY_API_KEY=
 # AI_GATEWAY_BASE_URL=https://ai-gateway.vercel.sh/v1
+# Cloudflare Turnstile (/login). Local dev uses Cloudflare's documented test keys (always pass):
+TURNSTILE_SITE_KEY=1x00000000000000000000AA
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+# TURNSTILE_HOSTNAMES=devstack.bid

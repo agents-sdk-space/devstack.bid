@@ -22,6 +22,9 @@
 | `OPENAI_FALLBACK` | var | `true` / `false` | `false` | `false` | ให้ planner ถอยไปใช้ OpenAI key ของเซิร์ฟเวอร์เมื่อ HF ล้มหรือไม่ (ปิดไว้เพื่อสงวนเครดิตให้ Orchestrator) |
 | `GITHUB_CLIENT_ID` | **secret** | `^[A-Za-z0-9.]{8,80}$` | ไม่มี → ปุ่ม GitHub พากลับ `/login?auth=missing&provider=github` | `wrangler secret put` (ไม่ใส่ใน `vars`) | OAuth App id สำหรับเข้าสู่ระบบ GitHub |
 | `GITHUB_CLIENT_SECRET` | **secret** | `^[\w-]{16,200}$` | ไม่มี → เข้าสู่ระบบ GitHub ปิด | `wrangler secret put` (stdin) | OAuth App secret ใช้แลก code ครั้งเดียว ไม่ถูกเก็บใน D1 |
+| `TURNSTILE_SECRET_KEY` | **secret** | ข้อความ (Turnstile secret) | ไม่มี → ปิดการตรวจ Turnstile บน /login (ฟอร์มยังใช้ได้) | `wrangler secret put` (stdin) | ใช้เรียก Siteverify สำหรับฟอร์มรหัสผ่าน (login/register); dev ใช้ test secret `1x0000000000000000000000000000000AA` |
+| `TURNSTILE_SITE_KEY` | var (public) | `0x…` | ไม่มี → ไม่แสดง widget | `wrangler.jsonc` vars | site key สาธารณะของ widget; dev ใช้ `1x00000000000000000000AA` |
+| `TURNSTILE_HOSTNAMES` | var | รายการคั่นด้วย `,` | ว่าง + secret จริง → ปฏิเสธทุกคำขอ | `wrangler.jsonc` vars | hostname ที่ Siteverify ต้องตอบกลับ (prod: `devstack.bid`); ไม่ใส่ localhost ใน prod |
 | `GOOGLE_CLIENT_ID` | **secret** | `^[A-Za-z0-9][A-Za-z0-9._-]{7,180}$` | ไม่มี → ปุ่ม Google พากลับ `/login?auth=missing&provider=google` | `wrangler secret put` (stdin) | OAuth client id callback `{origin}/api/auth/google/callback` |
 | `GOOGLE_CLIENT_SECRET` | **secret** | `^[\w-]{16,200}$` | ไม่มี → เข้าสู่ระบบ Google ปิด | `wrangler secret put` (stdin) | ใช้แลก code ครั้งเดียว ไม่ถูกเก็บใน D1 |
 | `CURSOR_APP_ID` | **secret** | `^app_[A-Za-z0-9]{6,80}$` | ไม่มี → ปุ่ม Cursor พากลับ `/login?auth=missing&provider=cursor` | `wrangler secret put` (stdin) | รหัสแอป Origin ที่เป็นสาธารณะ ไม่เก็บ private key ตรวจใบเสร็จจาก JWKS ของ Origin บน production ตั้งแล้วที่เวอร์ชัน `ffbd53ae-957b-4b48-b411-3a882f14f8ae` (`app_01m4xk8788f7s941zg4cpjxcer`) |

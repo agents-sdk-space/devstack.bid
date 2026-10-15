@@ -8,7 +8,7 @@ export function contentSecurityPolicy(dev = false): string {
   return [
     "default-src 'self'",
     // Cloudflare Web Analytics is injected on the devstack.bid zone (beacon script + RUM endpoint).
-    `script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com${dev ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://challenges.cloudflare.com${dev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https://avatars.githubusercontent.com https://*.googleusercontent.com",
     "font-src 'self' data:",
@@ -21,7 +21,8 @@ export function contentSecurityPolicy(dev = false): string {
     "frame-ancestors 'none'",
     // Home live example (Sandpack, Apache-2.0): its bundler runs in a cross-origin
     // *.codesandbox.io iframe in the visitor's browser. The only third-party frame we allow.
-    "frame-src https://*.codesandbox.io",
+    // Cloudflare Turnstile widget on /login (script + challenge iframe).
+    "frame-src https://*.codesandbox.io https://challenges.cloudflare.com",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
   ].join("; ");

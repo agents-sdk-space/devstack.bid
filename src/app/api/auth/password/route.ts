@@ -10,6 +10,7 @@ import { chatRuntime, json } from "@/lib/chat/runtime";
 import { findPasswordAccount, savePasswordAccount } from "@/lib/chat/store";
 import { clientIp } from "@/lib/server/http";
 import { checkRateLimit } from "@/lib/server/rate-limit";
+import { verifyTurnstile } from "@/lib/auth/turnstile";
 
 function back(origin: string, secure: boolean, code: string, next: string) {
   const headers = new Headers({
@@ -54,6 +55,13 @@ export async function POST(req: Request) {
   const password = acceptPassword(typeof passwordField === "string" ? passwordField : "");
   if (!email) return back(url.origin, secure, "invalid", dest);
   if (!password) return back(url.origin, secure, "weak", dest);
+  // Bot check after the cheap input checks (no Siteverify call for malformed posts) and before the
+  // per-account limiter, so bots cannot burn a real user's per-email attempts.
+  const human = await verifyTurnstile(form.get("cf-turnstile-response"), req.headers.get("cf-connecting-ip"));
+  if (!human.ok) {
+    console.warn(JSON.stringify({ at: "api/auth/password", event: "turnstile-failed", reason: human.reason }));
+    return back(url.origin, secure, "captcha", dest);
+  }
   // Per-account throttle on top of the per-IP burst, so one email cannot be guessed from many IPs.
   const perAccount = await checkRateLimit("NVX_CHAT_LIMITER", `pwacct:${await emailKey(email)}`, 5);
   if (!perAccount.ok) return back(url.origin, secure, "error", dest);
