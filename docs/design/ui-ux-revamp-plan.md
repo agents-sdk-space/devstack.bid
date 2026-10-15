@@ -277,3 +277,18 @@ header มีลิงก์และปุ่ม 20 ชิ้นบนทุก
 ### คอมโพเนนต์สาธารณะที่พิจารณาสำหรับ sign-in (ไม่อยู่ใน bookmark)
 
 ค้นด้วยคำว่า "sign-in" เจอ Auth UI (2624), Identifier First Login (37470), Sign In (2133), Login (2426), Sign In Flo (2553), Split Login (28369), Sign-in (4727), Modern Animated Sign In (2034), Sign In (3197) และ Modern & Stunning sign in (2060) เลือก 37470 กับ 2426 ด้วยเหตุผลในหัวข้อ 7 ส่วนแบบที่มีแอนิเมชันหนัก (2034, 2060, 2553) ขัดกับหลักการเรื่องความเรียบ ถ้าเจ้าของชอบชิ้นอื่น ให้ bookmark ไว้แล้วจะปรับหัวข้อ 7 ตาม
+
+## 14. Phase 2: หน้าแรก (สถานะ)
+
+ทำแล้วบน branch `feat/ui-revamp-phase-2`:
+
+- เอาคำสั่งและคำว่า nvm ออกจากหน้าแรกทั้งหมด (โค้ดตัวอย่างใน hero และ `hero.subtitle`) ข้อมูลเทมเพลตที่ใช้ร่วมกัน (ขั้น `node-nvm` ใน composer) และหน้า builder ไม่ได้แก้
+- Hero ใช้ข้อความใหม่จากหัวข้อ 8 กรอบมุม Focus Frame (bookmark 29885) ใช้กับหน้าต่างโค้ดใน hero เท่านั้น (`.focus-frame` ใน globals.css และหยุด animation เมื่อผู้ใช้ตั้ง reduced motion)
+- มีหัวข้อ "สามขั้นตอน" แบบ How It Works Steps (26891) FAQ สองคอลัมน์ (26910) ใช้ `<details>` แบบ native ตัวอย่างเทมเพลตเหลือ 3 อันพร้อมลิงก์ไป `/templates`
+- ตัวอย่างโค้ดสดแบบ react.dev: **ยังไม่ใช้ Sandpack** แม้ `@codesandbox/sandpack-react` เป็น Apache-2.0 แต่มี dependency บังคับ `@codesandbox/nodebox` ที่ใช้ Sustainable Use License (จำกัดการใช้เชิงพาณิชย์ ไม่ใช่ permissive) ขัดกฎข้อ 9 ใน AGENTS.md และต้องเปิด `frame-src https://*.codesandbox.io` ด้วย ตอนนี้หน้าแรกแสดงโค้ดตัวอย่างแบบ static พร้อมลิงก์ไป Studio (`src/components/home/live-example.tsx`) ซึ่งมี live preview โอเพนซอร์สอยู่แล้ว CSP ของเว็บหลักไม่ได้แก้ (`frame-src 'none'`) ต้องให้เจ้าของตัดสินใจก่อนถ้าจะใช้ Sandpack
+
+### ช่องวิดีโอ
+
+- **หน้าแรก**: ช่อง `data-slot="howto-video"` ใต้หัวข้อสามขั้นตอน (สัดส่วน 16:9) สำหรับวิดีโอสั้นประมาณ 30 วินาที ตอนนี้ยังเป็นข้อความ "เร็ว ๆ นี้"
+- **วิดีโอแบบละเอียด**: จะไปอยู่ใน docs หน้า [เริ่มต้นใช้งาน](../user-guide/getting-started.md) ไม่ใส่บนหน้าแรก
+- ไฟล์วิดีโอควรอยู่ใน `public/` ของเราเอง (CSP `media-src 'self'`) ถ้าจะฝังจาก YouTube หรือที่อื่นต้องแก้ `frame-src` และอัปเดต docs นี้กับ api-hardening ก่อน
