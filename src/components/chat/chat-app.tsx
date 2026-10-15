@@ -10,6 +10,7 @@ import { Mascot } from "../brand/mascot";
 import { useLang } from "../prefs";
 import { DeployCard } from "./deploy-card";
 import { GithubPublish } from "./github-publish";
+import { DeployZipButton } from "./deploy-zip-button";
 import { MarkdownView } from "./markdown-view";
 import { SandboxPanel, StatusDot } from "./sandbox-panel";
 import type { ChatAccount, ChatInfo, ChatMessage, ChatMode, ChatModelOption, ConversationSummary, Quota, SandboxStatus } from "./types";
@@ -669,6 +670,7 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
                         )}
                         {m.deploys?.map((d) => <DeployCard key={d.id} card={d} />)}
                         {!dev && !byok && m.content && !m.pending && <GithubPublish text={m.content} signedIn={info?.account?.provider === "github"} />}
+                        {!dev && !byok && m.content && !m.pending && <DeployZipButton text={m.content} signedIn={Boolean(info?.account)} />}
                         {m.activities.length > 0 && (
                           <button
                             type="button"

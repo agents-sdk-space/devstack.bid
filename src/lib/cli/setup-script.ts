@@ -10,6 +10,7 @@ NAME="\${1:-}"
 TEMPLATE="\${2:-static}"
 
 die() { printf 'devstack: %s\\n' "$1" >&2; exit 1; }
+has_tty() { ( : </dev/tty ) 2>/dev/null; }
 
 case "$(uname -sm)" in
   "Darwin arm64") ;;
@@ -18,7 +19,7 @@ esac
 for bin in curl unzip; do command -v "$bin" >/dev/null 2>&1 || die "missing $bin"; done
 
 if [ -z "$NAME" ]; then
-  [ -r /dev/tty ] || die "project name required: bash -s -- my-app"
+  has_tty || die "project name required: bash -s -- my-app"
   printf 'Project name: ' >/dev/tty
   read -r NAME </dev/tty
 fi
@@ -31,7 +32,7 @@ case "$TEMPLATE" in static|worker) ;; *) die "template must be static or worker"
 KEY="\${DEVSTACK_KEY:-}"
 unset DEVSTACK_KEY
 if [ -z "$KEY" ]; then
-  [ -r /dev/tty ] || die "set DEVSTACK_KEY (create one at ${origin}/settings/cli)"
+  has_tty || die "set DEVSTACK_KEY (create one at ${origin}/settings/cli)"
   printf 'DevStack CLI key (hidden): ' >/dev/tty
   stty -echo </dev/tty
   read -r KEY </dev/tty || true
@@ -67,6 +68,6 @@ unzip -q "$NAME-deploy.zip" -d . || die "could not unzip"
 
 printf '\\n✓ Project folder: %s/%s\\n' "$(pwd)" "$NAME"
 printf '✓ Deploy zip:     %s/%s-deploy.zip\\n' "$(pwd)" "$NAME"
-printf '\\nNext: upload the zip in ${origin}/projects (Deploy), or run: cd %s && npx wrangler deploy\\n' "$NAME"
+printf '\\nNext: open ${origin}/projects, choose "Deploy from a zip" and upload %s-deploy.zip\\n      (or run: cd %s && npx wrangler deploy)\\n' "$NAME" "$NAME"
 `;
 }

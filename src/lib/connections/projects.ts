@@ -10,7 +10,7 @@ export interface ProjectRow {
   created_at: number;
 }
 
-export async function insertProject(db: D1Like, p: { id: string; userId: string; name: string; templateId: string | null; repo: string; branch: string }): Promise<void> {
+export async function insertProject(db: D1Like, p: { id: string; userId: string; name: string; templateId: string | null; repo: string | null; branch: string | null }): Promise<void> {
   await db
     .prepare("INSERT INTO projects (id, user_id, name, template_id, repo_full_name, default_branch) VALUES (?1, ?2, ?3, ?4, ?5, ?6)")
     .bind(p.id, p.userId, p.name, p.templateId, p.repo, p.branch)
@@ -39,5 +39,6 @@ export const projectView = (p: ProjectRow) => ({
   repo: p.repo_full_name,
   defaultBranch: p.default_branch,
   repoUrl: p.repo_full_name ? `https://github.com/${p.repo_full_name}` : null,
+  source: p.repo_full_name ? ("github" as const) : ("upload" as const),
   createdAt: p.created_at,
 });

@@ -7,7 +7,8 @@ import { LIMITS } from "@/lib/connections/policy";
 import { getProject } from "@/lib/connections/projects";
 import { gate, isResponse } from "@/lib/connections/route-kit";
 import { BundleError, buildDeployZip, isBundleSafePath, zipResponse } from "@/lib/deploy/bundle";
-import { resolveProfile } from "@/lib/deploy/templates";
+import { profileById, resolveProfile } from "@/lib/deploy/templates";
+import { loadProjectFiles, uploadProfile } from "@/lib/deploy/upload";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -17,7 +18,12 @@ export async function GET(req: Request, ctx: Ctx) {
   const a = await gate(req, { write: false, burstKey: "proj-zip", perMinute: 4 });
   if (isResponse(a)) return a;
   const p = await getProject(a.db, a.uid, (await ctx.params).id);
-  if (!p?.repo_full_name) return json({ error: "Not found. / ไม่พบโปรเจกต์", code: "not_found" }, 404);
+  if (!p) return json({ error: "Not found. / ไม่พบโปรเจกต์", code: "not_found" }, 404);
+  if (!p.repo_full_name) {
+    const files = await loadProjectFiles(a.db, p.id);
+    try { return zipResponse(await buildDeployZip({ name: p.name, profile: profileById(p.template_id) ?? uploadProfile(files), files })); }
+    catch (e) { return json({ error: e instanceof BundleError ? e.message : "Could not build zip.", code: e instanceof BundleError ? e.code : "internal" }, 422); }
+  }
   const ref = safeBranch(new URL(req.url).searchParams.get("ref") || p.default_branch || "main");
   if (!ref) return json({ error: "Invalid ref.", code: "invalid" }, 400);
   const gh = await loadGithubToken(a.db, a.keys, a.uid);

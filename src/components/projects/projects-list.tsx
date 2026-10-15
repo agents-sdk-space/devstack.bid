@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { FolderGit2, Plus } from "lucide-react";
 import { buttonClasses, Card } from "@/components/ui";
+import { UploadZipPanel } from "./upload-zip-panel";
 import { useLang } from "@/components/prefs";
 
 type Project = { id: string; name: string; repo: string | null; repoUrl: string | null; templateId: string | null; createdAt: number };
@@ -50,6 +51,7 @@ export function ProjectsList() {
       <h1 className="text-2xl font-semibold tracking-tight text-fg">{th ? "โปรเจกต์" : "Projects"}</h1>
       <p className="mt-1 text-sm text-subtle">{th ? "repo ที่ DevStack สร้างในบัญชี GitHub ของคุณ (มีโควตารายวัน)" : "Repositories DevStack created in your GitHub account (daily quota applies)."}{" "}<a href="/settings/cli" className="underline underline-offset-4 hover:text-fg">{th ? "หรือสร้างจาก Terminal / ดาวน์โหลด zip" : "Or start from Terminal / download a zip"}</a></p>
       {error && <p role="alert" className="mt-4 rounded-lg border border-fg/40 px-3 py-2 text-sm text-fg">{error}</p>}
+      <UploadZipPanel onDone={(id) => { location.href = `/projects/${encodeURIComponent(id)}`; }} />
       <Card className="mt-6 p-5">
         <form onSubmit={create} className="flex flex-wrap items-end gap-3">
           <label className="min-w-56 flex-1 text-sm font-medium text-fg">

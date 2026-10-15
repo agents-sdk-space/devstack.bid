@@ -84,12 +84,14 @@ describe("setup.sh", () => {
     const f = join(mkdtempSync(join(tmpdir(), "ds-")), "setup.sh");
     writeFileSync(f, script);
     execFileSync("bash", ["-n", f]);
+    const sc = [`${process.env.HOME}/bin/shellcheck`, "shellcheck"].find((b) => { try { execFileSync(b, ["--version"]); return true; } catch { return false; } });
+    if (sc) execFileSync(sc, ["-s", "bash", f]);
   });
 });
 
 describe("capacity limits", () => {
   it("derives defaults from platform numbers", () => {
-    expect(deriveLimits({})).toMatchObject({ reposPerDay: 11, prsPerDay: 35, deploysPerDay: 66, maxFixAttempts: 3, maxFiles: 200 });
+    expect(deriveLimits({})).toMatchObject({ reposPerDay: 11, prsPerDay: 35, deploysPerDay: 100, maxFixAttempts: 3, maxFiles: 200, maxBundleBytes: 10 * 1048576, cliScaffoldsPerDay: 200, uploadsPerDay: 6 });
   });
   it("honours env overrides", () => {
     expect(deriveLimits({ DEVSTACK_LIMIT_REPOS_PER_DAY: "7" }).reposPerDay).toBe(7);

@@ -15,6 +15,7 @@ import { commitToBranch, createProjectRepo, takeQuota } from "@/lib/connections/
 import { validateChangeSet } from "@/lib/connections/policy";
 import { findProjectByRepo, getProject, projectView } from "@/lib/connections/projects";
 import { LIMITS } from "@/lib/connections/policy";
+import { patchProjectFiles, scanSecrets } from "@/lib/deploy/upload";
 import { ERROR_HINTS, deploymentView, getDeployment, latestFailed, recordFixAttempt } from "@/lib/deploy/service";
 import type { DeployCardData, UiEvent } from "./events";
 import type { D1Like } from "./store";
@@ -69,8 +70,8 @@ async function defaultBranch(token: string, owner: string, name: string): Promis
 }
 
 export async function runCustomerTool(name: string, args: Record<string, unknown>, ctx: CustomerCtx): Promise<unknown> {
-  const token = await loadGithubToken(ctx.db, ctx.keys, ctx.uid);
-  if (!token) throw new CustomerToolError("The user has not connected GitHub. Ask them to sign in with GitHub at /settings/connections, then retry.");
+  const token = (await loadGithubToken(ctx.db, ctx.keys, ctx.uid)) ?? "";
+  if (!token && name !== "get_deploy_logs" && name !== "apply_fix") throw new CustomerToolError("The user has not connected GitHub. Ask them to sign in with GitHub at /settings/connections, then retry.");
   switch (name) {
     case "github_list_repositories":
       return listWritableRepos(token);
@@ -140,13 +141,22 @@ export async function runCustomerTool(name: string, args: Record<string, unknown
       if (!d) throw new CustomerToolError("Deployment not found.");
       if (d.status !== "failed") throw new CustomerToolError("Only failed deployments can be fixed.");
       const project = await getProject(ctx.db, ctx.uid, d.project_id);
-      if (!project?.repo_full_name) throw new CustomerToolError("Project not found.");
+      if (!project) throw new CustomerToolError("Project not found.");
       const message = typeof args.message === "string" ? safeCommitMessage(args.message) : null;
       if (!message) throw new CustomerToolError("Invalid commit message.");
       const v = validateChangeSet(args.files);
       if (!v.ok) throw new CustomerToolError(`Files rejected: ${v.error}${v.path ? ` (${v.path})` : ""}`);
+      if (project.repo_full_name && !token) throw new CustomerToolError("The user has not connected GitHub. Ask them to sign in with GitHub at /settings/connections, then retry.");
+      if (!project.repo_full_name) for (const f of v.files) if (f.content !== null && scanSecrets(f.path, new TextEncoder().encode(f.content))) throw new CustomerToolError(`Refusing to write a secret into ${f.path}. Use Worker secrets.`);
       const attempt = await recordFixAttempt(ctx.db, ctx.uid, id);
       if (attempt === null) throw new CustomerToolError(`Fix limit reached (${LIMITS.maxFixAttempts} attempts). Stop and tell the user what to change manually.`);
+      if (!project.repo_full_name) {
+        await patchProjectFiles(ctx.db, project.id, v.files);
+        await audit(ctx.db, ctx.uid, "fix.committed", `${id}:${attempt}`);
+        ctx.emit?.({ t: "activity", a: { id: `fix:${id}:${attempt}`, kind: "tool", label: `Self-heal attempt ${attempt}/${LIMITS.maxFixAttempts}`, detail: `${v.files.length} file(s) → uploaded project`, status: "done", at: Date.now() } });
+        ctx.emit?.({ t: "deploy", d: { ...deployCard(deploymentView(d), null), fixAttempts: attempt, retryRef: null, canRetry: true } });
+        return { attempt, maxAttempts: LIMITS.maxFixAttempts, note: "Fix saved to the uploaded project files. Ask the user to click 'Retry deploy' (you cannot redeploy yourself)." };
+      }
       const [owner, repo] = project.repo_full_name.split("/");
       const def = project.default_branch ?? "main";
       const branch = d.ref && d.ref !== def ? d.ref : `devstack/fix-${id.slice(0, 8)}`;
