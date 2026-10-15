@@ -285,7 +285,13 @@ header มีลิงก์และปุ่ม 20 ชิ้นบนทุก
 - เอาคำสั่งและคำว่า nvm ออกจากหน้าแรกทั้งหมด (โค้ดตัวอย่างใน hero และ `hero.subtitle`) ข้อมูลเทมเพลตที่ใช้ร่วมกัน (ขั้น `node-nvm` ใน composer) และหน้า builder ไม่ได้แก้
 - Hero ใช้ข้อความใหม่จากหัวข้อ 8 กรอบมุม Focus Frame (bookmark 29885) ใช้กับหน้าต่างโค้ดใน hero เท่านั้น (`.focus-frame` ใน globals.css และหยุด animation เมื่อผู้ใช้ตั้ง reduced motion)
 - มีหัวข้อ "สามขั้นตอน" แบบ How It Works Steps (26891) FAQ สองคอลัมน์ (26910) ใช้ `<details>` แบบ native ตัวอย่างเทมเพลตเหลือ 3 อันพร้อมลิงก์ไป `/templates`
-- ตัวอย่างโค้ดสดแบบ react.dev: **ยังไม่ใช้ Sandpack** แม้ `@codesandbox/sandpack-react` เป็น Apache-2.0 แต่มี dependency บังคับ `@codesandbox/nodebox` ที่ใช้ Sustainable Use License (จำกัดการใช้เชิงพาณิชย์ ไม่ใช่ permissive) ขัดกฎข้อ 9 ใน AGENTS.md และต้องเปิด `frame-src https://*.codesandbox.io` ด้วย ตอนนี้หน้าแรกแสดงโค้ดตัวอย่างแบบ static พร้อมลิงก์ไป Studio (`src/components/home/live-example.tsx`) ซึ่งมี live preview โอเพนซอร์สอยู่แล้ว CSP ของเว็บหลักไม่ได้แก้ (`frame-src 'none'`) ต้องให้เจ้าของตัดสินใจก่อนถ้าจะใช้ Sandpack
+- ตัวอย่างโค้ดสดแบบ react.dev ใช้ Sandpack (`@codesandbox/sandpack-react`, Apache-2.0) อยู่ใน `src/components/home/live-example.tsx` (โหลดแบบ lazy ด้วย `next/dynamic` เมื่อเลื่อนเข้าใกล้หรือกดปุ่ม) และ `live-editor.tsx`
+  - **เนื้อหา:** เหมือน sandbox อ้างอิงของเจ้าของ (codesandbox.io/p/sandbox/pvtdl8) คือไฟล์ src/App.tsx ที่เป็น TypeScript, App.js ที่ re-export, index.js และ styles.css (ไฟล์ใน sandbox ไม่ใช่ใน repo นี้ ดู `src/components/home/sandbox-files.ts`) หน้าตัวอย่างแสดง "Welcome to my app" กับปุ่ม "I'm a button" (ตัวอย่าง MyButton จาก Quick Start ของ react.dev) แท็บที่แก้ได้มี App.tsx และ styles.css
+  - **ปุ่ม:** มี Reset, Open in CodeSandbox และ refresh ที่หน้าตัวอย่าง
+  - **ธีม:** ธีมขาวดำใช้ตัวแปร `--nvx-*` หน้าตัวอย่างตามโหมดสว่างหรือมืดผ่านไฟล์ซ่อน `theme.css` โดยไม่ล้างโค้ดที่ผู้ใช้แก้
+  - **มือถือ:** ตัวแก้โค้ดอยู่บน หน้าตัวอย่างอยู่ล่าง
+  - **CSP:** `frame-src https://*.codesandbox.io` และ `form-action 'self' https://codesandbox.io` (ดู [api-hardening](../architecture/api-hardening.md)) COEP ยังอยู่ที่ `/studio/*` เท่านั้น
+  - **ไลเซนส์:** `@codesandbox/nodebox` ใช้ Sustainable Use License (ไม่ใช่ permissive) เจ้าของอนุมัติให้เป็นข้อยกเว้นของกฎข้อ 9 เมื่อ 2026-10-15 บันทึกไว้ใน `EXCEPTIONS` ของ `scripts/third-party-licenses.mjs` และใน THIRD_PARTY_LICENSES.md
 
 ### ช่องวิดีโอ
 

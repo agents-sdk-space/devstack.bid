@@ -15,12 +15,14 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 
 | Set | Packages | Licenses | Flagged |
 |---|---|---|---|
-| Site (devstack.bid, Next.js Worker) | 94 | MIT ×81, Apache-2.0 ×4, ISC ×4, CC-BY-4.0 ×1, (MIT OR GPL-3.0-or-later) ×1, (MIT AND Zlib) ×1, BSD-3-Clause ×1, 0BSD ×1 | 0 |
+| Site (devstack.bid, Next.js Worker) | 146 | MIT ×119, ISC ×11, Apache-2.0 ×7, BSD-3-Clause ×2, SEE LICENSE IN ./LICENSE ×1, CC-BY-4.0 ×1, BSD-2-Clause ×1, W3C-20150513 ×1, (MIT OR GPL-3.0-or-later) ×1, (MIT AND Zlib) ×1, 0BSD ×1 | 0 |
 | Studio (/studio/, browser bundle) | 49 | MIT ×39, Apache-2.0 ×3, OFL-1.1 ×3, (MPL-2.0 OR Apache-2.0) ×1, ISC ×1, (MIT OR GPL-3.0-or-later) ×1, (MIT AND Zlib) ×1 | 0 |
 
 ## Exceptions and notes
 
 - `caniuse-lite`: CC-BY-4.0, browser-support data used at build time by Next.js/browserslist; not shipped; attribution below.
+- `@codesandbox/nodebox`: SEE LICENSE IN ./LICENSE, Sustainable Use License 1.0 (NOT permissive: internal, non-commercial or personal use; free non-commercial redistribution). Required by @codesandbox/sandpack-client for the home live example. Explicit owner-approved exception to AGENTS.md rule 9, dated 2026-10-15.
+- `intersection-observer`: W3C-20150513, W3C Software and Document License (OSI-approved, permissive); polyfill pulled in by Sandpack.
 - `sharp` / `@img/sharp-libvips-*` (LGPL-3.0-or-later): optional native image library pulled in by `next` and `wrangler` for local builds and `next dev`. It is marked dev/optional in the lockfile, is not in the Worker bundle, and is not shipped. No action needed.
 - No dependency requires a paid or commercial license. WebContainers (`@webcontainer/api`, commercial terms for some production use) was removed in 0.8.0-rc.2.
 
@@ -48,6 +50,19 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 
 | Package | Version | License |
 |---|---|---|
+| `@codemirror/autocomplete` | 6.20.3 | MIT |
+| `@codemirror/commands` | 6.11.1 | MIT |
+| `@codemirror/lang-css` | 6.3.1 | MIT |
+| `@codemirror/lang-html` | 6.4.12 | MIT |
+| `@codemirror/lang-javascript` | 6.2.5 | MIT |
+| `@codemirror/language` | 6.13.1 | MIT |
+| `@codemirror/lint` | 6.9.7 | MIT |
+| `@codemirror/state` | 6.7.6 | MIT |
+| `@codemirror/streamparser` | 6.0.0 | MIT |
+| `@codemirror/view` | 6.43.14 | MIT |
+| `@codesandbox/nodebox` | 0.1.8 | SEE LICENSE IN ./LICENSE |
+| `@codesandbox/sandpack-client` | 2.19.8 | Apache-2.0 |
+| `@codesandbox/sandpack-react` | 2.20.0 | Apache-2.0 |
 | `@dnd-kit/accessibility` | 3.1.1 | MIT |
 | `@dnd-kit/core` | 6.3.1 | MIT |
 | `@dnd-kit/sortable` | 10.0.0 | MIT |
@@ -57,6 +72,13 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `@floating-ui/react-dom` | 2.1.9 | MIT |
 | `@floating-ui/utils` | 0.2.12 | MIT |
 | `@img/colour` | 1.1.0 | MIT |
+| `@lezer/common` | 1.5.3 | MIT |
+| `@lezer/css` | 1.3.9 | MIT |
+| `@lezer/highlight` | 1.2.5 | MIT |
+| `@lezer/html` | 1.3.13 | MIT |
+| `@lezer/javascript` | 1.5.6 | MIT |
+| `@lezer/lr` | 1.4.11 | MIT |
+| `@marijn/find-cluster-break` | 1.0.4 | MIT |
 | `@next/env` | 16.4.0 | MIT |
 | `@next/swc-darwin-arm64` | 16.4.0 | MIT (optional) |
 | `@next/swc-darwin-x64` | 16.4.0 | MIT (optional) |
@@ -66,6 +88,7 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `@next/swc-linux-x64-musl` | 16.4.0 | MIT (optional) |
 | `@next/swc-win32-arm64-msvc` | 16.4.0 | MIT (optional) |
 | `@next/swc-win32-x64-msvc` | 16.4.0 | MIT (optional) |
+| `@open-draft/deferred-promise` | 2.2.0 | MIT |
 | `@radix-ui/primitive` | 1.1.7 | MIT |
 | `@radix-ui/react-arrow` | 1.1.16 | MIT |
 | `@radix-ui/react-checkbox` | 1.3.12 | MIT |
@@ -97,33 +120,59 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `@radix-ui/react-use-size` | 1.1.5 | MIT |
 | `@radix-ui/react-visually-hidden` | 1.2.12 | MIT |
 | `@radix-ui/rect` | 1.1.3 | MIT |
+| `@react-hook/intersection-observer` | 3.1.2 | MIT |
+| `@react-hook/passive-layout-effect` | 1.2.1 | MIT |
+| `@stitches/core` | 1.2.8 | MIT |
 | `@swc/helpers` | 0.5.23 | Apache-2.0 |
 | `@types/react` | 19.3.0 | MIT |
 | `@types/react-dom` | 19.3.0 | MIT |
+| `anser` | 2.3.5 | MIT |
 | `aria-hidden` | 1.2.6 | MIT |
+| `base64-js` | 1.5.1 | MIT |
 | `baseline-browser-mapping` | 2.11.28 | Apache-2.0 |
+| `buffer` | 6.0.3 | MIT |
 | `caniuse-lite` | 1.0.30001815 | CC-BY-4.0 |
+| `clean-set` | 1.1.2 | MIT |
 | `client-only` | 0.0.1 | MIT |
 | `cmdk` | 1.1.1 | MIT |
 | `core-util-is` | 1.0.3 | MIT |
+| `crelt` | 1.0.7 | MIT |
 | `csstype` | 3.2.3 | MIT |
+| `d` | 1.0.2 | ISC |
+| `dequal` | 2.0.3 | MIT |
 | `detect-libc` | 2.1.2 | Apache-2.0 |
 | `detect-node-es` | 1.1.0 | MIT |
+| `dotenv` | 16.6.1 | BSD-2-Clause |
+| `es5-ext` | 0.10.64 | ISC |
+| `es6-iterator` | 2.0.3 | MIT |
+| `es6-symbol` | 3.1.4 | ISC |
+| `escape-carriage` | 1.3.1 | MIT |
+| `esniff` | 2.0.1 | ISC |
+| `event-emitter` | 0.3.5 | MIT |
+| `ext` | 1.7.0 | ISC |
 | `get-nonce` | 1.0.1 | MIT |
+| `ieee754` | 1.2.1 | BSD-3-Clause |
 | `immediate` | 3.0.6 | MIT |
 | `inherits` | 2.0.4 | ISC |
+| `intersection-observer` | 0.10.0 | W3C-20150513 |
 | `isarray` | 1.0.0 | MIT |
 | `jszip` | 3.10.2 | (MIT OR GPL-3.0-or-later) |
 | `lie` | 3.3.0 | MIT |
 | `lucide-react` | 1.55.0 | ISC |
+| `lz-string` | 1.5.0 | MIT |
+| `mime-db` | 1.54.0 | MIT |
 | `nanoid` | 3.3.20 | MIT |
 | `next` | 16.4.0 | MIT |
+| `next-tick` | 1.1.0 | ISC |
+| `outvariant` | 1.4.0 | MIT |
 | `pako` | 1.0.11 | (MIT AND Zlib) |
 | `picocolors` | 1.1.1 | ISC |
 | `postcss` | 8.5.23 | MIT |
 | `process-nextick-args` | 2.0.1 | MIT |
 | `react` | 19.3.0 | MIT |
+| `react-devtools-inline` | 4.4.0 | MIT |
 | `react-dom` | 19.3.0 | MIT |
+| `react-is` | 17.0.2 | MIT |
 | `react-remove-scroll` | 2.7.2 | MIT |
 | `react-remove-scroll-bar` | 2.3.8 | MIT |
 | `react-style-singleton` | 2.2.3 | MIT |
@@ -135,12 +184,17 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `setimmediate` | 1.0.5 | MIT |
 | `sharp` | 0.35.5 | Apache-2.0 |
 | `source-map-js` | 1.2.2 | BSD-3-Clause |
+| `static-browser-server` | 1.0.3 | Apache-2.0 |
+| `strict-event-emitter` | 0.4.6 | MIT |
 | `string_decoder` | 1.1.1 | MIT |
+| `style-mod` | 4.1.4 | MIT |
 | `styled-jsx` | 5.1.6 | MIT |
 | `tslib` | 2.8.1 | 0BSD |
+| `type` | 2.7.3 | ISC |
 | `use-callback-ref` | 1.3.3 | MIT |
 | `use-sidecar` | 1.1.3 | MIT |
 | `util-deprecate` | 1.0.2 | MIT |
+| `w3c-keyname` | 2.2.8 | MIT |
 | `zod` | 4.6.5 | MIT |
 
 ## Studio (/studio/, browser bundle)

@@ -110,6 +110,12 @@ describe("security headers", () => {
     expect(csp).not.toContain("unsafe-eval");
     expect(contentSecurityPolicy(true)).toContain("unsafe-eval");
   });
+  it("CSP allows exactly one third-party frame origin: the Sandpack bundler on home (plus its Open in CodeSandbox form)", () => {
+    const frame = contentSecurityPolicy(false).split("; ").find((d) => d.startsWith("frame-src"));
+    expect(frame).toBe("frame-src https://*.codesandbox.io");
+    expect(contentSecurityPolicy(false)).toContain("form-action 'self' https://codesandbox.io");
+    expect(contentSecurityPolicy(false)).not.toMatch(/Cross-Origin-Embedder/);
+  });
 });
 
 describe("template id list used by the 404 rewrite in next.config.ts", () => {

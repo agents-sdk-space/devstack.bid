@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import Home, { metadata } from "@/app/page";
 import { translate } from "@/lib/i18n";
+import { APP_TSX, sandboxFiles } from "@/components/home/sandbox-files";
 
 describe("home page (v0.9 phase 2)", () => {
   it("has no nvm command or mention, in either language", () => {
@@ -29,5 +30,12 @@ describe("home page (v0.9 phase 2)", () => {
     expect(container.querySelectorAll("details").length).toBe(4);
     expect(container.querySelector('[data-slot="howto-video"]')).toBeTruthy();
     expect(container.querySelectorAll(".focus-frame").length).toBe(1);
+    expect(container.querySelector('[data-testid="live-example"]')).toBeTruthy();
+  });
+
+  it("live example matches the owner's reference sandbox shape", () => {
+    expect(APP_TSX).toContain("Welcome to my app");
+    expect(APP_TSX).toContain("I'm a button");
+    expect(Object.keys(sandboxFiles(true)).sort()).toEqual(["/App.js", "/index.js", "/src/App.tsx", "/styles.css", "/theme.css"]);
   });
 });
