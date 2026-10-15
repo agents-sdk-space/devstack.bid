@@ -113,6 +113,8 @@ describe("chat agent GitHub tools", () => {
   it("exposes the full set with activity labels", () => {
     const names = CUSTOMER_GITHUB_TOOLS.map((t) => t.name).sort();
     expect(names).toEqual([
+      "apply_fix",
+      "get_deploy_logs",
       "github_create_branch",
       "github_create_repo",
       "github_get_pull_request",

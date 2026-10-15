@@ -34,6 +34,22 @@ export const CUSTOMER_GITHUB_TOOLS = [
   fn("github_open_pull_request", "Open a pull request (30/day).", { ...repoArg, head: { type: "string" }, base: { type: "string" }, title: { type: "string" }, body: { type: "string" } }, ["repo", "head", "base", "title"]),
   fn("github_list_pull_requests", "List pull requests.", { ...repoArg, state: { type: "string", enum: ["open", "closed", "all"] } }, ["repo"]),
   fn("github_get_pull_request", "Read one pull request: title, state, body and changed files.", { ...repoArg, number: { type: "integer" } }, ["repo", "number"]),
+  fn(
+    "get_deploy_logs",
+    "Self-heal: read the latest (or a given) failed deployment for the customer: status, error code, sanitized log, hint, deploy profile and remaining fix attempts.",
+    { deployment_id: { type: "string", description: "Optional; defaults to the latest failed deployment." } },
+    []
+  ),
+  fn(
+    "apply_fix",
+    "Self-heal: commit a fix for a FAILED deployment to its branch (or a devstack/fix-* branch; never the default branch). Max 3 attempts per deployment. Does NOT redeploy: the customer must click 'Retry deploy'.",
+    {
+      deployment_id: { type: "string" },
+      message: { type: "string" },
+      files: { type: "array", items: { type: "object", properties: { path: { type: "string" }, content: { type: "string" }, delete: { type: "boolean" } }, required: ["path"] } },
+    },
+    ["deployment_id", "message", "files"]
+  ),
 ];
 
 export const CUSTOMER_TOOL_NAMES = new Set(CUSTOMER_GITHUB_TOOLS.map((t) => t.name));
@@ -48,5 +64,7 @@ export const CUSTOMER_TOOL_LABELS: Record<string, string> = {
   github_open_pull_request: "GitHub: open pull request",
   github_list_pull_requests: "GitHub: list pull requests",
   github_get_pull_request: "GitHub: read pull request",
+  get_deploy_logs: "Self-heal: read deploy logs",
+  apply_fix: "Self-heal: commit fix",
 };
 

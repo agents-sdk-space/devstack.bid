@@ -8,6 +8,7 @@ import type { Activity, UiEvent } from "@/lib/chat/events";
 import type { DictKey } from "@/lib/i18n";
 import { Mascot } from "../brand/mascot";
 import { useLang } from "../prefs";
+import { DeployCard } from "./deploy-card";
 import { GithubPublish } from "./github-publish";
 import { MarkdownView } from "./markdown-view";
 import { SandboxPanel, StatusDot } from "./sandbox-panel";
@@ -377,6 +378,9 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
             case "file":
               patchAssistant(assistantId, (m) => ({ ...m, files: [...m.files.filter((x) => x.id !== ev.id), { id: ev.id, name: ev.name, size: ev.size, url: ev.url }] }));
               break;
+            case "deploy":
+              patchAssistant(assistantId, (m) => ({ ...m, deploys: [...(m.deploys ?? []).filter((x) => x.id !== ev.d.id), ev.d] }));
+              break;
             case "quota":
               setRemaining((q) => ({ ...q, ...Object.fromEntries(Object.entries(ev).filter(([k, v]) => k !== "t" && v !== undefined)) }));
               break;
@@ -663,6 +667,7 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
                             <span>{m.error.message || t("agent.error")}</span>
                           </div>
                         )}
+                        {m.deploys?.map((d) => <DeployCard key={d.id} card={d} />)}
                         {!dev && !byok && m.content && !m.pending && <GithubPublish text={m.content} signedIn={info?.account?.provider === "github"} />}
                         {m.activities.length > 0 && (
                           <button

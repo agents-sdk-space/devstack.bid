@@ -180,11 +180,12 @@ export interface TreeEntry {
   path: string;
   type: "blob" | "tree";
   size?: number;
+  sha?: string;
 }
 
 export async function readTree(token: string, owner: string, repo: string, ref: string): Promise<{ entries: TreeEntry[]; truncated: boolean }> {
-  const { data } = await gh<{ tree?: { path: string; type: string; size?: number }[]; truncated?: boolean }>(token, "GET", `${rp(owner, repo)}/git/trees/${encodeURIComponent(ref)}?recursive=1`);
-  const entries = (data.tree ?? []).filter((e) => e.type === "blob" || e.type === "tree").slice(0, 2000).map((e) => ({ path: e.path, type: e.type as "blob" | "tree", size: e.size }));
+  const { data } = await gh<{ tree?: { path: string; type: string; size?: number; sha?: string }[]; truncated?: boolean }>(token, "GET", `${rp(owner, repo)}/git/trees/${encodeURIComponent(ref)}?recursive=1`);
+  const entries = (data.tree ?? []).filter((e) => e.type === "blob" || e.type === "tree").slice(0, 2000).map((e) => ({ path: e.path, type: e.type as "blob" | "tree", size: e.size, sha: e.sha }));
   return { entries, truncated: Boolean(data.truncated) || (data.tree?.length ?? 0) > 2000 };
 }
 
@@ -264,4 +265,12 @@ export async function getPullRequest(token: string, owner: string, repo: string,
 export async function getRepo(token: string, owner: string, repo: string): Promise<{ private: boolean; defaultBranch: string }> {
   const { data } = await gh<{ private?: boolean; default_branch?: string }>(token, "GET", rp(owner, repo));
   return { private: Boolean(data.private), defaultBranch: data.default_branch ?? "main" };
+}
+
+/** Raw bytes of a blob (binary-safe; used by direct deploy). */
+export async function readBlob(token: string, owner: string, repo: string, sha: string): Promise<Uint8Array> {
+  const { data } = await gh<{ content?: string; encoding?: string }>(token, "GET", `${rp(owner, repo)}/git/blobs/${encodeURIComponent(sha)}`);
+  if (data.encoding !== "base64" || typeof data.content !== "string") throw new GithubApiError("Unexpected blob encoding", 502);
+  const bin = atob(data.content.replace(/\n/g, ""));
+  return Uint8Array.from(bin, (c) => c.charCodeAt(0));
 }

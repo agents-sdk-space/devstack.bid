@@ -1,3 +1,4 @@
+import type { DeployCardData } from "@/lib/chat/events";
 import type { Activity, ChatMode } from "@/lib/chat/events";
 
 export type { ChatMode };
@@ -26,6 +27,7 @@ export interface ChatMessage {
   activities: Activity[];
   images: ChatImage[];
   files: ChatFile[];
+  deploys?: DeployCardData[];
   usage?: { input: number; output: number };
   error?: { code: string; message: string };
   pending?: boolean;

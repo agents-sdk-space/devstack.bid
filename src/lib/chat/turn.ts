@@ -94,7 +94,7 @@ export async function runTurn(d: TurnDeps): Promise<{ outcome: string; usage?: {
     if (CUSTOMER_TOOL_NAMES.has(name)) {
       if (d.byok || !d.env.CHAT_COOKIE_SECRET) throw new ToolFailure("GitHub tools are only available in Dev Chat for signed-in accounts.");
       try {
-        return await runCustomerTool(name, args, { db: d.db, uid: d.uid, keys: sealKeys(d.env.CHAT_COOKIE_SECRET) });
+        return await runCustomerTool(name, args, { db: d.db, uid: d.uid, keys: sealKeys(d.env.CHAT_COOKIE_SECRET), emit });
       } catch (err) {
         if (err instanceof CustomerToolError || err instanceof ServiceError) throw new ToolFailure(err.message);
         if (err instanceof GithubApiError) throw new ToolFailure(`GitHub ${err.status}: ${err.message}`);

@@ -13,7 +13,10 @@ import { audit } from "@/lib/connections/audit";
 import { loadGithubToken, type SealKeys } from "@/lib/connections/credentials";
 import { commitToBranch, createProjectRepo, takeQuota } from "@/lib/connections/github-service";
 import { validateChangeSet } from "@/lib/connections/policy";
-import { findProjectByRepo, projectView } from "@/lib/connections/projects";
+import { findProjectByRepo, getProject, projectView } from "@/lib/connections/projects";
+import { LIMITS } from "@/lib/connections/policy";
+import { ERROR_HINTS, deploymentView, getDeployment, latestFailed, recordFixAttempt } from "@/lib/deploy/service";
+import type { DeployCardData, UiEvent } from "./events";
 import type { D1Like } from "./store";
 export { CUSTOMER_GITHUB_TOOLS, CUSTOMER_TOOL_NAMES } from "./customer-tool-defs";
 
@@ -29,6 +32,22 @@ export interface CustomerCtx {
   db: D1Like;
   uid: string;
   keys: SealKeys;
+  emit?: (e: UiEvent) => void;
+}
+
+export function deployCard(v: ReturnType<typeof deploymentView>, repo: string | null): DeployCardData {
+  return {
+    id: v.id,
+    projectId: v.projectId,
+    repo,
+    status: v.status,
+    url: v.url,
+    errorCode: v.errorCode,
+    fixAttempts: v.fixAttempts,
+    maxFixAttempts: v.maxFixAttempts,
+    retryRef: v.ref,
+    canRetry: false,
+  };
 }
 
 function repoOf(args: Record<string, unknown>) {
@@ -106,6 +125,37 @@ export async function runCustomerTool(name: string, args: Record<string, unknown
       const r = repoOf(args);
       const state = args.state === "closed" || args.state === "all" ? args.state : "open";
       return listPullRequests(token, r.owner, r.name, state);
+    }
+    case "get_deploy_logs": {
+      const d = typeof args.deployment_id === "string" && args.deployment_id ? await getDeployment(ctx.db, ctx.uid, args.deployment_id) : await latestFailed(ctx.db, ctx.uid);
+      if (!d) throw new CustomerToolError("No failed deployment found for this user.");
+      const project = await getProject(ctx.db, ctx.uid, d.project_id);
+      const view = deploymentView(d);
+      ctx.emit?.({ t: "deploy", d: { ...deployCard(view, project?.repo_full_name ?? null) } });
+      return { ...view, hint: d.error_code ? ERROR_HINTS[d.error_code] ?? null : null, repo: project?.repo_full_name, defaultBranch: project?.default_branch, templateId: project?.template_id, remainingFixAttempts: Math.max(0, LIMITS.maxFixAttempts - d.fix_attempts) };
+    }
+    case "apply_fix": {
+      const id = typeof args.deployment_id === "string" ? args.deployment_id : "";
+      const d = await getDeployment(ctx.db, ctx.uid, id);
+      if (!d) throw new CustomerToolError("Deployment not found.");
+      if (d.status !== "failed") throw new CustomerToolError("Only failed deployments can be fixed.");
+      const project = await getProject(ctx.db, ctx.uid, d.project_id);
+      if (!project?.repo_full_name) throw new CustomerToolError("Project not found.");
+      const message = typeof args.message === "string" ? safeCommitMessage(args.message) : null;
+      if (!message) throw new CustomerToolError("Invalid commit message.");
+      const v = validateChangeSet(args.files);
+      if (!v.ok) throw new CustomerToolError(`Files rejected: ${v.error}${v.path ? ` (${v.path})` : ""}`);
+      const attempt = await recordFixAttempt(ctx.db, ctx.uid, id);
+      if (attempt === null) throw new CustomerToolError(`Fix limit reached (${LIMITS.maxFixAttempts} attempts). Stop and tell the user what to change manually.`);
+      const [owner, repo] = project.repo_full_name.split("/");
+      const def = project.default_branch ?? "main";
+      const branch = d.ref && d.ref !== def ? d.ref : `devstack/fix-${id.slice(0, 8)}`;
+      const c = await commitToBranch(token, { owner, repo, branch, defaultBranch: def, message: `${message} (fix ${attempt}/${LIMITS.maxFixAttempts})`, files: v.files, createFrom: d.ref ?? def });
+      await audit(ctx.db, ctx.uid, "fix.committed", `${id}:${attempt}`);
+      const card = deployCard(deploymentView(d), project.repo_full_name);
+      ctx.emit?.({ t: "activity", a: { id: `fix:${id}:${attempt}`, kind: "tool", label: `Self-heal attempt ${attempt}/${LIMITS.maxFixAttempts}`, detail: `${v.files.length} file(s) → ${branch}`, status: "done", at: Date.now() } });
+      ctx.emit?.({ t: "deploy", d: { ...card, fixAttempts: attempt, retryRef: branch, canRetry: true } });
+      return { branch, commit: c.sha, attempt, maxAttempts: LIMITS.maxFixAttempts, note: "Fix committed. Ask the user to click 'Retry deploy' (you cannot redeploy yourself)." };
     }
     case "github_get_pull_request": {
       const r = repoOf(args);
