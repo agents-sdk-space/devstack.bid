@@ -116,3 +116,21 @@ describe("default theme", () => {
     expect(layout).not.toContain("prefers-color-scheme: dark)').matches");
   });
 });
+
+describe("v0.9 monochrome palette", () => {
+  // Owner decision 2026-10-15: neutral greys only until accent colours return. Status colours keep meaning.
+  const NEUTRAL = ["bg", "surface", "surface-2", "surface-3", "border", "border-strong", "fg", "muted", "subtle", "primary", "primary-hover", "primary-fg", "link", "accent", "ring", "info", "info-fg"];
+  for (const [theme, vars] of Object.entries(themes)) {
+    it(`${theme}: interactive and surface tokens have no hue`, () => {
+      for (const name of NEUTRAL) {
+        const [r, g, b] = parseColor(vars[name]);
+        expect(Math.max(r, g, b) - Math.min(r, g, b), name).toBeLessThanOrEqual(6);
+      }
+    });
+  }
+  it("links stay underlined because they share the text colour", () => {
+    const globals = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
+    const link = globals.slice(globals.indexOf("@utility link {"), globals.indexOf("@utility link {") + 300);
+    expect(link).toMatch(/text-decoration:\s*underline/);
+  });
+});

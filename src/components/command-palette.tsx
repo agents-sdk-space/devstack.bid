@@ -157,7 +157,7 @@ export function PaletteTrigger({ onClick }: { onClick: () => void }) {
       className="focus-ring motion-fast hidden h-9 items-center gap-2 rounded-md border border-border bg-surface-2 px-3 text-sm text-muted hover:border-border-strong hover:text-fg md:inline-flex"
     >
       <SearchIcon />
-      <span className="hidden gap-0.5 min-[1720px]:ml-3 min-[1720px]:flex">
+      <span className="hidden gap-0.5 lg:ml-6 lg:flex" aria-hidden>
         <Kbd>{mac ? "⌘" : "Ctrl"}</Kbd>
         <Kbd>K</Kbd>
       </span>

@@ -47,7 +47,7 @@ export const SECTIONS = [
     label: { th: "คู่มือผู้ใช้", en: "User guide" },
     files: ["getting-started", "templates", "builder", "ai-agent", "chat", "dev-chat", "sandbox-factory", "studio", "sharing", "downloads", "language-theme", "troubleshooting"].map((f) => `user-guide/${f}.md`),
   },
-  { id: "concepts", label: { th: "แนวคิด", en: "Concepts" }, files: ["stack-template", "composition", "safety-model", "design-system"].map((f) => `concepts/${f}.md`) },
+  { id: "concepts", label: { th: "แนวคิด", en: "Concepts" }, files: [...["stack-template", "composition", "safety-model", "design-system"].map((f) => `concepts/${f}.md`), "design/ui-ux-revamp-plan.md"] },
   {
     id: "architecture",
     label: { th: "สถาปัตยกรรม", en: "Architecture" },

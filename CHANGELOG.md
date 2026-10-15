@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **UI revamp phases 0–1 (monochrome).** Following `docs/design/ui-ux-revamp-plan.md`:
+  - **Colours:** the light theme is now white and the dark theme black, both built from neutral greys only. Buttons are black or white pills, links share the text colour and are always underlined, and the focus ring is grey. Status colours and the pink mascot image are unchanged.
+  - **Tokens:** new spacing and type tokens: `py-section`, `py-section-sm`, `mt-block`, `max-w-content`, `max-w-measure`, `text-h2`, `text-h3`, `text-lead` and `text-caption`.
+  - **Header:** four links (Templates, Builder, Chat, Docs), search with a `⌘K`/`Ctrl K` hint, Sign in, **Start building**, and a menu that holds every other page plus Setup Cursor. Below 640px the language and theme switches move into the menu.
+  - **Account button:** shows the profile picture, or initials when there is none.
+  - **Footer:** a smaller signature beside three link columns.
+  - **Design references:** patterns come from the owner's 21st.dev bookmarks (Combo Kbd, Avatar). Each was rebuilt on NVX UI, with no copied code and no new dependencies.
+  - **Screenshots:** before and after, light and dark, at 1440px and 390px, in `screenshots/v0.9/`.
 - **/chat is a full-height app layout.** The page fills `100dvh` (with safe-area insets and `interactive-widget=resizes-content`, so the on-screen keyboard shrinks the layout instead of covering the input). The model picker, intro, suggestions and messages share one scroll area, and the composer stays pinned at the bottom. The site footer (with the terminal signature) is not shown on `/chat` and `/chat/dev`; every other page keeps it.
 - The page body clips horizontal overflow, so nothing on `/login` or the mobile menu can push the page sideways at 320–414px.
 - The homepage **Ask the AI agent** button opens `/learn`.

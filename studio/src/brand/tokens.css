@@ -8,32 +8,34 @@
  * is the default for everyone (<html class="dark"> is server-rendered). :root holds the light
  * variant that the theme toggle switches to.
  *
- * Roles: `primary` = filled call-to-action (blue pill, white text); `link` = blue text links and
- * selected/active text; `accent` = the same family, for icons and highlights. Everything else is
- * neutral greys so colour stays restrained. Terminal green appears only in code (`code-prompt`).
+ * v0.9 monochrome (owner decision, 2026-10-15): a white light theme and a black dark theme built
+ * from neutral greys only. `primary` = filled call-to-action (black pill in light, white pill in
+ * dark); `link` and `accent` = the foreground colour (links are underlined so they stay
+ * distinguishable without hue). Status colours (success/warning/danger) stay for meaning only.
+ * The pink mascot image is unchanged; accent colours come back in a later phase.
  */
 
 :root {
   /* Surfaces */
-  --nvx-bg: #f5f5f7;
+  --nvx-bg: #ffffff;
   --nvx-surface: #ffffff;
-  --nvx-surface-2: #f0f0f2;
-  --nvx-surface-3: #e6e6ea;
+  --nvx-surface-2: #f5f5f5;
+  --nvx-surface-3: #e5e5e5;
   --nvx-raised: #ffffff;
-  --nvx-border: #e3e3e8;
-  --nvx-border-strong: #c7c7cc;
+  --nvx-border: #e5e5e5;
+  --nvx-border-strong: #a3a3a3;
   /* Text */
-  --nvx-fg: #1d1d1f;
-  --nvx-muted: #515154;
-  --nvx-subtle: #636366;
+  --nvx-fg: #0a0a0a;
+  --nvx-muted: #404040;
+  --nvx-subtle: #525252;
   /* Brand */
-  --nvx-primary: #0071e3;
-  --nvx-primary-hover: #0062c4;
+  --nvx-primary: #171717;
+  --nvx-primary-hover: #404040;
   --nvx-primary-fg: #ffffff;
-  --nvx-primary-soft: #e8f1fc;
-  --nvx-primary-soft-fg: #0058b0;
-  --nvx-link: #0066cc;
-  --nvx-accent: #0066cc;
+  --nvx-primary-soft: #f5f5f5;
+  --nvx-primary-soft-fg: #171717;
+  --nvx-link: #171717;
+  --nvx-accent: #171717;
   /* Status */
   --nvx-success: #157a32;
   --nvx-success-soft: #e5f5e9;
@@ -45,33 +47,33 @@
   --nvx-danger-hover: #b00011;
   --nvx-danger-soft: #fde8ea;
   --nvx-danger-fg: #a30010;
-  --nvx-info: #0066cc;
-  --nvx-info-soft: #e8f1fc;
-  --nvx-info-fg: #0058b0;
+  --nvx-info: #404040;
+  --nvx-info-soft: #f5f5f5;
+  --nvx-info-fg: #262626;
   /* Focus + code (code windows are always dark) */
-  --nvx-ring: #0071e3;
-  --nvx-code-bg: #1d1d1f;
-  --nvx-code-fg: #f5f5f7;
-  --nvx-code-prompt: #32d74b;
-  --nvx-code-muted: #98989d;
-  --nvx-code-border: #2c2c2e;
+  --nvx-ring: #171717;
+  --nvx-code-bg: #171717;
+  --nvx-code-fg: #fafafa;
+  --nvx-code-prompt: #d4d4d4;
+  --nvx-code-muted: #a3a3a3;
+  --nvx-code-border: #262626;
   --nvx-overlay: rgb(0 0 0 / 0.4);
   /* macOS window chrome on code windows */
-  --nvx-chrome-close: #ff5f57;
-  --nvx-chrome-min: #febc2e;
-  --nvx-chrome-zoom: #28c840;
+  --nvx-chrome-close: #737373;
+  --nvx-chrome-min: #737373;
+  --nvx-chrome-zoom: #737373;
   /* Brand mascot accent (measured from the logo). Decorative only: never for text or UI states;
      the interactive colour system stays blue (primary / link). */
   --nvx-brand-pink: #fb0fab;
   --nvx-brand-glow: rgb(251 15 171 / 0.35);
   /* App-icon tiles */
   --nvx-tile-top: #ffffff;
-  --nvx-tile-bottom: #f2f2f5;
+  --nvx-tile-bottom: #f5f5f5;
   --nvx-tile-edge: rgb(0 0 0 / 0.08);
   --nvx-tile-sheen: rgb(255 255 255 / 0.9);
   /* Hero glow */
-  --nvx-glow-1: rgb(0 113 227 / 0.1);
-  --nvx-glow-2: rgb(175 82 222 / 0.07);
+  --nvx-glow-1: rgb(0 0 0 / 0);
+  --nvx-glow-2: rgb(0 0 0 / 0);
   /* Shadows */
   --nvx-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
   --nvx-shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.1);
@@ -88,24 +90,24 @@
 .dark {
   /* Surfaces: black page, graphite cards */
   --nvx-bg: #000000;
-  --nvx-surface: #161617;
-  --nvx-surface-2: #1d1d1f;
-  --nvx-surface-3: #2a2a2d;
-  --nvx-raised: #3a3a3c;
-  --nvx-border: #2a2a2d;
-  --nvx-border-strong: #48484c;
+  --nvx-surface: #0a0a0a;
+  --nvx-surface-2: #171717;
+  --nvx-surface-3: #262626;
+  --nvx-raised: #2e2e2e;
+  --nvx-border: #262626;
+  --nvx-border-strong: #525252;
   /* Text */
-  --nvx-fg: #f5f5f7;
-  --nvx-muted: #c7c7cc;
-  --nvx-subtle: #98989d;
+  --nvx-fg: #fafafa;
+  --nvx-muted: #d4d4d4;
+  --nvx-subtle: #a3a3a3;
   /* Brand */
-  --nvx-primary: #0071e3;
-  --nvx-primary-hover: #0068d1;
-  --nvx-primary-fg: #ffffff;
-  --nvx-primary-soft: rgb(41 151 255 / 0.16);
-  --nvx-primary-soft-fg: #8ec5ff;
-  --nvx-link: #2997ff;
-  --nvx-accent: #2997ff;
+  --nvx-primary: #fafafa;
+  --nvx-primary-hover: #d4d4d4;
+  --nvx-primary-fg: #0a0a0a;
+  --nvx-primary-soft: rgb(255 255 255 / 0.08);
+  --nvx-primary-soft-fg: #fafafa;
+  --nvx-link: #fafafa;
+  --nvx-accent: #fafafa;
   /* Status (Apple system colours, dark) */
   --nvx-success: #32d74b;
   --nvx-success-soft: rgb(50 215 75 / 0.14);
@@ -117,19 +119,19 @@
   --nvx-danger-hover: #ff6961;
   --nvx-danger-soft: rgb(255 69 58 / 0.15);
   --nvx-danger-fg: #ff8f88;
-  --nvx-info: #64d2ff;
-  --nvx-info-soft: rgb(100 210 255 / 0.13);
-  --nvx-info-fg: #9fe3ff;
-  --nvx-ring: #2997ff;
-  --nvx-code-bg: #0c0c0d;
-  --nvx-code-border: #2a2a2d;
+  --nvx-info: #d4d4d4;
+  --nvx-info-soft: rgb(255 255 255 / 0.08);
+  --nvx-info-fg: #e5e5e5;
+  --nvx-ring: #fafafa;
+  --nvx-code-bg: #0a0a0a;
+  --nvx-code-border: #262626;
   --nvx-overlay: rgb(0 0 0 / 0.7);
-  --nvx-tile-top: #2c2c2e;
-  --nvx-tile-bottom: #1c1c1e;
+  --nvx-tile-top: #262626;
+  --nvx-tile-bottom: #171717;
   --nvx-tile-edge: rgb(255 255 255 / 0.1);
   --nvx-tile-sheen: rgb(255 255 255 / 0.12);
-  --nvx-glow-1: rgb(41 151 255 / 0.16);
-  --nvx-glow-2: rgb(191 90 242 / 0.1);
+  --nvx-glow-1: rgb(0 0 0 / 0);
+  --nvx-glow-2: rgb(0 0 0 / 0);
   --nvx-shadow-sm: 0 0 0 0 transparent;
   --nvx-shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.6);
   --nvx-shadow-lg: 0 24px 64px -16px rgb(0 0 0 / 0.8);

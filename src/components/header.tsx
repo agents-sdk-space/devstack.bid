@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { AppWindow, Blocks, BookOpen, Bot, House, Languages, Layers, LayoutGrid, Menu, FlaskConical, MessagesSquare, Moon, Palette, SquareTerminal, Sun } from "lucide-react";
-import { Button, cn, Dialog, DialogContent, DialogTrigger, SearchIcon, Tooltip } from "@/components/ui";
+import { Button, buttonClasses, cn, Dialog, DialogContent, DialogTrigger, SearchIcon, Tooltip } from "@/components/ui";
 import { AccountButton } from "./account-button";
 import { SetupCursor } from "./setup-cursor";
 import { CommandPalette, PaletteTrigger } from "./command-palette";
 import { Mascot } from "./brand/mascot";
 import { TerminalSignature } from "./brand/terminal-signature";
+import type { DictKey } from "@/lib/i18n";
 import { useDarkMode, useLang } from "./prefs";
 
 const NAV = [
@@ -48,6 +49,14 @@ function NavLink({
   );
 }
 
+/** The four links in the bar (nextjs.org-style restraint). Everything else lives in the menu sheet. */
+const PRIMARY: { href: string; key: "nav.templates" | "nav.builderShort" | "nav.chat" | "nav.docs" }[] = [
+  { href: "/templates", key: "nav.templates" },
+  { href: "/builder", key: "nav.builderShort" },
+  { href: "/chat", key: "nav.chat" },
+  { href: "/docs", key: "nav.docs" },
+];
+
 function isActive(pathname: string, href: string) {
   if (href === "/" || href === "/chat") return pathname === href;
   if (href === "/docs") return pathname === "/docs" || (pathname.startsWith("/docs/") && !pathname.startsWith("/docs/platform") && !pathname.startsWith("/docs/agents/cursor-caretakers"));
@@ -69,53 +78,53 @@ export function Header() {
       >
         {t("skip")}
       </a>
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4">
+      <div className="mx-auto flex h-14 max-w-content items-center gap-2 px-4 sm:gap-3 sm:px-5">
         <Link href="/" className="focus-ring flex items-center gap-2 rounded-md font-semibold tracking-tight" aria-label="NVX Stack Builder home">
           <Mascot size={28} />
           <span className="hidden text-[15px] sm:inline">Stack Builder</span>
         </Link>
 
         <nav aria-label="Main" className="ml-4 hidden items-center gap-1 lg:flex">
-          {NAV.map((item) => {
+          {PRIMARY.map((item) => {
             const active = isActive(pathname, item.href);
             return (
-              <NavLink
+              <Link
                 key={item.href}
-                item={item}
+                href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={cn(
-                  "focus-ring motion-fast whitespace-nowrap rounded-md px-3 py-1.5 text-[13px]",
-                  "wide" in item && item.wide && "hidden 2xl:inline-block",
-                  active ? "font-medium text-fg" : "text-subtle hover:text-fg"
-                )}
+                className={cn("focus-ring motion-fast whitespace-nowrap rounded-md px-3 py-1.5 text-sm", active ? "font-medium text-fg" : "text-muted hover:text-fg")}
               >
                 {t(item.key)}
-              </NavLink>
+              </Link>
             );
           })}
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5">
-          <SetupCursor />
-          <AccountButton next={pathname} />
           <PaletteTrigger onClick={() => setPaletteOpen(true)} />
+          <AccountButton next={pathname} />
+          <span className="hidden sm:contents">
+            <Link href="/builder" className={buttonClasses("primary", "sm")}>
+              {t("nav.start")}
+            </Link>
+          </span>
           <Tooltip content={t("palette.open")}>
             <Button variant="ghost" size="icon" className="md:hidden" aria-label={t("palette.open")} onClick={() => setPaletteOpen(true)}>
               <SearchIcon className="text-base" />
             </Button>
           </Tooltip>
-          <Button variant="ghost" size="sm" onClick={() => setLang(lang === "en" ? "th" : "en")} aria-label={t("toggle.langLabel")}>
+          <Button variant="ghost" size="sm" className="max-sm:hidden" onClick={() => setLang(lang === "en" ? "th" : "en")} aria-label={t("toggle.langLabel")}>
             <Languages className="h-4 w-4" aria-hidden />
-            <span className="hidden min-[1600px]:inline">{t("toggle.lang")}</span>
+            <span className="sr-only">{t("toggle.lang")}</span>
           </Button>
           <Tooltip content={t("toggle.theme")}>
-            <Button variant="ghost" size="icon" onClick={toggle} aria-label={t("toggle.theme")} aria-pressed={dark}>
+            <Button variant="ghost" size="icon" className="max-sm:hidden" onClick={toggle} aria-label={t("toggle.theme")} aria-pressed={dark}>
               {dark ? <Sun className="h-4 w-4" aria-hidden /> : <Moon className="h-4 w-4" aria-hidden />}
             </Button>
           </Tooltip>
           <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="2xl:hidden" aria-label={t("nav.menu")}>
+              <Button variant="ghost" size="icon" aria-label={t("nav.menu")}>
                 <Menu className="h-5 w-5" aria-hidden />
               </Button>
             </DialogTrigger>
@@ -123,6 +132,14 @@ export function Header() {
               <div className="mb-4 space-y-2">
                 <AccountButton next={pathname} full onNavigate={() => setMenuOpen(false)} />
                 <SetupCursor appearance="menu" />
+                <div className="flex gap-2 sm:hidden">
+                  <Button variant="secondary" size="sm" className="flex-1" onClick={() => setLang(lang === "en" ? "th" : "en")} aria-label={t("toggle.langLabel")}>
+                    <Languages className="h-4 w-4" aria-hidden /> {t("toggle.lang")}
+                  </Button>
+                  <Button variant="secondary" size="sm" className="flex-1" onClick={toggle} aria-label={t("toggle.theme")} aria-pressed={dark}>
+                    {dark ? <Sun className="h-4 w-4" aria-hidden /> : <Moon className="h-4 w-4" aria-hidden />} {t("toggle.theme")}
+                  </Button>
+                </div>
               </div>
               <nav aria-label="Mobile">
                 <ul className="space-y-1">
@@ -168,6 +185,35 @@ export function Header() {
   );
 }
 
+const FOOTER: { heading: "footer.product" | "footer.resources" | "footer.developers"; links: { href: string; key: DictKey; document?: boolean }[] }[] = [
+  {
+    heading: "footer.product",
+    links: [
+      { href: "/templates", key: "nav.templates" },
+      { href: "/builder", key: "nav.builderShort" },
+      { href: "/chat", key: "nav.chat" },
+      { href: "/studio/", key: "nav.studio", document: true },
+    ],
+  },
+  {
+    heading: "footer.resources",
+    links: [
+      { href: "/docs", key: "nav.docs" },
+      { href: "/learn", key: "nav.learn" },
+      { href: "/design", key: "nav.design" },
+    ],
+  },
+  {
+    heading: "footer.developers",
+    links: [
+      { href: "/docs/platform", key: "nav.functions" },
+      { href: "/chat/dev", key: "nav.devChat" },
+      { href: "/factory", key: "nav.factory" },
+      { href: "/docs/agents/cursor-caretakers", key: "nav.agents" },
+    ],
+  },
+];
+
 /** App-style pages (/chat, /chat/dev) fill the viewport, so they have no footer. */
 export function hidesFooter(pathname: string | null): boolean {
   return !!pathname && (pathname === "/chat" || pathname.startsWith("/chat/"));
@@ -178,19 +224,33 @@ export function Footer() {
   const pathname = usePathname();
   if (hidesFooter(pathname)) return null;
   return (
-    <footer className="mt-20 border-t border-border bg-surface py-10 text-center text-xs leading-relaxed text-subtle">
-      {/* DevStack signature: on every page, above the existing footer line. */}
-      <div className="mx-auto mb-6 flex max-w-3xl flex-col items-center gap-3 px-4">
-        <TerminalSignature className="w-52 sm:w-60" />
-        <p className="font-mono text-[11px] tracking-wide text-muted">
-          DevStack · <a href="https://devstack.bid" className="link">devstack.bid</a>
-          {" · "}
-          <Link href="/learn" className="link">
-            {t("nav.learn")}
-          </Link>
-        </p>
+    <footer className="mt-section-sm border-t border-border bg-bg text-sm sm:mt-section">
+      <div className="mx-auto grid max-w-content gap-10 px-5 py-14 sm:grid-cols-2 lg:grid-cols-[1.2fr_repeat(3,1fr)]">
+        {/* DevStack signature: on every page, beside the link columns. */}
+        <div className="flex flex-col items-start gap-3">
+          <TerminalSignature className="w-44" />
+          <p className="font-mono text-caption text-muted">
+            DevStack · <a href="https://devstack.bid" className="link">devstack.bid</a>
+          </p>
+        </div>
+        {FOOTER.map((col) => (
+          <nav key={col.heading} aria-label={t(col.heading)}>
+            <h2 className="text-sm font-medium text-fg">{t(col.heading)}</h2>
+            <ul className="mt-4 space-y-3">
+              {col.links.map((l) => (
+                <li key={l.href}>
+                  {l.document ? (
+                    <a href={l.href} className="focus-ring rounded-sm text-muted hover:text-fg">{t(l.key)}</a>
+                  ) : (
+                    <Link href={l.href} className="focus-ring rounded-sm text-muted hover:text-fg">{t(l.key)}</Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))}
       </div>
-      <p className="mx-auto max-w-3xl px-4">{t("footer.text")}</p>
+      <p className="mx-auto max-w-content border-t border-border px-5 py-6 text-caption leading-relaxed text-muted">{t("footer.text")}</p>
     </footer>
   );
 }

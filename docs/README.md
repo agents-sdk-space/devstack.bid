@@ -45,7 +45,7 @@
   - [language-theme.md](./user-guide/language-theme.md) ภาษาไทย/อังกฤษ, ธีมดำ/สว่าง, command palette, หน้าเอกสาร
   - [troubleshooting.md](./user-guide/troubleshooting.md) ปัญหาที่พบบ่อยและ FAQ
 - **concepts/** แนวคิดเบื้องหลัง
-  - [stack-template.md](./concepts/stack-template.md), [composition.md](./concepts/composition.md), [safety-model.md](./concepts/safety-model.md), [design-system.md](./concepts/design-system.md)
+  - [stack-template.md](./concepts/stack-template.md), [composition.md](./concepts/composition.md), [safety-model.md](./concepts/safety-model.md), [design-system.md](./concepts/design-system.md), [design/ui-ux-revamp-plan.md](./design/ui-ux-revamp-plan.md)
 - **architecture/** สถาปัตยกรรม
   - [overview.md](./architecture/overview.md), [data-flow.md](./architecture/data-flow.md), [templates-and-composer.md](./architecture/templates-and-composer.md), [scripts-and-share.md](./architecture/scripts-and-share.md), [ai-planner.md](./architecture/ai-planner.md), [api-hardening.md](./architecture/api-hardening.md), [ui-framework.md](./architecture/ui-framework.md), [cloudflare-runtime.md](./architecture/cloudflare-runtime.md), [docs-site.md](./architecture/docs-site.md)
 - **history/** [SUBSYSTEM-HISTORY.md](./history/SUBSYSTEM-HISTORY.md) ไทม์ไลน์ของแต่ละ subsystem พร้อม commit
