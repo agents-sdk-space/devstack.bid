@@ -34,6 +34,7 @@
 | `npm run licenses:check` | `node scripts/third-party-licenses.mjs --check` | ตรวจว่าไม่มี license นอกนโยบาย (permissive เท่านั้น) และไฟล์เป็นปัจจุบัน (`npm test` ตรวจให้ด้วย) |
 | `npm run plugins:sync` | `node scripts/sync-plugin-catalog.mjs` | ดึง `catalog/plugins.json` จาก commit ที่ปักไว้ของ devstack-plugins ตรวจ แล้วเขียน `src/data/plugin-catalog.json` (ต้องใช้เน็ต) |
 | `npm run plugins:check` | `node scripts/sync-plugin-catalog.mjs --check` | ตรวจว่า snapshot ตรงกับ commit ที่ปักไว้ |
+| `npm run cli:test` | `npm --prefix packages/nvx21st test` | รันเทสต์ของ CLI `nvx21st` (`packages/nvx21st`) |
 
 ## ตัวเลือกของ `npm run export`
 
