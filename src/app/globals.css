@@ -328,6 +328,85 @@ samp {
 }
 
 /* ---------------------------------------------------------------------------------------------
+ * DST vector mascot (src/components/brand/dst-mascot.tsx): pure SVG on optional black canvas,
+ * float + subtle yaw toward the right, face slide + blink. Static under prefers-reduced-motion.
+ * ------------------------------------------------------------------------------------------- */
+@layer components {
+  .dst-mascot {
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    border-radius: 0;
+    overflow: hidden;
+  }
+  .dst-mascot--canvas-black {
+    background: #000;
+    border-radius: 12%;
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.06);
+  }
+  .dst-mascot--canvas-brand {
+    background: var(--nvx-brand-pink, #fb0fab);
+    border-radius: 12%;
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 0.12),
+      0 0.75rem 2rem rgb(251 15 171 / 0.35);
+  }
+  .dst-mascot-float,
+  .dst-mascot-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .dst-mascot-eye {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .dst-mascot-turn {
+    transform-origin: 512px 512px;
+  }
+  .dst-mascot-look {
+    transform: translate(0, 0);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .dst-mascot-float {
+      animation: dst-mascot-float 4.6s ease-in-out infinite;
+    }
+    .dst-mascot-body {
+      transform-origin: 512px 512px;
+      animation: dst-mascot-yaw 5.8s ease-in-out infinite;
+    }
+    .dst-mascot-turn {
+      animation: dst-mascot-face-slide 5.8s ease-in-out infinite;
+    }
+    .dst-mascot-eye {
+      animation: dst-mascot-blink 5.4s infinite;
+    }
+  }
+}
+
+@keyframes dst-mascot-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5%); }
+}
+@keyframes dst-mascot-yaw {
+  0%, 100% { transform: rotate(0deg); }
+  42%, 58% { transform: rotate(5deg); }
+}
+@keyframes dst-mascot-face-slide {
+  0%, 100% { transform: translate(0, 0); }
+  42%, 58% { transform: translate(36px, 6px); }
+}
+@keyframes dst-mascot-blink {
+  0%, 44%, 49%, 88%, 91.5%, 95%, 100% { transform: scaleY(1); }
+  46.5% { transform: scaleY(0.08); }
+  89.75% { transform: scaleY(0.08); }
+  93.25% { transform: scaleY(0.12); }
+}
+
+/* ---------------------------------------------------------------------------------------------
  * In-app docs (/docs, src/components/docs/*). Material 3 patterns (navigation drawer, state
  * layers, tonal containers, large rounded shapes) adapted to the NVX black theme. Everything is
  * scoped under .docs-root / .docs-* so no other page changes.
