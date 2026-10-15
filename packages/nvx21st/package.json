@@ -1,0 +1,11 @@
+{
+  "name": "nvx21st",
+  "version": "0.1.0",
+  "description": "devstack.bid template CLI: new project zips, 21st components, deploy-ready zips, wrangler deploy.",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "nvx21st": "bin/nvx21st.mjs" },
+  "files": ["bin", "nvx21st.1.md", "README.md"],
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test test/*.test.mjs" }
+}

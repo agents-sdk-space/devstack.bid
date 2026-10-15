@@ -35,7 +35,8 @@
     "licenses": "node scripts/third-party-licenses.mjs",
     "licenses:check": "node scripts/third-party-licenses.mjs --check",
     "plugins:sync": "node scripts/sync-plugin-catalog.mjs",
-    "plugins:check": "node scripts/sync-plugin-catalog.mjs --check"
+    "plugins:check": "node scripts/sync-plugin-catalog.mjs --check",
+    "cli:test": "npm --prefix packages/nvx21st test"
   },
   "dependencies": {
     "@codesandbox/sandpack-react": "^2.20.0",
