@@ -1,10 +1,10 @@
 import { issueSession } from "@/lib/auth/session";
 import { connection } from "next/server";
-import { exchangeCode, fetchProfile } from "@/lib/auth/github-api";
-import { GITHUB_SCOPES } from "@/lib/auth/github-policy";
+import { exchangeCodeWithScope, fetchProfile } from "@/lib/auth/github-api";
+import { GITHUB_SCOPES, grantedScopes } from "@/lib/auth/github-policy";
 import { planSignIn } from "@/lib/auth/link-account";
 import { oauthFail, readOAuthState, signedInRedirect } from "@/lib/auth/oauth-flow";
-import { sealSecret } from "@/lib/auth/token-box";
+import { seal, sealKeys } from "@/lib/connections/credentials";
 import { chatEnv } from "@/lib/chat/config";
 import { OAUTH_STATE_COOKIE, readCookie } from "@/lib/chat/identity";
 import { chatRuntime } from "@/lib/chat/runtime";
@@ -32,7 +32,7 @@ export async function GET(req: Request) {
   const { db } = await chatRuntime();
   if (!db) return oauthFail(url.origin, secure, "error", "github");
   try {
-    const token = await exchangeCode({
+    const { token, scope } = await exchangeCodeWithScope({
       clientId: server.GITHUB_CLIENT_ID,
       clientSecret: server.GITHUB_CLIENT_SECRET,
       code,
@@ -44,7 +44,7 @@ export async function GET(req: Request) {
       db,
       plan,
       { provider: "github", subject: profile.id, login: profile.login, name: profile.name, email: profile.email, avatarUrl: profile.avatarUrl },
-      { tokenEnc: await sealSecret(secret, token), scope: GITHUB_SCOPES }
+      { tokenEnc: await seal(sealKeys(secret), "github", plan.userId, token), scope: grantedScopes(scope, GITHUB_SCOPES) }
     );
     console.warn(JSON.stringify({ at: "api/auth/github", event: "linked", login: profile.login }));
     return signedInRedirect(url.origin, secure, opened.next, await issueSession(db, plan.userId, secret));

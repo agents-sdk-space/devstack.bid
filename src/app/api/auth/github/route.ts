@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { GITHUB_SCOPES, safeNext } from "@/lib/auth/github-policy";
+import { githubScopesFor, safeNext } from "@/lib/auth/github-policy";
 import { OAUTH_COOKIE_PATH, issueOAuthState, oauthFail } from "@/lib/auth/oauth-flow";
 import { chatEnv } from "@/lib/chat/config";
 import { OAUTH_STATE_COOKIE, namedCookie } from "@/lib/chat/identity";
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   const authorize = new URL("https://github.com/login/oauth/authorize");
   authorize.searchParams.set("client_id", server.GITHUB_CLIENT_ID);
   authorize.searchParams.set("redirect_uri", `${url.origin}/api/auth/github/callback`);
-  authorize.searchParams.set("scope", GITHUB_SCOPES);
+  authorize.searchParams.set("scope", githubScopesFor(url.searchParams.get("scope")));
   authorize.searchParams.set("state", state);
   authorize.searchParams.set("allow_signup", "true");
   const headers = new Headers({ Location: authorize.toString(), "Cache-Control": "no-store" });

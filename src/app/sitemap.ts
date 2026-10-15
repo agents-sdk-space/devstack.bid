@@ -4,7 +4,7 @@ import { TEMPLATE_IDS } from "@/data/templates";
 import { PLUGINS } from "@/lib/plugins/catalog";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const pages = ["/", "/about", "/contact", "/privacy", "/learn", "/templates", "/builder", "/chat", "/chat/dev", "/factory", "/studio/", "/docs", "/design", "/login", "/plugins", "/settings/mcp"];
+  const pages = ["/", "/about", "/contact", "/learn", "/templates", "/builder", "/chat", "/chat/dev", "/factory", "/studio/", "/docs", "/design", "/login", "/plugins", "/settings/mcp", "/support", "/status", "/careers", "/terms", "/security", "/privacy"];
   return [
     ...pages.map((p) => ({ url: `${SITE_URL}${p === "/" ? "" : p}` })),
     ...TEMPLATE_IDS.map((id) => ({ url: `${SITE_URL}/templates/${id}` })),

@@ -8,8 +8,11 @@ import type { Activity, UiEvent } from "@/lib/chat/events";
 import type { DictKey } from "@/lib/i18n";
 import { Mascot } from "../brand/mascot";
 import { useLang } from "../prefs";
+import { DeployCard } from "./deploy-card";
 import { GithubPublish } from "./github-publish";
-import { MarkdownView } from "./markdown-view";
+import { DeployZipButton } from "./deploy-zip-button";
+import { StreamText } from "./stream-text";
+import { ThoughtChain } from "./thought-chain";
 import { SandboxPanel, StatusDot } from "./sandbox-panel";
 import type { ChatAccount, ChatInfo, ChatMessage, ChatMode, ChatModelOption, ConversationSummary, Quota, SandboxStatus } from "./types";
 
@@ -205,7 +208,29 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
   const [mobileTab, setMobileTab] = useState<"chat" | "sandbox">("chat");
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const atBottomRef = useRef(true);
+  const [showJumpLatest, setShowJumpLatest] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const scrollNearBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return true;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 96;
+  }, []);
+
+  const scrollToLatest = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+    atBottomRef.current = true;
+    setShowJumpLatest(false);
+  }, []);
+
+  const onTranscriptScroll = useCallback(() => {
+    const near = scrollNearBottom();
+    atBottomRef.current = near;
+    setShowJumpLatest(!near);
+  }, [scrollNearBottom]);
 
   useEffect(() => {
     if (!byok) return;
@@ -251,9 +276,8 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
   }, [byok, channel, dev]);
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [messages]);
+    if (atBottomRef.current) scrollToLatest();
+  }, [messages, scrollToLatest]);
 
   const openConversation = useCallback(async (id: string) => {
     if (abortRef.current) return;
@@ -376,6 +400,9 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
               break;
             case "file":
               patchAssistant(assistantId, (m) => ({ ...m, files: [...m.files.filter((x) => x.id !== ev.id), { id: ev.id, name: ev.name, size: ev.size, url: ev.url }] }));
+              break;
+            case "deploy":
+              patchAssistant(assistantId, (m) => ({ ...m, deploys: [...(m.deploys ?? []).filter((x) => x.id !== ev.d.id), ev.d] }));
               break;
             case "quota":
               setRemaining((q) => ({ ...q, ...Object.fromEntries(Object.entries(ev).filter(([k, v]) => k !== "t" && v !== undefined)) }));
@@ -557,7 +584,8 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
         {dev && mobileTab === "sandbox" && <div className="flex min-h-0 flex-1 p-2 lg:hidden">{sandbox("flex-1 rounded-xl")}</div>}
 
         <div className={cn("flex min-h-0 flex-1 flex-col", mobileTab === "sandbox" && "hidden lg:flex")}>
-          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">
+          <div className="relative min-h-0 flex-1">
+          <div ref={scrollRef} onScroll={onTranscriptScroll} className="h-full overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">
             {!dev && (
               <div role="radiogroup" aria-label={t("chat.modelPicker")} className="mx-auto mb-4 flex max-w-3xl flex-wrap items-center justify-center gap-1.5">
                 {(info?.models ?? DEFAULT_USER_MODELS).map((m) => {
@@ -639,8 +667,13 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
                       </div>
                       <div className="min-w-0 flex-1 space-y-3">
                         <span className="sr-only">{t("chat.agent")}: </span>
+                        <ThoughtChain
+                          key={`${m.id}-${m.activities.filter((a) => a.kind !== "reasoning").length}`}
+                          activities={m.activities}
+                          pending={m.pending}
+                        />
                         {m.content ? (
-                          <MarkdownView text={m.content} />
+                          <StreamText text={m.content} streaming={Boolean(m.pending)} />
                         ) : m.pending ? (
                           <p className="flex items-center gap-2 text-sm text-muted">
                             <Spinner variant="dots" /> {t(`chat.status.${status}` as const)}…
@@ -663,8 +696,10 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
                             <span>{m.error.message || t("agent.error")}</span>
                           </div>
                         )}
+                        {m.deploys?.map((d) => <DeployCard key={d.id} card={d} />)}
                         {!dev && !byok && m.content && !m.pending && <GithubPublish text={m.content} signedIn={info?.account?.provider === "github"} />}
-                        {m.activities.length > 0 && (
+                        {!dev && !byok && m.content && !m.pending && <DeployZipButton text={m.content} signedIn={Boolean(info?.account)} />}
+                        {dev && m.activities.filter((a) => a.kind !== "reasoning").length > 0 && (
                           <button
                             type="button"
                             onClick={() => {
@@ -686,6 +721,18 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
                 )}
               </ol>
             )}
+          </div>
+          {showJumpLatest && messages.length > 0 && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center px-4">
+              <button
+                type="button"
+                onClick={scrollToLatest}
+                className="focus-ring pointer-events-auto rounded-full border border-border-strong bg-bg px-3 py-1.5 text-[12px] font-medium text-fg shadow-sm"
+              >
+                {t("chat.jumpToLatest")}
+              </button>
+            </div>
+          )}
           </div>
 
           <div className="border-t border-border bg-surface px-3 py-3 sm:px-4">

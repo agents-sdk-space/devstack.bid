@@ -83,3 +83,21 @@ describe("agent indexes", () => {
     expect(isKnownSitePath("/totally-unknown-path")).toBe(false);
   });
 });
+
+describe("route coverage", () => {
+  it("every API route and page is known to the middleware", async () => {
+    const { readdirSync, statSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { isKnownApiPath } = await import("@/lib/agent/api-paths");
+    const { isKnownSitePath } = await import("@/lib/agent/site-paths");
+    const walk = (d: string): string[] => readdirSync(d).flatMap((f) => { const p = join(d, f); return statSync(p).isDirectory() ? walk(p) : [p]; });
+    const files = walk("src/app").filter((f) => /\/(page\.tsx|route\.ts)$/.test(f));
+    for (const f of files) {
+      if (f.includes("[...")) continue;
+      const path = (f.replace(/^src\/app/, "").replace(/\/(page\.tsx|route\.ts)$/, "") || "/").replace(/\[[^\]]+\]/g, "x");
+      if (path.startsWith("/templates/") || path.startsWith("/plugins/")) continue;
+      if (path.startsWith("/api/")) expect(isKnownApiPath(path), path).toBe(true);
+      else expect(isKnownSitePath(path), path).toBe(true);
+    }
+  });
+});

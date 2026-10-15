@@ -45,7 +45,7 @@ export const SECTIONS = [
   {
     id: "user-guide",
     label: { th: "คู่มือผู้ใช้", en: "User guide" },
-    files: ["getting-started", "templates", "builder", "ai-agent", "chat", "dev-chat", "sandbox-factory", "studio", "sharing", "downloads", "language-theme", "troubleshooting"].map((f) => `user-guide/${f}.md`),
+    files: ["getting-started", "templates", "builder", "ai-agent", "chat", "dev-chat", "sandbox-factory", "studio", "customer-deploy", "sharing", "downloads", "language-theme", "troubleshooting"].map((f) => `user-guide/${f}.md`),
   },
   { id: "concepts", label: { th: "แนวคิด", en: "Concepts" }, files: [...["stack-template", "composition", "safety-model", "design-system"].map((f) => `concepts/${f}.md`), "design/ui-ux-revamp-plan.md"] },
   {
@@ -60,7 +60,7 @@ export const SECTIONS = [
   {
     id: "operations",
     label: { th: "การดูแลระบบ", en: "Operations" },
-    files: [...["local-dev", "env-secrets", "deploy-cloudflare", "rollback", "monitoring", "rate-limits-cost", "custom-domain", "d1-database"].map((f) => `operations/${f}.md`), "DEPLOY.md"],
+    files: [...["local-dev", "env-secrets", "deploy-cloudflare", "rollback", "monitoring", "rate-limits-cost", "custom-domain", "d1-database"].map((f) => `operations/${f}.md`), "DEPLOY.md", "deploy-templates.md", "limits.md", "cli-setup.md", "verification/cli-zip-rounds.md"],
   },
   {
     id: "contributing",

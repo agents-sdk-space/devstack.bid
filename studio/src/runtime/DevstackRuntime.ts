@@ -322,6 +322,18 @@ export class DevstackRuntime {
     await this.broker.emit('agent:thinking', { active: false });
   }
 
+  /** Workers-ready zip from the shared DevStack bundle builder (server). */
+  async exportDeployZip(): Promise<void> {
+    this.store.setState({ exporting: true });
+    try {
+      const { buildDeployZipViaServer, downloadBlob } = await import('@/export/exportEngine');
+      const res = await buildDeployZipViaServer(this.fs, 'devstack-app');
+      downloadBlob(res.blob, res.filename);
+    } finally {
+      this.store.setState({ exporting: false });
+    }
+  }
+
   async exportProject(): Promise<void> {
     this.store.setState({ exporting: true });
     try {

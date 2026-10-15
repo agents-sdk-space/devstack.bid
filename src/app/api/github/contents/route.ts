@@ -2,11 +2,10 @@ import { connection } from "next/server";
 import { resolveSignedIn } from "@/lib/auth/session";
 import { GithubApiError, putFile } from "@/lib/auth/github-api";
 import { MAX_FILE_CHARS, parseRepo, safeBranch, safeCommitMessage, safeRepoPath, sameOrigin } from "@/lib/auth/github-policy";
-import { openSecret } from "@/lib/auth/token-box";
 import { chatEnv } from "@/lib/chat/config";
 
 import { chatRuntime, json } from "@/lib/chat/runtime";
-import { githubTokenEnc } from "@/lib/chat/store";
+import { loadGithubToken, sealKeys } from "@/lib/connections/credentials";
 import { HttpError, clientIp, readJsonBody } from "@/lib/server/http";
 import { checkRateLimit } from "@/lib/server/rate-limit";
 
@@ -42,8 +41,7 @@ export async function POST(req: Request) {
   }
   const { db } = await chatRuntime();
   if (!db) return json({ error: "Storage unavailable. / ระบบจัดเก็บไม่พร้อม", code: "no_database" }, 503);
-  const packed = await githubTokenEnc(db, actor.uid);
-  const token = packed ? await openSecret(env.CHAT_COOKIE_SECRET, packed) : null;
+  const token = await loadGithubToken(db, sealKeys(env.CHAT_COOKIE_SECRET), actor.uid);
   if (!token) return json({ error: "Sign in with GitHub again to push code. / เข้าสู่ระบบ GitHub อีกครั้งเพื่อส่งโค้ด", code: "reauth" }, 401);
   try {
     const saved = await putFile(token, { owner: repo.owner, repo: repo.name, path, message, content, branch });

@@ -1,4 +1,5 @@
 import type { RawEvent } from "./agents-api";
+import { CUSTOMER_TOOL_LABELS } from "./customer-tool-defs";
 
 /**
  * Translate Agents API session events into the small, secret-free event vocabulary the /chat UI
@@ -31,7 +32,23 @@ export type UiEvent =
   | { t: "usage"; input: number; output: number }
   | { t: "quota"; messagesLeft?: number; imagesLeft?: number; agentLeft?: number }
   | { t: "done"; messageId: string }
-  | { t: "error"; code: string; message: string };
+  | { t: "error"; code: string; message: string }
+  | { t: "deploy"; d: DeployCardData };
+
+/** Deploy status card in chat (self-heal). No secrets: status, sanitized code, public URL. */
+export interface DeployCardData {
+  id: string;
+  projectId: string;
+  repo: string | null;
+  status: string;
+  url: string | null;
+  errorCode: string | null;
+  fixAttempts: number;
+  maxFixAttempts: number;
+  /** Branch the customer's "Retry deploy" click will deploy. */
+  retryRef: string | null;
+  canRetry: boolean;
+}
 
 const clip = (s: unknown, n = 160) => {
   const v = typeof s === "string" ? s : s == null ? "" : JSON.stringify(s);
@@ -42,6 +59,7 @@ export const FUNCTION_LABELS: Record<string, { label: string; kind: ActivityKind
   generate_ai_agents_website: { label: "Stack Builder: site plan", kind: "tool" },
   get_agents_sdk_info: { label: "Docs lookup (devstack.bid)", kind: "tool" },
   generate_image: { label: "Image generation", kind: "image" },
+  ...Object.fromEntries(Object.entries(CUSTOMER_TOOL_LABELS).map(([k, label]) => [k, { label, kind: "tool" as ActivityKind }])),
 };
 
 export interface MapperState {

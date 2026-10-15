@@ -26,9 +26,16 @@ const STATIC = new Set([
   "/llms.txt",
   "/llms-full.txt",
   "/agent-instructions.txt",
-  "/about",
-  "/contact",
-  "/privacy",
+  "/support",
+  "/status",
+  "/careers",
+  "/terms",
+  "/security",
+  "/settings/cli",
+  "/settings/connections",
+  "/projects",
+  "/design/chat-stream",
+  "/setup.sh",
   "/sitemap.xml",
   "/robots.txt",
   "/manifest.webmanifest",
@@ -52,7 +59,8 @@ export function isKnownSitePath(pathname: string): boolean {
   if (tpl) return KNOWN_TEMPLATE_IDS.includes(tpl[1] as (typeof KNOWN_TEMPLATE_IDS)[number]);
   const plug = path.match(/^\/plugins\/([^/]+)$/);
   if (plug) return PLUGIN_NAMES.has(plug[1]);
-  if (path === "/api/plan") return true;
+  if (/^\/projects\/[^/]+$/.test(path)) return true;
+  if (path.startsWith("/api/")) return true;
   if (path.startsWith("/_next/")) return true;
   if (path.startsWith("/docs-assets/")) return true;
   if (/\.(png|jpg|jpeg|gif|webp|svg|ico|css|js|woff2?|txt|xml|json|map)$/i.test(path)) return true;

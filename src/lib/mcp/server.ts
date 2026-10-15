@@ -7,9 +7,9 @@ import { searchDocs, type SearchEntry } from "@/lib/docs-search";
 import { DOCS, getDoc, llmsTxt, SITE_URL } from "@/lib/docs";
 import { chatRuntime } from "@/lib/chat/runtime";
 import { AUTH_COOKIE, signUid } from "@/lib/chat/identity";
-import { getAccount, getConversation, githubTokenEnc, listConversations, listMessages, loadInlineImage } from "@/lib/chat/store";
+import { getAccount, getConversation, listConversations, listMessages, loadInlineImage } from "@/lib/chat/store";
 import { chatEnv as loadChatEnv } from "@/lib/chat/config";
-import { openSecret } from "@/lib/auth/token-box";
+import { loadGithubToken, sealKeys } from "@/lib/connections/credentials";
 import { listWritableRepos, putFile } from "@/lib/auth/github-api";
 import { parseRepo, safeBranch, safeCommitMessage, safeRepoPath, MAX_FILE_CHARS } from "@/lib/auth/github-policy";
 import { handleTurn } from "@/lib/chat/turn-route";
@@ -333,8 +333,7 @@ export async function callTool(req: Request, name: string, rawArgs: unknown) {
         if (!client || !db) return toolError("unavailable", "Storage is not available.");
         const account = await getAccount(db, client.userId);
         if (account?.provider !== "github") return toolError("github_required", "Sign in to DevStack with GitHub to use GitHub tools.");
-        const packed = await githubTokenEnc(db, client.userId);
-        const token = packed && env.CHAT_COOKIE_SECRET ? await openSecret(env.CHAT_COOKIE_SECRET, packed) : null;
+        const token = env.CHAT_COOKIE_SECRET ? await loadGithubToken(db, sealKeys(env.CHAT_COOKIE_SECRET), client.userId) : null;
         if (!token) return toolError("reauth", "Reconnect GitHub in DevStack before using this tool.");
         return result(await listWritableRepos(token));
       }
@@ -348,8 +347,7 @@ export async function callTool(req: Request, name: string, rawArgs: unknown) {
         const branch = typeof args.branch === "string" && args.branch.trim() ? safeBranch(args.branch) : "main";
         const content = typeof args.content === "string" ? args.content : "";
         if (!repo || !path || !message || !branch || !content.trim() || content.length > MAX_FILE_CHARS) return toolError("invalid", "Repository, path, branch, commit message, or file content is invalid.");
-        const packed = await githubTokenEnc(db, client.userId);
-        const token = packed && env.CHAT_COOKIE_SECRET ? await openSecret(env.CHAT_COOKIE_SECRET, packed) : null;
+        const token = env.CHAT_COOKIE_SECRET ? await loadGithubToken(db, sealKeys(env.CHAT_COOKIE_SECRET), client.userId) : null;
         if (!token) return toolError("reauth", "Reconnect GitHub in DevStack before committing.");
         return result({ ...(await putFile(token, { owner: repo.owner, repo: repo.name, path, message, content, branch })), repo: `${repo.owner}/${repo.name}`, branch, path });
       }

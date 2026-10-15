@@ -51,6 +51,8 @@ const eslintConfig = defineConfig([
     // Studio sub-app (Vite + React, own ESLint/TS config: npm run studio:check) and its build output
     "studio/**",
     "public/studio/**",
+    // Verbatim upstream template copies kept for licence attribution
+    "third_party/**",
   ]),
 ]);
 

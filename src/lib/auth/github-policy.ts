@@ -6,6 +6,19 @@
 /** Classic OAuth scopes: profile, email, and write access to repos the user can push. */
 export const GITHUB_SCOPES = "read:user user:email repo";
 
+/** Least-privilege option (`/api/auth/github?scope=public`): public repositories only. */
+export const GITHUB_SCOPES_PUBLIC = "read:user user:email public_repo";
+
+export function githubScopesFor(choice: string | null | undefined): string {
+  return choice === "public" ? GITHUB_SCOPES_PUBLIC : GITHUB_SCOPES;
+}
+
+/** Normalise the scope string GitHub reports ("repo,user:email") for storage. */
+export function grantedScopes(raw: string | null | undefined, fallback: string): string {
+  const s = (raw ?? "").split(/[\s,]+/).filter((x) => /^[a-z:_]{2,40}$/.test(x));
+  return s.length ? s.join(" ") : fallback;
+}
+
 export const MAX_FILE_CHARS = 100_000;
 
 export interface AccountPlan {
