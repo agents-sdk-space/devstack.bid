@@ -1,0 +1,12 @@
+{
+  "name": "devstack.bid",
+  "user": "ubuntu",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "install": "npm ci",
+  "repositoryDependencies": [
+    "https://github.com/agents-sdk-space/devstack.bid"
+  ]
+}
