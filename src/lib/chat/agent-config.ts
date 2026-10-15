@@ -1,4 +1,5 @@
 import agentDefinition from "../../../agents/orchestrator/agent.json";
+import { CUSTOMER_GITHUB_TOOLS } from "./customer-tool-defs";
 import type { ChatEnv } from "./config";
 
 /**
@@ -25,7 +26,9 @@ export function sessionBody(env: ChatEnv, input: string, metadata: Record<string
   void _name;
   void _model;
   return {
-    ...(env.CHAT_AGENT_ID ? { agent_id: env.CHAT_AGENT_ID, agent: override } : { agent: { ...inline, ...override } }),
+    // Customer GitHub tools are added inline (TS-only; the Python reference app does not ship them).
+    // A saved CHAT_AGENT_ID agent must define them itself to use them.
+    ...(env.CHAT_AGENT_ID ? { agent_id: env.CHAT_AGENT_ID, agent: override } : { agent: { ...inline, tools: [...inline.tools, ...CUSTOMER_GITHUB_TOOLS], ...override } }),
     environment: environmentConfig(env),
     input,
     metadata,

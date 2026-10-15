@@ -52,6 +52,7 @@
 - **operations/** การรันและดูแล
   - [local-dev.md](./operations/local-dev.md), [env-secrets.md](./operations/env-secrets.md), [deploy-cloudflare.md](./operations/deploy-cloudflare.md), [rollback.md](./operations/rollback.md), [monitoring.md](./operations/monitoring.md), [rate-limits-cost.md](./operations/rate-limits-cost.md), [custom-domain.md](./operations/custom-domain.md)
   - คู่มือ deploy ฉบับเต็มเดิม: [DEPLOY.md](./DEPLOY.md) (TH + EN)
+  - [deploy-templates.md](./deploy-templates.md) ตาราง template → วิธี deploy ลูกค้า (Cloudflare Workers)
 - **contributing/** การร่วมพัฒนา
   - [add-template.md](./contributing/add-template.md), [add-component.md](./contributing/add-component.md), [testing.md](./contributing/testing.md), [release-process.md](./contributing/release-process.md), [docs-maintenance.md](./contributing/docs-maintenance.md)
 - **reference/** ข้อมูลอ้างอิง

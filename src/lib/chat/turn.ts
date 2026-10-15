@@ -7,6 +7,10 @@ import { addSpend, consume, imageRules } from "./limits";
 import { generateSitePlan } from "./site-plan";
 import { finishMessage, saveInlineImage, setAgentSession, type ConversationRow, type D1Like, type MessageRow } from "./store";
 import type { SearchEntry } from "@/lib/docs-search";
+import { GithubApiError } from "@/lib/auth/github-api";
+import { sealKeys } from "@/lib/connections/credentials";
+import { ServiceError } from "@/lib/connections/github-service";
+import { CUSTOMER_TOOL_NAMES, CustomerToolError, runCustomerTool } from "./customer-tools";
 
 export interface TurnDeps {
   api: AgentsApi;
@@ -86,6 +90,16 @@ export async function runTurn(d: TurnDeps): Promise<{ outcome: string; usage?: {
       images.push({ id, url, caption });
       emit({ t: "image", id, url, caption });
       return { image_url: url, caption, size, note: "Show it with Markdown: ![caption](image_url)" };
+    }
+    if (CUSTOMER_TOOL_NAMES.has(name)) {
+      if (d.byok || !d.env.CHAT_COOKIE_SECRET) throw new ToolFailure("GitHub tools are only available in Dev Chat for signed-in accounts.");
+      try {
+        return await runCustomerTool(name, args, { db: d.db, uid: d.uid, keys: sealKeys(d.env.CHAT_COOKIE_SECRET) });
+      } catch (err) {
+        if (err instanceof CustomerToolError || err instanceof ServiceError) throw new ToolFailure(err.message);
+        if (err instanceof GithubApiError) throw new ToolFailure(`GitHub ${err.status}: ${err.message}`);
+        throw err;
+      }
     }
     throw new ToolFailure(`Unknown function ${name}`);
   }

@@ -12,7 +12,7 @@ interface Repo {
   defaultBranch: string;
 }
 
-/** Push one fenced code block to a repository the signed-in user can write. */
+/** Push one fenced code block to a repository the signed-in user can write, or open a PR with all of them (PR-B). */
 export function GithubPublish({ text, signedIn }: { text: string; signedIn: boolean }) {
   const files = fencedFiles(text);
   const { t } = useLang();
@@ -26,6 +26,7 @@ export function GithubPublish({ text, signedIn }: { text: string; signedIn: bool
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState<string | null>(null);
+  const [asPr, setAsPr] = useState(false);
 
   if (files.length === 0) return null;
 
@@ -55,12 +56,19 @@ export function GithubPublish({ text, signedIn }: { text: string; signedIn: bool
     setBusy(true);
     setError("");
     try {
-      const res = await fetch("/api/github/contents", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ repo, path, branch, message: message.trim() || `Add ${path}`, content: file.code }),
-      });
-      const data = (await res.json().catch(() => ({}))) as { error?: string; url?: string };
+      const res = asPr
+        ? await fetch(`/api/github/pulls?repo=${encodeURIComponent(repo)}&base=${encodeURIComponent(branch)}`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ title: message.trim() || `Add ${files.length} file(s) from DevStack`, body: "", files: files.map((f) => ({ path: f.path === file.path ? path : f.path, content: f.code })) }),
+          })
+        : await fetch("/api/github/contents", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ repo, path, branch, message: message.trim() || `Add ${path}`, content: file.code }),
+          });
+      const raw = (await res.json().catch(() => ({}))) as { error?: string; url?: string; pr?: { url?: string } };
+      const data = { error: raw.error, url: raw.pr?.url ?? raw.url };
       if (!res.ok || !data.url) {
         setError(data.error || t("github.failed"));
         return;
@@ -138,6 +146,10 @@ export function GithubPublish({ text, signedIn }: { text: string; signedIn: bool
             <Field label={t("github.message")}>
               {(p) => <Input {...p} value={message} onChange={(e) => setMessage(e.target.value)} placeholder={`Add ${path}`} />}
             </Field>
+            <label className="flex items-center gap-2 text-[13px] text-fg">
+              <input type="checkbox" checked={asPr} onChange={(e) => setAsPr(e.target.checked)} className="accent-current" />
+              {files.length > 1 ? `Open a pull request with all ${files.length} files (base = branch above)` : "Open a pull request (base = branch above)"}
+            </label>
             <pre className={cn("max-h-40 overflow-auto rounded-lg border border-border bg-bg p-3 font-mono text-[12px] leading-relaxed text-muted")}>
               {file?.code}
             </pre>
