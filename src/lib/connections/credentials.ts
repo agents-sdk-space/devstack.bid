@@ -22,6 +22,49 @@ export function sealKeys(cookieSecret: string, source: Record<string, string | u
   return { cookieSecret, credentialsKey: raw && validCredentialsKey(raw) ? raw : undefined };
 }
 
+interface SecretsStoreBinding {
+  get(): Promise<string>;
+}
+
+let storeKey: Promise<string | undefined> | null = null;
+
+/** Reads CREDENTIALS_KEY from the Secrets Store binding (`await env.CREDENTIALS_KEY.get()`), cached per isolate. */
+export async function storeCredentialsKey(binding: unknown): Promise<string | undefined> {
+  if (!binding || typeof (binding as SecretsStoreBinding).get !== "function") return undefined;
+  // Wrap: the binding (and the dev platform proxy's RPC stub) may return a non-native thenable.
+  storeKey ??= Promise.resolve()
+    .then(() => (binding as SecretsStoreBinding).get())
+    .then((v) => v?.trim() || undefined)
+    .catch(() => {
+      storeKey = null;
+      return undefined;
+    });
+  return storeKey;
+}
+
+export function resetStoreKeyCache(): void {
+  storeKey = null;
+}
+
+/**
+ * Seal keys for the current request. Prefers the Secrets Store binding CREDENTIALS_KEY; falls back to a
+ * plain Worker secret of the same name (process.env), then to legacy v1 only.
+ */
+export async function resolveSealKeys(cookieSecret: string, bindings?: Record<string, unknown>): Promise<SealKeys> {
+  let env = bindings;
+  if (!env) {
+    try {
+      const { getCloudflareContext } = await import("@opennextjs/cloudflare");
+      env = (await getCloudflareContext({ async: true })).env as unknown as Record<string, unknown>;
+    } catch {
+      env = {};
+    }
+  }
+  const fromStore = await storeCredentialsKey(env.CREDENTIALS_KEY);
+  if (fromStore && validCredentialsKey(fromStore)) return { cookieSecret, credentialsKey: fromStore };
+  return sealKeys(cookieSecret);
+}
+
 /** 32 random bytes, base64 (`openssl rand -base64 32`). */
 export function validCredentialsKey(raw: string): boolean {
   if (!/^[A-Za-z0-9+/]{43}=$/.test(raw)) return false;

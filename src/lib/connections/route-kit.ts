@@ -6,7 +6,7 @@ import { chatRuntime, json } from "@/lib/chat/runtime";
 import { getAccount, type D1Like } from "@/lib/chat/store";
 import { clientIp } from "@/lib/server/http";
 import { checkRateLimit } from "@/lib/server/rate-limit";
-import { sealKeys, type SealKeys } from "./credentials";
+import { resolveSealKeys, type SealKeys } from "./credentials";
 
 export interface Actor {
   uid: string;
@@ -24,7 +24,9 @@ export async function gate(req: Request, opts: { write: boolean; burstKey: strin
   if (opts.write && !sameOrigin(req)) return json({ error: "Cross-site request blocked. / คำขอข้ามไซต์ถูกปฏิเสธ", code: "forbidden" }, 403);
   const env = chatEnv();
   if (!env.CHAT_COOKIE_SECRET) return json({ error: "Not signed in. / ยังไม่ได้เข้าสู่ระบบ", code: "unauthorized" }, 401);
-  const burst = await checkRateLimit("NVX_CHAT_LIMITER", `${opts.burstKey}:${clientIp(req)}`, opts.perMinute);
+  // Writes use the shared Workers limiter (4 / 60 s per key). Reads (page loads, deploy status polling every
+  // 3 s) use the per-isolate limiter at `perMinute`: the binding's fixed 4/min would throttle normal use.
+  const burst = await checkRateLimit("NVX_CHAT_LIMITER", `${opts.burstKey}:${clientIp(req)}`, opts.perMinute, { memoryOnly: !opts.write });
   if (!burst.ok) return json({ error: "Too many requests. / ส่งคำขอถี่เกินไป", code: "rate_limited" }, 429, { "Retry-After": "60" });
   const actor = await resolveSignedIn(req, env.CHAT_COOKIE_SECRET);
   if (!actor.authenticated || !actor.uid) return json({ error: "Sign in first. / กรุณาเข้าสู่ระบบก่อน", code: "unauthorized" }, 401);
@@ -32,7 +34,7 @@ export async function gate(req: Request, opts: { write: boolean; burstKey: strin
   if (!db) return json({ error: "Storage unavailable. / ระบบจัดเก็บไม่พร้อม", code: "no_database" }, 503);
   const account = await getAccount(db, actor.uid).catch(() => null);
   if (!account) return json({ error: "Sign in with an account (not a guest browser). / กรุณาเข้าสู่ระบบด้วยบัญชี", code: "account_required" }, 401);
-  return { uid: actor.uid, db, keys: sealKeys(env.CHAT_COOKIE_SECRET), provider: account.provider, login: account.login };
+  return { uid: actor.uid, db, keys: await resolveSealKeys(env.CHAT_COOKIE_SECRET), provider: account.provider, login: account.login };
 }
 
 export const isResponse = (x: unknown): x is Response => x instanceof Response;

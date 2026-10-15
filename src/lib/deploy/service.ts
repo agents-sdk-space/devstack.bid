@@ -3,7 +3,8 @@ import { readBlob, readTree } from "@/lib/auth/github-api";
 import { safeBranch } from "@/lib/auth/github-policy";
 import type { D1Like } from "@/lib/chat/store";
 import { audit } from "@/lib/connections/audit";
-import { loadCredential, loadGithubToken, type SealKeys } from "@/lib/connections/credentials";
+import { loadCredential, loadGithubToken, type CredentialMeta, type SealKeys } from "@/lib/connections/credentials";
+import { loadEnv } from "@/lib/connections/environment";
 import { ServiceError, takeQuota } from "@/lib/connections/github-service";
 import { LIMITS, safeWorkerName } from "@/lib/connections/policy";
 import type { ProjectRow } from "@/lib/connections/projects";
@@ -106,6 +107,13 @@ export function selectFiles(profile: DeployProfile, entries: { path: string; typ
   return chosen;
 }
 
+/** Remembered Environment entries CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID (fallback when no connection row). */
+async function rememberedCloudflare(db: D1Like, keys: SealKeys, uid: string): Promise<{ secret: string; meta: CredentialMeta } | null> {
+  const secret = await loadEnv(db, keys, uid, "CLOUDFLARE_API_TOKEN").catch(() => null);
+  const account = await loadEnv(db, keys, uid, "CLOUDFLARE_ACCOUNT_ID").catch(() => null);
+  return secret && account && /^[a-f0-9]{32}$/.test(account) ? { secret, meta: { account_id: account } } : null;
+}
+
 /**
  * POST /api/projects/:id/deploy. Validates synchronously (quota, one in flight, credentials, profile),
  * records a `queued` deployment and runs the upload in the background.
@@ -117,7 +125,9 @@ export async function startDeploy(
   project: ProjectRow,
   rawRef: string | null,
   waitUntil: (p: Promise<unknown>) => void,
-  f: typeof fetch = fetch
+  f: typeof fetch = fetch,
+  /** Token entered with "Remember" off: used for this deploy only, never persisted. */
+  once?: { secret: string; meta: CredentialMeta } | null
 ): Promise<DeploymentRow> {
   const upload = !project.repo_full_name;
   const ref = upload ? "upload" : safeBranch(rawRef || project.default_branch || "main");
@@ -126,7 +136,7 @@ export async function startDeploy(
   if (inflight) throw new ServiceError("conflict", "A deploy is already running for this project. / มี deploy กำลังทำงานอยู่", 409);
   const gh = upload ? null : await loadGithubToken(db, keys, uid);
   if (!upload && !gh) throw new ServiceError("reauth", "Connect GitHub first. / เชื่อมต่อ GitHub ก่อน", 401);
-  const cred = await loadCredential(db, keys, uid, "cloudflare");
+  const cred = once ?? (await loadCredential(db, keys, uid, "cloudflare")) ?? (await rememberedCloudflare(db, keys, uid));
   if (!cred) throw new ServiceError("reauth", "Connect Cloudflare in /settings/connections first. / เชื่อมต่อ Cloudflare ก่อน", 401);
   const [owner, repo] = upload ? ["", ""] : project.repo_full_name!.split("/");
   const tree = upload ? null : await readTree(gh!, owner, repo, ref);

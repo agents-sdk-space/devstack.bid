@@ -10,14 +10,14 @@ import { HttpError, readJsonBody } from "@/lib/server/http";
 type Ctx = { params: Promise<{ kind: string }> };
 const SAVABLE = new Set<CredentialKind>(["cloudflare", "openai"]);
 
-/** PUT /api/connections/cloudflare {token, accountId} | /api/connections/openai {key}: validate with the provider, seal, save. */
+/** PUT /api/connections/cloudflare {token, accountId, remember?} | /api/connections/openai {key, remember?}: validate with the provider; seal + save only when remember === true. */
 export async function PUT(req: Request, ctx: Ctx) {
   await connection();
   const { kind } = await ctx.params;
   if (!SAVABLE.has(kind as CredentialKind)) return json({ error: "Unknown connection. / ไม่รู้จักการเชื่อมต่อนี้", code: "not_found" }, 404);
   const a = await gate(req, { write: true, burstKey: "conn-put", perMinute: 6 });
   if (isResponse(a)) return a;
-  let body: { token?: unknown; accountId?: unknown; key?: unknown };
+  let body: { token?: unknown; accountId?: unknown; key?: unknown; remember?: unknown };
   try {
     body = ((await readJsonBody(req, 4_000)) ?? {}) as typeof body;
   } catch (err) {
@@ -27,10 +27,14 @@ export async function PUT(req: Request, ctx: Ctx) {
   const accountId = String(body.accountId ?? "").trim().toLowerCase();
   const result = kind === "cloudflare" ? await validateCloudflare(secret, accountId) : await validateOpenAI(secret);
   if (!result.ok) return json({ error: ERROR_TEXT[result.code], code: result.code }, result.code === "provider_unavailable" ? 502 : 400);
+  if (body.remember !== true) {
+    // "Remember" off (default): verified for this request only, nothing persisted.
+    return json({ ok: true, remembered: false, meta: { accountId: result.meta.account_id ?? null, label: result.meta.label ?? null } });
+  }
   await saveCredential(a.db, a.keys, a.uid, kind as CredentialKind, secret, result.meta);
   await audit(a.db, a.uid, "credential.saved", kind);
   console.warn(JSON.stringify({ at: "api/connections", event: "saved", kind }));
-  return json({ ok: true });
+  return json({ ok: true, remembered: true });
 }
 
 /** DELETE /api/connections/:kind — removes the row; for GitHub also revokes the OAuth grant. */

@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Create token menu** next to every token/key input (Connections, direct deploy, AI agent panel, Sandbox Factory, Environment): links to the official Cloudflare, GitHub fine-grained, OpenAI, Vercel and Hugging Face token pages (URLs verified against provider docs 2026-10-15). Monochrome, keyboard operable, our own component.
+- **Remember checkbox** (default off) next to each token input. Off = used once for that request, never persisted. On = sealed with CREDENTIALS_KEY v2 into the new **/settings/environment** page (name + created/updated/last-used only, delete). D1 migration `0012_user_environment.sql`; API `/api/environment`. Direct deploy accepts a one-off Cloudflare token and falls back to remembered `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`.
+- **Chat stream archive to R2** (binding `CHAT_STREAMS`, bucket `nvx-chat-streams`): each turn's streamed reply and thinking steps are written to `chat/<uid>/<conversationId>/<messageId>.json`. D1 history and the UI are unchanged.
+- **CI builds the app** (`npm run build`) in the check job.
+
+### Changed
+
+- **CREDENTIALS_KEY moved to Cloudflare Secrets Store** (`secrets_store_secrets` binding, read with `await env.CREDENTIALS_KEY.get()`, cached per isolate). Falls back to a plain Worker secret, then legacy v1. Takes effect at the next deploy; existing v1 rows are re-sealed as v2 on first use.
+- `PUT /api/connections/:kind` saves only when `remember: true`; otherwise it verifies and returns without storing.
+- Sandbox Factory no longer keeps the OpenAI key in `sessionStorage`.
+
+### Fixed
+
+- `/api/connections`, `/api/projects`, `/api/deployments` and `/api/environment` reads were throttled by the fixed 4 / 60 s `NVX_CHAT_LIMITER` binding (deploy-status polling every 3 s returned 429). Reads now use the per-isolate limiter at each route's `perMinute`; writes keep the shared binding.
+- Secrets Store `get()` result is wrapped in a native Promise (the dev platform proxy returns a non-native thenable).
+
 - macOS arm64 one-command setup: `curl -fsSL https://devstack.bid/setup.sh | bash -s -- my-app` with a scoped `cli:setup` key from `/settings/cli` (hashed, shown once, revocable); outputs `<name>/` and `<name>-deploy.zip`. New routes `/setup.sh`, `/api/cli/whoami`, `/api/cli/scaffold`, `/api/cli/starter`, `/api/projects/:id/zip`.
 - One shared deploy-zip builder (`src/lib/deploy/bundle.ts`) for CLI and web "Download zip": wrangler.jsonc per `templates.ts`, `package.json` `deploy` script, `DEPLOY.txt` (env var names only), `NOTICE`; secret files are never included.
 - Zip upload → deploy in /projects ("Deploy from a zip"): validates bundle structure, size/file limits, paths and zip-slip, strips env files, rejects key files and secret-looking content; stores files in D1 (`project_files`, migration 0011) and deploys with the existing Cloudflare provider; Retry and chat self-heal (`apply_fix`) work for upload projects.
