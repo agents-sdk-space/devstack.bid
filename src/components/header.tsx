@@ -12,6 +12,7 @@ import { Mascot } from "./brand/mascot";
 import { TerminalSignature } from "./brand/terminal-signature";
 import type { DictKey } from "@/lib/i18n";
 import { useDarkMode, useLang } from "./prefs";
+import { CookiePreferences } from "./cookie-preferences";
 
 const NAV = [
   { href: "/", key: "nav.home", Icon: House },
@@ -215,6 +216,15 @@ const FOOTER: { heading: "footer.product" | "footer.resources" | "footer.develop
   },
 ];
 
+const LEGAL: { href: string; key: DictKey }[] = [
+  { href: "/support", key: "footer.support" },
+  { href: "/status", key: "footer.status" },
+  { href: "/careers", key: "footer.careers" },
+  { href: "/terms", key: "footer.terms" },
+  { href: "/security", key: "footer.security" },
+  { href: "/privacy", key: "footer.privacy" },
+];
+
 /** App-style pages (/chat, /chat/dev) fill the viewport, so they have no footer. */
 export function hidesFooter(pathname: string | null): boolean {
   return !!pathname && (pathname === "/chat" || pathname.startsWith("/chat/"));
@@ -251,7 +261,23 @@ export function Footer() {
           </nav>
         ))}
       </div>
-      <p className="mx-auto max-w-content border-t border-border px-5 py-6 text-caption leading-relaxed text-muted">{t("footer.text")}</p>
+      <div className="border-t border-border">
+        <div className="mx-auto flex max-w-content flex-col gap-4 px-5 py-6 text-caption text-muted lg:flex-row lg:items-center lg:justify-between">
+          <nav aria-label={t("footer.legal")}>
+            <ul className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              {LEGAL.map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="focus-ring rounded-sm hover:text-fg">{t(l.key)}</Link>
+                </li>
+              ))}
+              <li>
+                <CookiePreferences />
+              </li>
+            </ul>
+          </nav>
+          <p>{t("footer.copyright")}</p>
+        </div>
+      </div>
     </footer>
   );
 }
