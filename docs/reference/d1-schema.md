@@ -12,7 +12,7 @@ Reference ของทุกตารางในฐานข้อมูล D1 
 | `value` | TEXT | ไม่ | — | |
 | `updated_at` | INTEGER | ไม่ | now (ms) | |
 
-ไฟล์ migration ตั้ง `schema_version` ไปจนถึง `8` บน remote `nvx-db` มีการบันทึกว่า apply `0001`–`0007` แล้วเมื่อ 14 ต.ค. 2026 และ apply `0008_mcp_clients` ก่อน deploy MCP ในวันเดียวกัน
+ไฟล์ migration ตั้ง `schema_version` ไปจนถึง `9` บน remote `nvx-db` มีการบันทึกว่า apply `0001`–`0007` แล้วเมื่อ 14 ต.ค. 2026 และ apply `0008_mcp_clients` ก่อน deploy MCP ในวันเดียวกัน `0009_auth_sessions` ยังไม่ apply บน remote (ต้องได้รับอนุมัติ และต้อง apply ก่อน deploy โค้ดที่ใช้ตารางนี้)
 
 ## `users`
 
@@ -52,6 +52,19 @@ Index: `users_auth_identity_uq` (unique: `auth_provider`, `auth_subject`), `user
 | `updated_at` | INTEGER | ไม่ | now (ms) | |
 
 ออกจากระบบไม่ลบแถวนี้ อีเมลเดียวกันบน Google หรือ GitHub เป็นคนละแถวใน `users`
+
+## `auth_sessions` (0009)
+
+One row per signed-in browser. / หนึ่งแถวต่อเบราว์เซอร์ที่ล็อกอินอยู่
+
+| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น | หมายเหตุ |
+|---|---|---|---|---|
+| `id` | TEXT | ไม่ | — | PK, UUID สุ่ม (session id ใน cookie `nvx_auth`) |
+| `user_id` | TEXT | ไม่ | — | FK → `users.id`, `ON DELETE CASCADE`; index `auth_sessions_user_idx` |
+| `created_at` | INTEGER | ไม่ | now (ms) | |
+| `expires_at` | INTEGER | ไม่ | — | ms; 30 วันหลังล็อกอิน |
+
+ทุกวิธีล็อกอิน (Cursor, Google, GitHub, รหัสผ่าน DevStack) สร้างแถวนี้ cookie คือ `<user id>.<session id>.<HMAC>` ออกจากระบบลบแถวของเบราว์เซอร์นั้น (`?everywhere=1` ลบทุกแถวของผู้ใช้) ถ้าไม่มีแถวหรือหมดอายุ cookie ใช้ไม่ได้ cookie แบบเก่า `<user id>.<HMAC>` ยังใช้ได้เพื่อไม่ให้ผู้ใช้เดิมหลุด และเป็นรูปแบบที่ MCP server ใช้ภายใน
 
 ## `conversations`
 
@@ -120,6 +133,7 @@ Migration `0008_mcp_clients` เพิ่ม `user_id` ที่ผูกกั�
 - **0005** `conversations.channel` (`'user'|'dev'`, default `'user'`; แถวที่มี `agent_session_id` หรือ `source='factory'` ถูกตั้งเป็น `'dev'`), index `conversations_user_channel_updated`, `schema_version = 5`
 - **0006** `users.login`, `users.avatar_url`, ตาราง `github_credentials` (`user_id` PK → `users.id`, `token_enc` คือ ciphertext AES-GCM ของ OAuth token, `scope`, `updated_at`), `schema_version = 6` apply บน remote แล้วเมื่อ 14 ต.ค. 2026
 - **0007** ตาราง `password_credentials` (แฮช PBKDF2 ของบัญชี DevStack), `schema_version = 7` apply บน remote แล้วเมื่อ 14 ต.ค. 2026
+- **0009** ตาราง `auth_sessions` (session ที่เพิกถอนได้), `schema_version = 9` ยังไม่ apply บน remote
 - **0008** `api_clients.user_id` foreign key ไป `users.id` และ active-owner index สำหรับจัดการ key ที่หน้า MCP settings apply บน remote แล้วก่อน deploy MCP เมื่อ 14 ต.ค. 2026
 
 bucket ของ `usage_counters`: `d:YYYYMMDD` = วันตามเวลาไทย (UTC+7), `h:YYYYMMDDHH` = ชั่วโมง UTC

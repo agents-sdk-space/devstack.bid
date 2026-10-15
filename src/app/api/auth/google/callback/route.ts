@@ -1,9 +1,10 @@
+import { issueSession } from "@/lib/auth/session";
 import { connection } from "next/server";
 import { exchangeGoogleCode, fetchGoogleProfile } from "@/lib/auth/google-api";
 import { planSignIn } from "@/lib/auth/link-account";
 import { oauthFail, readOAuthState, signedInRedirect } from "@/lib/auth/oauth-flow";
 import { chatEnv } from "@/lib/chat/config";
-import { OAUTH_STATE_COOKIE, readCookie, signUid } from "@/lib/chat/identity";
+import { OAUTH_STATE_COOKIE, readCookie } from "@/lib/chat/identity";
 import { chatRuntime } from "@/lib/chat/runtime";
 import { saveOAuthAccount } from "@/lib/chat/store";
 import { serverEnv } from "@/lib/server/env";
@@ -41,7 +42,7 @@ export async function GET(req: Request) {
     const plan = await planSignIn(db, req, secret, "google", profile.id);
     await saveOAuthAccount(db, plan, { provider: "google", subject: profile.id, login: profile.login, name: profile.name, email: profile.email, avatarUrl: profile.avatarUrl });
     console.warn(JSON.stringify({ at: "api/auth/google", event: "linked" }));
-    return signedInRedirect(url.origin, secure, opened.next, await signUid(plan.userId, secret));
+    return signedInRedirect(url.origin, secure, opened.next, await issueSession(db, plan.userId, secret));
   } catch (error) {
     console.warn(JSON.stringify({ at: "api/auth/google", event: "failed", name: (error as Error)?.name }));
     return oauthFail(url.origin, secure, "error", "google");

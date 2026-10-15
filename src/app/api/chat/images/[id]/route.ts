@@ -1,5 +1,6 @@
 import { connection } from "next/server";
-import { resolveActor } from "@/lib/chat/identity";
+import { resolveSignedIn } from "@/lib/auth/session";
+
 import { chatEnv, chatRuntime, json, unavailable } from "@/lib/chat/runtime";
 import { loadInlineImage } from "@/lib/chat/store";
 
@@ -10,7 +11,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const env = chatEnv();
   const { db } = await chatRuntime();
   if (unavailable(env, db) || !/^[0-9a-f-]{36}$/.test(id)) return json({ error: "Not found" }, 404);
-  const actor = await resolveActor(req, env.CHAT_COOKIE_SECRET!);
+  const actor = await resolveSignedIn(req, env.CHAT_COOKIE_SECRET!);
   if (!actor.uid) return json({ error: "Not found" }, 404);
   const uid = actor.uid;
   const img = await loadInlineImage(db!, uid, id);

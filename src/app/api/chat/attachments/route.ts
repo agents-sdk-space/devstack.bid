@@ -1,5 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { resolveActor } from "@/lib/chat/identity";
+import { resolveSignedIn } from "@/lib/auth/session";
+
 import { chatEnv, chatRuntime, json } from "@/lib/chat/runtime";
 import { newId } from "@/lib/chat/store";
 import { clientIp } from "@/lib/server/http";
@@ -51,7 +52,7 @@ export async function POST(req: Request) {
   }
   const { db } = await chatRuntime();
   if (!db || !env.CHAT_COOKIE_SECRET) return json({ error: "Storage unavailable", code: "no_database" }, 503);
-  const actor = await resolveActor(req, env.CHAT_COOKIE_SECRET, { issue: true });
+  const actor = await resolveSignedIn(req, env.CHAT_COOKIE_SECRET, { issue: true });
   const uid = actor.uid!;
   const setCookie = actor.setCookie;
 

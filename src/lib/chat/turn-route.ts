@@ -1,4 +1,5 @@
 import "server-only";
+import { resolveSignedIn } from "@/lib/auth/session";
 import { GATEWAY_MODELS, isGatewayModel } from "@/lib/ai/gateway-models";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { AiBinding } from "@/lib/ai/workers-ai";
@@ -9,7 +10,6 @@ import { checkRateLimit } from "@/lib/server/rate-limit";
 import { AgentsApi } from "./agents-api";
 import { quotaConfig } from "./config";
 import type { UiEvent } from "./events";
-import { resolveActor } from "./identity";
 import { agentRules, consume, imageRules, messageRules, pruneCounters, refund, spentToday, type LimitResult } from "./limits";
 import { runImageTurn, runPlainTurn, USER_MODES, type UserMode } from "./plain-turn";
 import { chatEnv, chatRuntime, json, unavailable } from "./runtime";
@@ -99,7 +99,7 @@ export async function handleTurn(req: Request, channel: "user" | "dev"): Promise
   const mode: UserMode | "agent" = channel === "dev" ? "agent" : USER_MODES.includes(body.mode as UserMode) ? (body.mode as UserMode) : "general";
   const gatewayModel = mode === "gateway" && typeof body.model === "string" && isGatewayModel(body.model) ? body.model : mode === "gateway" ? GATEWAY_MODELS[0].id : undefined;
 
-  const actor = await resolveActor(req, env.CHAT_COOKIE_SECRET!, { issue: true });
+  const actor = await resolveSignedIn(req, env.CHAT_COOKIE_SECRET!, { issue: true });
   const uid = actor.uid!;
   const setCookie = actor.setCookie;
   const cookie: Record<string, string> = setCookie ? { "Set-Cookie": setCookie } : {};

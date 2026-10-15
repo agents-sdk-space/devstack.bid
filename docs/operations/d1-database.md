@@ -67,3 +67,15 @@ npx wrangler d1 export nvx-db --remote --output backup.sql       # export เป
 ## ดูเพิ่ม
 
 [env-secrets.md](./env-secrets.md), [deploy-cloudflare.md](./deploy-cloudflare.md), [rollback.md](./rollback.md)
+
+## Migration 0009 (auth sessions) · ยังไม่ apply
+
+`0009_auth_sessions.sql` เพิ่มตาราง `auth_sessions` สำหรับ session ที่เพิกถอนได้ **ต้อง apply บน remote ก่อน deploy โค้ดที่ใช้ตารางนี้** ไม่อย่างนั้นการล็อกอินใหม่ทุกวิธีจะตอบ `auth=error` ต้องได้รับอนุมัติก่อน (AGENTS.md ข้อ 3)
+
+Apply `0009` on remote before deploying the code that uses it, after explicit approval:
+
+```bash
+npx wrangler d1 migrations list nvx-db --remote      # expect 0009_auth_sessions pending
+npx wrangler d1 migrations apply nvx-db --remote
+npx wrangler d1 execute nvx-db --remote --command "SELECT value FROM schema_meta WHERE key = 'schema_version'"   # expect 9
+```

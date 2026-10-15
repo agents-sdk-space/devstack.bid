@@ -1,5 +1,5 @@
 import "server-only";
-import { resolveActor } from "./identity";
+import { resolveSignedIn } from "@/lib/auth/session";
 import { consume, factoryRules } from "./limits";
 import { chatEnv, chatRuntime, json } from "./runtime";
 import { factoryUnavailable, readUserKey } from "./factory";
@@ -37,7 +37,7 @@ export async function factoryContext(req: Request, bucket?: "session" | "turn"):
       return json({ error: "Hourly request limit reached for this network. / ใช้ครบโควตารายชั่วโมงของเครือข่ายนี้แล้ว", code: "rate_limited", limit: r.exceeded, retryAfter: retry }, 429, { "Retry-After": String(retry) });
     }
   }
-  const actor = await resolveActor(req, env.CHAT_COOKIE_SECRET!, { issue: true });
+  const actor = await resolveSignedIn(req, env.CHAT_COOKIE_SECRET!, { issue: true });
   const uid = actor.uid!;
   const setCookie = actor.setCookie;
   return { env, db: db!, waitUntil, key, uid, ip, cookie: setCookie ? { "Set-Cookie": setCookie } : {} };

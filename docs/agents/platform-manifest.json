@@ -206,7 +206,9 @@
         "src/components/account-button.tsx",
         "src/components/chat/github-publish.tsx",
         "migrations/0006_github_auth.sql",
-        "migrations/0007_password_auth.sql"
+        "migrations/0007_password_auth.sql",
+        "migrations/0009_auth_sessions.sql",
+        "src/lib/auth/session.ts"
       ],
       "docs": "docs/user-guide/chat.md"
     },

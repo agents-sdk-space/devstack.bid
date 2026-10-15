@@ -1,10 +1,11 @@
+import { issueSession } from "@/lib/auth/session";
 import { connection } from "next/server";
 import { safeNext, sameOrigin } from "@/lib/auth/github-policy";
 import { planSignIn } from "@/lib/auth/link-account";
 import { signedInRedirect } from "@/lib/auth/oauth-flow";
 import { acceptPassword, hashPassword, normalizeEmail, passwordMatches } from "@/lib/auth/password";
 import { chatEnv } from "@/lib/chat/config";
-import { signUid } from "@/lib/chat/identity";
+
 import { chatRuntime, json } from "@/lib/chat/runtime";
 import { findPasswordAccount, savePasswordAccount } from "@/lib/chat/store";
 import { clientIp } from "@/lib/server/http";
@@ -16,6 +17,12 @@ function back(origin: string, secure: boolean, code: string, next: string) {
     "Cache-Control": "no-store",
   });
   return new Response(null, { status: 303, headers });
+}
+
+/** SHA-256 of the normalised email, so the limiter key never carries the address itself. */
+async function emailKey(email: string): Promise<string> {
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(email)));
+  return Array.from(digest.slice(0, 16), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 /** POST /api/auth/password — create or sign in to a DevStack email account. Passwords are hashed before they touch D1. */
@@ -47,6 +54,9 @@ export async function POST(req: Request) {
   const password = acceptPassword(typeof passwordField === "string" ? passwordField : "");
   if (!email) return back(url.origin, secure, "invalid", dest);
   if (!password) return back(url.origin, secure, "weak", dest);
+  // Per-account throttle on top of the per-IP burst, so one email cannot be guessed from many IPs.
+  const perAccount = await checkRateLimit("NVX_CHAT_LIMITER", `pwacct:${await emailKey(email)}`, 5);
+  if (!perAccount.ok) return back(url.origin, secure, "error", dest);
   const { db } = await chatRuntime();
   if (!db) return back(url.origin, secure, "missing", dest);
   try {
@@ -56,7 +66,7 @@ export async function POST(req: Request) {
       if (!plan.create && !plan.promoteAnon) return back(url.origin, secure, "taken", dest);
       await savePasswordAccount(db, plan, email, hashed);
       console.warn(JSON.stringify({ at: "api/auth/password", event: "registered" }));
-      return signedInRedirect(url.origin, secure, dest, await signUid(plan.userId, secret), 303);
+      return signedInRedirect(url.origin, secure, dest, await issueSession(db, plan.userId, secret), 303);
     }
     const account = await findPasswordAccount(db, email);
     const matches = account ? await passwordMatches(password, account.salt, account.iterations, account.hash) : await passwordMatches(password, "AAAAAAAAAAAAAAAAAAAAAA==", 100_000, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
@@ -64,7 +74,7 @@ export async function POST(req: Request) {
     const plan = await planSignIn(db, req, secret, "password", email);
     if (plan.moveFrom) await db.prepare("UPDATE conversations SET user_id = ?2 WHERE user_id = ?1").bind(plan.moveFrom, account.userId).run();
     console.warn(JSON.stringify({ at: "api/auth/password", event: "signed-in" }));
-    return signedInRedirect(url.origin, secure, dest, await signUid(account.userId, secret), 303);
+    return signedInRedirect(url.origin, secure, dest, await issueSession(db, account.userId, secret), 303);
   } catch (err) {
     const message = (err as Error)?.message ?? "";
     const taken = /UNIQUE|constraint/i.test(message);

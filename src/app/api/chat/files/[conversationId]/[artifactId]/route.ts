@@ -1,6 +1,7 @@
 import { connection } from "next/server";
+import { resolveSignedIn } from "@/lib/auth/session";
 import { AgentsApi } from "@/lib/chat/agents-api";
-import { resolveActor } from "@/lib/chat/identity";
+
 import { chatEnv, chatRuntime, json, unavailable } from "@/lib/chat/runtime";
 import { getConversation } from "@/lib/chat/store";
 
@@ -21,7 +22,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ conversa
   const env = chatEnv();
   const { db } = await chatRuntime();
   if (unavailable(env, db) || !/^[0-9a-f-]{36}$/.test(conversationId) || !/^[\w-]{4,200}$/.test(artifactId)) return json({ error: "Not found" }, 404);
-  const uid = (await resolveActor(req, env.CHAT_COOKIE_SECRET!)).uid;
+  const uid = (await resolveSignedIn(req, env.CHAT_COOKIE_SECRET!)).uid;
   const conv = uid ? await getConversation(db!, uid, conversationId) : null;
   if (!conv?.agent_session_id) return json({ error: "Not found" }, 404);
   const api = new AgentsApi(env.OPENAI_API_KEY!);

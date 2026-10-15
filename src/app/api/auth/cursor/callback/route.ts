@@ -1,9 +1,10 @@
+import { issueSession } from "@/lib/auth/session";
 import { connection } from "next/server";
 import { originSigningKeys, verifyInstallationReceipt } from "@/lib/auth/cursor-receipt";
 import { planSignIn } from "@/lib/auth/link-account";
 import { oauthFail, readOAuthState, signedInRedirect } from "@/lib/auth/oauth-flow";
 import { chatEnv } from "@/lib/chat/config";
-import { OAUTH_STATE_COOKIE, readCookie, signUid } from "@/lib/chat/identity";
+import { OAUTH_STATE_COOKIE, readCookie } from "@/lib/chat/identity";
 import { chatRuntime } from "@/lib/chat/runtime";
 import { saveOAuthAccount } from "@/lib/chat/store";
 import { serverEnv } from "@/lib/server/env";
@@ -40,7 +41,7 @@ export async function GET(req: Request) {
       avatarUrl: null,
     });
     console.warn(JSON.stringify({ at: "api/auth/cursor", event: "linked" }));
-    return signedInRedirect(url.origin, secure, opened.next, await signUid(plan.userId, secret));
+    return signedInRedirect(url.origin, secure, opened.next, await issueSession(db, plan.userId, secret));
   } catch (err) {
     console.warn(JSON.stringify({ at: "api/auth/cursor", event: "failed", name: (err as Error)?.name }));
     return oauthFail(url.origin, secure, "error", "cursor");
