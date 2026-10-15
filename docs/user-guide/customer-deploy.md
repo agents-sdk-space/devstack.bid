@@ -62,3 +62,26 @@ If a deploy fails, ask Dev Chat to fix it:
 - The audit log on `/settings/connections` records event types only (for example "credential.saved" or "deploy.live"), never secrets.
 
 คีย์ทั้งหมดเข้ารหัสเก็บฝั่งเซิร์ฟเวอร์ แสดงแค่ 4 ตัวท้าย ไม่บันทึกลง log และไม่ส่งให้โมเดล AI ลบได้ทุกเมื่อ และถูกลบทั้งหมดเมื่อลบบัญชี
+
+
+## Create token, Remember and Environment · สร้าง token, จำไว้ และ Environment
+
+Every place that asks for a token or key (Connections, the direct-deploy panel, the AI agent panel, Sandbox Factory, Environment) has:
+
+- **Create token**: a menu of links to each provider's official token page. Verified against each provider's docs on 2026-10-15:
+
+  | Provider | Page | Source |
+  |---|---|---|
+  | Cloudflare API token | https://dash.cloudflare.com/profile/api-tokens | developers.cloudflare.com/fundamentals/api/get-started/create-token/ |
+  | GitHub fine-grained token | https://github.com/settings/personal-access-tokens/new | docs.github.com, Managing your personal access tokens |
+  | OpenAI API key | https://platform.openai.com/api-keys | platform.openai.com/docs/quickstart |
+  | Vercel token | https://vercel.com/account/tokens | vercel.com/docs/rest-api |
+  | Hugging Face access token | https://huggingface.co/settings/tokens | huggingface.co/docs/hub/security-tokens |
+
+- **Remember** (off by default). Off: the token is used once for that request (verify, deploy, plan) and never stored. On: it is encrypted with `CREDENTIALS_KEY` v2 and kept in **/settings/environment**, which shows only the name, created, updated and last-used dates, with a delete button. Values never come back to the browser.
+
+ช่องใส่ token ทุกที่มีปุ่ม **สร้าง token** (ลิงก์ไปหน้าทางการของผู้ให้บริการ) และช่อง **จำไว้** ที่ปิดไว้ตั้งต้น ถ้าไม่ติ๊ก token ใช้ครั้งเดียวแล้วทิ้ง ถ้าติ๊ก จะเก็บแบบเข้ารหัสในหน้า Environment ซึ่งแสดงแค่ชื่อกับวันที่ และลบได้
+
+The chat bot and deploys use remembered keys server-side: a direct deploy uses the Cloudflare connection, or `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` from Environment when there is no connection.
+
+The Sandbox Factory key used to be kept in `sessionStorage` when "Remember" was ticked. It is no longer stored in the browser; any old copy is removed on load.

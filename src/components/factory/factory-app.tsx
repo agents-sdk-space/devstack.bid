@@ -1,8 +1,12 @@
 "use client";
 
+import { CreateTokenMenu } from "@/components/tokens/create-token-menu";
+import { RememberToggle } from "@/components/tokens/remember-toggle";
+import { rememberSecret } from "@/components/tokens/remember-secret";
+
 import { AlertTriangle, ArrowLeft, Box, Check, Cloud, FlaskConical, KeyRound, Laptop, Plus, ShieldCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Badge, Button, Card, Checkbox, cn, Field, Input, Spinner, Textarea } from "@/components/ui";
+import { Badge, Button, Card, cn, Field, Input, Spinner, Textarea } from "@/components/ui";
 import { ChatApp } from "../chat/chat-app";
 import type { ChatInfo } from "../chat/types";
 import { CodeBlock } from "../copy-button";
@@ -76,14 +80,7 @@ export function FactoryApp() {
   useEffect(() => {
     let live = true;
     try {
-      const saved = sessionStorage.getItem(KEY_STORE);
-      if (saved) {
-        queueMicrotask(() => {
-          if (!live) return;
-          setKey(saved);
-          setRemember(true);
-        });
-      }
+      sessionStorage.removeItem(KEY_STORE); // legacy: keys are no longer kept in the browser
     } catch {}
     fetch("/api/factory", { cache: "no-store" })
       .then((r) => r.json() as Promise<FactoryInfo>)
@@ -94,12 +91,6 @@ export function FactoryApp() {
     };
   }, []);
 
-  useEffect(() => {
-    try {
-      if (remember && key) sessionStorage.setItem(KEY_STORE, key);
-      else sessionStorage.removeItem(KEY_STORE);
-    } catch {}
-  }, [remember, key]);
 
   const keyValid = /^sk-[A-Za-z0-9_-]{20,400}$/.test(key.trim());
 
@@ -152,6 +143,10 @@ export function FactoryApp() {
         return;
       }
       setCreated(data);
+      if (remember) {
+        const saved = await rememberSecret("OPENAI_API_KEY", key.trim(), "openai");
+        if (!saved.ok) setError(saved.error ?? null);
+      }
       setInfo((i) => (i ? { ...i, sessions: [{ id: data.conversationId, title: data.title, model: data.model, environment: data.environment, updatedAt: Date.now() }, ...i.sessions] } : i));
       if (data.environment === "self_hosted") void watch(data.conversationId);
     } catch {
@@ -187,7 +182,10 @@ export function FactoryApp() {
         {(p) => <Input {...p} type="password" autoComplete="off" spellCheck={false} placeholder="sk-…" value={key} onChange={(e) => setKey(e.target.value)} invalid={key.length > 0 && !keyValid} />}
       </Field>
       <div className="mt-3">
-        <Checkbox label={t("factory.remember")} checked={remember} onCheckedChange={setRemember} />
+        <div className="flex flex-wrap items-center gap-3">
+          <RememberToggle checked={remember} onCheckedChange={setRemember} />
+          <CreateTokenMenu primary="openai" />
+        </div>
       </div>
     </Card>
   );
