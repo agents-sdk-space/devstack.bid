@@ -9,17 +9,17 @@ Source of truth: `src/lib/deploy/templates.ts` (`DEPLOY_PROFILES`). Deploy provi
 
 | Profile | Source | Target | Path | Build | Entry | Assets | Needs (added by prepare PR) | Secrets | Audit flags |
 |---|---|---|---|---|---|---|---|---|---|
-| `nextjs-dashboard` | Stack template | opennext | cf-build | `npx opennextjs-cloudflare build` | .open-next/worker.js | .open-next/assets | wrangler.jsonc, open-next.config.ts, `package.json` scripts and deps | none | ⚠ create-next-app ships no Workers config |
-| `nextjs-ai-chat` | Stack template | opennext | cf-build | same | same | same | same, plus .dev.vars.example | `OPENAI_API_KEY` | ⚠ key must be a Worker secret, not `.env.local` |
-| `collab-workspace` | Stack template | opennext | cf-build | same | same | same | same | none | ❌ **Breaks:** the y-websocket Node server (`npm run ws`) can't run on Workers. Only the page deploys; realtime needs a Durable Objects rewrite |
-| `vite-react-game` | Stack template | worker-assets | cf-build | `npm run build` | none | `dist` (SPA) | wrangler.jsonc | none | ⚠ only Docker config in template |
-| `react-admin-tool` | Stack template | worker-assets | cf-build | `npm run build` | none | `dist` (SPA) | wrangler.jsonc | none | ⚠ needs a public data API |
-| `express-api` | Stack template | not-deployable | none | none | src/index.js | none | none | none | ❌ `app.listen()` Node server. Use Docker or port to Hono |
-| `fastapi-ai` | Stack template | not-deployable | none | none | main.py | none | none | `OPENAI_API_KEY` | ❌ Python/uvicorn. Use Docker |
-| `streamlit-dashboard` | Stack template | not-deployable | none | none | app.py | none | none | none | ❌ long-running Python server |
+| `nextjs-dashboard` | Stack template | opennext | cf-build | `npx opennextjs-cloudflare build` | .open-next/worker.js | .open-next/assets | wrangler.jsonc, open-next.config.ts, `package.json` scripts and deps | none | Warning: create-next-app ships no Workers config |
+| `nextjs-ai-chat` | Stack template | opennext | cf-build | same | same | same | same, plus .dev.vars.example | `OPENAI_API_KEY` | Warning: key must be a Worker secret, not `.env.local` |
+| `collab-workspace` | Stack template | opennext | cf-build | same | same | same | same | none | **Breaks:** the y-websocket Node server (`npm run ws`) can't run on Workers. Only the page deploys; realtime needs a Durable Objects rewrite |
+| `vite-react-game` | Stack template | worker-assets | cf-build | `npm run build` | none | `dist` (SPA) | wrangler.jsonc | none | Warning: only Docker config in template |
+| `react-admin-tool` | Stack template | worker-assets | cf-build | `npm run build` | none | `dist` (SPA) | wrangler.jsonc | none | Warning: needs a public data API |
+| `express-api` | Stack template | not-deployable | none | none | src/index.js | none | none | none | `app.listen()` Node server. Use Docker or port to Hono |
+| `fastapi-ai` | Stack template | not-deployable | none | none | main.py | none | none | `OPENAI_API_KEY` | Python/uvicorn. Use Docker |
+| `streamlit-dashboard` | Stack template | not-deployable | none | none | app.py | none | none | none | long-running Python server |
 | `node-cli-npx` | Stack template | not-deployable | none | none | bin/cli.js | none | none | none | publishes to npm, not a website |
 | `pypi-package` | Stack template | not-deployable | none | none | none | none | none | none | publishes to PyPI, not a website |
-| `studio` | /studio export (Vite + React) | worker-assets | cf-build | `npm run build` | none | `dist` (SPA) | wrangler.jsonc | none | ❌ **Points wrongly:** the export's wrangler.toml targets **Pages** (`pages_build_output_dir`), but the Deploy button supports Workers only. The prepare PR's wrangler.jsonc takes precedence. The Studio export should switch in a follow-up |
+| `studio` | /studio export (Vite + React) | worker-assets | cf-build | `npm run build` | none | `dist` (SPA) | wrangler.jsonc | none | **Points wrongly:** the export's wrangler.toml targets **Pages** (`pages_build_output_dir`), but the Deploy button supports Workers only. The prepare PR's wrangler.jsonc takes precedence. The Studio export should switch in a follow-up |
 | `chat-static` | chat code blocks (index.html, no package.json) | worker-assets | direct | none | none | repo root | index.html | none | none |
 | `chat-worker` | chat code blocks (src/index.js, no package.json) | worker-script | direct | none | src/index.js | none | `export default { fetch }` | none | plain ESM only, no npm imports and no TypeScript |
 | `my-button` | `sandbox-examples/` (CodeSandbox CI) | not-deployable | none | `react-scripts build` | none | `build` | none | none | internal example, never offered for deploy |
