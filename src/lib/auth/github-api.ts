@@ -9,11 +9,32 @@ const UA = "nvx-stack-builder";
 export class GithubApiError extends Error {
   constructor(
     message: string,
-    public status: number
+    public status: number,
+    /** Which call failed ("exchange" | "profile" | ...). Safe to log. */
+    public step?: string,
+    /** GitHub's OAuth error code (e.g. bad_verification_code). Safe to log. */
+    public ghError?: string
   ) {
     super(message);
     this.name = "GithubApiError";
   }
+}
+
+/** Retry transient edge/upstream failures (5xx incl. Cloudflare 52x, network errors) with a short backoff. */
+export async function fetchRetry(input: string, init: RequestInit, attempts = 3, f: typeof fetch = fetch): Promise<Response> {
+  let last: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await f(input, init);
+      if (res.status < 500 || i === attempts - 1) return res;
+      last = res;
+    } catch (err) {
+      last = err;
+      if (i === attempts - 1) throw err;
+    }
+    await new Promise((r) => setTimeout(r, 250 * (i + 1)));
+  }
+  throw last instanceof Error ? last : new Error("fetch failed");
 }
 
 function headers(token: string, extra: Record<string, string> = {}) {
@@ -26,14 +47,23 @@ function headers(token: string, extra: Record<string, string> = {}) {
   };
 }
 
-export async function exchangeCodeWithScope(opts: { clientId: string; clientSecret: string; code: string; redirectUri: string }): Promise<{ token: string; scope: string | null }> {
-  const res = await fetch("https://github.com/login/oauth/access_token", {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json", "User-Agent": UA },
-    body: JSON.stringify({ client_id: opts.clientId, client_secret: opts.clientSecret, code: opts.code, redirect_uri: opts.redirectUri }),
-  });
-  const body = (await res.json().catch(() => ({}))) as { access_token?: string; scope?: string };
-  if (!res.ok || !body.access_token) throw new GithubApiError("GitHub did not return an access token", res.status || 502);
+export async function exchangeCodeWithScope(opts: { clientId: string; clientSecret: string; code: string; redirectUri: string }, f: typeof fetch = fetch): Promise<{ token: string; scope: string | null }> {
+  const form = new URLSearchParams({ client_id: opts.clientId, client_secret: opts.clientSecret, code: opts.code, redirect_uri: opts.redirectUri });
+  const res = await fetchRetry(
+    "https://github.com/login/oauth/access_token",
+    {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded", "User-Agent": UA },
+      body: form.toString(),
+    },
+    3,
+    f
+  );
+  const body = (await res.json().catch(() => ({}))) as { access_token?: string; scope?: string; error?: string };
+  if (!res.ok || !body.access_token) {
+    const ghError = typeof body.error === "string" && /^[a-z_]{1,64}$/.test(body.error) ? body.error : undefined;
+    throw new GithubApiError("GitHub did not return an access token", res.status || 502, "exchange", ghError);
+  }
   return { token: body.access_token, scope: typeof body.scope === "string" ? body.scope : null };
 }
 
@@ -66,8 +96,8 @@ export interface GhProfile {
 }
 
 export async function fetchProfile(token: string): Promise<GhProfile> {
-  const res = await fetch(`${API}/user`, { headers: headers(token) });
-  if (!res.ok) throw new GithubApiError("GitHub profile request failed", res.status);
+  const res = await fetchRetry(`${API}/user`, { headers: headers(token) });
+  if (!res.ok) throw new GithubApiError("GitHub profile request failed", res.status, "profile");
   const u = (await res.json()) as { id?: number; login?: string; name?: string | null; avatar_url?: string | null; email?: string | null };
   if (!u.id || !u.login || !/^[A-Za-z0-9-]{1,39}$/.test(u.login)) throw new GithubApiError("GitHub profile was incomplete", 502);
   let email = u.email && /^[^\s@]+@[^\s@]+$/.test(u.email) ? u.email : null;
