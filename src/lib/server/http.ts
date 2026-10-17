@@ -1,4 +1,5 @@
 import "server-only";
+import { trustedClientIp } from "./trusted-proxy";
 
 export const NO_STORE = { "Cache-Control": "no-store" } as const;
 
@@ -18,6 +19,7 @@ export class HttpError extends Error {
  */
 export function clientIp(req: Request): string {
   const raw = (
+    trustedClientIp(req) ||
     req.headers.get("cf-connecting-ip") ||
     (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() ||
     req.headers.get("x-real-ip") ||

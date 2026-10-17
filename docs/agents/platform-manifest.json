@@ -1,7 +1,7 @@
 {
   "$comment": "Machine-readable map of NVX Stack Builder for AI agents. Verified by `npm run docs:check` (templateIds must equal src/data/template-ids.ts; every keyFiles path must exist). Human docs: docs/agents/AGENT-PLAYBOOK.md",
   "name": "nvx-stack-builder",
-  "version": "0.8.0-rc.2",
+  "version": "0.8.0-rc.3",
   "branchState": "Production https://devstack.bid is Worker version ffbd53ae-957b-4b48-b411-3a882f14f8ae (CURSOR_APP_ID app_01m4xk8788f7s941zg4cpjxcer, 2026-10-14 23:19 ICT; same code as /learn merge be6eb3f). Rollback: d29b83b8-1753-4a47-a0b5-a63ba79fa6a2.",
   "stack": {
     "framework": "Next.js 16.4 App Router",

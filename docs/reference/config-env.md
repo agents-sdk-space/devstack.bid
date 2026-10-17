@@ -29,6 +29,7 @@
 | `GOOGLE_CLIENT_SECRET` | **secret** | `^[\w-]{16,200}$` | ไม่มี → เข้าสู่ระบบ Google ปิด | `wrangler secret put` (stdin) | ใช้แลก code ครั้งเดียว ไม่ถูกเก็บใน D1 |
 | `CURSOR_APP_ID` | **secret** | `^app_[A-Za-z0-9]{6,80}$` | ไม่มี → ปุ่ม Cursor พากลับ `/login?auth=missing&provider=cursor` | `wrangler secret put` (stdin) | รหัสแอป Origin ที่เป็นสาธารณะ ไม่เก็บ private key ตรวจใบเสร็จจาก JWKS ของ Origin บน production ตั้งแล้วที่เวอร์ชัน `ffbd53ae-957b-4b48-b411-3a882f14f8ae` (`app_01m4xk8788f7s941zg4cpjxcer`) |
 | `AI_GATEWAY_API_KEY` | **secret** | `^[\w-]{16,400}$` | ไม่มี → ปุ่มเกตเวย์ในตัวเลือกโมเดลกดไม่ได้ | `wrangler secret put` (stdin) | คีย์ Vercel AI Gateway สำหรับโมเดลที่ผู้ใช้เลือกใน `/chat` |
+| `CHAT_PROXY_KEY` | **secret** | `^[A-Za-z0-9_-]{32,128}$` | ไม่มี → ไม่เชื่อ `x-nvx-client-ip` (คำขอจาก implemented.stream ใช้ IP ของ Worker ร่วมกัน) | `wrangler secret put CHAT_PROXY_KEY` (stdin) ค่าเดียวกับ secret ของ Worker `implemented-stream` | ให้ proxy `/api/chat` ของ implemented.stream ส่ง IP ผู้ใช้จริงมาใช้กับโควตาต่อ IP (`src/lib/server/trusted-proxy.ts`) ส่วน header `x-nvx-site: implemented.stream` เปลี่ยนแค่ persona เป็น Bugbot |
 | `AI_GATEWAY_BASE_URL` | var | URL https | `https://ai-gateway.vercel.sh/v1` | — | endpoint แบบ OpenAI-compatible ของ AI Gateway |
 
 ## ตัวแปรของแชต ([`src/lib/chat/config.ts`](../../src/lib/chat/config.ts))

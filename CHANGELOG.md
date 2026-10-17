@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0-rc.3] - 2026-10-17
+
+Release branch `release/2026-10-17`: `fix/github-oauth-525` + `feat/ui-glowcard-spline` + chat knowledge and persona.
+
+### Added
+
+- **Cloudflare Agents chat client SDK guide** at `/docs/integrations/cloudflare-agents-chat-sdk` (overview, install, useAgent / useAgentChat, messages, tools and human-in-the-loop, resumable streams, persistence, examples), written in our own words with links to the Cloudflare docs.
+- **SDK knowledge for User Chat**: keyword retrieval over bundled notes (`src/lib/chat/knowledge/`) adds at most ~1400 characters to the system prompt, only for questions about that SDK.
+- **implemented.stream persona**: requests with `x-nvx-site: implemented.stream` answer as Bugbot from implemented.stream and avoid devstack.bid-only pages. Optional `CHAT_PROXY_KEY` secret lets that proxy forward the visitor IP for per-IP quotas (`src/lib/server/trusted-proxy.ts`).
+- `/ui-lab` (not linked, noindex): GlowCard and the Spline 3D robot with Thai hero copy, implemented.stream waist plate and eye glow; site-wide warm ambient background.
+- `npm run preview:local`, `.nvmrc` (Node 22), and a `cf:build` guard that fails when the OpenNext preview-props patch is missing (cause of the 500s in Worker version `0286ef58`).
+
+### Fixed
+
+- GitHub OAuth: retries transient 5xx/525 on the token exchange and profile calls, form-encoded exchange, logs the failing step.
+
 ## [Unreleased]
 
 > Deployed to production 2026-10-15 22:46 ICT (Cloudflare version `c1c1495f-a371-4ac9-9073-97f9055bf23e`, PRs #31–#32; rollback `46d66baf-d1a1-4875-b603-1a395b067c6e`). Earlier: 2026-10-15 ~22:10 ICT (Cloudflare version `46d66baf-d1a1-4875-b603-1a395b067c6e`, PRs #26–#29, migration 0012; rollback `f5c15746-673b-47d7-b7a2-dafeb9b032fa`). Earlier the same day: `f5c15746` (PRs #16–#24). See `docs/DEPLOY.md`.

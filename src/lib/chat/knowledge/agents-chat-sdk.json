@@ -1,0 +1,87 @@
+{
+  "id": "agents-chat-sdk",
+  "version": "1.0.0",
+  "source": "https://developers.cloudflare.com/agents/communication-channels/chat/client-sdk/",
+  "sourceName": "Cloudflare Agents documentation (summarized in our own words)",
+  "checked": "2026-10-17",
+  "chunks": [
+    {
+      "id": "overview",
+      "title": "Overview: three clients",
+      "keywords": ["overview", "client sdk", "useagent", "agentclient", "agentfetch", "websocket", "http", "which", "choose", "difference", "agents sdk", "เลือก", "ต่างกัน"],
+      "text": "Cloudflare Agents client SDK: clients connect to one named instance of an agent (a Durable Object). useAgent (agents/react) = React hook, live WebSocket, state sync, auto-reconnect with backoff. AgentClient (agents/client) = same over WebSocket for any JS runtime (Vue, Svelte, Node, Bun, Deno). agentFetch (agents/client) = one HTTP request without a persistent connection (server-to-server, cron). For chat UIs, useAgentChat (@cloudflare/ai-chat/react) sits on top of useAgent and exposes the AI SDK useChat shape."
+    },
+    {
+      "id": "install",
+      "title": "Install and wrangler config",
+      "keywords": ["install", "npm", "setup", "wrangler", "durable object", "migration", "sqlite", "binding", "new_sqlite_classes", "ติดตั้ง", "ตั้งค่า"],
+      "text": "Install: npm i agents @cloudflare/ai-chat ai @ai-sdk/react workers-ai-provider. wrangler.jsonc needs a Durable Object binding for the agent class plus a SQLite migration: \"durable_objects\": {\"bindings\": [{\"name\": \"ChatAgent\", \"class_name\": \"ChatAgent\"}]}, \"migrations\": [{\"tag\": \"v1\", \"new_sqlite_classes\": [\"ChatAgent\"]}], and \"ai\": {\"binding\": \"AI\"} for Workers AI. The SQLite migration is required because chat history and stream buffers are stored in SQLite."
+    },
+    {
+      "id": "useagent",
+      "title": "useAgent connection options",
+      "keywords": ["useagent", "name", "instance", "host", "path", "query", "token", "auth", "cachettl", "querydeps", "onopen", "onclose", "onerror", "kebab", "url", "reconnect", "เชื่อมต่อ"],
+      "text": "useAgent({ agent: \"ChatAgent\", name: roomId }). agent = class name, turned into kebab-case in the URL (/agents/chat-agent/<name>); name picks the instance, default \"default\". Options: host/path (other Worker or custom route; default current origin), query (object or async function, e.g. auth token; cached for cacheTtl, default 5 min, refreshed when queryDeps change and dropped on every disconnect so reconnects get a fresh token), onOpen, onClose, onError, onMessage, onMcpUpdate. Returns state, setState, call, stub, send, close, reconnect; React closes on unmount."
+    },
+    {
+      "id": "state",
+      "title": "State sync",
+      "keywords": ["state", "setstate", "onstateupdate", "sync", "onstatechanged", "broadcast", "สถานะ"],
+      "text": "State sync: agent.state is undefined until the first server message. agent.setState(next) sends state to the agent, which runs onStateChanged() and broadcasts to all connected clients; onStateUpdate(state, source) fires with source \"client\" (you pushed) or \"server\" (agent pushed). On reconnect the agent sends current state automatically, no manual re-sync."
+    },
+    {
+      "id": "rpc",
+      "title": "RPC with @callable and streaming",
+      "keywords": ["rpc", "callable", "call", "stub", "typed", "typescript", "streaming", "onchunk", "ondone", "streamingresponse", "method", "เรียก"],
+      "text": "RPC: mark agent methods with @callable() to call them from clients: await agent.call(\"getStats\") or typed: useAgent<MyAgent>(...) then agent.stub.getStats(). Inside the same Worker use plain Durable Object RPC instead. @callable({ streaming: true }) methods get a StreamingResponse first arg (stream.send(chunk), stream.end()); the client passes { onChunk, onDone, onError } as the third argument of call(). Errors thrown by the method reject the client promise."
+    },
+    {
+      "id": "vanilla",
+      "title": "AgentClient, agentFetch and non-React chat",
+      "keywords": ["agentclient", "agentfetch", "vanilla", "vue", "svelte", "node", "non-react", "websocketchattransport", "transport", "close", "fetch", "rest"],
+      "text": "Vanilla: new AgentClient({ agent, name, host }) then client.call(\"method\", [args]); call client.close() when done; supports addEventListener open/close/error/message. agentFetch({ agent, name, host }, init) does one HTTP request (GET or POST with body) when you do not need real-time updates. For an AI SDK chat UI outside React (e.g. Vue useChat from @ai-sdk/vue), pass new WebSocketChatTransport({ agent: client }) from agents/chat/transport."
+    },
+    {
+      "id": "useagentchat",
+      "title": "useAgentChat and AIChatAgent",
+      "keywords": ["useagentchat", "aichatagent", "onchatmessage", "sendmessage", "messages", "status", "streamtext", "convertToModelMessages", "workers-ai-provider", "chat", "server", "แชท"],
+      "text": "Client: const agent = useAgent({ agent: \"ChatAgent\", name: userId }); const { messages, sendMessage, status, stop, clearHistory, setMessages, addToolOutput, addToolApprovalResponse, isStreaming, isRecovering } = useAgentChat({ agent }); sendMessage({ text }). Server: class ChatAgent extends AIChatAgent { async onChatMessage(_onFinish, options) { return streamText({ model, messages: await convertToModelMessages(this.messages), abortSignal: options?.abortSignal }).toUIMessageStreamResponse(); } }. Any AI SDK provider works (Workers AI via createWorkersAI({ binding: this.env.AI }), OpenAI, Anthropic)."
+    },
+    {
+      "id": "messages",
+      "title": "Message handling, body and data parts",
+      "keywords": ["message", "parts", "uimessage", "body", "custom data", "data part", "ondata", "transient", "concurrency", "messageconcurrency", "queue", "multi-client", "headers", "preparesendmessagesrequest", "ข้อความ"],
+      "text": "Messages are AI SDK UIMessage objects; render msg.parts (text, tool, data-*). Per-request data: useAgentChat({ agent, body }) (object or function), read on server as options.body; prepareSendMessagesRequest can add headers. Data parts: write { type: \"data-x\", id, data } into a createUIMessageStream writer; same type+id updates in place; transient: true sends without storing (read with onData). messageConcurrency on the agent: \"queue\" (default), \"latest\", \"merge\", \"drop\" or debounce. All clients on the same instance receive the updated messages (multi-tab sync)."
+    },
+    {
+      "id": "tools",
+      "title": "Tools: server and client",
+      "keywords": ["tool", "tools", "execute", "client tool", "ontoolcall", "addtooloutput", "stepcountis", "zod", "inputschema", "function calling", "เครื่องมือ"],
+      "text": "Tools use the AI SDK tool() helper. Server tools have execute and run in the agent. Client tools have no execute: handle them in useAgentChat({ onToolCall: async ({ toolCall, addToolOutput }) => addToolOutput({ toolCallId: toolCall.toolCallId, output }) }), e.g. browser geolocation. Limit tool loops with stopWhen: stepCountIs(5)."
+    },
+    {
+      "id": "hitl",
+      "title": "Human-in-the-loop approvals",
+      "keywords": ["approval", "approve", "needsapproval", "human-in-the-loop", "hitl", "confirm", "reject", "addtoolapprovalresponse", "gettoolapproval", "waiting-approval", "deny", "อนุมัติ", "ยืนยัน"],
+      "text": "Approvals: add needsApproval (boolean or async ({ input }) => bool) to a tool; the turn pauses. On the client find parts where getToolPartState(part) === \"waiting-approval\", get const a = getToolApproval(part), then addToolApprovalResponse({ id: a.id, approved: true|false }) (helpers from @cloudflare/ai-chat/react). Rejecting sets output-denied; to give the model a reason use addToolOutput({ toolCallId, state: \"output-error\", errorText })."
+    },
+    {
+      "id": "resume",
+      "title": "Resumable streams and cancellation",
+      "keywords": ["resume", "resumable", "reconnect", "disconnect", "stop", "cancel", "abort", "cancelonclientabort", "recovery", "chatrecovery", "buffer", "stream", "หลุด", "ต่อ"],
+      "text": "Resumable streaming is on by default: chunks are buffered in SQLite; if the client disconnects the agent keeps generating and a reconnecting client replays the buffer then continues live. Closing a tab does not cancel the server turn; stop() does. cancelOnClientAbort: true lets the browser own the turn; resume: false disables resuming. Pass options.abortSignal to streamText so cancellation works. chatRecovery config (maxAttempts, noProgressTimeoutMs, onExhausted) handles agent restarts mid-turn."
+    },
+    {
+      "id": "persistence",
+      "title": "Persistence and storage",
+      "keywords": ["persist", "persistence", "storage", "history", "sqlite", "maxpersistedmessages", "prunemessages", "savemessages", "persistmessages", "sanitize", "2 mb", "row", "context", "เก็บ", "ประวัติ"],
+      "text": "this.messages is loaded from SQLite and saved after every turn. maxPersistedMessages caps stored messages but not model context (use AI SDK pruneMessages() for context). persistMessages(msgs) stores and broadcasts without a reply; saveMessages(msgs or fn) stores and starts a reply after any active turn (good for scheduled messages); waitUntilStable() waits for turns to finish. SQLite rows max 2 MB: big tool outputs are compacted automatically; sanitizeMessageForPersistence() can redact before saving."
+    },
+    {
+      "id": "errors",
+      "title": "Errors, MCP and best practices",
+      "keywords": ["error", "errors", "onerror", "try", "catch", "mcp", "onmcpupdate", "best practice", "tips", "protocol", "cf_agent", "ปัญหา", "ข้อผิดพลาด"],
+      "text": "Errors: onError/onClose on useAgent for connection issues (it auto-reconnects); wrap agent.call in try/catch for RPC errors; onError in streaming call options. onMcpUpdate(servers) reports MCP server connection state and tools. Best practices: prefer typed stub calls, rely on automatic reconnect and state replay, tune cacheTtl for expiring tokens, close AgentClient yourself. Wire protocol messages are named CF_AGENT_* (e.g. CF_AGENT_USE_CHAT_REQUEST, CF_AGENT_TOOL_APPROVAL, CF_AGENT_STREAM_RESUME_REQUEST)."
+    }
+  ]
+}
