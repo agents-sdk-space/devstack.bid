@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0-rc.4] - unreleased (branch `feat/hub-events`, not deployed)
+
+### Added
+
+- **stack-hub events** (`src/lib/hub/report.ts`): server-side, PII-free events to the private hub Worker
+  `stack-hub` over the new `HUB` service binding, authenticated with the `HUB_API_KEY` secret.
+  - `chat_turn` after each User Chat turn on devstack.bid: outcome, mode, provider, new session or not,
+    token usage counts, duration. Turns proxied from implemented.stream are not reported here (its proxy
+    reports them), so each turn is counted once. Rate-limited turns report `outcome: rate_limited`.
+  - `github_login` from `/api/auth/github/callback`: `ok` or `failed` with the reason code
+    (`missing` / `error` / `denied`). No GitHub login, name or email is sent.
+  - Scheduled with `ctx.waitUntil`, 3 s timeout, every error swallowed: a slow or down hub never delays
+    or breaks chat or sign-in (checked locally with the hub stopped). Off without `HUB_API_KEY`.
+- `tests/hub-report.test.ts`.
+
+### Deploy notes
+
+- Order: deploy `stack-hub` first (service binding target), then `wrangler secret put HUB_API_KEY`, then this Worker.
+- Rollback point: Worker version `28ae3ef9-9c3e-4c2b-8254-e836712bb4aa` (0.8.0-rc.3).
+
 ## [0.8.0-rc.3] - 2026-10-17
 
 Release branch `release/2026-10-17`: `fix/github-oauth-525` + `feat/ui-glowcard-spline` + chat knowledge and persona.

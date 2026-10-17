@@ -22,6 +22,13 @@
       // Self-reference used by OpenNext for cache revalidation; must match "name".
       "binding": "WORKER_SELF_REFERENCE",
       "service": "nvx-stack-builder"
+    },
+    {
+      // stack-hub: private hub Worker (same account). Server-side chat_turn / github_login events
+      // (src/lib/hub/report.ts) with the HUB_API_KEY secret. Deploy stack-hub BEFORE this Worker,
+      // otherwise the deploy fails on the missing service.
+      "binding": "HUB",
+      "service": "stack-hub"
     }
   ],
   // D1 (SQLite) for chat history. Created 2026-10-11 (region WNAM). Schema: migrations/ and

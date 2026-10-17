@@ -2,6 +2,7 @@ import "server-only";
 import { resolveSignedIn } from "@/lib/auth/session";
 import { GATEWAY_MODELS, isGatewayModel } from "@/lib/ai/gateway-models";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { reportHubEvent } from "@/lib/hub/report";
 import type { AiBinding } from "@/lib/ai/workers-ai";
 import type { SearchEntry } from "@/lib/docs-search";
 import { serverEnv } from "@/lib/server/env";
@@ -119,6 +120,7 @@ export async function handleTurn(req: Request, channel: "user" | "dev"): Promise
   if (mode === "image" && q.imagesPerDay === 0) return limitError("image_user_day", 3600, cookie);
 
   let conversation = null;
+  const newSession = !(typeof body.conversationId === "string" && ID.test(body.conversationId));
   if (typeof body.conversationId === "string" && ID.test(body.conversationId)) {
     conversation = await getConversation(database, uid, body.conversationId);
     if (!conversation || conversation.archived || conversation.source !== "chat" || conversation.channel !== channel)
@@ -134,6 +136,7 @@ export async function handleTurn(req: Request, channel: "user" | "dev"): Promise
   const lim: LimitResult = await consume(database, rules);
   if (!lim.ok) {
     log("rate_limited", req, { channel, limit: lim.exceeded });
+    if (channel === "user" && chatFor === "devstack.bid") reportHubEvent("chat_turn", { outcome: "rate_limited", mode, limit: lim.exceeded, via: "engine" });
     return limitError(lim.exceeded, lim.retryAfterSec ?? 3600, cookie);
   }
   if (Math.random() < 0.02) waitUntil(pruneCounters(database).catch(() => undefined));
@@ -188,6 +191,9 @@ export async function handleTurn(req: Request, channel: "user" | "dev"): Promise
       .then(async (res) => {
         if (res.outcome === "failed" && !res.usage) await refund(database, rules).catch(() => undefined);
         log("turn_finished", req, { channel, mode, outcome: res.outcome, tokensIn: res.usage?.input, tokensOut: res.usage?.output });
+        // implemented.stream reports its own turns from its proxy; count each turn once.
+        if (chatFor === "devstack.bid")
+          reportHubEvent("chat_turn", { outcome: res.outcome === "failed" ? "failed" : "ok", mode, provider, channel, newSession, usageIn: res.usage?.input, usageOut: res.usage?.output, ms: Date.now() - now, via: "engine" });
       })
       .catch((err) => {
         log("turn_crashed", req, { channel, mode, name: (err as Error)?.name });

@@ -1,4 +1,5 @@
 import { issueSession } from "@/lib/auth/session";
+import { loginOutcome, reportHubEvent } from "@/lib/hub/report";
 import { connection } from "next/server";
 import { exchangeCodeWithScope, fetchProfile } from "@/lib/auth/github-api";
 import { GITHUB_SCOPES, grantedScopes } from "@/lib/auth/github-policy";
@@ -16,6 +17,13 @@ import { checkRateLimit } from "@/lib/server/rate-limit";
 /** GET /api/auth/github/callback — exchange the code, link chats, set the session cookie. */
 export async function GET(req: Request) {
   await connection();
+  const res = await callback(req);
+  // stack-hub: success/failure only (reason code from the redirect, no login names or emails).
+  reportHubEvent("github_login", loginOutcome(res));
+  return res;
+}
+
+async function callback(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const secure = url.protocol === "https:";
   const server = serverEnv();

@@ -65,6 +65,8 @@ Checks: `npm run lint && npm run typecheck && npm test && npm run cf:build`.
 | `NVX_PLAN_LIMITER` | rate-limit binding | `wrangler.jsonc` `ratelimits` (namespace `4712`) | 20 req / 60 s per IP, all POSTs |
 | `NVX_PLAN_AI_LIMITER` | rate-limit binding | `wrangler.jsonc` `ratelimits` (namespace `4711`) | 5 req / 60 s per IP, shared server key only |
 | `PLAN_LIMIT_PER_MIN`, `PLAN_AI_LIMIT_PER_MIN` | var | only used by the in-memory fallback (non-Workers hosts) | 20 / 5 |
+| `HUB` | service binding → Worker `stack-hub` | `wrangler.jsonc` `services` | Private hub. **Deploy `stack-hub` first**, or this deploy fails on the missing service |
+| `HUB_API_KEY` | **secret** | `wrangler secret put` (same value on `stack-hub` and `implemented-stream`) | none → hub reporting off |
 
 Rate-limit bindings are declared in config only. They are not a separate dashboard resource, and they are created when the Worker is deployed. Counters are per Cloudflare location and eventually consistent, so very fast bursts may let a few extra requests through, which is fine for abuse control. Clients are keyed by IP, and IPv6 clients by their /64 prefix.
 
@@ -178,6 +180,7 @@ npm run preview    # รันใน Workers runtime ที่ http://localhost:
 - `OPENAI_MODEL` (ค่าเริ่มต้น `gpt-6.1-sol`), `OPENAI_MAX_OUTPUT_TOKENS` (6000, สูงสุด 16000), `OPENAI_TIMEOUT_MS` ตั้งใน `vars` ของ `wrangler.jsonc`
 - Rate limit: `NVX_PLAN_LIMITER` 20 ครั้งต่อนาทีต่อ IP สำหรับทุก POST และ `NVX_PLAN_AI_LIMITER` 5 ครั้งต่อนาทีต่อ IP เฉพาะเมื่อใช้ key ของเซิร์ฟเวอร์ binding ทั้งสองถูกสร้างพร้อมการ deploy
 - key ที่ผู้ใช้ใส่เองถูกใช้แค่ในคำขอนั้น ไม่ถูกเก็บและไม่ถูกบันทึก log
+- `HUB` (service binding ไปที่ Worker `stack-hub`) กับ secret `HUB_API_KEY` ใช้ส่งเหตุการณ์ `chat_turn` และ `github_login` ไปที่ศูนย์ควบคุมส่วนตัว ต้อง deploy `stack-hub` ก่อน ไม่งั้น deploy นี้จะล้ม ถ้าไม่มี secret ระบบจะไม่ส่งอะไรเลย
 
 ### 4. Deploy ไปยัง production domains ที่ตั้งไว้
 ```bash
