@@ -3,13 +3,14 @@
 import { SplineScene } from "@/components/ui/splite";
 import { Card } from "@/components/ui/card"
 import { Spotlight } from "@/components/ui/spotlight"
+import { addRobotEyeGlow } from "./robot-eyes"
  
 // Demo from the pasted snippet. Adjustments: the repo's existing Card is kept (no shadcn copy);
 // ibelick's Spotlight has no `fill` prop (that belongs to the Aceternity variant), so it uses
 // `size` and a warm tint instead; the layout stacks on small screens.
 export function SplineSceneBasic() {
   return (
-    <Card className="w-full min-h-[600px] md:min-h-0 md:h-[500px] bg-black/[0.96] relative overflow-hidden">
+    <Card className="w-full md:h-[500px] bg-black/[0.96] relative overflow-hidden">
       <Spotlight
         className="-top-40 left-0 md:left-60 md:-top-20 from-orange-200 via-orange-300 to-orange-500/40"
         size={320}
@@ -35,12 +36,21 @@ export function SplineSceneBasic() {
           </p>
         </div>
 
-        {/* Right content */}
-        <div className="flex-1 relative min-h-[300px] md:min-h-0">
+        {/* Right content. container-type: size lets the waist panel scale in cqh: the scene
+            camera scales the robot with the canvas height and keeps it centred horizontally. */}
+        <div className="relative h-[340px] md:h-auto md:flex-1 [container-type:size]">
           <SplineScene 
             scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
             className="w-full h-full"
+            onLoad={(app) => { void addRobotEyeGlow(app) }}
           />
+          {/* implemented.stream plate covering the robot's waist band. Decorative, click-through. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 top-[76%] flex h-[9cqh] w-[27cqh] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[1.4cqh] border border-white/10 bg-[#16171b] px-[1.6cqh] shadow-[0_0.6cqh_1.6cqh_rgb(0_0_0/0.55)]"
+          >
+            <img src="/implemented-stream-wordmark-panel.png" alt="" width={585} height={247} decoding="async" className="h-[78%] w-auto max-w-full object-contain" draggable={false} />
+          </div>
         </div>
       </div>
     </Card>
