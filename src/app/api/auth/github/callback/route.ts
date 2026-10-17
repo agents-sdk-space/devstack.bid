@@ -49,7 +49,7 @@ export async function GET(req: Request) {
     console.warn(JSON.stringify({ at: "api/auth/github", event: "linked", login: profile.login }));
     return signedInRedirect(url.origin, secure, opened.next, await issueSession(db, plan.userId, secret));
   } catch (err) {
-    console.warn(JSON.stringify({ at: "api/auth/github", event: "failed", name: (err as Error)?.name, status: (err as { status?: number }).status }));
+    console.warn(JSON.stringify({ at: "api/auth/github", event: "failed", name: (err as Error)?.name, status: (err as { status?: number }).status, step: (err as { step?: string }).step, ghError: (err as { ghError?: string }).ghError }));
     return oauthFail(url.origin, secure, "error", "github");
   }
 }
