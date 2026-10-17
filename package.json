@@ -17,6 +17,7 @@
     "export": "tsx scripts/export-template.ts",
     "cf:build": "opennextjs-cloudflare build",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "preview:local": "opennextjs-cloudflare populateCache local && wrangler dev",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf:typegen": "wrangler types --env-interface CloudflareEnv --include-runtime=false cloudflare-env.d.ts",
     "db:migrate:local": "wrangler d1 migrations apply nvx-db --local",
@@ -92,7 +93,9 @@
     "vitest": "^4.1.11",
     "wrangler": "^4.149.0"
   },
-  "engines": {},
+  "engines": {
+    "node": ">=22"
+  },
   "overrides": {
     "@node-minify/core": {
       "glob": "10.5.0"

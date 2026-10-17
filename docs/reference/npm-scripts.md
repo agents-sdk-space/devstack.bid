@@ -15,6 +15,7 @@
 | `npm run export -- <id> [opts]` | `tsx scripts/export-template.ts` เขียน setup.sh/ps1/README ของเทมเพลตลงดิสก์ | ทดสอบเทมเพลต end-to-end |
 | `npm run cf:build` | `opennextjs-cloudflare build` → `.open-next/` | ตรวจว่า build เป็น Worker ได้ |
 | `npm run preview` | build + `opennextjs-cloudflare preview` ใน workerd ที่ :8787 | ตรวจพฤติกรรม/ภาพแบบ production |
+| `npm run preview:local` | `opennextjs-cloudflare populateCache local` แล้ว `wrangler dev` (ใช้หลัง `npm run cf:build`) | รัน build ที่มีอยู่ใน workerd ในเครื่อง ถ้ารัน `wrangler dev` ตรงๆ โดยไม่ populate cache ทุกหน้า App Router จะค้างแล้วได้ 500 |
 | `npm run deploy` | build + `opennextjs-cloudflare deploy` | **ต้องได้รับอนุมัติก่อน** ดู [deploy-cloudflare.md](../operations/deploy-cloudflare.md) |
 | `npm run cf:typegen` | `wrangler types ...` → `cloudflare-env.d.ts` | หลังแก้ binding ใน wrangler.jsonc |
 | `npm run db:migrate:local` | `wrangler d1 migrations apply nvx-db --local` | ทดสอบ migration ในฐานข้อมูลจำลองบนเครื่อง |
