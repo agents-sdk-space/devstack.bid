@@ -15,13 +15,15 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 
 | Set | Packages | Licenses | Flagged |
 |---|---|---|---|
-| Site (devstack.bid, Next.js Worker) | 146 | MIT ×119, ISC ×11, Apache-2.0 ×7, BSD-3-Clause ×2, SEE LICENSE IN ./LICENSE ×1, CC-BY-4.0 ×1, BSD-2-Clause ×1, W3C-20150513 ×1, (MIT OR GPL-3.0-or-later) ×1, (MIT AND Zlib) ×1, 0BSD ×1 | 0 |
+| Site (devstack.bid, Next.js Worker) | 157 | MIT ×128, ISC ×11, Apache-2.0 ×7, UNKNOWN ×2, BSD-3-Clause ×2, SEE LICENSE IN ./LICENSE ×1, CC-BY-4.0 ×1, BSD-2-Clause ×1, W3C-20150513 ×1, (MIT OR GPL-3.0-or-later) ×1, (MIT AND Zlib) ×1, 0BSD ×1 | 0 |
 | Studio (/studio/, browser bundle) | 49 | MIT ×39, Apache-2.0 ×3, OFL-1.1 ×3, (MPL-2.0 OR Apache-2.0) ×1, ISC ×1, (MIT OR GPL-3.0-or-later) ×1, (MIT AND Zlib) ×1 | 0 |
 
 ## Exceptions and notes
 
 - `caniuse-lite`: CC-BY-4.0, browser-support data used at build time by Next.js/browserslist; not shipped; attribution below.
 - `@codesandbox/nodebox`: SEE LICENSE IN ./LICENSE, Sustainable Use License 1.0 (NOT permissive: internal, non-commercial or personal use; free non-commercial redistribution). Required by @codesandbox/sandpack-client for the home live example. Explicit owner-approved exception to AGENTS.md rule 9, dated 2026-10-15.
+- `@splinetool/react-spline`: UNKNOWN, MIT per the LICENSE file shipped in the package (Spline, Inc.); package.json has no license field.
+- `@splinetool/runtime`: UNKNOWN, NOT open source: no license field or file; Spline, Inc. terms apply. Installed on the owner's explicit request (2026-10-17) for the /ui-lab demo. Confirm owner approval of this AGENTS.md rule 9 exception before merging.
 - `intersection-observer`: W3C-20150513, W3C Software and Document License (OSI-approved, permissive); polyfill pulled in by Sandpack.
 - `sharp` / `@img/sharp-libvips-*` (LGPL-3.0-or-later): optional native image library pulled in by `next` and `wrangler` for local builds and `next dev`. It is marked dev/optional in the lockfile, is not in the Worker bundle, and is not shipped. No action needed.
 - No dependency requires a paid or commercial license. WebContainers (`@webcontainer/api`, commercial terms for some production use) was removed in 0.8.0-rc.2.
@@ -122,6 +124,8 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `@radix-ui/rect` | 1.1.3 | MIT |
 | `@react-hook/intersection-observer` | 3.1.2 | MIT |
 | `@react-hook/passive-layout-effect` | 1.2.1 | MIT |
+| `@splinetool/react-spline` | 4.1.0 | UNKNOWN |
+| `@splinetool/runtime` | 2.0.93 | UNKNOWN |
 | `@stitches/core` | 1.2.8 | MIT |
 | `@swc/helpers` | 0.5.23 | Apache-2.0 |
 | `@types/react` | 19.3.0 | MIT |
@@ -130,6 +134,7 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `aria-hidden` | 1.2.6 | MIT |
 | `base64-js` | 1.5.1 | MIT |
 | `baseline-browser-mapping` | 2.11.28 | Apache-2.0 |
+| `blurhash` | 2.0.5 | MIT |
 | `buffer` | 6.0.3 | MIT |
 | `caniuse-lite` | 1.0.30001815 | CC-BY-4.0 |
 | `clean-set` | 1.1.2 | MIT |
@@ -150,6 +155,7 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `esniff` | 2.0.1 | ISC |
 | `event-emitter` | 0.3.5 | MIT |
 | `ext` | 1.7.0 | ISC |
+| `framer-motion` | 14.3.0 | MIT |
 | `get-nonce` | 1.0.1 | MIT |
 | `ieee754` | 1.2.1 | BSD-3-Clause |
 | `immediate` | 3.0.6 | MIT |
@@ -158,12 +164,16 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `isarray` | 1.0.0 | MIT |
 | `jszip` | 3.10.2 | (MIT OR GPL-3.0-or-later) |
 | `lie` | 3.3.0 | MIT |
+| `lodash.debounce` | 4.0.8 | MIT |
 | `lucide-react` | 1.55.0 | ISC |
 | `lz-string` | 1.5.0 | MIT |
 | `mime-db` | 1.54.0 | MIT |
+| `motion-dom` | 14.3.0 | MIT |
+| `motion-utils` | 14.1.1 | MIT |
 | `nanoid` | 3.3.20 | MIT |
 | `next` | 16.4.0 | MIT |
 | `next-tick` | 1.1.0 | ISC |
+| `on-change` | 4.0.0 | MIT |
 | `outvariant` | 1.4.0 | MIT |
 | `pako` | 1.0.11 | (MIT AND Zlib) |
 | `picocolors` | 1.1.1 | ISC |
@@ -173,6 +183,7 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `react-devtools-inline` | 4.4.0 | MIT |
 | `react-dom` | 19.3.0 | MIT |
 | `react-is` | 17.0.2 | MIT |
+| `react-merge-refs` | 2.1.1 | MIT |
 | `react-remove-scroll` | 2.7.2 | MIT |
 | `react-remove-scroll-bar` | 2.3.8 | MIT |
 | `react-style-singleton` | 2.2.3 | MIT |
@@ -180,6 +191,7 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `safe-buffer` | 5.1.2 | MIT |
 | `scheduler` | 0.28.0 | MIT |
 | `semver` | 7.8.5 | ISC |
+| `semver-compare` | 1.0.0 | MIT |
 | `server-only` | 0.0.1 | MIT |
 | `setimmediate` | 1.0.5 | MIT |
 | `sharp` | 0.35.5 | Apache-2.0 |
@@ -189,6 +201,7 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `string_decoder` | 1.1.1 | MIT |
 | `style-mod` | 4.1.4 | MIT |
 | `styled-jsx` | 5.1.6 | MIT |
+| `thumbhash` | 0.1.1 | MIT |
 | `tslib` | 2.8.1 | 0BSD |
 | `type` | 2.7.3 | ISC |
 | `use-callback-ref` | 1.3.3 | MIT |
