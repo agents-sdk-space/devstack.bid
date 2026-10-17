@@ -15,7 +15,7 @@ cp .env.example .env.local        # สำหรับ next dev (ถ้าต้
 cp .dev.vars.example .dev.vars    # สำหรับ wrangler preview (ถ้าต้องการ AI)
 ```
 
-`postinstall` patch adapter ของ OpenNext ให้รองรับ `preview-props.json` ของ Next 16.4 ถ้าเห็น `[patch-opennext] pattern not found` แปลว่า adapter เปลี่ยนเวอร์ชันแล้ว ให้ตรวจว่ายังต้อง patch หรือไม่ (ดู [cloudflare-runtime.md](../architecture/cloudflare-runtime.md))
+`postinstall` patch adapter ของ OpenNext ให้รองรับ `preview-props.json` ของ Next 16.4 ถ้าเห็น `[patch-opennext] pattern not found` แปลว่า adapter เปลี่ยนเวอร์ชันแล้ว ให้ตรวจว่ายังต้อง patch หรือไม่ (ดู [cloudflare-runtime.md](../architecture/cloudflare-runtime.md)) `npm run cf:build` ตรวจ patch นี้ทั้งก่อนและหลัง build ด้วย `scripts/check-opennext-patch.mjs` ถ้าขึ้น `[check-opennext-patch] ERROR` แปลว่าติดตั้งแบบข้าม postinstall (เช่น `--ignore-scripts`) ให้รัน `npm ci` ใหม่
 
 ## สองวิธีรัน และควรใช้เมื่อไร
 
@@ -26,7 +26,7 @@ cp .dev.vars.example .dev.vars    # สำหรับ wrangler preview (ถ้�
 
 ข้อสังเกตจากประสบการณ์: `next dev` บางครั้งแสดง CSS ค้าง (stale) หลังแก้ token มาก ๆ ให้ยืนยันภาพด้วย `npm run preview` ก่อนสรุปผลเสมอ
 
-`npm run preview` = `opennextjs-cloudflare build && opennextjs-cloudflare preview` build ใช้เวลาประมาณ 1 นาที ถ้าต้องการรัน preview ซ้ำโดยไม่ build ใหม่: `npx opennextjs-cloudflare preview --port 8787` ปิด preview ที่ค้าง: `pkill -f "opennextjs-cloudflare preview"; pkill -f workerd`
+`npm run preview` = `npm run cf:build && opennextjs-cloudflare preview` build ใช้เวลาประมาณ 1 นาที ถ้าต้องการรัน preview ซ้ำโดยไม่ build ใหม่: `npx opennextjs-cloudflare preview --port 8787` ปิด preview ที่ค้าง: `pkill -f "opennextjs-cloudflare preview"; pkill -f workerd`
 
 ## ชุดตรวจก่อน commit
 

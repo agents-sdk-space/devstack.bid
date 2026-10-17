@@ -19,6 +19,7 @@
 | [`.dev.vars.example`](../../.dev.vars.example) | ต้นแบบ `.dev.vars` สำหรับ `npm run preview` (ห้าม commit `.dev.vars`) |
 | [`public/_headers`](../../public/_headers) | headers ของ static assets ที่เสิร์ฟตรงจาก `.open-next/assets` |
 | [`scripts/patch-opennext.mjs`](../../scripts/patch-opennext.mjs) | patch ตอน `postinstall` ให้ adapter inline `preview-props.json` ของ Next 16.4 (ไม่งั้นทุกคำขอ error `Unexpected loadManifest(...preview-props.json)`) idempotent และเตือนถ้า pattern เปลี่ยน ลบได้เมื่อ adapter แก้เอง |
+| [`scripts/check-opennext-patch.mjs`](../../scripts/check-opennext-patch.mjs) | รันใน `npm run cf:build` (และ `preview`/`deploy`) ให้ build ล้มด้วย exit 1 ถ้า patch ข้างบนไม่ได้ติดตั้ง หรือ `.open-next` ไม่ได้ inline `preview-props.json` (เคยทำให้ version `0286ef58` ได้ 500 ทุกคำขอ) |
 | [`next.config.ts`](../../next.config.ts) | headers, 404 rewrite, และ `initOpenNextCloudflareForDev()` ใน dev เพื่อให้ `next dev` เห็น binding |
 
 ## การทำงานตอนรัน
