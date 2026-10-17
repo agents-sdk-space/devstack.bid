@@ -23,7 +23,7 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 - `caniuse-lite`: CC-BY-4.0, browser-support data used at build time by Next.js/browserslist; not shipped; attribution below.
 - `@codesandbox/nodebox`: SEE LICENSE IN ./LICENSE, Sustainable Use License 1.0 (NOT permissive: internal, non-commercial or personal use; free non-commercial redistribution). Required by @codesandbox/sandpack-client for the home live example. Explicit owner-approved exception to AGENTS.md rule 9, dated 2026-10-15.
 - `@splinetool/react-spline`: UNKNOWN, MIT per the LICENSE file shipped in the package (Spline, Inc.); package.json has no license field.
-- `@splinetool/runtime`: UNKNOWN, NOT open source: no license field or file; Spline, Inc. terms apply. Installed on the owner's explicit request (2026-10-17) for the /ui-lab demo. Confirm owner approval of this AGENTS.md rule 9 exception before merging.
+- `@splinetool/runtime`: UNKNOWN, NOT open source: no license field or file; Spline, Inc. terms apply. Explicit owner-approved exception to AGENTS.md rule 9, dated 2026-10-17 (Spline 3D scene on the /ui-lab demo, client-only chunk).
 - `intersection-observer`: W3C-20150513, W3C Software and Document License (OSI-approved, permissive); polyfill pulled in by Sandpack.
 - `sharp` / `@img/sharp-libvips-*` (LGPL-3.0-or-later): optional native image library pulled in by `next` and `wrangler` for local builds and `next dev`. It is marked dev/optional in the lockfile, is not in the Worker bundle, and is not shipped. No action needed.
 - No dependency requires a paid or commercial license. WebContainers (`@webcontainer/api`, commercial terms for some production use) was removed in 0.8.0-rc.2.

@@ -34,7 +34,7 @@ export const EXCEPTIONS = {
   "@splinetool/react-spline": { license: "UNKNOWN", reason: "MIT per the LICENSE file shipped in the package (Spline, Inc.); package.json has no license field" },
   "@splinetool/runtime": {
     license: "UNKNOWN",
-    reason: "NOT open source: no license field or file; Spline, Inc. terms apply. Installed on the owner's explicit request (2026-10-17) for the /ui-lab demo. Confirm owner approval of this AGENTS.md rule 9 exception before merging",
+    reason: "NOT open source: no license field or file; Spline, Inc. terms apply. Explicit owner-approved exception to AGENTS.md rule 9, dated 2026-10-17 (Spline 3D scene on the /ui-lab demo, client-only chunk)",
   },
   "intersection-observer": { license: "W3C-20150513", reason: "W3C Software and Document License (OSI-approved, permissive); polyfill pulled in by Sandpack" },
 };
