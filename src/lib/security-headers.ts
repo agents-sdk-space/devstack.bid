@@ -29,6 +29,25 @@ export function contentSecurityPolicy(dev = false): string {
 }
 
 /**
+ * CSP for the internal /ui-lab preview only (noindex, not linked). Same as the site CSP plus what
+ * the Spline 3D runtime needs: the scene file (prod.spline.design), its WASM/JS helpers
+ * (cdn.spline.design, unpkg fallback, Google's Draco decoder) and 'wasm-unsafe-eval'.
+ * Scoped to that one route in next.config.ts so the rest of the site keeps the strict policy.
+ */
+export function uiLabContentSecurityPolicy(dev = false): string {
+  const spline = "https://prod.spline.design https://cdn.spline.design https://unpkg.com https://www.gstatic.com";
+  return contentSecurityPolicy(dev)
+    .split("; ")
+    .map((d) => {
+      if (d.startsWith("script-src ")) return `${d} 'wasm-unsafe-eval' ${spline}`;
+      if (d.startsWith("connect-src ")) return `${d} ${spline}`;
+      if (d.startsWith("font-src ")) return `${d} https://fonts.gstatic.com`;
+      return d;
+    })
+    .join("; ");
+}
+
+/**
  * CSP for /studio (the merged DEVSTACK workspace). The Studio is served from static assets, so the
  * policy lives in public/_headers (block `/studio/*`, together with COOP/COEP); this function is the
  * tested source of truth for that line (tests/studio.test.ts). Differences from the site CSP:

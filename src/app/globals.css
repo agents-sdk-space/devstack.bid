@@ -952,3 +952,63 @@ samp {
 @media (prefers-reduced-motion: reduce) {
   .focus-frame-corner { animation: none; }
 }
+
+/* ---------------------------------------------------------------------------------------------
+ * Site-wide ambient background (src/components/background-glow.tsx).
+ * A fixed, decorative layer behind all content: a faint warm glow near the top plus a soft
+ * spotlight that follows the pointer via --mx/--my. pointer-events: none, aria-hidden.
+ * Reduced motion / touch: the spotlight stays parked (no tracking, no transition).
+ * ------------------------------------------------------------------------------------------- */
+.nvx-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background:
+    radial-gradient(70rem 32rem at 50% -8rem, var(--nvx-ambient-warm), transparent 70%),
+    radial-gradient(36rem 24rem at 92% -4rem, var(--nvx-ambient-pink), transparent 70%);
+}
+.nvx-ambient__spot {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(38rem 38rem at var(--mx, 50%) var(--my, 30%), var(--nvx-spot), transparent 65%);
+  transition: opacity 600ms var(--nvx-ease-standard);
+}
+.nvx-ambient[data-active="true"] .nvx-ambient__spot {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce), (pointer: coarse) {
+  .nvx-ambient__spot {
+    transition: none;
+    opacity: 0.6;
+    --mx: 50%;
+    --my: 0%;
+  }
+}
+@media print {
+  .nvx-ambient {
+    display: none;
+  }
+}
+
+/* Spline fallback spinner (src/components/ui/splite.tsx). */
+.loader {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  border: 3px solid rgb(255 255 255 / 0.15);
+  border-top-color: rgb(255 138 61 / 0.9);
+  animation: nvx-loader-spin 0.9s linear infinite;
+}
+@keyframes nvx-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loader {
+    animation-duration: 2.4s;
+  }
+}
