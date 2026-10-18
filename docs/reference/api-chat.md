@@ -5,7 +5,7 @@
 | Route | Method | ใช้ทำอะไร |
 |---|---|---|
 | `/api/chat?channel=user\|dev` | GET | สถานะ, `limits`, `models` (รวม Vercel AI Gateway), `github.configured`, `account` ถ้าเข้าสู่ระบบแล้ว, `quota`, รายการแชตของ session หรือ cookie |
-| `/api/chat/turn` | POST | User Chat: `{ message, conversationId?, mode?: general\|thai\|code\|strong\|image\|gateway, model? }` → SSE โหมด `gateway` รับเฉพาะ id ในรายการอนุญาต |
+| `/api/chat/turn` | POST | User Chat: `{ message, conversationId?, mode?: general\|thai\|code\|strong\|image\|gateway, model? }` → SSE โหมด `gateway` รับเฉพาะ id ในรายการอนุญาต header ทางเลือก: `x-nvx-site: implemented.stream` (persona Bugbot), `x-nvx-proxy-key` + `x-nvx-client-ip` (IP ผู้ใช้สำหรับโควตา ใช้เมื่อ key ตรงกับ `CHAT_PROXY_KEY`) |
 | `/login` | GET | หน้าเข้าสู่ระบบ: Cursor, Google, GitHub และบัญชี DevStack |
 | `/api/auth/session` | GET | `{ account }` ของ cookie `nvx_auth` หรือ `account: null` |
 | `/api/auth/github` | GET | เริ่ม GitHub OAuth (state ลงนามใน cookie) ถ้ายังไม่ตั้งค่า จะพากลับ `/login?auth=missing&provider=github` |

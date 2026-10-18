@@ -90,6 +90,13 @@ const schema = z.object({
     .regex(/^[\w-]{16,400}$/)
     .optional()
     .catch(undefined),
+  /** Shared with the implemented.stream chat proxy: lets it forward the visitor IP (x-nvx-client-ip) for per-IP quotas. */
+  CHAT_PROXY_KEY: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9_-]{32,128}$/)
+    .optional()
+    .catch(undefined),
   AI_GATEWAY_BASE_URL: z
     .string()
     .trim()
@@ -107,7 +114,7 @@ export function serverEnv(source: Record<string, string | undefined> = process.e
   if (cached && KEYS.every((k) => cached!.source[k] === source[k])) return cached.env;
   const raw = Object.fromEntries(KEYS.map((k) => [k, source[k] === "" ? undefined : source[k]]));
   const env = schema.parse(raw);
-  const secrets = new Set<keyof ServerEnv>(["OPENAI_API_KEY", "HF_TOKEN", "GITHUB_CLIENT_SECRET", "GOOGLE_CLIENT_SECRET", "AI_GATEWAY_API_KEY"]);
+  const secrets = new Set<keyof ServerEnv>(["OPENAI_API_KEY", "HF_TOKEN", "GITHUB_CLIENT_SECRET", "GOOGLE_CLIENT_SECRET", "AI_GATEWAY_API_KEY", "CHAT_PROXY_KEY"]);
   const invalid: string[] = KEYS.filter((k) => raw[k] !== undefined && !secrets.has(k) && String(env[k]) !== String(raw[k]).trim());
   for (const k of secrets) if (raw[k] !== undefined && !env[k]) invalid.push(k);
   if (invalid.length) console.warn(`[env] ignoring invalid values for: ${invalid.join(", ")} (using defaults)`);

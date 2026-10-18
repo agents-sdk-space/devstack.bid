@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans_Thai, Inter } from "next/font/google";
 import { Footer, Header } from "@/components/header";
 import { Providers } from "@/components/providers";
+import { BackgroundGlow } from "@/components/background-glow";
 import "./globals.css";
 
 // Inter (SF-like) for headings and body, IBM Plex Sans Thai for Thai glyphs, IBM Plex Mono for code
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   // The black theme is the default for everyone, regardless of the OS preference.
-  themeColor: "#000000",
+  themeColor: "#0c0c0e",
   // Full-height app pages (/chat) use 100dvh + safe-area insets; the on-screen keyboard shrinks the layout instead of covering the composer.
   viewportFit: "cover",
   interactiveWidget: "resizes-content",
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: PREFS_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col overflow-x-clip font-sans">
+        <BackgroundGlow />
         <Providers>
           <Header />
           <main id="main" tabIndex={-1} className="flex-1 outline-none">

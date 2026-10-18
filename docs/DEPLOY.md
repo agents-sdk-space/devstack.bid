@@ -39,7 +39,7 @@
 
 - Node.js **22+** for Wrangler 4 (`wrangler` refuses Node 20). Next.js itself runs on Node 20.9+.
 - A Cloudflare account and an API token (see [Token permissions](#token-permissions)).
-- `npm install`. It runs `postinstall` → `scripts/patch-opennext.mjs`, which patches `@opennextjs/cloudflare` so it also loads Next 16.4's `preview-props.json`. The patch is idempotent and safe to re-run.
+- `npm install`. It runs `postinstall` → `scripts/patch-opennext.mjs`, which patches `@opennextjs/cloudflare` so it also loads Next 16.4's `preview-props.json`. The patch is idempotent and safe to re-run. `npm run cf:build` (also used by `preview` and `deploy`) runs `scripts/check-opennext-patch.mjs` before and after the build and exits 1 if the patch is missing.
 
 ### 2. Local development
 
@@ -93,7 +93,7 @@ npm run db:migrations:list
 npm run db:migrate:remote
 
 # 3) build + deploy this Worker and its configured custom domains
-npm run deploy                            # = opennextjs-cloudflare build && opennextjs-cloudflare deploy
+npm run deploy                            # = npm run cf:build (with patch checks) && opennextjs-cloudflare deploy
 
 # 4) secret (after the worker exists)
 printenv OPENAI_API_KEY | npx wrangler secret put OPENAI_API_KEY

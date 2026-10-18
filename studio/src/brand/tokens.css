@@ -74,6 +74,10 @@
   /* Hero glow */
   --nvx-glow-1: rgb(0 0 0 / 0);
   --nvx-glow-2: rgb(0 0 0 / 0);
+  /* Site-wide ambient layer (src/components/background-glow.tsx). Decorative only. */
+  --nvx-ambient-warm: rgb(255 138 61 / 0.07);
+  --nvx-ambient-pink: rgb(251 15 171 / 0.03);
+  --nvx-spot: rgb(255 150 80 / 0.06);
   /* Shadows */
   --nvx-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
   --nvx-shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.1);
@@ -89,13 +93,15 @@
 
 .dark {
   /* Surfaces: black page, graphite cards */
-  --nvx-bg: #000000;
-  --nvx-surface: #0a0a0a;
-  --nvx-surface-2: #171717;
-  --nvx-surface-3: #262626;
-  --nvx-raised: #2e2e2e;
-  --nvx-border: #262626;
-  --nvx-border-strong: #525252;
+  /* v0.10 (owner request 2026-10-17: "background too dark"): lifted from pure black to a soft
+     graphite so the warm ambient glow reads. Text contrast stays well above WCAG AA. */
+  --nvx-bg: #0c0c0e;
+  --nvx-surface: #121214;
+  --nvx-surface-2: #1b1b1e;
+  --nvx-surface-3: #28282c;
+  --nvx-raised: #313136;
+  --nvx-border: #2a2a2e;
+  --nvx-border-strong: #56565c;
   /* Text */
   --nvx-fg: #fafafa;
   --nvx-muted: #d4d4d4;
@@ -130,8 +136,12 @@
   --nvx-tile-bottom: #171717;
   --nvx-tile-edge: rgb(255 255 255 / 0.1);
   --nvx-tile-sheen: rgb(255 255 255 / 0.12);
-  --nvx-glow-1: rgb(0 0 0 / 0);
-  --nvx-glow-2: rgb(0 0 0 / 0);
+  --nvx-glow-1: rgb(255 138 61 / 0.1);
+  --nvx-glow-2: rgb(251 15 171 / 0.05);
+  /* Site-wide ambient layer (src/components/background-glow.tsx). Decorative only. */
+  --nvx-ambient-warm: rgb(255 138 61 / 0.11);
+  --nvx-ambient-pink: rgb(251 15 171 / 0.045);
+  --nvx-spot: rgb(255 176 120 / 0.07);
   --nvx-shadow-sm: 0 0 0 0 transparent;
   --nvx-shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.6);
   --nvx-shadow-lg: 0 24px 64px -16px rgb(0 0 0 / 0.8);

@@ -30,6 +30,12 @@ export const EXCEPTIONS = {
     license: "SEE LICENSE IN ./LICENSE",
     reason: "Sustainable Use License 1.0 (NOT permissive: internal, non-commercial or personal use; free non-commercial redistribution). Required by @codesandbox/sandpack-client for the home live example. Explicit owner-approved exception to AGENTS.md rule 9, dated 2026-10-15",
   },
+  // Spline 3D (internal /ui-lab demo only, client-only chunk; never loaded site-wide).
+  "@splinetool/react-spline": { license: "UNKNOWN", reason: "MIT per the LICENSE file shipped in the package (Spline, Inc.); package.json has no license field" },
+  "@splinetool/runtime": {
+    license: "UNKNOWN",
+    reason: "NOT open source: no license field or file; Spline, Inc. terms apply. Explicit owner-approved exception to AGENTS.md rule 9, dated 2026-10-17 (Spline 3D scene on the /ui-lab demo, client-only chunk)",
+  },
   "intersection-observer": { license: "W3C-20150513", reason: "W3C Software and Document License (OSI-approved, permissive); polyfill pulled in by Sandpack" },
 };
 

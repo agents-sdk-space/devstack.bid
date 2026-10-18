@@ -38,6 +38,7 @@ const STATIC = new Set([
   "/projects",
   "/design/chat-stream",
   "/design/dst-mascot",
+  "/ui-lab",
   "/setup.sh",
   "/sitemap.xml",
   "/robots.txt",

@@ -15,7 +15,7 @@ cp .env.example .env.local        # สำหรับ next dev (ถ้าต้
 cp .dev.vars.example .dev.vars    # สำหรับ wrangler preview (ถ้าต้องการ AI)
 ```
 
-`postinstall` patch adapter ของ OpenNext ให้รองรับ `preview-props.json` ของ Next 16.4 ถ้าเห็น `[patch-opennext] pattern not found` แปลว่า adapter เปลี่ยนเวอร์ชันแล้ว ให้ตรวจว่ายังต้อง patch หรือไม่ (ดู [cloudflare-runtime.md](../architecture/cloudflare-runtime.md))
+`postinstall` patch adapter ของ OpenNext ให้รองรับ `preview-props.json` ของ Next 16.4 ถ้าเห็น `[patch-opennext] pattern not found` แปลว่า adapter เปลี่ยนเวอร์ชันแล้ว ให้ตรวจว่ายังต้อง patch หรือไม่ (ดู [cloudflare-runtime.md](../architecture/cloudflare-runtime.md)) `npm run cf:build` ตรวจ patch นี้ทั้งก่อนและหลัง build ด้วย `scripts/check-opennext-patch.mjs` ถ้าขึ้น `[check-opennext-patch] ERROR` แปลว่าติดตั้งแบบข้าม postinstall (เช่น `--ignore-scripts`) ให้รัน `npm ci` ใหม่
 
 ## สองวิธีรัน และควรใช้เมื่อไร
 
@@ -26,7 +26,7 @@ cp .dev.vars.example .dev.vars    # สำหรับ wrangler preview (ถ้�
 
 ข้อสังเกตจากประสบการณ์: `next dev` บางครั้งแสดง CSS ค้าง (stale) หลังแก้ token มาก ๆ ให้ยืนยันภาพด้วย `npm run preview` ก่อนสรุปผลเสมอ
 
-`npm run preview` = `opennextjs-cloudflare build && opennextjs-cloudflare preview` build ใช้เวลาประมาณ 1 นาที ถ้าต้องการรัน preview ซ้ำโดยไม่ build ใหม่: `npx opennextjs-cloudflare preview --port 8787` ปิด preview ที่ค้าง: `pkill -f "opennextjs-cloudflare preview"; pkill -f workerd`
+`npm run preview` = `npm run cf:build && opennextjs-cloudflare preview` build ใช้เวลาประมาณ 1 นาที ถ้าต้องการรัน preview ซ้ำโดยไม่ build ใหม่: `npx opennextjs-cloudflare preview --port 8787` ปิด preview ที่ค้าง: `pkill -f "opennextjs-cloudflare preview"; pkill -f workerd`
 
 ## ชุดตรวจก่อน commit
 
@@ -49,6 +49,7 @@ npm run cf:build      # ต้องผ่านก่อน deploy
 ## ปัญหาที่พบบ่อย
 
 - **`wrangler` บอกว่า Node เก่าเกินไป** → ใช้ Node 22+
+- **หลัง `opennextjs-cloudflare build` แล้วรัน `wrangler dev` ตรงๆ ทุกหน้า (เช่น `/login`) ค้างแล้วได้ 500** (log: `Worker's code had hung`) → ยังไม่ได้คัดลอก `.open-next/cache` ไปที่ `.open-next/assets/cdn-cgi/_next_cache` ให้รัน `npm run preview:local` (หรือ `npx opennextjs-cloudflare populateCache local` ก่อน `wrangler dev`) `opennextjs-cloudflare preview` และ `deploy` ทำขั้นนี้ให้อยู่แล้ว
 - **หน้า `/builder` ค้างที่ "Loading builder…"** → เปิด `http://localhost:3000` Next.js 16 บล็อก HMR เมื่อต้นทางเป็น `127.0.0.1` (ตอบคำว่า `Unauthorized` แบบไม่มีสถานะ HTTP) หน้า client-only จึงไม่ hydrate
 - **พอร์ต 8787 ถูกใช้** → ปิด preview เก่าตามคำสั่งข้างบน
 - **AI ไม่ทำงานใน dev** → ตรวจว่า `OPENAI_API_KEY` อยู่ใน `.env.local` หรือ `.dev.vars` และตรงรูปแบบ `^[\w-]{20,400}$`; `GET /api/plan` จะบอก `serverKeyConfigured`

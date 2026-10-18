@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 import { KNOWN_TEMPLATE_IDS } from "./src/data/template-ids";
 import docsNav from "./src/generated/docs-nav.json";
-import { securityHeaders } from "./src/lib/security-headers";
+import { securityHeaders, uiLabContentSecurityPolicy } from "./src/lib/security-headers";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -51,7 +51,11 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders(isDev) }];
+    return [
+      { source: "/:path*", headers: securityHeaders(isDev) },
+      // Later entries win for the same key: relax the CSP for the internal Spline demo only.
+      { source: "/ui-lab", headers: [{ key: "Content-Security-Policy", value: uiLabContentSecurityPolicy(isDev) }] },
+    ];
   },
 };
 

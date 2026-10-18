@@ -13,6 +13,8 @@ import { createRecorder, saveArchive } from "./stream-archive";
 import type { UiEvent } from "./events";
 import { agentRules, consume, imageRules, messageRules, pruneCounters, refund, spentToday, type LimitResult } from "./limits";
 import { runImageTurn, runPlainTurn, USER_MODES, type UserMode } from "./plain-turn";
+import { stripProxyContext } from "./knowledge/retrieve";
+import { chatSite } from "@/lib/server/trusted-proxy";
 import { chatEnv, chatRuntime, json, unavailable } from "./runtime";
 import { addMessage, createConversation, ensureUser, getConversation, listMessages } from "./store";
 import { runTurn } from "./turn";
@@ -92,7 +94,10 @@ export async function handleTurn(req: Request, channel: "user" | "dev"): Promise
     if (err instanceof HttpError) return json({ error: err.message }, err.status);
     return json({ error: "Bad request" }, 400);
   }
-  const message = typeof body.message === "string" ? body.message.replace(/\u0000/g, "").trim() : "";
+  const chatFor = chatSite(req);
+  // implemented.stream v10.5.0 appends its own SDK notes; drop them (retrieval happens here) so they
+  // are not stored, used as the title, or counted against the length limit.
+  const message = typeof body.message === "string" ? stripProxyContext(body.message.replace(/\u0000/g, "")).trim() : "";
   if (!message) return json({ error: "Please type a message. / กรุณาพิมพ์ข้อความ", code: "empty" }, 400);
   if (message.length > env.CHAT_MAX_INPUT_CHARS) {
     return json({ error: `Message is too long (max ${env.CHAT_MAX_INPUT_CHARS} characters). / ข้อความยาวเกิน ${env.CHAT_MAX_INPUT_CHARS} ตัวอักษร`, code: "too_long", max: env.CHAT_MAX_INPUT_CHARS }, 413);
@@ -214,7 +219,7 @@ export async function handleTurn(req: Request, channel: "user" | "dev"): Promise
         })
       : mode === "image"
         ? runImageTurn(base)
-        : runPlainTurn({ ...base, mode, history, gatewayModel, timeoutMs: Math.min(env.CHAT_TURN_TIMEOUT_MS, 90_000) });
+        : runPlainTurn({ ...base, mode, history, gatewayModel, site: chatFor, timeoutMs: Math.min(env.CHAT_TURN_TIMEOUT_MS, 90_000) });
   waitUntil(finish(work));
 
   return new Response(stream.readable, {

@@ -20,6 +20,8 @@ flowchart LR
 - Workers AI ผ่าน binding `AI` ([`workers-ai.ts`](../../src/lib/ai/workers-ai.ts)) สตรีม delta เป็น SSE; `strong` ใช้ HF router ([`hf.ts`](../../src/lib/ai/hf.ts)); ล้มแล้วถอยไปอีกค่าย
 - ภาพ: FLUX-1 schnell → bytes เก็บใน `attachment_blobs` (≤1.5 MB) เสิร์ฟที่ `/api/chat/images/<id>` เฉพาะเจ้าของ cookie
 - โควตา: `messageRules` / `imageRules(…,"user")` ใน [`limits.ts`](../../src/lib/chat/limits.ts) day bucket ตามเวลาไทย
+- ความรู้ Cloudflare Agents chat client SDK: คำถามที่เกี่ยวกับ SDK นี้ (useAgent, useAgentChat, AgentClient, tools, approvals ฯลฯ) จะได้โน้ตสั้นๆ จาก [`agents-chat-sdk.json`](../../src/lib/chat/knowledge/agents-chat-sdk.json) ที่คัดด้วย keyword ใน [`retrieve.ts`](../../src/lib/chat/knowledge/retrieve.ts) ต่อท้าย system prompt (ไม่เกิน ~1400 ตัวอักษร คำถามอื่นไม่เพิ่ม token) หน้าคู่มือสาธารณะคือ [integrations/cloudflare-agents-chat-sdk.md](../integrations/cloudflare-agents-chat-sdk.md)
+- Persona ตามเว็บ: proxy `/api/chat` ของ implemented.stream ส่ง `x-nvx-site: implemented.stream` เครื่องยนต์จึงแนะนำตัวเป็น Bugbot จาก implemented.stream และไม่ชี้ไปหน้าเฉพาะ devstack.bid ส่วน `x-nvx-proxy-key` + `x-nvx-client-ip` ใช้ IP ผู้ใช้จริงกับโควตาต่อ IP เมื่อ key ตรงกับ secret `CHAT_PROXY_KEY` ([`trusted-proxy.ts`](../../src/lib/server/trusted-proxy.ts)) โน้ตที่ proxy รุ่น v10.5.0 แนบมาท้ายข้อความถูกตัดทิ้งก่อนบันทึก
 
 ## Dev Chat (`channel = 'dev'`)
 
