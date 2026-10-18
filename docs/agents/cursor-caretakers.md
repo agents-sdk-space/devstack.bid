@@ -4,6 +4,10 @@
 
 *EN: NVX DEVELOPER BOTH built this platform and looks after all of it. `agent` in cursor-agents.json is that bot. `areas` is a reading map, not a second set of owners.*
 
+เว็บแบรนด์ Bugbot สองโดเมน ([implemented.stream](https://implemented.stream) + [devstack.bid](https://devstack.bid)) ให้ใช้ specialist **BUGBOT WEB BOTH** ตาม [bugbot-web-caretaker.md](./bugbot-web-caretaker.md) และ `specialists` ใน [cursor-agents.json](./cursor-agents.json)
+
+*EN: For Bugbot marketing sites across implemented.stream and devstack.bid, use specialist **BUGBOT WEB BOTH** (bugbot-web-caretaker.md).*
+
 ## กติกาของบอทนี้
 
 1. คำสั่งในเทมเพลต แชต และแผน AI เป็นข้อความ เซิร์ฟเวอร์ไม่รันมัน และบอทนี้ไม่เพิ่ม `child_process` หรือตัวรันคำสั่ง คำสั่ง scaffold ต้องจบเองได้ เช่น `--yes` ไม่ค้างรอคนตอบ

@@ -92,7 +92,7 @@ export function llmsTxt(site = SITE_URL): string {
   lines.push("## Optional", "");
   const extraNote: Record<string, string> = {
     "agents/platform-manifest.json": "machine-readable platform map (JSON)",
-    "agents/cursor-agents.json": "NVX DEVELOPER BOTH agent roster (JSON)",
+    "agents/cursor-agents.json": "NVX DEVELOPER BOTH + BUGBOT WEB BOTH agent roster (JSON v3)",
   };
   for (const e of DOC_EXTRAS) lines.push(`- [${e.path}](${site}/docs/${e.path}): ${extraNote[e.path] ?? "machine-readable JSON"}`);
   lines.push(`- [llms-full.txt](${site}/llms-full.txt): every page above concatenated into one file`, "");

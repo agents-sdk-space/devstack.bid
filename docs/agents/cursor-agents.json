@@ -1,16 +1,75 @@
 {
-  "version": 2,
+  "version": 3,
   "platform": "https://devstack.bid",
   "builtBy": "NVX DEVELOPER BOTH",
   "index": "/docs/platform.md",
   "llms": "/llms.txt",
   "playbook": "/docs/agents/AGENT-PLAYBOOK.md",
+  "properties": [
+    {
+      "id": "devstack",
+      "url": "https://devstack.bid",
+      "repo": "agents-sdk-space/devstack.bid",
+      "stack": "Next.js 16 App Router, OpenNext, Cloudflare Worker nvx-stack-builder",
+      "inWorkspace": true
+    },
+    {
+      "id": "implemented-stream",
+      "url": "https://implemented.stream",
+      "repo": "discover on GitHub (not in devstack.bid workspace)",
+      "stack": "VitePress static site on Cloudflare",
+      "inWorkspace": false
+    }
+  ],
   "agent": {
     "id": "nvx-developer",
     "name": "NVX DEVELOPER BOTH",
     "owns": ["."],
     "role": "Built this platform and looks after all of it when a Cursor agent opens the repo."
   },
+  "specialists": [
+    {
+      "id": "bugbot-web",
+      "name": "BUGBOT WEB BOTH",
+      "role": "Owns and improves Bugbot brand website implementation across implemented.stream and devstack.bid.",
+      "playbook": "/docs/agents/bugbot-web-caretaker.md",
+      "properties": ["implemented-stream", "devstack"],
+      "never": [
+        "confuse Cursor Bugbot PR review with implemented.stream marketing site",
+        "deploy or bind domains without explicit human approval",
+        "touch Cloudflare Workers other than nvx-stack-builder"
+      ],
+      "areas": [
+        {
+          "id": "cross-brand",
+          "property": "devstack",
+          "owns": [
+            "src/lib/i18n.ts",
+            "src/app/layout.tsx",
+            "src/components/header.tsx",
+            "docs/platform.md",
+            "docs/README.md",
+            "README.md"
+          ],
+          "reads": [
+            "/docs/agents/bugbot-web-caretaker.md",
+            "https://implemented.stream"
+          ],
+          "verify": ["npm run docs:check", "npm test"]
+        },
+        {
+          "id": "implemented-marketing",
+          "property": "implemented-stream",
+          "owns": ["(external VitePress repo — paths defined in that repo)"],
+          "reads": [
+            "/docs/agents/bugbot-web-caretaker.md",
+            "https://cursor.com/docs/bugbot"
+          ],
+          "verify": ["vitepress build in implemented.stream repo"]
+        }
+      ]
+    }
+  ],
   "never": [
     "execute user, AI, or template commands on the server",
     "commit or print secrets",

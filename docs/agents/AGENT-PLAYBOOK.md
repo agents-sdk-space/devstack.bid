@@ -4,9 +4,9 @@
 
 ## 1. ภาพรวมแพลตฟอร์ม
 
-แอป Next.js 16.4 deploy เป็น Cloudflare Worker ชื่อ `nvx-stack-builder` ที่ **https://devstack.bid** มีแชต, D1 และบัญชีผู้ใช้ (Cursor, Google, GitHub, รหัสผ่าน DevStack) สารบัญฟังก์ชันอยู่ที่ [platform.md](../platform.md) บอท **NVX DEVELOPER BOTH** สร้างแพลตฟอร์มนี้และดูแลทั้งหมดตาม [cursor-caretakers.md](./cursor-caretakers.md) และ [cursor-agents.json](./cursor-agents.json) แผนภาพดู [architecture/overview.md](../architecture/overview.md)
+แอป Next.js 16.4 deploy เป็น Cloudflare Worker ชื่อ `nvx-stack-builder` ที่ **https://devstack.bid** มีแชต, D1 และบัญชีผู้ใช้ (Cursor, Google, GitHub, รหัสผ่าน DevStack) สารบัญฟังก์ชันอยู่ที่ [platform.md](../platform.md) บอท **NVX DEVELOPER BOTH** สร้างแพลตฟอร์มนี้และดูแลทั้งหมดตาม [cursor-caretakers.md](./cursor-caretakers.md) และ [cursor-agents.json](./cursor-agents.json) เว็บแบรนด์ Bugbot สองโดเมน ([implemented.stream](https://implemented.stream) + devstack.bid) ใช้ specialist **BUGBOT WEB BOTH** ตาม [bugbot-web-caretaker.md](./bugbot-web-caretaker.md) แผนภาพดู [architecture/overview.md](../architecture/overview.md)
 
-*EN: Next.js 16.4 app on https://devstack.bid, with chat, D1 and sign-in. Function index: platform.md. NVX DEVELOPER BOTH built it and looks after all of it: cursor-caretakers.md and cursor-agents.json.*
+*EN: Next.js 16.4 app on https://devstack.bid, with chat, D1 and sign-in. Function index: platform.md. NVX DEVELOPER BOTH built it and looks after all of it. BUGBOT WEB BOTH owns cross-site Bugbot web implementation: bugbot-web-caretaker.md.*
 
 ## 2. แหล่งความจริง (where truth lives)
 

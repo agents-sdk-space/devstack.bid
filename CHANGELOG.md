@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **BUGBOT WEB BOTH** specialist agent for Bugbot brand websites on [implemented.stream](https://implemented.stream) and [devstack.bid](https://devstack.bid): [docs/agents/bugbot-web-caretaker.md](docs/agents/bugbot-web-caretaker.md) and `specialists` in [docs/agents/cursor-agents.json](docs/agents/cursor-agents.json) (roster version 3).
 - Deployed the sign-in page, function index, and NVX DEVELOPER BOTH roster to https://devstack.bid. Worker version `d4c19335-3b9b-4003-9cd9-a744eab5afd4` includes the GitHub, Google, and AI Gateway secrets. Rollback to `f3257677-8d0e-4f59-80da-35d8141d3bf8` keeps the same code and removes those secrets. Remote D1 migrations `0001`–`0007` are applied on `nvx-db` (`schema_version` 7). An unknown DevStack password returns `auth=invalid`. GitHub and Google now redirect to their providers. Cursor still returns `auth=missing` until `CURSOR_APP_ID` is set.
 - **Function index** at `/docs/platform` (raw Markdown `/docs/platform.md`), linked from the header. It lists the product areas the way a docs index does, and points agents at `/llms.txt`.
 - **NVX DEVELOPER BOTH** is the Cursor agent that built this platform and looks after all of it. Roster: `docs/agents/cursor-caretakers.md` and `docs/agents/cursor-agents.json` (`agent.id` `nvx-developer`). Header item **Agents**. Area rows are a reading map for that one agent. It does not deploy or execute user commands on its own.

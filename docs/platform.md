@@ -8,8 +8,8 @@
 
 - [ดัชนี Markdown ทุกหน้า](https://devstack.bid/llms.txt) ใช้ค้นว่ามีหน้าไหนก่อนเปิดทีละหน้า
 - [รวมทุกหน้า](https://devstack.bid/llms-full.txt) เมื่อต้องการบริบททั้งก้อน
-- [คู่มือเอเจนต์](./agents/AGENT-PLAYBOOK.md) และ [รายชื่อ Cursor caretakers](./agents/cursor-caretakers.md)
-- ไฟล์เครื่องอ่าน [cursor-agents.json](./agents/cursor-agents.json) บอกว่าบอท NVX DEVELOPER BOTH ดูแลทั้งแพลตฟอร์ม และแต่ละพื้นที่ต้องอ่านหน้าไหน
+- [คู่มือเอเจนต์](./agents/AGENT-PLAYBOOK.md), [NVX DEVELOPER BOTH](./agents/cursor-caretakers.md), [BUGBOT WEB BOTH](./agents/bugbot-web-caretaker.md) (เว็บ Bugbot บน [implemented.stream](https://implemented.stream) + devstack.bid)
+- ไฟล์เครื่องอ่าน [cursor-agents.json](./agents/cursor-agents.json): `agent` = NVX DEVELOPER BOTH, `specialists` = BUGBOT WEB BOTH; `areas` เป็นแผนที่อ่าน
 
 ## สร้างสแต็ก
 

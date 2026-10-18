@@ -38,7 +38,7 @@
 | [`src/app/layout.tsx`](../../src/app/layout.tsx) | root layout, ฟอนต์, `<html class="dark">`, สคริปต์ pre-paint, providers |
 | [`src/app/page.tsx`](../../src/app/page.tsx) | หน้าแรก `/` |
 | [`docs/platform.md`](../../docs/platform.md) | เมนูฟังก์ชัน `/docs/platform` (ไฟล์ดิบ `/docs/platform.md`) |
-| [`docs/agents/cursor-caretakers.md`](../../docs/agents/cursor-caretakers.md), [`docs/agents/cursor-agents.json`](../../docs/agents/cursor-agents.json) | บอท NVX DEVELOPER BOTH ที่สร้างและดูแลทั้งแพลตฟอร์ม |
+| [`docs/agents/cursor-caretakers.md`](../../docs/agents/cursor-caretakers.md), [`docs/agents/bugbot-web-caretaker.md`](../../docs/agents/bugbot-web-caretaker.md), [`docs/agents/cursor-agents.json`](../../docs/agents/cursor-agents.json) | NVX DEVELOPER BOTH + specialist BUGBOT WEB BOTH (implemented.stream + devstack.bid) |
 | [`src/app/login/page.tsx`](../../src/app/login/page.tsx) | หน้าเข้าสู่ระบบ `/login` |
 | [`src/app/templates/page.tsx`](../../src/app/templates/page.tsx) | catalog `/templates` |
 | [`src/app/templates/[id]/page.tsx`](../../src/app/templates/[id]/page.tsx) | รายละเอียดเทมเพลต |

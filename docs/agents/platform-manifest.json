@@ -137,6 +137,7 @@
         "docs/README.md",
         "docs/platform.md",
         "docs/agents/cursor-caretakers.md",
+        "docs/agents/bugbot-web-caretaker.md",
         "docs/agents/cursor-agents.json",
         "scripts/docs-check.mjs",
         "tests/docs-check.test.ts",
