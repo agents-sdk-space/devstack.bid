@@ -16,7 +16,7 @@
     {
       "id": "implemented-stream",
       "url": "https://implemented.stream",
-      "repo": "discover on GitHub (not in devstack.bid workspace)",
+      "repo": "agensdklab/devstacks (per /build docs; may be private)",
       "stack": "VitePress static site on Cloudflare",
       "inWorkspace": false
     }

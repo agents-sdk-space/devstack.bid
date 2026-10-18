@@ -35,7 +35,7 @@
 
 ## พื้นที่ implemented.stream (repo นอก workspace)
 
-1. หา repo จาก GitHub org [agents-sdk-space](https://github.com/agents-sdk-space) หรือ repo ที่ deploy โดเมนนี้ (หน้าเว็บอ้าง Void/MIT — อาจเป็น repo แยกหรือ private)
+1. ซอร์ce ตามเอกสาร production บนไซต์จริง: [Build this site](https://implemented.stream/build) อ้าง repo **`agensdklab/devstacks`** (อาจ private — API สาธารณะไม่เห็น) ถ้าเข้าไม่ได้ ให้เจ้าของชี้ repo ที่ deploy `implemented.stream` แล้วอัปเดต [cursor-agents.json](./cursor-agents.json) → `properties` → `implemented-stream`
 2. แก้ marketing layout, VitePress theme, `/brand/*`, OG `implemented-stream-og.png`
 3. ให้ลิงก์ **devstack.bid**, **Chat**, **Docs**, **GitHub** ทำงานและข้อความตรงกับของจริงบน production
 4. Deploy ผ่าน pipeline ของ repo นั้น (Cloudflare Pages/Workers static) — **ต้องอนุมัติ**
