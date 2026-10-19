@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { getTemplate } from "@/data/templates";
 import type { AgentPlan } from "@/lib/ai/types";
-import { applyEdits, composeSteps, configForTemplate, flattenCommands } from "@/lib/composer";
+import { applyEdits, composeSteps, configForTemplate } from "@/lib/composer";
+import { toBash } from "@/lib/scripts";
 import { CreateTokenMenu } from "@/components/tokens/create-token-menu";
 import { RememberToggle } from "@/components/tokens/remember-toggle";
 import { rememberSecret } from "@/components/tokens/remember-secret";
@@ -81,10 +82,11 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
   }
 
   const preview = useMemo(() => {
-    if (!plan) return [];
+    if (!plan) return "";
     const config = configForTemplate(plan.templateId, { projectName: plan.projectName, addons: plan.addons, jsPm: plan.jsPm, pyPm: plan.pyPm });
-    return flattenCommands(applyEdits(composeSteps(config), { custom: plan.extraSteps }));
-  }, [plan]);
+    // Full setup.sh (starter files included), same text as the Builder's download; dev server/publish stay commented.
+    return toBash(applyEdits(composeSteps(config), { custom: plan.extraSteps }), config, lang);
+  }, [plan, lang]);
 
   const template = plan ? getTemplate(plan.templateId) : undefined;
   const canSubmit = !busy && prompt.trim().length >= 3;
@@ -255,7 +257,7 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
             <div className="grid gap-5 lg:grid-cols-2">
               <div className="min-w-0">
                 <h4 className="mb-2 font-semibold text-fg">{t("agent.commands")}</h4>
-                <CodeBlock code={preview.join("\n")} prompt maxHeight="22rem" />
+                <CodeBlock code={preview} title="setup.sh" maxHeight="22rem" />
                 {plan.extraSteps.length > 0 && (
                   <>
                     <h4 className="mb-2 mt-4 font-semibold text-fg">{t("agent.extra")}</h4>

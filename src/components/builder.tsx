@@ -238,6 +238,9 @@ export function Builder() {
   const usesPython = template.runtimes.includes("python");
   const groups = [...new Set(TEMPLATES.map((tpl) => tpl.category))];
   const allCommands = flattenCommands(steps, os);
+  // What is shown and copied is the same script that "Download setup.sh/.ps1" writes: it creates the template's
+  // starter files before building and keeps dev-server, manual and publish steps as comments.
+  const script = os === "windows" ? toPowerShell(steps, config, lang) : toBash(steps, config, lang);
 
   const stages = [
     { id: "start", label: t("stage.start"), description: t("stage.startDesc") },
@@ -297,7 +300,7 @@ export function Builder() {
         <span className="ml-auto flex items-center gap-2 text-sm text-muted">
           {steps.length} {t("builder.stepCount")}
           <Tooltip content={t("builder.copyAll")}>
-            <Button size="sm" variant="soft" onClick={() => copy(allCommands.join("\n"), t("toast.copied"), `${allCommands.length} commands`)} aria-label={t("builder.copyAll")}>
+            <Button size="sm" variant="soft" onClick={() => copy(script, t("toast.copied"), `${allCommands.length} commands`)} aria-label={t("builder.copyAll")}>
               <Copy className="h-3.5 w-3.5" aria-hidden /> <span className="hidden sm:inline">{t("step.copy")}</span>
             </Button>
           </Tooltip>
@@ -624,7 +627,7 @@ export function Builder() {
                     <OsToggle os={os} onChange={setOs} />
                   </div>
                   {allCommands.length > 0 ? (
-                    <CodeBlock code={allCommands.join("\n")} prompt title={os === "windows" ? "setup.ps1" : "setup.sh"} maxHeight="28rem" />
+                    <CodeBlock code={script} title={os === "windows" ? "setup.ps1" : "setup.sh"} maxHeight="28rem" />
                   ) : (
                     <EmptyState icon={<FolderOpen className="h-6 w-6" strokeWidth={1.75} />} title={t("review.emptyTitle")} action={<Button onClick={() => setStage(2)}>{t("stage.review")}</Button>} />
                   )}
@@ -636,7 +639,7 @@ export function Builder() {
                   <CardContent className="space-y-3">
                     <CardTitle>{t("export.files")}</CardTitle>
                     <div className="grid gap-2">
-                      <Button className="justify-start" onClick={() => copy(allCommands.join("\n"), t("toast.copied"), `${allCommands.length} commands`)}>
+                      <Button className="justify-start" onClick={() => copy(script, t("toast.copied"), `${allCommands.length} commands`)}>
                         <Copy className="h-4 w-4" aria-hidden /> {t("builder.copyAll")}
                       </Button>
                       <Button variant="secondary" className="justify-start" onClick={() => download("setup.sh", () => downloadText("setup.sh", toBash(steps, config, lang), "text/x-shellscript"))}>
