@@ -130,13 +130,18 @@ export function generateSitePlan(raw: unknown, site = "https://devstack.bid"): S
       env_var: envName(service),
       note: lang === "th" ? "เก็บ key เป็น secret ฝั่งเซิร์ฟเวอร์ ห้ามส่งไปเบราว์เซอร์" : "Keep the key as a server-side secret; never send it to the browser",
     })),
-    setup_commands: flattenCommands(steps).slice(0, 14),
+    // Only commands that are safe to copy and finish: dev server, manual and publish steps are left out.
+    // The starter files are written by the full script, so builder_url / the download remain the complete path.
+    setup_commands: flattenCommands(steps.filter((s) => s.kind !== "longRunning" && s.kind !== "manual" && s.kind !== "publish")).slice(0, 14),
     file_tree: plan.fileTree.slice(0, 25),
     next_steps: plan.nextSteps.slice(0, 5),
     notes: [
       lang === "th"
         ? "คำสั่งเป็นข้อความเท่านั้น เซิร์ฟเวอร์ไม่รันคำสั่งใดๆ เปิด builder_url เพื่อปรับขั้นตอนก่อนใช้"
         : "Commands are text only; nothing runs on the server. Open builder_url to adjust the steps before use.",
+      lang === "th"
+        ? "setup_commands ไม่รวมขั้นที่เขียนไฟล์เริ่มต้นของเทมเพลต ใช้ปุ่มดาวน์โหลด setup.sh หรือคัดลอกสคริปต์เต็มจาก builder_url"
+        : "setup_commands omit the steps that write the template's starter files; use the setup.sh download or copy the full script from builder_url.",
     ],
   };
 }
