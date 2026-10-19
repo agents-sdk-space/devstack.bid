@@ -124,7 +124,7 @@ function BlockNode({ b }: { b: Block }) {
 export function MarkdownView({ text }: { text: string }) {
   const blocks = useMemo(() => parseMarkdown(text), [text]);
   return (
-    <div className="space-y-3 text-[14px] leading-relaxed text-fg">
+    <div className="space-y-3 leading-relaxed text-fg">
       {blocks.map((b, i) => (
         <BlockNode key={i} b={b} />
       ))}

@@ -41,6 +41,11 @@ function snapshot() {
   return account;
 }
 
+/** The signed-in account (null for guests and while loading). Shares the header's single /api/auth/session request. */
+export function useAccount(): ChatAccount | null {
+  return useSyncExternalStore(subscribe, snapshot, () => null);
+}
+
 function viaKey(provider: ChatAccount["provider"]): DictKey {
   if (provider === "cursor") return "auth.via.cursor";
   if (provider === "google") return "auth.via.google";

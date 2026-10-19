@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowUp, BookOpenText, Box, Code2, FlaskConical, History, ImageIcon, LogIn, MessageSquarePlus, Paperclip, Square, TerminalSquare, Trash2, Users } from "lucide-react";
+import { AlertTriangle, ArrowUp, BookOpenText, Box, Code2, FlaskConical, History, ImageIcon, LogIn, MessageSquarePlus, Square, TerminalSquare, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { Badge, Button, buttonClasses, cn, Dialog, DialogContent, Kbd, Spinner, Tooltip } from "@/components/ui";
@@ -9,6 +9,7 @@ import type { DictKey } from "@/lib/i18n";
 import { Mascot } from "../brand/mascot";
 import { useLang } from "../prefs";
 import { DeployCard } from "./deploy-card";
+import { ChatPlusMenu } from "./chat-plus-menu";
 import { GithubPublish } from "./github-publish";
 import { DeployZipButton } from "./deploy-zip-button";
 import { StreamText } from "./stream-text";
@@ -587,7 +588,7 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
           <div className="relative min-h-0 flex-1">
           <div ref={scrollRef} onScroll={onTranscriptScroll} className="h-full overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">
             {!dev && (
-              <div role="radiogroup" aria-label={t("chat.modelPicker")} className="mx-auto mb-4 flex max-w-3xl flex-wrap items-center justify-center gap-1.5">
+              <div role="radiogroup" aria-label={t("chat.modelPicker")} className="chat-col mx-auto mb-4 flex flex-wrap items-center justify-center gap-1.5">
                 {(info?.models ?? DEFAULT_USER_MODELS).map((m) => {
                   const selected = m.mode === "gateway" ? mode === "gateway" && gatewayModel === m.model : mode === m.mode;
                   const vendor = m.provider === "vercel" ? "Vercel AI Gateway" : m.provider === "huggingface" ? "Hugging Face" : "Cloudflare Workers AI";
@@ -651,11 +652,11 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
                 </ul>
               </div>
             ) : (
-              <ol className="mx-auto max-w-3xl space-y-6">
+              <ol className="chat-col chat-text mx-auto space-y-6">
                 {messages.map((m) =>
                   m.role === "user" ? (
                     <li key={m.id} className="flex justify-end">
-                      <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-surface-3 px-4 py-2.5 text-[14px] leading-relaxed">
+                      <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-surface-3 px-4 py-2.5 leading-relaxed">
                         <span className="sr-only">{t("chat.you")}: </span>
                         {m.content}
                       </div>
@@ -737,7 +738,7 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
 
           <div className="border-t border-border bg-surface px-3 py-3 sm:px-4">
             {banner && (
-              <div role="alert" className="mx-auto mb-2 flex max-w-3xl gap-2 rounded-xl border border-warning/40 bg-warning-soft px-3 py-2 text-[13px] text-warning-fg">
+              <div role="alert" className="chat-col mx-auto mb-2 flex gap-2 rounded-xl border border-warning/40 bg-warning-soft px-3 py-2 text-[13px] text-warning-fg">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 <div>
                   <p className="font-semibold">{banner.title}</p>
@@ -747,26 +748,18 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
               </div>
             )}
             {disabled && (
-              <p role="status" className="mx-auto mb-2 max-w-3xl rounded-xl border border-border bg-surface-2 px-3 py-2 text-[13px] text-muted">
+              <p role="status" className="chat-col mx-auto mb-2 rounded-xl border border-border bg-surface-2 px-3 py-2 text-[13px] text-muted">
                 {info?.unavailable?.message ?? t("chat.unavailable")}
               </p>
             )}
             <form
-              className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-border-strong bg-bg p-2 focus-within:ring-2 focus-within:ring-ring"
+              className="chat-col mx-auto flex items-end gap-2 rounded-2xl border border-border-strong bg-bg p-2 focus-within:ring-2 focus-within:ring-ring"
               onSubmit={(e) => {
                 e.preventDefault();
                 void send(input);
               }}
             >
-              {!byok && (
-                <Tooltip content={t("chat.attachOff").replace("{mb}", String(Math.round((info?.limits.maxAttachmentBytes ?? 10485760) / 1048576)))}>
-                  <span tabIndex={0} className="focus-ring rounded-md">
-                    <Button type="button" variant="ghost" size="icon" disabled aria-label={t("chat.attach")}>
-                      <Paperclip className="h-4 w-4" aria-hidden />
-                    </Button>
-                  </span>
-                </Tooltip>
-              )}
+              <ChatPlusMenu attachHint={byok ? undefined : t("chat.attachOff").replace("{mb}", String(Math.round((info?.limits.maxAttachmentBytes ?? 10485760) / 1048576)))} />
               <label htmlFor="chat-input" className="sr-only">
                 {t("chat.placeholder")}
               </label>
@@ -780,7 +773,7 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
                 placeholder={t(dev ? "chat.placeholderDev" : mode === "image" ? "chat.placeholderImage" : "chat.placeholder")}
                 disabled={disabled}
                 aria-invalid={tooLong || undefined}
-                className="max-h-48 min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-[14px] text-fg outline-none [field-sizing:content] placeholder:text-subtle"
+                className="chat-text max-h-48 min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-fg outline-none [field-sizing:content] placeholder:text-subtle"
               />
               {busy ? (
                 <Button type="button" variant="secondary" size="icon" onClick={stop} aria-label={t("chat.stop")}>
@@ -792,7 +785,7 @@ export function ChatApp({ byok, className, channel = "user" }: { byok?: ByokMode
                 </Button>
               )}
             </form>
-            <p className="mx-auto mt-1.5 flex max-w-3xl items-center justify-between gap-2 px-1 text-[11px] text-subtle">
+            <p className="chat-col mx-auto mt-1.5 flex items-center justify-between gap-2 px-1 text-[11px] text-subtle">
               <span className="hidden sm:inline">
                 <Kbd>Enter</Kbd> · <Kbd>Shift</Kbd> + <Kbd>Enter</Kbd> — {t("chat.hint")}
               </span>

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans_Thai, Inter } from "next/font/google";
 import { Footer, Header } from "@/components/header";
 import { Providers } from "@/components/providers";
+import { PREFS_BOOT_SCRIPT } from "@/lib/prefs";
 import "./globals.css";
 
 // Inter (SF-like) for headings and body, IBM Plex Sans Thai for Thai glyphs, IBM Plex Mono for code
@@ -44,15 +45,11 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
 };
 
-// Runs before first paint: apply saved theme + language without a flash.
-// Dark is the default; only an explicit saved "light" choice switches it off.
-const PREFS_SCRIPT = `(function(){try{var d=document.documentElement;var t=localStorage.getItem('nvx-theme');var dark=t!=='light';d.classList.toggle('dark',dark);var l=localStorage.getItem('nvx-lang')||((navigator.language||'').toLowerCase().indexOf('th')===0?'th':'en');d.dataset.lang=l;d.lang=l;}catch(e){}})();`;
-
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" data-lang="en" suppressHydrationWarning className={`dark ${inter.variable} ${plexMono.variable} ${plexThai.variable} h-full`}>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: PREFS_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: PREFS_BOOT_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col overflow-x-clip font-sans">
         <Providers>

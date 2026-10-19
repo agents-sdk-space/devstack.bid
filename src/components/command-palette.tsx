@@ -7,7 +7,7 @@ import { TEMPLATES } from "@/data/templates";
 import { CATEGORY_LABELS } from "@/lib/i18n";
 import { Dialog, DialogContent, Kbd, SearchIcon } from "@/components/ui";
 import { useDarkMode, useLang } from "./prefs";
-import { AppWindow, Blocks, BookOpen, Bot, FileText, FlaskConical, GraduationCap, House, Languages, Layers, LayoutGrid, MessagesSquare, Palette, SquareTerminal, SunMoon } from "lucide-react";
+import { AppWindow, Blocks, BookOpen, Bot, FileText, FlaskConical, GraduationCap, House, Languages, Layers, LayoutGrid, MessagesSquare, Palette, Settings, SquareTerminal, SunMoon } from "lucide-react";
 import docsNav from "@/generated/docs-nav.json";
 import { templateTool, ToolTile } from "./brand/tool-icon";
 
@@ -67,6 +67,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
                   ["/studio/", AppWindow, t("nav.studio")],
                   ["/docs", BookOpen, t("nav.docs")],
                   ["/design", Palette, t("nav.design")],
+                  ["/settings", Settings, t("nav.settings")],
                 ] as const
               ).map(([href, Icon, label]) => (
                 <Command.Item key={href} value={`page ${label} ${href}`} onSelect={() => run(() => (href === "/studio/" ? window.location.assign(href) : router.push(href)))} className={itemClass}>

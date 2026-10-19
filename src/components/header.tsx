@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { AppWindow, Blocks, BookOpen, Bot, House, Languages, Layers, LayoutGrid, Menu, FlaskConical, MessagesSquare, Moon, Palette, SquareTerminal, Sun } from "lucide-react";
+import { AppWindow, Blocks, BookOpen, Bot, House, Languages, Layers, LayoutGrid, Menu, FlaskConical, MessagesSquare, Moon, Palette, Settings, SquareTerminal, Sun } from "lucide-react";
 import { Button, buttonClasses, cn, Dialog, DialogContent, DialogTrigger, SearchIcon, Tooltip } from "@/components/ui";
 import { AccountButton } from "./account-button";
 import { SetupCursor } from "./setup-cursor";
@@ -28,6 +28,7 @@ const NAV = [
   { href: "/studio/", key: "nav.studio", Icon: AppWindow, wide: true, document: true },
   { href: "/docs", key: "nav.docs", Icon: BookOpen },
   { href: "/design", key: "nav.design", Icon: Palette, wide: true },
+  { href: "/settings", key: "nav.settings", Icon: Settings },
 ] as const;
 
 /** Next <Link> for app routes; a plain <a> for documents outside the Next.js router (/studio). */

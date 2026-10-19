@@ -239,6 +239,57 @@ samp {
 }
 
 /* ---------------------------------------------------------------------------------------------
+ * Display preferences (/settings, src/lib/prefs.ts). <html> carries data-chat-font, data-chat-size,
+ * data-chat-width and data-motion (set before paint by PREFS_BOOT_SCRIPT and by setPref()).
+ * The chat uses .chat-text (font + size) and .chat-col (column width). Defaults match the old look:
+ * Inter + IBM Plex Sans Thai, 14px, 48rem (max-w-3xl).
+ * ------------------------------------------------------------------------------------------- */
+:root {
+  --chat-font: var(--font-inter), var(--font-thai), -apple-system, BlinkMacSystemFont, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --chat-size: 14px;
+  --chat-width: 48rem;
+}
+:root[data-chat-font="thai"] {
+  --chat-font: var(--font-thai), var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+}
+:root[data-chat-font="mono"] {
+  --chat-font: var(--font-plex-mono), var(--font-thai), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+:root[data-chat-size="small"] {
+  --chat-size: 13px;
+}
+:root[data-chat-size="large"] {
+  --chat-size: 16px;
+}
+:root[data-chat-width="narrow"] {
+  --chat-width: 40rem;
+}
+:root[data-chat-width="wide"] {
+  --chat-width: 64rem;
+}
+.chat-text {
+  font-family: var(--chat-font);
+  font-size: var(--chat-size);
+}
+.chat-col {
+  max-width: var(--chat-width);
+}
+
+/* Motion "reduced" in /settings: same rules as prefers-reduced-motion, applied regardless of the OS setting. */
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
+}
+:root[data-motion="reduced"] .term-cursor {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+/* ---------------------------------------------------------------------------------------------
  * NVX mascot (src/components/brand/mascot.tsx): idle float + breathing, blinking, squish on
  * hover/click and cursor-following eyes. Transform/opacity only (compositor-friendly).
  * Everything is static under prefers-reduced-motion.
