@@ -35,6 +35,11 @@ export function openaiBase(c: Pick<LlmConfig, "accountId" | "gatewayId">): { url
   return { url: "https://api.openai.com/v1", via: "direct" };
 }
 
+/** Fail closed: in production the AI route must go through Cloudflare AI Gateway unless AISITE_ALLOW_DIRECT=1. */
+export function directBlocked(c: Pick<LlmConfig, "accountId" | "gatewayId">, production: boolean, allowDirect: boolean): boolean {
+  return production && !allowDirect && openaiBase(c).via === "direct";
+}
+
 export function systemPrompt(lang: "en" | "th"): string {
   return [
     "You are the DevStack website builder. You build and edit small STATIC websites (HTML, CSS, vanilla JS only).",

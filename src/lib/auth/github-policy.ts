@@ -115,7 +115,26 @@ export function sameOrigin(req: Request): boolean {
     }
   }
   const site = req.headers.get("sec-fetch-site");
-  return site === "same-origin" || site === "same-site" || site === "none";
+  // "same-site" is NOT accepted: user sites on *.devstack.bid are same-site with the apex.
+  return site === "same-origin" || site === "none";
+}
+
+export const PLATFORM_ORIGIN = "https://devstack.bid";
+
+/**
+ * Strict write check for signed-in APIs: an Origin header is required and must be this exact origin.
+ * On the devstack.bid zone that means exactly https://devstack.bid; *.devstack.bid (user sites) is rejected.
+ */
+export function strictOrigin(req: Request): boolean {
+  const origin = req.headers.get("origin");
+  const host = (req.headers.get("host") ?? "").toLowerCase();
+  if (!origin || !host) return false;
+  let o: URL;
+  try { o = new URL(origin); } catch { return false; }
+  if (o.origin !== origin.toLowerCase().replace(/\/$/, "")) return false;
+  const h = host.replace(/:\d+$/, "");
+  if (h === "devstack.bid" || h.endsWith(".devstack.bid")) return origin === PLATFORM_ORIGIN && h === "devstack.bid";
+  return o.host === host;
 }
 
 const FILE_LINE = /^(?:\/\/|#|--)\s*file:\s*(\S+)\s*$/;

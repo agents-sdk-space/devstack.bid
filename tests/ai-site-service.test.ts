@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { sqliteD1 } from "./helpers/sqlite-d1";
 import type { R2BucketLike } from "@/lib/hosting/serve";
 import { serveSite } from "@/lib/hosting/serve";
-import { addMessage, aiTurnsToday, createAiProject, filesOf, latestVersion, nextFiles, projectState, promoteVersion, publishVersion, saveVersion } from "@/lib/aisite/service";
+import { addMessage, aiTurnsToday, createAiProject, filesOf, latestVersion, nextFiles, projectState, reserveAiTurn, promoteVersion, publishVersion, saveVersion } from "@/lib/aisite/service";
 
 function memBucket(): R2BucketLike & { keys: () => string[] } {
   const m = new Map<string, Uint8Array>();
@@ -33,7 +33,7 @@ describe("ai site service", () => {
     if (r.status !== "live") return;
     expect(r.url).toMatch(/^https:\/\/bean-house-[a-z0-9]{6}\.devstack\.bid$/);
     const res = await serveSite(new Request(`${r.url}/`), sites);
-    expect(await res.text()).toBe("<h1>v1</h1>");
+    expect(await res.text()).toMatch(/^<h1>v1<\/h1><a [^>]*data-devstack-badge/);
     expect((await serveSite(new Request("https://devstack.bid/"), sites)).status).toBe(404);
     const job = db.raw.prepare("SELECT status, executor FROM build_jobs WHERE id = ?").get(r.jobId) as { status: string; executor: string };
     expect(job).toEqual({ status: "succeeded", executor: "direct" });
@@ -43,7 +43,7 @@ describe("ai site service", () => {
     expect((await latestVersion(db, p.id))!.version).toBe(2);
     const promoted = await promoteVersion(db, { sites, dnsReady: true }, "u1", p, 1);
     expect(promoted.url).toBe("https://bean-house.devstack.bid");
-    expect(await (await serveSite(new Request("https://bean-house.devstack.bid/"), sites)).text()).toBe("<h1>v1</h1>");
+    expect(await (await serveSite(new Request("https://bean-house.devstack.bid/"), sites)).text()).toMatch(/^<h1>v1<\/h1>/);
 
     const s = await projectState(db, "u1", p.id);
     expect(s.versions.map((v) => (v as { version: number }).version)).toEqual([2, 1]);
@@ -61,7 +61,7 @@ describe("ai site service", () => {
     const { db, p } = await setup();
     expect(() => nextFiles([], { summary: "", write: [{ path: "../../etc/passwd.txt", content: "" }] })).toThrow(/rejected/);
     await addMessage(db, { projectId: p.id, uid: "u1", role: "user", content: "a" });
-    await addMessage(db, { projectId: p.id, uid: "u1", role: "assistant", content: "b" });
+    expect(await reserveAiTurn(db, "u1")).toBe(true);
     expect(await aiTurnsToday(db, "u1")).toBe(1);
   });
 });

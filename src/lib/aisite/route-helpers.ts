@@ -13,7 +13,7 @@ export async function body<T>(req: Request, max = 8_000): Promise<T | Response> 
 }
 
 export function errorResponse(err: unknown): Response {
-  if (err instanceof LlmError) return json({ error: err.message, code: err.code }, err.code === "blocked" ? 503 : 502);
+  if (err instanceof LlmError) return json({ error: err.message, code: err.code === "blocked" ? "ai_not_configured" : err.code }, err.code === "blocked" ? 503 : 502);
   const e = serviceErrorBody(err);
   return json(e.body, e.status);
 }

@@ -126,7 +126,7 @@ describe("build executor", () => {
     const dep = db.raw.prepare("SELECT status, url, error_code, alias_url FROM deployments WHERE build_job_id = ?").get(job.id) as Record<string, string>;
     expect(dep).toMatchObject({ status: "failed", url: null, error_code: "site_url_blocked", alias_url: "https://svelte-app.devstack.bid" });
     const res = await serveSite(new Request("https://svelte-app.devstack.bid/"), b.sites);
-    expect(await res.text()).toBe("<h1>svelte</h1>");
+    expect(await res.text()).toMatch(/^<h1>svelte<\/h1>/);
   });
 
   it("marks live with a URL only when DNS is ready", async () => {

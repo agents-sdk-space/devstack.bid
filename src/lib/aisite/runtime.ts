@@ -6,7 +6,7 @@ import type { KvLike } from "./kv-limit";
 import type { LlmConfig } from "./llm";
 import type { SiteBindings } from "./service";
 
-export interface AiSiteRuntime { llm: LlmConfig; ai: AiBinding | null; kv: KvLike | null; sites: SiteBindings; waiModel: string }
+export interface AiSiteRuntime { production: boolean; allowDirect: boolean; llm: LlmConfig; ai: AiBinding | null; kv: KvLike | null; sites: SiteBindings; waiModel: string }
 
 /** Bindings + config for the AI site builder. Secrets are read here and passed only to the fetch Authorization header. */
 export async function aiSiteRuntime(): Promise<AiSiteRuntime> {
@@ -19,6 +19,8 @@ export async function aiSiteRuntime(): Promise<AiSiteRuntime> {
   const s = serverEnv();
   const str = (k: string) => (typeof env[k] === "string" ? (env[k] as string) : process.env[k]) || undefined;
   return {
+    production: process.env.NODE_ENV === "production",
+    allowDirect: str("AISITE_ALLOW_DIRECT") === "1",
     llm: {
       apiKey: s.OPENAI_API_KEY,
       model: str("AISITE_MODEL") ?? s.OPENAI_MODEL,

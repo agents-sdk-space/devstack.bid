@@ -5,7 +5,8 @@ import { listEvents } from "@/lib/build/jobs";
 import { projectState } from "@/lib/aisite/service";
 import { aiSiteRuntime } from "@/lib/aisite/runtime";
 import { errorResponse } from "@/lib/aisite/route-helpers";
-import { openaiBase } from "@/lib/aisite/llm";
+import { directBlocked, openaiBase } from "@/lib/aisite/llm";
+import { isAdmin } from "@/lib/aisite/admin";
 
 /** GET /api/ai-sites/:id[?job=<id>&after=<seq>] — transcript, versions with deploy status, file tree, build log. */
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -22,7 +23,14 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     return json({
       ...state,
       events,
-      infra: { ai: !!rt.llm.apiKey, via: openaiBase(rt.llm).via, sites: !!rt.sites.sites, dnsReady: rt.sites.dnsReady },
+      infra: {
+        ai: !!rt.llm.apiKey,
+        aiBlocked: !rt.llm.apiKey ? "ai_not_configured" : directBlocked(rt.llm, rt.production, rt.allowDirect) ? "ai_gateway_required" : null,
+        // The AI route is operator detail: only shown to admins.
+        via: isAdmin(a.login) ? openaiBase(rt.llm).via : null,
+        sites: !!rt.sites.sites,
+        dnsReady: rt.sites.dnsReady,
+      },
     });
   } catch (err) {
     return errorResponse(err);

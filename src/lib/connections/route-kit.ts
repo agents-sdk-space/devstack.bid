@@ -1,6 +1,6 @@
 import "server-only";
 import { resolveSignedIn } from "@/lib/auth/session";
-import { sameOrigin } from "@/lib/auth/github-policy";
+import { strictOrigin } from "@/lib/auth/github-policy";
 import { chatEnv } from "@/lib/chat/config";
 import { chatRuntime, json } from "@/lib/chat/runtime";
 import { getAccount, type D1Like } from "@/lib/chat/store";
@@ -21,7 +21,7 @@ export interface Actor {
  * burst limiter, signed-in non-anonymous user, D1 present. Returns a Response on failure.
  */
 export async function gate(req: Request, opts: { write: boolean; burstKey: string; perMinute: number }): Promise<Actor | Response> {
-  if (opts.write && !sameOrigin(req)) return json({ error: "Cross-site request blocked. / คำขอข้ามไซต์ถูกปฏิเสธ", code: "forbidden" }, 403);
+  if (opts.write && !strictOrigin(req)) return json({ error: "Cross-site request blocked. / คำขอข้ามไซต์ถูกปฏิเสธ", code: "forbidden" }, 403);
   const env = chatEnv();
   if (!env.CHAT_COOKIE_SECRET) return json({ error: "Not signed in. / ยังไม่ได้เข้าสู่ระบบ", code: "unauthorized" }, 401);
   // Writes use the shared Workers limiter (4 / 60 s per key). Reads (page loads, deploy status polling every

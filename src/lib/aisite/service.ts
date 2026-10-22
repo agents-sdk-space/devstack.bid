@@ -39,8 +39,23 @@ export async function requireAiProject(db: D1Like, uid: string, id: string) {
 }
 
 export async function aiTurnsToday(db: D1Like, uid: string, now = Date.now()): Promise<number> {
-  const r = await db.prepare("SELECT COUNT(*) AS n FROM ai_site_messages WHERE user_id = ?1 AND role = 'user' AND created_at > ?2").bind(uid, now - 86_400_000).first<{ n: number }>();
+  const r = await db.prepare("SELECT COUNT(*) AS n FROM ai_quota WHERE user_id = ?1 AND created_at > ?2").bind(uid, now - 86_400_000).first<{ n: number }>();
   return Number(r?.n ?? 0);
+}
+
+/**
+ * Atomically reserve one AI turn before calling the model: a single INSERT ... SELECT ... HAVING COUNT(*) < cap,
+ * so concurrent requests can never exceed the daily cap. Returns false when the cap is reached.
+ * Reservations are not refunded on model errors (a failing upstream call still costs money).
+ */
+export async function reserveAiTurn(db: D1Like, uid: string, cap = DAILY_AI_TURNS_PER_USER, now = Date.now()): Promise<boolean> {
+  const r = await db
+    // One statement = atomic in D1/SQLite. (SQLite rejects a bare HAVING without an aggregate in the select list,
+    // so the count is a scalar subquery; same semantics as INSERT ... SELECT ... HAVING COUNT(*) < cap.)
+    .prepare("INSERT INTO ai_quota (user_id, created_at) SELECT ?1, ?2 WHERE (SELECT COUNT(*) FROM ai_quota WHERE user_id = ?1 AND created_at > ?3) < ?4 RETURNING id")
+    .bind(uid, now, now - 86_400_000, cap)
+    .first<{ id: number }>();
+  return !!r;
 }
 
 /** Free slug: base, base-2, base-3 ... (per-user unique index + global host ownership in R2). */
@@ -56,11 +71,20 @@ async function freeSlug(db: D1Like, uid: string, base: string): Promise<string> 
 export async function createAiProject(db: D1Like, uid: string, title: string): Promise<{ id: string; name: string; slug: string }> {
   const n = await db.prepare("SELECT COUNT(*) AS n FROM projects WHERE user_id = ?1 AND source = 'ai'").bind(uid).first<{ n: number }>();
   if (Number(n?.n ?? 0) >= MAX_AI_PROJECTS_PER_USER) throw new ServiceError("limit", `AI project limit reached (${MAX_AI_PROJECTS_PER_USER}). / ครบจำนวนโปรเจกต์ AI แล้ว`, 429);
-  const slug = await freeSlug(db, uid, siteSlug(title) ?? "ai-site");
-  const id = crypto.randomUUID();
-  await db.prepare("INSERT INTO projects (id, user_id, name, slug, source, framework, output_directory, provider, updated_at) VALUES (?1, ?2, ?3, ?4, 'ai', 'static', '.', 'devstack-sites', ?5)")
-    .bind(id, uid, title.slice(0, 60), slug, Date.now()).run();
-  return { id, name: title.slice(0, 60), slug };
+  const base = siteSlug(title) ?? "ai-site";
+  // Slugs are globally unique (index projects_slug_global_uq): retry with a fresh suffix if we lose a race.
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const slug = attempt === 0 ? await freeSlug(db, uid, base) : `${base.slice(0, 40)}-${crypto.randomUUID().slice(0, 6)}`;
+    const id = crypto.randomUUID();
+    try {
+      await db.prepare("INSERT INTO projects (id, user_id, name, slug, source, framework, output_directory, provider, updated_at) VALUES (?1, ?2, ?3, ?4, 'ai', 'static', '.', 'devstack-sites', ?5)")
+        .bind(id, uid, title.slice(0, 60), slug, Date.now()).run();
+      return { id, name: title.slice(0, 60), slug };
+    } catch (e) {
+      if (!/UNIQUE/i.test(String((e as Error)?.message))) throw e;
+    }
+  }
+  throw new ServiceError("conflict", "Could not allocate a site name. Try again. / จองชื่อเว็บไม่สำเร็จ", 409);
 }
 
 export async function latestVersion(db: D1Like, projectId: string): Promise<VersionRow | null> {
@@ -154,8 +178,10 @@ export async function promoteVersion(db: D1Like, b: SiteBindings, uid: string, p
   if (!v?.deployment_id) throw new ServiceError("invalid", "This version has no published deployment. / เวอร์ชันนี้ยังไม่ได้เผยแพร่", 409);
   try {
     const url = await promoteProduction(b.sites, project.slug, project.id, v.deployment_id);
+    // Exactly one production deployment per AI project: the previous one goes back to preview.
+    await db.prepare("UPDATE deployments SET alias_url = NULL, environment = 'preview' WHERE project_id = ?1 AND user_id = ?3 AND id != ?2 AND alias_url IS NOT NULL").bind(project.id, v.deployment_id, uid).run();
     await db.prepare("UPDATE deployments SET alias_url = ?2, environment = 'production' WHERE id = ?1 AND user_id = ?3").bind(v.deployment_id, url, uid).run();
-    return { url, dnsReady: b.dnsReady };
+    return { url, dnsReady: b.dnsReady, version };
   } catch (e) {
     if (e instanceof HostTakenError) throw new ServiceError("conflict", `Hostname ${e.host} belongs to another project.`, 409);
     throw e;

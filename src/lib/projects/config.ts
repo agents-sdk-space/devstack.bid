@@ -2,6 +2,7 @@
  * New Project platform (Milestone 1): pure validation + framework detection. No network, no secrets.
  * Used by /api/projects/import, /api/github/inspect and the /new UI (via API responses only).
  */
+import { RESERVED as HOST_RESERVED, RESERVED_SUBSTRINGS } from "@/lib/hosting/hostnames";
 import { safeWorkerName } from "@/lib/connections/policy";
 
 export type FrameworkId = "nextjs" | "vite" | "astro" | "sveltekit" | "remix" | "react-router" | "nuxt" | "static" | "worker" | "node" | "unknown";
@@ -74,7 +75,7 @@ export function validateSlug(raw: unknown): { ok: true; slug: string } | { ok: f
   if (raw.length > 100) return { ok: false, error: "Project name is too long." };
   const slug = safeWorkerName(raw);
   if (!slug) return { ok: false, error: "Use letters, digits and dashes (1–63)." };
-  if (RESERVED_SLUGS.has(slug)) return { ok: false, error: `"${slug}" is reserved.` };
+  if (RESERVED_SLUGS.has(slug) || HOST_RESERVED.has(slug) || RESERVED_SUBSTRINGS.some((r) => slug.includes(r))) return { ok: false, error: `"${slug}" is reserved.` };
   return { ok: true, slug };
 }
 

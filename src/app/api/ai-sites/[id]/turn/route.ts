@@ -3,11 +3,11 @@ import { json } from "@/lib/chat/runtime";
 import { audit } from "@/lib/connections/audit";
 import { gate, isResponse } from "@/lib/connections/route-kit";
 import { kvRateLimit } from "@/lib/aisite/kv-limit";
-import { generateEdit, titleFor } from "@/lib/aisite/llm";
+import { directBlocked, generateEdit, titleFor } from "@/lib/aisite/llm";
 import { aiSiteRuntime } from "@/lib/aisite/runtime";
 import { body, errorResponse } from "@/lib/aisite/route-helpers";
 import {
-  addMessage, aiTurnsToday, contextFor, createAiProject, DAILY_AI_TURNS_PER_USER, filesOf, latestVersion, MAX_PROMPT_CHARS, nextFiles, publishVersion, requireAiProject, saveVersion,
+  addMessage, contextFor, createAiProject, DAILY_AI_TURNS_PER_USER, filesOf, latestVersion, MAX_PROMPT_CHARS, nextFiles, publishVersion, requireAiProject, reserveAiTurn, saveVersion,
 } from "@/lib/aisite/service";
 
 /**
@@ -22,11 +22,13 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (b instanceof Response) return b;
   const prompt = typeof b.prompt === "string" ? b.prompt.trim() : "";
   const lang = b.lang === "th" ? "th" : "en";
-  if (!prompt || prompt.length > MAX_PROMPT_CHARS) return json({ error: `Describe the change in 1-${MAX_PROMPT_CHARS} characters. / กรุณาพิมพ์คำขอ`, code: "invalid" }, 400);
+  if (!prompt || prompt.length > MAX_PROMPT_CHARS) return json({ error: `Describe the change in 1-${MAX_PROMPT_CHARS} characters. / กรุณาพิมพ์คำขอ`, code: "prompt_invalid" }, 400);
   const rt = await aiSiteRuntime();
   if (!(await kvRateLimit(rt.kv, `ai-site:${a.uid}`, 6, 60))) return json({ error: "Too many requests. Wait a minute. / ส่งถี่เกินไป รอสักครู่", code: "rate_limited" }, 429, { "Retry-After": "60" });
-  if ((await aiTurnsToday(a.db, a.uid)) >= DAILY_AI_TURNS_PER_USER) return json({ error: `Daily AI limit reached (${DAILY_AI_TURNS_PER_USER}/day). / ครบโควตา AI วันนี้แล้ว`, code: "limit" }, 429);
-  if (!rt.llm.apiKey) return json({ error: "AI is not configured on this server. / ยังไม่ได้ตั้งค่า AI", code: "blocked" }, 503);
+  if (!rt.llm.apiKey) return json({ error: "AI is not configured on this server. / ยังไม่ได้ตั้งค่า AI", code: "ai_not_configured" }, 503);
+  if (directBlocked(rt.llm, rt.production, rt.allowDirect)) return json({ error: "AI Gateway is required in production (CF_ACCOUNT_ID / CF_AI_GATEWAY_ID). / ต้องตั้งค่า AI Gateway ก่อน", code: "ai_gateway_required" }, 503);
+  // Atomic reservation BEFORE the model call (cannot be raced past the cap).
+  if (!(await reserveAiTurn(a.db, a.uid))) return json({ error: `Daily AI limit reached (${DAILY_AI_TURNS_PER_USER}/day). / ครบโควตา AI วันนี้แล้ว`, code: "daily_limit" }, 429);
   try {
     const id = (await ctx.params).id;
     const project = id === "new" ? await createAiProject(a.db, a.uid, (await titleFor(prompt, rt.ai, rt.waiModel, rt.llm.gatewayId)).title) : await requireAiProject(a.db, a.uid, id);

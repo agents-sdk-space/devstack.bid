@@ -119,7 +119,9 @@ describe("security: account isolation", () => {
     expect(await getProject(db, "userB", a.id)).toBeNull();
     expect(await listProjects(db, "userB")).toHaveLength(0);
     // Same repo + same slug is fine for a different account (slug unique per user only).
-    const b = await importRepo(db, "t", "userB", { repo: "acme/web" }, reader());
+    // Slugs are global hostnames (<slug>.devstack.bid): B cannot take A's name, but can import under another.
+    await expect(importRepo(db, "t", "userB", { repo: "acme/web" }, reader())).rejects.toMatchObject({ code: "conflict" });
+    const b = await importRepo(db, "t", "userB", { repo: "acme/web", name: "web-b" }, reader());
     expect(b.id).not.toBe(a.id);
     expect((await listProjects(db, "userA")).map((p) => p.id)).toEqual([a.id]);
   });

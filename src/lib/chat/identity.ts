@@ -7,6 +7,11 @@
 export const CHAT_COOKIE = "nvx_chat_uid";
 /** Sign-in session after Cursor, Google, GitHub or DevStack sign-in: `<uid>.<sid>.<HMAC>` backed by `auth_sessions` (0009). */
 export const AUTH_COOKIE = "nvx_auth";
+/**
+ * Preferred session cookie name over HTTPS. The __Host- prefix forces Secure, Path=/ and NO Domain, so a user
+ * site on *.devstack.bid can neither set nor overwrite it (cookie tossing). The legacy name is still read.
+ */
+export const HOST_AUTH_COOKIE = "__Host-nvx_auth";
 /** Short-lived CSRF state for OAuth callbacks. Path is /api/auth so every provider can read it. */
 export const OAUTH_STATE_COOKIE = "nvx_oauth_state";
 const MAX_AGE = 60 * 60 * 24 * 365;
@@ -114,9 +119,25 @@ export async function readSession(value: string | undefined, secret: string): Pr
 /** Checks that a session id is still live for this user. Absent means session cookies are refused. */
 export type SessionCheck = (uid: string, sid: string) => Promise<boolean>;
 
+/** Raw session cookie: __Host-nvx_auth first, then the legacy nvx_auth (so existing sessions stay signed in). */
+export function readAuthRaw(header: string | null): string | undefined {
+  return readCookie(header, HOST_AUTH_COOKIE) ?? readCookie(header, AUTH_COOKIE);
+}
+
+/** Set-Cookie headers for a new session: __Host- over HTTPS (and clear the legacy name), legacy over plain http (dev). */
+export function authSetCookies(value: string, secure: boolean, maxAge: number): string[] {
+  if (!secure) return [namedCookie(AUTH_COOKIE, value, false, maxAge)];
+  return [namedCookie(HOST_AUTH_COOKIE, value, true, maxAge), clearCookie(AUTH_COOKIE, true)];
+}
+
+/** Clear both session cookie names. */
+export function authClearCookies(secure: boolean): string[] {
+  return secure ? [clearCookie(HOST_AUTH_COOKIE, true), clearCookie(AUTH_COOKIE, true)] : [clearCookie(AUTH_COOKIE, false)];
+}
+
 /** The signed-in uid from `nvx_auth`: a live session, or a legacy `<uid>.<HMAC>` value. */
 export async function readAuthCookie(req: Request, secret: string, check?: SessionCheck): Promise<string | null> {
-  const raw = readCookie(req.headers.get("cookie"), AUTH_COOKIE);
+  const raw = readAuthRaw(req.headers.get("cookie"));
   const session = await readSession(raw, secret);
   if (session) return check && (await check(session.uid, session.sid).catch(() => false)) ? session.uid : null;
   return verifyUid(raw, secret);

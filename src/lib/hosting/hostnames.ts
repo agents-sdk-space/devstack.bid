@@ -7,7 +7,9 @@
 export const PLATFORM_DOMAIN = "devstack.bid";
 
 /** Labels that must never be handed to a user site (platform hosts and look-alikes). */
-export const RESERVED = new Set(["www", "api", "app", "admin", "auth", "login", "mail", "smtp", "mx", "ns1", "ns2", "cdn", "static", "assets", "status", "docs", "studio", "mcp", "dev", "staging", "preview", "sites", "builds", "dashboard", "support", "billing", "github", "cloudflare"]);
+export const RESERVED = new Set(["www", "api", "app", "admin", "auth", "login", "mail", "smtp", "mx", "ns1", "ns2", "cdn", "static", "assets", "status", "docs", "studio", "mcp", "dev", "staging", "preview", "sites", "builds", "dashboard", "support", "billing", "github", "cloudflare", "signin", "signup", "register", "account", "accounts", "oauth", "sso", "password", "reset", "verify", "secure", "security", "pay", "payment", "payments", "checkout", "wallet", "webmail", "imap", "pop", "ftp", "help", "report", "abuse", "legal", "privacy", "terms", "root", "system", "official", "devstack", "nvx", "chat", "factory", "new", "projects", "deployments", "settings"]);
+/** Labels that impersonate the platform even with a suffix (e.g. devstack-login). */
+export const RESERVED_SUBSTRINGS = ["devstack", "cloudflare", "github"];
 
 const LABEL = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const SHORT_ID = /^[a-z0-9]{6}$/;
@@ -16,7 +18,7 @@ const SLUG_MAX = 63 - 7; // leave room for "-" + 6-char preview id inside one 63
 /** Normalise a project name into a DNS-safe slug, or null if nothing usable remains. */
 export function siteSlug(name: string): string | null {
   const s = name.toLowerCase().normalize("NFKD").replace(/[^a-z0-9-]+/g, "-").replace(/-{2,}/g, "-").replace(/^-+|-+$/g, "").slice(0, SLUG_MAX).replace(/-+$/g, "");
-  if (!s || !LABEL.test(s) || RESERVED.has(s) || /^xn--/.test(s)) return null;
+  if (!s || !LABEL.test(s) || RESERVED.has(s) || RESERVED_SUBSTRINGS.some((r) => s.includes(r)) || /^xn--/.test(s)) return null;
   return s;
 }
 

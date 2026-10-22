@@ -67,13 +67,13 @@ describe("site router", () => {
       expect(r.headers.get("content-type")).toMatch(/text\/html/);
       expect(r.headers.get("x-content-type-options")).toBe("nosniff");
       expect(r.headers.get("set-cookie")).toBeNull();
-      expect(await r.text()).toBe("<h1>hi</h1>");
+      expect(await r.text()).toMatch(/^<h1>hi<\/h1>/);
     }
-    expect(await (await serveSite(new Request(`${prod}/about`), b)).text()).toBe("about");
+    expect(await (await serveSite(new Request(`${prod}/about`), b)).text()).toMatch(/^about<a /);
     expect((await serveSite(new Request(`${prod}/assets/app.js`), b)).headers.get("cache-control")).toMatch(/immutable/);
     const nf = await serveSite(new Request(`${prod}/missing`), b);
     expect(nf.status).toBe(404);
-    expect(await nf.text()).toBe("nope");
+    expect(await nf.text()).toMatch(/^nope<a /);
     expect((await serveSite(new Request("https://other.devstack.bid/"), b)).status).toBe(404);
     expect((await serveSite(new Request("https://devstack.bid/"), b)).status).toBe(404);
     expect((await serveSite(new Request(`${prod}/`, { method: "POST" }), b)).status).toBe(405);

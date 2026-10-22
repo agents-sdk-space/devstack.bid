@@ -18,7 +18,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   try {
     const project = await requireAiProject(a.db, a.uid, (await ctx.params).id);
     const v = await latestVersion(a.db, project.id);
-    if (!v) return json({ error: "Nothing to export yet. / ยังไม่มีไฟล์", code: "invalid" }, 409);
+    if (!v) return json({ error: "Nothing to export yet. / ยังไม่มีไฟล์", code: "nothing_to_export" }, 409);
     const token = await loadGithubToken(a.db, a.keys, a.uid);
     if (!token) return json({ error: "Connect GitHub first. / เชื่อมต่อ GitHub ก่อน", code: "reauth" }, 401);
     const r = await exportToGithub(token, { repo: b.repo, branch: b.branch }, filesOf(v), v.version);

@@ -5,7 +5,7 @@
  */
 
 import { safeNext } from "@/lib/auth/github-policy";
-import { AUTH_COOKIE, OAUTH_STATE_COOKIE, clearCookie, namedCookie, signPayload, verifyPayload } from "@/lib/chat/identity";
+import { OAUTH_STATE_COOKIE, authSetCookies, clearCookie, signPayload, verifyPayload } from "@/lib/chat/identity";
 
 export const OAUTH_COOKIE_PATH = "/api/auth";
 export const AUTH_PROVIDERS = ["cursor", "google", "github", "password"] as const;
@@ -93,7 +93,7 @@ export const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
 export function signedInRedirect(origin: string, secure: boolean, next: string, sessionValue: string, status = 302): Response {
   const headers = new Headers({ Location: new URL(safeNext(next), origin).toString(), "Cache-Control": "no-store" });
-  headers.append("Set-Cookie", namedCookie(AUTH_COOKIE, sessionValue, secure, AUTH_COOKIE_MAX_AGE));
+  for (const c of authSetCookies(sessionValue, secure, AUTH_COOKIE_MAX_AGE)) headers.append("Set-Cookie", c);
   headers.append("Set-Cookie", clearCookie(OAUTH_STATE_COOKIE, secure, OAUTH_COOKIE_PATH));
   return new Response(null, { status, headers });
 }
