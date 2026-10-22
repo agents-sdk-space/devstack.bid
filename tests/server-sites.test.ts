@@ -350,3 +350,56 @@ describe("pickLanguage / previewExpired", () => {
   });
 });
 
+describe("deployServerWorker asset MIME types", () => {
+  it("uploads each asset part with a Content-Type from its extension (Workers Assets serves that type)", async () => {
+    const uploads: FormData[] = [];
+    let manifest: Record<string, { hash: string }> = {};
+    const fetcher = (async (url: string, init: RequestInit) => {
+      if (url.endsWith("/script-settings")) return new Response(JSON.stringify({ success: false, errors: [{ code: 10007, message: "missing" }] }), { status: 404 });
+      if (url.includes("assets-upload-session")) {
+        manifest = JSON.parse(String(init.body)).manifest;
+        return new Response(JSON.stringify({ success: true, result: { jwt: "sess", buckets: [Object.values(manifest).map((m) => m.hash)] } }), { status: 200 });
+      }
+      if (url.includes("assets/upload")) { uploads.push(init.body as FormData); return new Response(JSON.stringify({ success: true, result: { jwt: "done" } }), { status: 200 }); }
+      return new Response(JSON.stringify({ success: true, result: { id: "v1" } }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const b = readServerBundle([
+      { path: "server.json", bytes: enc("{}") }, { path: "worker/worker.js", bytes: enc("export default {}") },
+      { path: "assets/_next/static/chunks/x.css", bytes: enc("body{}") }, { path: "assets/_next/static/chunks/y.js", bytes: enc("1") },
+      { path: "assets/font.woff2", bytes: enc("f") }, { path: "assets/blob.unknownext", bytes: enc("z") },
+    ])!;
+    await deployServerWorker({ accountId: "a", token: "t", proxySecret: "s".repeat(40), fetcher }, W, b, "p");
+    expect(uploads).toHaveLength(1);
+    const typeOf = (p: string) => (uploads[0].get(manifest[p].hash) as Blob).type;
+    expect(typeOf("/_next/static/chunks/x.css")).toMatch(/^text\/css/);
+    expect(typeOf("/_next/static/chunks/y.js")).toMatch(/^text\/javascript/);
+    expect(typeOf("/font.woff2")).toBe("font/woff2");
+    expect(typeOf("/blob.unknownext")).toBe("application/octet-stream");
+    expect(await (uploads[0].get(manifest["/_next/static/chunks/y.js"].hash) as Blob).text()).toBe(btoa("1"));
+  });
+});
+
+describe("asset hash version + MIME table", () => {
+  it("versions assetHash so pre-fix (untyped) uploads are not deduped", async () => {
+    const { assetHash, ASSET_HASH_VERSION } = await import("@/lib/hosting/server-worker");
+    expect(ASSET_HASH_VERSION).toBe("v2:");
+    const f = { path: "/a.css", bytes: enc("body{}") };
+    const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(btoa("body{}") + "css"));
+    const legacy = [...new Uint8Array(d)].slice(0, 16).map((b) => b.toString(16).padStart(2, "0")).join("");
+    const h = await assetHash(f);
+    expect(h).toMatch(/^[0-9a-f]{32}$/);
+    expect(h).not.toBe(legacy);
+    expect(await assetHash(f)).toBe(h);
+  });
+  it("maps fonts, media and data formats", async () => {
+    const { contentType } = await import("@/lib/hosting/serve");
+    expect(contentType("/f.ttf")).toBe("font/ttf");
+    expect(contentType("/f.otf")).toBe("font/otf");
+    expect(contentType("/f.eot")).toBe("application/vnd.ms-fontobject");
+    expect(contentType("/d.csv")).toMatch(/^text\/csv/);
+    expect(contentType("/s.MP3")).toBe("audio/mpeg");
+    expect(contentType("/v.webm")).toBe("video/webm");
+    expect(contentType("/s.ogg")).toBe("audio/ogg");
+    expect(contentType("/x.nope")).toBe("application/octet-stream");
+  });
+});

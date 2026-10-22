@@ -134,7 +134,8 @@ export async function runContainerJob(db: D1Like, keys: SealKeys, b: BuildBindin
   let dep = await db.prepare("SELECT id FROM deployments WHERE build_job_id = ?1").bind(jobId).first<{ id: string }>();
   // Automatic retries get a new job id; the deployment row still points at the original attempt, so re-link it.
   if (!dep && job.retry_of) {
-    dep = await db.prepare("SELECT id FROM deployments WHERE build_job_id = ?1").bind(job.retry_of).first<{ id: string }>();
+    // The row may point at the original or at any earlier retry in the chain (attempt 3 follows attempt 2).
+    dep = await db.prepare("SELECT id FROM deployments WHERE build_job_id IN (SELECT id FROM build_jobs WHERE id = ?1 OR retry_of = ?1) ORDER BY created_at DESC LIMIT 1").bind(job.retry_of).first<{ id: string }>();
     if (dep) await db.prepare("UPDATE deployments SET build_job_id = ?2, status = 'queued', error_code = NULL, error_log = NULL, finished_at = NULL WHERE id = ?1").bind(dep.id, jobId).run();
   }
   let state = "claimed" as BuildState;
