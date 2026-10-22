@@ -18,8 +18,8 @@ describe("deploy mapping table", () => {
     }
   });
   it("maps the expected targets", () => {
-    expect(DEPLOY_PROFILES["nextjs-dashboard"].target).toBe("worker-assets");
-    expect(DEPLOY_PROFILES["nextjs-dashboard"].assetsDir).toBe("out");
+    expect(DEPLOY_PROFILES["nextjs-dashboard"].target).toBe("opennext");
+    expect(DEPLOY_PROFILES["nextjs-dashboard"].assetsDir).toBe(".open-next/assets");
     expect(DEPLOY_PROFILES["vite-react-game"].target).toBe("worker-assets");
     expect(DEPLOY_PROFILES["express-api"].target).toBe("not-deployable");
     expect(DEPLOY_PROFILES["collab-workspace"].flags.join(" ")).toMatch(/BroadcastChannel/);
