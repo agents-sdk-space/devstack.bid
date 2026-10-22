@@ -1,11 +1,11 @@
-# @lsuperdev/devstack
+# devstack-bid
 
 เครื่องมือบรรทัดคำสั่งสำหรับ [devstack.bid](https://devstack.bid) ใช้เข้าสู่ระบบ สร้างโปรเจกต์จาก template เชื่อมโฟลเดอร์กับ GitHub repo deploy ขึ้น `<ชื่อ>.devstack.bid` และดูบันทึกการ build [English](./README.md)
 
 ## ติดตั้ง
 
 ```bash
-npm i -g @lsuperdev/devstack     # หรือ npx @lsuperdev/devstack <คำสั่ง>
+npm i -g devstack-bid     # หรือ npx devstack-bid <คำสั่ง>
 ```
 
 ต้องใช้ Node.js 20 ขึ้นไป ไม่มี dependency ตอนรัน

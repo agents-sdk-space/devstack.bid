@@ -39,7 +39,7 @@
 | `npm run plugins:sync` | `node scripts/sync-plugin-catalog.mjs` | ดึง `catalog/plugins.json` จาก commit ที่ปักไว้ของ devstack-plugins ตรวจ แล้วเขียน `src/data/plugin-catalog.json` (ต้องใช้เน็ต) |
 | `npm run plugins:check` | `node scripts/sync-plugin-catalog.mjs --check` | ตรวจว่า snapshot ตรงกับ commit ที่ปักไว้ |
 | `npm run cli:test` | `npm --prefix packages/nvx21st test` | รันเทสต์ของ CLI `nvx21st` (`packages/nvx21st`) |
-| `npm run cli:devstack:test` | `npm --prefix packages/cli test` | รันเทสต์ของ CLI `devstack` (`packages/cli`, แพ็กเกจ npm `@lsuperdev/devstack`) |
+| `npm run cli:devstack:test` | `npm --prefix packages/cli test` | รันเทสต์ของ CLI `devstack` (`packages/cli`, แพ็กเกจ npm `devstack-bid`) |
 
 ## ตัวเลือกของ `npm run export`
 

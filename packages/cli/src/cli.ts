@@ -6,7 +6,7 @@ import { Api, ApiError, redact, type Fetch } from "./api.js";
 import { apiBase, clearAuth, readAuth, readLink, savedLogin, TOKEN_RE, writeAuth, writeLink, type Link } from "./config.js";
 import { extractZip, readZip } from "./unzip.js";
 
-export const VERSION = "0.1.0";
+export const VERSION = "0.1.1";
 
 export interface Io {
   out(s: string): void;

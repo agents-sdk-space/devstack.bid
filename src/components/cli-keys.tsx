@@ -75,7 +75,7 @@ export function CliKeys() {
 
       <Card className="mt-6 p-5">
         <h2 className="text-base font-semibold text-fg">{th ? "1. สร้าง CLI key" : "1. Create a CLI key"}</h2>
-        <p className="mt-1 text-sm text-subtle">{th ? "ใช้กับ `npx @lsuperdev/devstack login --token` (สิทธิ์ cli:setup, cli:deploy) เก็บเป็นค่าแฮช แสดงครั้งเดียว เพิกถอนได้ทุกเมื่อ" : "For `npx @lsuperdev/devstack login --token` (scopes cli:setup, cli:deploy), stored hashed, shown once, revocable anytime."}</p>
+        <p className="mt-1 text-sm text-subtle">{th ? "ใช้กับ `npx devstack-bid login --token` (สิทธิ์ cli:setup, cli:deploy) เก็บเป็นค่าแฮช แสดงครั้งเดียว เพิกถอนได้ทุกเมื่อ" : "For `npx devstack-bid login --token` (scopes cli:setup, cli:deploy), stored hashed, shown once, revocable anytime."}</p>
         <button type="button" disabled={busy} onClick={() => void create()} className={buttonClasses("primary", "md", "mt-4")}><Plus className="h-4 w-4" aria-hidden />{th ? "สร้างคีย์" : "Create key"}</button>
         {freshKey && <div className="mt-4 rounded-xl border border-fg/30 p-4">
           <p className="text-sm font-semibold text-fg">{th ? "คัดลอกตอนนี้ ระบบจะไม่แสดงซ้ำ" : "Copy it now. It will not be shown again."}</p>

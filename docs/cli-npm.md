@@ -1,4 +1,4 @@
-# devstack CLI (npm package `@lsuperdev/devstack`)
+# devstack CLI (npm package `devstack-bid`)
 
 Source: `packages/cli` (TypeScript → ESM, Node ≥ 20, no runtime deps, bin `devstack`, MIT, SemVer 0.1.0).
 
@@ -45,7 +45,7 @@ jobs:
         env: { NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}" }
 ```
 
-Owner must: use npm account `lsuperdev` (2FA on), create a **granular automation token** limited to `@lsuperdev/devstack`
+Owner must: use npm account `lsuperdev` (2FA on), create a **granular automation token** limited to `devstack-bid`
 (publish only), add it as repo secret `NPM_TOKEN` in an `npm` environment with required reviewers. Then tag `cli-v0.1.0`.
 
 ## Hardening (Supdev review of 6bdbc03)

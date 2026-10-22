@@ -1,11 +1,11 @@
-# @lsuperdev/devstack
+# devstack-bid
 
 Command-line interface for [devstack.bid](https://devstack.bid). Sign in, create projects from templates, link a folder to a GitHub repo, deploy to `<slug>.devstack.bid` and watch build logs. [ภาษาไทย](./README.th.md)
 
 ## Install
 
 ```bash
-npm i -g @lsuperdev/devstack     # or: npx @lsuperdev/devstack <command>
+npm i -g devstack-bid     # or: npx devstack-bid <command>
 ```
 
 Requires Node.js 20 or newer. No runtime dependencies.

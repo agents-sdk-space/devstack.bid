@@ -9,7 +9,7 @@ export class Api {
   constructor(public base: string, private token: string | null, private f: Fetch = fetch) {}
 
   async req<T = Record<string, unknown>>(method: string, path: string, body?: unknown, opts: { raw?: boolean } = {}): Promise<T> {
-    const headers: Record<string, string> = { "User-Agent": "devstack-cli/0.1.0", Accept: "application/json" };
+    const headers: Record<string, string> = { "User-Agent": "devstack-cli/0.1.1", Accept: "application/json" };
     if (this.token) headers.Authorization = `Bearer ${this.token}`;
     if (body !== undefined) headers["Content-Type"] = "application/json";
     let res: Response;
