@@ -3,13 +3,15 @@
 The manifest is in `docs/platform/github-app/manifest.json`. `/workspace/out/github-app-create.html` posts it to `https://github.com/organizations/agents-sdk-space/settings/apps/new?state=<random>`. The state value is kept next to the HTML file in `github-app-state.txt`. **The app has not been created.** An org owner has to open the HTML page and confirm on GitHub.
 
 ## One-click creation (manifest flow, 0.12.x)
-Signed in as an admin (`GITHUB_APP_ADMIN_LOGINS`, default `thanabartbb`), open
-`https://devstack.bid/api/github/app/manifest` (org `agents-sdk-space`; `?owner=personal` for your own account, `?owner=<org>` for another org).
+Signed in with GitHub as an admin (numeric id in `GITHUB_APP_ADMIN_IDS`, prod `326990420` = @thanabartbb), open
+`https://devstack.bid/api/github/app/manifest` (org `agents-sdk-space`; `?owner=_personal` for your own account, `?owner=<org>` for another org).
 Click **Continue to GitHub**, then **Create GitHub App**. GitHub redirects to `/api/github/app/manifest-callback`, which checks the
-signed 10-minute `state` (bound to the admin's user id), converts the code, and stores the app id, client id/secret, webhook
+signed 10-minute, single-use `state` (bound to the admin's user id; nonce recorded in `github_app_state`), refuses if an app is already stored (before using the code), converts the code, and stores the app id, client id/secret, webhook
 secret and private key **sealed** in D1 table `github_app` (migration 0022, single row, never overwritten). Nothing secret is shown.
-App deliveries (with an installation id) are verified with the stored App webhook secret; per-repository webhooks keep using
-`GITHUB_APP_WEBHOOK_SECRET`. Manifest: webhook `/api/github/webhook`, events push + pull_request, permissions contents:write,
+Each delivery is verified with exactly one secret: if `X-GitHub-Hook-Installation-Target-ID` (type `integration`) equals the
+stored app id, only the App secret (cached per isolate for 60 s); otherwise only `GITHUB_APP_WEBHOOK_SECRET`.
+**Rotating `CHAT_COOKIE_SECRET` (without `CREDENTIALS_KEY` set) makes the sealed App bundle unreadable**: App webhooks then fail
+with 401 until the row is deleted and the app re-created (or its secrets re-sealed). Set `CREDENTIALS_KEY` before rotating. Manifest: webhook `/api/github/webhook`, events push + pull_request, permissions contents:write,
 metadata:read, pull_requests:read, statuses:write. The section below describes the earlier plan and is kept for history.
 
 ## Permissions (least privilege)

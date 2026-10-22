@@ -4,7 +4,7 @@ import { verifyWebhook } from "@/lib/github/webhook";
 import { claimDelivery, handleGitEvent } from "@/lib/github/autodeploy";
 import { routeBuildBindings } from "@/lib/build/bindings";
 import { resolveSealKeys } from "@/lib/connections/credentials";
-import { loadAppBundle, resolveWebhookSecret } from "@/lib/github/app-manifest";
+import { cachedAppBundle, loadAppBundle, resolveWebhookSecret } from "@/lib/github/app-manifest";
 
 /**
  * POST /api/github/webhook — GitHub App deliveries. Verified and recorded (idempotent on
@@ -15,13 +15,13 @@ import { loadAppBundle, resolveWebhookSecret } from "@/lib/github/app-manifest";
 export async function POST(req: Request) {
   await connection();
   const env = process.env as Record<string, string | undefined>;
-  // Per-installation env override → App secret from the manifest flow (sealed in D1) → GITHUB_APP_WEBHOOK_SECRET.
-  const result = await verifyWebhook(req, (installationId) =>
-    resolveWebhookSecret(installationId, env, async () => {
+  // One secret: hook target = stored app_id → App secret (sealed in D1, cached); else GITHUB_APP_WEBHOOK_SECRET.
+  const result = await verifyWebhook(req, (installationId, target) =>
+    resolveWebhookSecret(installationId, target, env, () => cachedAppBundle(async () => {
       const { db } = await chatRuntime();
       if (!db || !env.CHAT_COOKIE_SECRET) return null;
       return loadAppBundle(db, await resolveSealKeys(env.CHAT_COOKIE_SECRET));
-    }),
+    })),
   );
   if (!result.ok) {
     console.warn(JSON.stringify({ at: "api/github/webhook", event: "rejected", reason: result.reason }));

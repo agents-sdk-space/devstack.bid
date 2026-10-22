@@ -1,6 +1,6 @@
 /**
  * GitHub App manifest flow (https://docs.github.com/apps/sharing-github-apps/registering-a-github-app-from-a-manifest).
- * 1. An admin opens /api/github/app/manifest → an auto-submitting form posts the manifest to GitHub with a
+ * 1. An admin opens /api/github/app/manifest → a page whose button (no script) posts the manifest to GitHub with a
  *    signed, expiring `state` bound to their user id.
  * 2. GitHub redirects to /api/github/app/manifest-callback?code&state → we verify state, convert the code
  *    (one use, 1 h) and store the credentials sealed in D1 (`github_app`, single row).
@@ -119,23 +119,52 @@ export async function loadAppBundle(db: D1Like, keys: SealKeys): Promise<AppBund
 }
 
 /**
- * Webhook secret for an App delivery: per-installation env override, then the sealed App secret from the
- * manifest flow, then GITHUB_APP_WEBHOOK_SECRET. Repo webhooks (no installation) use the env secret only.
+ * Exactly one secret per delivery, chosen by X-GitHub-Hook-Installation-Target-ID (type "integration"):
+ * equal to the stored app_id → ONLY the App secret from the manifest flow; anything else → ONLY
+ * GITHUB_APP_WEBHOOK_SECRET (legacy app / per-repository webhooks; per-installation env override kept).
+ * The header is unauthenticated, but it only selects which secret must sign the body, so it can't widen access.
  */
-export async function resolveWebhookSecret(installationId: number | null, env: Record<string, string | undefined>, loadApp: () => Promise<AppBundle | null>): Promise<string | null> {
+export async function resolveWebhookSecret(
+  installationId: number | null,
+  target: { type: string | null; id: number | null },
+  env: Record<string, string | undefined>,
+  loadApp: () => Promise<AppBundle | null>,
+): Promise<string | null> {
+  if (target.id !== null && target.type === "integration") {
+    const app = await loadApp().catch(() => null);
+    if (app && app.id === target.id) return app.webhook_secret || null;
+  }
   if (installationId !== null) {
     const own = env[`GITHUB_APP_WEBHOOK_SECRET_${installationId}`];
     if (own) return own;
-    const app = await loadApp().catch(() => null);
-    if (app?.webhook_secret) return app.webhook_secret;
   }
   return env.GITHUB_APP_WEBHOOK_SECRET ?? null;
 }
 
-export function isAppAdmin(login: string | null | undefined, env: Record<string, string | undefined> = process.env): boolean {
-  if (!login) return false;
-  const list = `${env.GITHUB_APP_ADMIN_LOGINS ?? ""},${env.AISITE_ADMIN_LOGINS ?? ""}`;
-  return list.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean).includes(login.toLowerCase());
+export const APP_CACHE_TTL_MS = 60_000;
+let appCache: { at: number; value: AppBundle | null } | null = null;
+/** Per-isolate cache of the opened bundle (short TTL) so each delivery doesn't hit D1 + decrypt. */
+export async function cachedAppBundle(load: () => Promise<AppBundle | null>, now = Date.now()): Promise<AppBundle | null> {
+  if (appCache && now - appCache.at < APP_CACHE_TTL_MS) return appCache.value;
+  const value = await load();
+  appCache = { at: now, value };
+  return value;
+}
+export function resetAppCache(): void { appCache = null; }
+
+/** Admin = GitHub numeric user id (auth_subject of a github account) listed in GITHUB_APP_ADMIN_IDS. Logins can be renamed; ids can't. */
+export function isAppAdmin(provider: string | null | undefined, subject: string | null | undefined, env: Record<string, string | undefined> = process.env): boolean {
+  if (provider !== "github" || !subject || !/^\d+$/.test(subject)) return false;
+  return (env.GITHUB_APP_ADMIN_IDS ?? "").split(",").map((s) => s.trim()).filter(Boolean).includes(subject);
+}
+
+/** Marks the state nonce used. False if it was already used (single-use). */
+export async function consumeState(db: D1Like, state: string, now = Date.now()): Promise<boolean> {
+  const nonce = state.split(".")[2] ?? "";
+  if (!nonce) return false;
+  await db.prepare("DELETE FROM github_app_state WHERE used_at < ?1").bind(now - 24 * 3600_000).run();
+  const r = await db.prepare("INSERT INTO github_app_state (nonce, used_at) VALUES (?1, ?2) ON CONFLICT(nonce) DO NOTHING RETURNING nonce").bind(nonce, now).first();
+  return !!r;
 }
 
 export const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);

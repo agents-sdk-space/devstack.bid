@@ -2,7 +2,8 @@
 import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 import { sealKeys } from "@/lib/connections/credentials";
-import { appExists, buildManifest, convertManifest, isAppAdmin, loadAppBundle, manifestTarget, publicOrigin, resolveWebhookSecret, signState, storeAppBundle, verifyState, type AppBundle } from "@/lib/github/app-manifest";
+import { appExists, buildManifest, convertManifest, isAppAdmin, loadAppBundle, manifestTarget, publicOrigin, resolveWebhookSecret, cachedAppBundle, resetAppCache, consumeState, signState, storeAppBundle, verifyState, type AppBundle } from "@/lib/github/app-manifest";
+import { verifyWebhook } from "@/lib/github/webhook";
 import { githubManifestContentSecurityPolicy } from "@/lib/security-headers";
 import { isKnownApiPath } from "@/lib/agent/api-paths";
 import { readFileSync } from "node:fs";
@@ -14,10 +15,17 @@ const bundle: AppBundle = { id: 123, slug: "devstack-deploy", owner: "agents-sdk
 function fakeDb(): D1Like & { row: Record<string, unknown> | null } {
   const db = {
     row: null as Record<string, unknown> | null,
+    nonces: new Set<string>(),
     prepare(sql: string) {
       const stmt = (args: unknown[]) => ({
         bind: (...a: unknown[]) => stmt(a),
         async first() {
+          if (sql.includes("github_app_state")) {
+            const n = String(args[0]);
+            if (db.nonces.has(n)) return null;
+            db.nonces.add(n);
+            return { nonce: n };
+          }
           if (sql.startsWith("INSERT")) {
             if (db.row) return null;
             const [app_id, slug, owner, html_url, sealed] = args;
@@ -97,18 +105,68 @@ describe("conversion + storage", () => {
   });
 });
 
-describe("webhook secret order", () => {
-  const load = async () => bundle;
-  it("app deliveries use the stored App secret", async () => expect(await resolveWebhookSecret(5, { GITHUB_APP_WEBHOOK_SECRET: "env" }, load)).toBe("wh-not-real"));
-  it("per-installation override wins", async () => expect(await resolveWebhookSecret(5, { GITHUB_APP_WEBHOOK_SECRET_5: "own" }, load)).toBe("own"));
-  it("repo webhooks keep the env secret", async () => expect(await resolveWebhookSecret(null, { GITHUB_APP_WEBHOOK_SECRET: "env" }, load)).toBe("env"));
-  it("falls back to env before the App exists", async () => expect(await resolveWebhookSecret(5, { GITHUB_APP_WEBHOOK_SECRET: "env" }, async () => null)).toBe("env"));
+describe("webhook secret selection", () => {
+  const load = async () => bundle; // stored app id 123, secret wh-not-real
+  const env = { GITHUB_APP_WEBHOOK_SECRET: "legacy-env" };
+  const app = { type: "integration", id: 123 };
+  const legacy = { type: "integration", id: 999 };
+  const none = { type: null, id: null };
+  it("target = stored app → app secret only", async () => expect(await resolveWebhookSecret(5, app, env, load)).toBe("wh-not-real"));
+  it("other target → env only", async () => expect(await resolveWebhookSecret(5, legacy, env, load)).toBe("legacy-env"));
+  it("repo webhook → env", async () => expect(await resolveWebhookSecret(null, { type: "repository", id: 123 }, env, load)).toBe("legacy-env"));
+  it("no App stored → env", async () => expect(await resolveWebhookSecret(5, app, env, async () => null)).toBe("legacy-env"));
+
+  async function signed(secret: string, body: string, target: { type: string | null; id: number | null }) {
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const sig = Buffer.from(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body))).toString("hex");
+    const headers: Record<string, string> = { "x-hub-signature-256": `sha256=${sig}`, "x-github-delivery": "0123456789abcdef", "x-github-event": "push" };
+    if (target.id !== null) { headers["x-github-hook-installation-target-id"] = String(target.id); headers["x-github-hook-installation-target-type"] = target.type ?? ""; }
+    return new Request("https://devstack.bid/api/github/webhook", { method: "POST", body, headers });
+  }
+  const body = JSON.stringify({ installation: { id: 77 }, ref: "refs/heads/main" });
+  const verify = async (secret: string, target: { type: string | null; id: number | null }) =>
+    verifyWebhook(await signed(secret, body, target), (id, t) => resolveWebhookSecret(id, t, env, load));
+  it("new app delivery passes with the app secret", async () => expect((await verify("wh-not-real", app)).ok).toBe(true));
+  it("legacy app delivery still passes after a github_app row exists", async () => expect((await verify("legacy-env", legacy)).ok).toBe(true));
+  it("per-repo webhook (no target header) passes with env", async () => expect((await verify("legacy-env", none)).ok).toBe(true));
+  it("forgery: env secret claiming the new app's target is rejected", async () => expect(await verify("legacy-env", app)).toMatchObject({ ok: false, status: 401 }));
+  it("forgery: app secret claiming another target is rejected", async () => expect(await verify("wh-not-real", legacy)).toMatchObject({ ok: false, status: 401 }));
+  it("forgery: app secret without target header is rejected", async () => expect(await verify("wh-not-real", none)).toMatchObject({ ok: false, status: 401 }));
+  it("bundle cache honours the TTL", async () => {
+    resetAppCache();
+    const l = vi.fn(async () => bundle);
+    await cachedAppBundle(l, 0); await cachedAppBundle(l, 30_000);
+    expect(l).toHaveBeenCalledTimes(1);
+    await cachedAppBundle(l, 61_000);
+    expect(l).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("admin", () => {
-  it("only listed logins", () => {
-    expect(isAppAdmin("ThanabartBB", { GITHUB_APP_ADMIN_LOGINS: "thanabartbb" })).toBe(true);
-    expect(isAppAdmin("someone", { GITHUB_APP_ADMIN_LOGINS: "thanabartbb" })).toBe(false);
-    expect(isAppAdmin("x", {})).toBe(false);
+  const env = { GITHUB_APP_ADMIN_IDS: "326990420" };
+  it("matches the numeric GitHub id only", () => {
+    expect(isAppAdmin("github", "326990420", env)).toBe(true);
+    expect(isAppAdmin("github", "1", env)).toBe(false);
+    expect(isAppAdmin("google", "326990420", env)).toBe(false);
+    expect(isAppAdmin("github", "thanabartbb", { GITHUB_APP_ADMIN_IDS: "thanabartbb" })).toBe(false);
+    expect(isAppAdmin("github", "326990420", {})).toBe(false);
+  });
+});
+
+describe("state single-use", () => {
+  it("second use fails", async () => {
+    const db = fakeDb();
+    const s1 = await signState("sec", "u1");
+    expect(await consumeState(db, s1)).toBe(true);
+    expect(await consumeState(db, s1)).toBe(false);
+  });
+});
+
+describe("manifest page headers", () => {
+  it("page() sets the CSP it is given (manifest CSP allows posting to github.com only)", async () => {
+    const { page } = await import("@/lib/github/app-routes");
+    const r = page("t", "<p>x</p>", 200, githubManifestContentSecurityPolicy());
+    expect(r.headers.get("content-security-policy")).toContain("form-action https://github.com");
+    expect(page("t", "x").headers.get("content-security-policy")).toContain("form-action 'self'");
   });
 });

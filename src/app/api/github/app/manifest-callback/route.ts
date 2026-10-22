@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import { chatEnv } from "@/lib/chat/config";
 import { isResponse } from "@/lib/connections/route-kit";
-import { convertManifest, escapeHtml, storeAppBundle, verifyState } from "@/lib/github/app-manifest";
+import { appExists, consumeState, convertManifest, escapeHtml, storeAppBundle, verifyState } from "@/lib/github/app-manifest";
 import { adminGate, page } from "@/lib/github/app-routes";
 
 /** GET /api/github/app/manifest-callback?code&state — GitHub's redirect after "Create GitHub App". Admin only. */
@@ -10,9 +10,12 @@ export async function GET(req: Request) {
   const a = await adminGate(req, "gh-app-callback");
   if (isResponse(a)) return a;
   const u = new URL(req.url);
-  if (!(await verifyState(chatEnv().CHAT_COOKIE_SECRET!, a.uid, u.searchParams.get("state")))) {
+  const state = u.searchParams.get("state");
+  if (!(await verifyState(chatEnv().CHAT_COOKIE_SECRET!, a.uid, state)) || !(await consumeState(a.db, state!))) {
     return page("Expired", `<p>This link expired or is invalid. Open the create page again. / ลิงก์หมดอายุ เปิดหน้าสร้างใหม่อีกครั้ง</p><p><a class="btn" href="/api/github/app/manifest">Start again / เริ่มใหม่</a></p>`, 400);
   }
+  const existing = await appExists(a.db);
+  if (existing) return page("Already set up", `<p>The GitHub App <b>${escapeHtml(existing.slug)}</b> already exists; nothing was changed. If GitHub just created another app, delete it in GitHub settings. / มีแอปอยู่แล้ว</p>`, 409);
   let bundle;
   try {
     bundle = await convertManifest(u.searchParams.get("code") ?? "");

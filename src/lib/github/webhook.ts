@@ -59,7 +59,7 @@ function peekInstallation(body: Uint8Array): number | null {
   }
 }
 
-export async function verifyWebhook(req: Request, secretFor: (installationId: number | null) => Promise<string | null>): Promise<WebhookResult> {
+export async function verifyWebhook(req: Request, secretFor: (installationId: number | null, hookTarget: { type: string | null; id: number | null }) => Promise<string | null>): Promise<WebhookResult> {
   const signature = req.headers.get("x-hub-signature-256");
   if (!signature) return { ok: false, status: 401, reason: "missing_signature" };
   const delivery = req.headers.get("x-github-delivery") ?? "";
@@ -69,7 +69,9 @@ export async function verifyWebhook(req: Request, secretFor: (installationId: nu
   const body = await readCapped(req);
   if (!body) return { ok: false, status: 413, reason: "too_large" };
   const installationId = peekInstallation(body);
-  const secret = await secretFor(installationId);
+  const rawTarget = req.headers.get("x-github-hook-installation-target-id");
+  const targetId = rawTarget && /^\d{1,15}$/.test(rawTarget) ? Number(rawTarget) : null;
+  const secret = await secretFor(installationId, { type: req.headers.get("x-github-hook-installation-target-type"), id: targetId });
   if (!secret) return { ok: false, status: 503, reason: "no_secret" };
   if (!(await verifySignature(secret, body, signature))) return { ok: false, status: 401, reason: "bad_signature" };
   let payload: Record<string, unknown>;
