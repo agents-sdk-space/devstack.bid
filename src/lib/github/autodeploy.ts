@@ -8,6 +8,7 @@
  * The result is reported back as a GitHub commit status with the deployment URL.
  * Nothing here logs the payload, tokens or signatures.
  */
+import { limitsForUser } from "@/lib/limits/tiers";
 import type { D1Like } from "@/lib/chat/store";
 import { loadGithubToken, type SealKeys } from "@/lib/connections/credentials";
 import type { ProjectRow } from "@/lib/connections/projects";
@@ -210,6 +211,8 @@ async function buildOne(db: D1Like, keys: SealKeys, b: BuildBindings, plan: GitP
     const r = await startContainerBuild(db, keys, b, uid, project, {
       ref: plan.branch, commit: plan.sha, environment, trigger: plan.kind,
       idempotencyKey: `gh:${environment}:${plan.branch}:${plan.sha}`,
+      // Webhook builds use the project owner's tier (buildsPerDay / buildsPerHour) and the KV hourly window.
+      limits: await limitsForUser(db, uid), kv: b.kv ?? null,
     });
     const url = environment === "production" ? r.productionUrl : r.previewUrl;
     await report(plan.sha, "pending", url, environment === "production" ? "Production build queued" : "Preview build queued");

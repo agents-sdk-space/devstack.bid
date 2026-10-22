@@ -23,3 +23,13 @@ export async function kvRateLimit(kv: KvLike | null, key: string, limit: number,
     return rateLimit(`kv:${key}`, limit, windowSec * 1000, now);
   }
 }
+
+/** Read-only check of the same window (no increment). Without KV it reports room (the consuming check still runs later). */
+export async function kvHasRoom(kv: KvLike | null, key: string, limit: number, windowSec: number, now = Date.now()): Promise<boolean> {
+  if (!kv) return true;
+  try {
+    return Number((await kv.get(`rl:${key}:${Math.floor(now / 1000 / windowSec)}`)) ?? 0) < limit;
+  } catch {
+    return true;
+  }
+}

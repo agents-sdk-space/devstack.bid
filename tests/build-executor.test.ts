@@ -103,6 +103,24 @@ describe("build executor", () => {
     expect(r.job.config_snapshot).not.toMatch(/gho_/);
   });
 
+  it("tier caps: hourly KV window consumed only after token/ref checks; per-tier daily/hourly limits apply", async () => {
+    const store = new Map<string, string>();
+    const kv = { get: async (k: string) => store.get(k) ?? null, put: async (k: string, v: string) => void store.set(k, v) };
+    const lim = { buildsPerDay: 10, buildsPerHour: 1 };
+    const noTok = await setup({});
+    const p0 = noTok.raw.prepare("SELECT * FROM projects WHERE id = 'projA-0001'").get() as never;
+    await expect(startContainerBuild(noTok, keys, bindings(scripted([])), "userA", p0, { limits: lim, kv }, async () => SHA)).rejects.toMatchObject({ code: "reauth" });
+    await expect(startContainerBuild(noTok, keys, bindings(scripted([])), "userA", p0, { limits: lim, kv }, async () => null)).rejects.toBeTruthy();
+    expect([...store.values()]).toEqual([]);
+    const db = await setup({ token: "gho_" + "a".repeat(36) });
+    const p = db.raw.prepare("SELECT * FROM projects WHERE id = 'projA-0001'").get() as never;
+    await expect(startContainerBuild(db, keys, bindings(scripted([])), "userA", p, { limits: lim, kv }, async () => null)).rejects.toMatchObject({ status: 404 });
+    expect([...store.values()]).toEqual([]);
+    await startContainerBuild(db, keys, bindings(scripted([])), "userA", p, { limits: lim, kv }, async () => SHA);
+    await expect(startContainerBuild(db, keys, bindings(scripted([])), "userA", p, { limits: lim, kv, ref: "dev" }, async () => "b".repeat(40))).rejects.toMatchObject({ code: "limit", status: 429 });
+    await expect(startContainerBuild(db, keys, bindings(scripted([])), "userA", p, { limits: { buildsPerDay: 1, buildsPerHour: 99 }, kv }, async () => "c".repeat(40))).rejects.toMatchObject({ code: "limit" });
+  });
+
   it("runs a build: phases, redacted streamed logs (split secrets), R2 artifact + site, Blocked URL until DNS", async () => {
     const token = "gho_" + "Z".repeat(36);
     const db = await setup({ token });

@@ -249,11 +249,13 @@ export interface TreeEntry {
   type: "blob" | "tree";
   size?: number;
   sha?: string;
+  /** Git file mode, e.g. "100644"; "120000" = symlink. */
+  mode?: string;
 }
 
 export async function readTree(token: string, owner: string, repo: string, ref: string): Promise<{ entries: TreeEntry[]; truncated: boolean }> {
-  const { data } = await gh<{ tree?: { path: string; type: string; size?: number; sha?: string }[]; truncated?: boolean }>(token, "GET", `${rp(owner, repo)}/git/trees/${encodeURIComponent(ref)}?recursive=1`);
-  const entries = (data.tree ?? []).filter((e) => e.type === "blob" || e.type === "tree").slice(0, 2000).map((e) => ({ path: e.path, type: e.type as "blob" | "tree", size: e.size, sha: e.sha }));
+  const { data } = await gh<{ tree?: { path: string; type: string; size?: number; sha?: string; mode?: string }[]; truncated?: boolean }>(token, "GET", `${rp(owner, repo)}/git/trees/${encodeURIComponent(ref)}?recursive=1`);
+  const entries = (data.tree ?? []).filter((e) => e.type === "blob" || e.type === "tree").slice(0, 2000).map((e) => ({ path: e.path, type: e.type as "blob" | "tree", size: e.size, sha: e.sha, mode: e.mode }));
   return { entries, truncated: Boolean(data.truncated) || (data.tree?.length ?? 0) > 2000 };
 }
 
@@ -401,4 +403,10 @@ export async function getRepoMeta(token: string, owner: string, repo: string): P
 export async function listBranches(token: string, owner: string, repo: string): Promise<string[]> {
   const { data } = await gh<{ name?: string }[]>(token, "GET", `${rp(owner, repo)}/branches?per_page=100`);
   return (Array.isArray(data) ? data : []).map((b) => b.name).filter((n): n is string => typeof n === "string").slice(0, 100);
+}
+
+/** Merge `head` into `base` (server-side merge commit, never a force update). 201 merged, 204 already up to date, 409 conflict. */
+export async function mergeInto(token: string, owner: string, repo: string, base: string, head: string): Promise<"merged" | "up_to_date" | "conflict"> {
+  const { status } = await gh(token, "POST", `${rp(owner, repo)}/merges`, { base, head, commit_message: `Merge ${head} into ${base} (devstack AI sync)` }, [204, 409]);
+  return status === 204 ? "up_to_date" : status === 409 ? "conflict" : "merged";
 }
