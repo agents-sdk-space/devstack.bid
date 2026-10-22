@@ -32,6 +32,23 @@ describe("1. session cookie + strict origin", () => {
     expect(await readAuthCookie(new Request("https://devstack.bid/", { headers: { cookie: `nvx_auth=${encodeURIComponent(v)}` } }), SECRET)).toBe(UID);
     expect(await readAuthCookie(new Request("https://devstack.bid/", { headers: { cookie: `nvx_auth=junk; ${HOST_AUTH_COOKIE}=${encodeURIComponent(v)}` } }), SECRET)).toBe(UID);
   });
+  it("migrates legacy cookies on read, prefers __Host-, and sunsets legacy reads", async () => {
+    const { legacyAuthMigration, readAuthRaw, LEGACY_AUTH_SUNSET } = await import("@/lib/chat/identity");
+    const before = LEGACY_AUTH_SUNSET - 1;
+    const [issue, clear] = legacyAuthMigration("nvx_auth=abc", true, before);
+    expect(issue).toMatch(/^__Host-nvx_auth=abc; Path=\/; .*Secure/);
+    expect(issue).not.toMatch(/Domain=/i);
+    expect(clear).toMatch(/^nvx_auth=; .*Max-Age=0/);
+    expect(legacyAuthMigration(`nvx_auth=tossed; ${HOST_AUTH_COOKIE}=real`, true, before)).toEqual([clear]);
+    expect(legacyAuthMigration("nvx_auth=abc", true, LEGACY_AUTH_SUNSET)).toEqual([clear]);
+    expect(legacyAuthMigration("nvx_auth=abc", false, before)).toEqual([]);
+    expect(legacyAuthMigration(`${HOST_AUTH_COOKIE}=real`, true, before)).toEqual([]);
+    expect(readAuthRaw(`nvx_auth=tossed; ${HOST_AUTH_COOKIE}=real`, before)).toBe("real");
+    expect(readAuthRaw(`${HOST_AUTH_COOKIE}=real; nvx_auth=tossed`, before)).toBe("real");
+    expect(readAuthRaw("nvx_auth=old", before)).toBe("old");
+    expect(readAuthRaw("nvx_auth=old", LEGACY_AUTH_SUNSET)).toBeUndefined();
+    expect(new Date(LEGACY_AUTH_SUNSET).toISOString()).toBe("2026-11-20T17:00:00.000Z");
+  });
   it("gate writes require Origin exactly https://devstack.bid", () => {
     const r = (origin: string | null, host = "devstack.bid", site?: string) => new Request("https://devstack.bid/api/x", { method: "POST", headers: { host, ...(origin ? { origin } : {}), ...(site ? { "sec-fetch-site": site } : {}) } });
     expect(strictOrigin(r("https://devstack.bid"))).toBe(true);
@@ -119,9 +136,10 @@ describe("6. globally unique slugs", () => {
     const raw = new DatabaseSync(":memory:");
     const files = readdirSync("migrations").filter((f) => f.endsWith(".sql")).sort();
     for (const f of files.filter((f) => f < "0017")) raw.exec(readFileSync(`migrations/${f}`, "utf8"));
-    raw.exec("INSERT INTO users (id) VALUES ('a'),('b'); INSERT INTO projects (id, user_id, name, slug) VALUES ('p1aaaaaa','a','x','dup'),('p2bbbbbb','b','x','dup')");
+    // 'dup-p2bbbb' is exactly what the old 6-char suffix scheme would have produced for p2bbbbbb -> must not collide.
+    raw.exec("INSERT INTO users (id) VALUES ('a'),('b'),('c'); INSERT INTO projects (id, user_id, name, slug) VALUES ('p1aaaaaa','a','x','dup'),('p2bbbbbb','b','x','dup'),('p4dddddd','a','x','dup-p2bbbb'),('p5eeeeee','c','x','dup')");
     raw.exec(readFileSync("migrations/0017_site_safety.sql", "utf8"));
-    expect(raw.prepare("SELECT slug FROM projects ORDER BY id").all().map((r) => (r as { slug: string }).slug)).toEqual(["dup", "dup-p2bbbb"]);
+    expect(raw.prepare("SELECT slug FROM projects ORDER BY id").all().map((r) => (r as { slug: string }).slug)).toEqual(["dup", "dup-p2bbbbbb", "dup-p2bbbb", "dup-p5eeeeee"]);
     expect(() => raw.exec("INSERT INTO projects (id, user_id, name, slug) VALUES ('p3','a','x','dup')")).toThrow(/UNIQUE/);
 
     const db = sqliteD1();

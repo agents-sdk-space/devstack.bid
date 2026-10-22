@@ -7,7 +7,9 @@ import JSON5 from "json5";
 export function releaseConfig(base, extra) {
   const out = { ...base };
   for (const [k, v] of Object.entries(extra)) {
-    out[k] = Array.isArray(v) && Array.isArray(base[k]) ? [...base[k], ...v] : v;
+    const plain = (x) => x && typeof x === "object" && !Array.isArray(x);
+    // Arrays append; "vars" merges key by key (release overrides); everything else replaces.
+    out[k] = Array.isArray(v) && Array.isArray(base[k]) ? [...base[k], ...v] : k === "vars" && plain(v) && plain(base[k]) ? { ...base[k], ...v } : v;
   }
   return out;
 }

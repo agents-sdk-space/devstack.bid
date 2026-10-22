@@ -18,7 +18,8 @@ describe("wrangler config split (hotfix vs release)", () => {
   it("release config = base + build bindings", () => {
     expect(rel.name).toBe(base.name);
     expect(rel.routes).toEqual(base.routes);
-    expect(rel.vars).toEqual(base.vars);
+    // Release vars = base vars + the AI Gateway ids (plain ids, not secrets).
+    expect(rel.vars).toEqual({ ...base.vars, CF_ACCOUNT_ID: "2d92bd5b25768fa9093d6adc0a8887fc", CF_AI_GATEWAY_ID: "devstack-ai" });
     expect(rel.r2_buckets.map((b: { binding: string }) => b.binding)).toEqual(["CHAT_STREAMS", "BUILD_ARTIFACTS", "SITES"]);
     expect(rel.containers[0]).toMatchObject({ class_name: "BuildContainer", image: "./container/Dockerfile", max_instances: 2 });
     expect(rel.durable_objects.bindings[0].name).toBe("BUILD_CONTAINER");

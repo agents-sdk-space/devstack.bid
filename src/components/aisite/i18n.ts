@@ -1,7 +1,7 @@
 /** Thai / English strings for the AI chat builder (no emoji). Server responses carry `code`; the client translates them here. */
 export const AISITE_TEXT = {
   en: {
-    title: "Build with AI", intro: "Describe a website. The AI writes the files, every reply becomes a new version with its own preview link.",
+    dismiss: "Dismiss", title: "Build with AI", intro: "Describe a website. The AI writes the files, every reply becomes a new version with its own preview link.",
     placeholder: "e.g. A coffee shop site with a menu, opening hours and a map link", send: "Send", sending: "Working...",
     chat: "Chat", preview: "Preview", history: "Versions", files: "Files", logs: "Build log", newProject: "New site", projects: "Your AI sites", details: "Versions, files and build log",
     revert: "Restore this version", promote: "Publish as production", export: "Export to GitHub", exportRepo: "owner/repo (existing)", branch: "Branch",
@@ -19,7 +19,7 @@ export const AISITE_TEXT = {
     "code.invalid_output": "The AI reply could not be used. Try rephrasing.", "code.upstream": "The AI service failed. Try again.", "code.conflict": "Another change is in progress.", "code.limit": "Limit reached.",
   },
   th: {
-    title: "สร้างเว็บด้วย AI", intro: "อธิบายเว็บที่ต้องการ AI จะเขียนไฟล์ให้ ทุกคำตอบจะเป็นเวอร์ชันใหม่พร้อมลิงก์ preview ของตัวเอง",
+    dismiss: "ปิด", title: "สร้างเว็บด้วย AI", intro: "อธิบายเว็บที่ต้องการ AI จะเขียนไฟล์ให้ ทุกคำตอบจะเป็นเวอร์ชันใหม่พร้อมลิงก์ preview ของตัวเอง",
     placeholder: "เช่น เว็บร้านกาแฟ มีเมนู เวลาเปิดปิด และลิงก์แผนที่", send: "ส่ง", sending: "กำลังทำ...",
     chat: "แชต", preview: "ตัวอย่าง", history: "เวอร์ชัน", files: "ไฟล์", logs: "บันทึกการ build", newProject: "เว็บใหม่", projects: "เว็บ AI ของคุณ", details: "เวอร์ชัน ไฟล์ และบันทึกการ build",
     revert: "กู้คืนเวอร์ชันนี้", promote: "เผยแพร่เป็นเวอร์ชันจริง", export: "ส่งออกไป GitHub", exportRepo: "owner/repo (ที่มีอยู่แล้ว)", branch: "Branch",

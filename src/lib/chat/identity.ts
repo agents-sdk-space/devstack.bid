@@ -119,9 +119,32 @@ export async function readSession(value: string | undefined, secret: string): Pr
 /** Checks that a session id is still live for this user. Absent means session cookies are refused. */
 export type SessionCheck = (uid: string, sid: string) => Promise<boolean>;
 
-/** Raw session cookie: __Host-nvx_auth first, then the legacy nvx_auth (so existing sessions stay signed in). */
-export function readAuthRaw(header: string | null): string | undefined {
-  return readCookie(header, HOST_AUTH_COOKIE) ?? readCookie(header, AUTH_COOKIE);
+/** Hard sunset: the legacy (tossable) nvx_auth cookie is not read at or after this instant (2026-11-21 00:00 Asia/Bangkok). */
+export const LEGACY_AUTH_SUNSET = Date.parse("2026-11-21T00:00:00+07:00");
+const MIGRATED_MAX_AGE = 60 * 60 * 24 * 30;
+
+/**
+ * Raw session cookie. __Host-nvx_auth always wins; when it is present the legacy cookie is ignored entirely
+ * (a cookie tossed from a *.devstack.bid site can never override it). Legacy nvx_auth is read only when no
+ * __Host- cookie exists and only before LEGACY_AUTH_SUNSET.
+ */
+export function readAuthRaw(header: string | null, now = Date.now()): string | undefined {
+  const host = readCookie(header, HOST_AUTH_COOKIE);
+  if (host !== undefined) return host;
+  return now < LEGACY_AUTH_SUNSET ? readCookie(header, AUTH_COOKIE) : undefined;
+}
+
+/**
+ * Migrate-on-read (run by middleware on every HTTPS request): legacy-only → issue __Host-nvx_auth with the same value
+ * and clear nvx_auth; both present, or past the sunset → just clear nvx_auth. The value is still verified on every read.
+ */
+export function legacyAuthMigration(header: string | null, secure: boolean, now = Date.now()): string[] {
+  if (!secure) return [];
+  const legacy = readCookie(header, AUTH_COOKIE);
+  if (legacy === undefined) return [];
+  const hasHost = readCookie(header, HOST_AUTH_COOKIE) !== undefined;
+  if (hasHost || now >= LEGACY_AUTH_SUNSET || !legacy) return [clearCookie(AUTH_COOKIE, true)];
+  return [namedCookie(HOST_AUTH_COOKIE, legacy, true, MIGRATED_MAX_AGE), clearCookie(AUTH_COOKIE, true)];
 }
 
 /** Set-Cookie headers for a new session: __Host- over HTTPS (and clear the legacy name), legacy over plain http (dev). */

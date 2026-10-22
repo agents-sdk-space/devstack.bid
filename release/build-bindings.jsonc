@@ -9,6 +9,9 @@
   ],
   // AI chat builder: Workers KV nvx-stack-builder-kv for rate-limit counters and short caches ONLY (never source data).
   "kv_namespaces": [{ "binding": "KV", "id": "7fcbeb7d5603411287c90e570cafa0dc" }],
+  // Cloudflare AI Gateway "devstack-ai" (logging on, Authenticated Gateway off -> no cf-aig-authorization token).
+  // Plain ids, not secrets. Merged key-by-key into the base vars.
+  "vars": { "CF_ACCOUNT_ID": "2d92bd5b25768fa9093d6adc0a8887fc", "CF_AI_GATEWAY_ID": "devstack-ai" },
   "queues": {
     "producers": [{ "binding": "BUILD_QUEUE", "queue": "devstack-build-jobs" }],
     "consumers": [{ "queue": "devstack-build-jobs", "max_batch_size": 1, "max_batch_timeout": 1, "max_retries": 10, "max_concurrency": 2 }]

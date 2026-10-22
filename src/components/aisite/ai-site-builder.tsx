@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { X } from "lucide-react";
 import { Badge, buttonClasses, Card, Input, Spinner, Textarea, type BadgeVariant } from "@/components/ui";
 import { useLang } from "@/components/prefs";
 import { AISITE_TEXT, codeText, fmt, versionStatus, type AiSiteKey } from "./i18n";
@@ -145,7 +146,7 @@ export function AiSiteBuilder() {
 
   const bannerEl = banner && (
     <div role={banner.kind === "error" ? "alert" : "status"} className={`m-2 rounded-lg border px-3 py-2 text-sm ${banner.kind === "error" ? "border-danger" : "border-success"}`}>
-      <div className="flex items-start justify-between gap-2"><span>{banner.text}</span><button className={buttonClasses("ghost", "sm")} onClick={() => setBanner(null)} aria-label="Dismiss">x</button></div>
+      <div className="flex items-start justify-between gap-2"><span>{banner.text}</span><button className={buttonClasses("ghost", "sm")} onClick={() => setBanner(null)} aria-label={L("dismiss")} title={L("dismiss")}><X aria-hidden="true" className="size-4" /></button></div>
     </div>
   );
   const aiBlockedEl = infra?.aiBlocked && (
@@ -239,9 +240,10 @@ export function AiSiteBuilder() {
           <p className="p-6 text-sm text-muted">{infra && !infra.sites ? `${L("st.blocked")}: ${L("why.sites")}` : current?.error_log ?? L("noPreview")}</p>
         )}
       </div>
-      <details className="hidden max-h-[40%] min-h-0 flex-col border-t border-border p-2 lg:flex">
+      <details className="hidden max-h-[40%] min-h-0 border-t border-border p-2 lg:block">
         <summary className="cursor-pointer text-xs font-medium">{L("details")}</summary>
-        {historyList}
+        {/* <details> ignores display:flex on its children in some engines; the wrapper owns the scroll layout. */}
+        <div className="flex max-h-[30vh] min-h-0 flex-col overflow-y-auto pt-2">{historyList}</div>
       </details>
     </section>
   );

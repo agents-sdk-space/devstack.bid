@@ -27,7 +27,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
         ai: !!rt.llm.apiKey,
         aiBlocked: !rt.llm.apiKey ? "ai_not_configured" : directBlocked(rt.llm, rt.production, rt.allowDirect) ? "ai_gateway_required" : null,
         // The AI route is operator detail: only shown to admins.
-        via: isAdmin(a.login) ? openaiBase(rt.llm).via : null,
+        via: isAdmin(a.login) || !rt.production ? openaiBase(rt.llm).via : null,
         sites: !!rt.sites.sites,
         dnsReady: rt.sites.dnsReady,
       },

@@ -1,7 +1,8 @@
 -- Site safety (security review of the AI builder). Additive; apply locally until GO — PUBLISH.
--- 1) Globally unique project slugs (<slug>.devstack.bid). Existing duplicates are renamed first (keep the oldest
---    row's slug; later rows get "-<first 6 chars of id>") so the index can always be created.
-UPDATE projects SET slug = substr(slug, 1, 50) || '-' || substr(id, 1, 6)
+-- 1) Globally unique project slugs (<slug>.devstack.bid). Existing duplicates are renamed first: the oldest row keeps
+--    its slug, later rows become "<first 26 chars>-<full project id>" (<= 63 chars). The full primary key makes renamed
+--    slugs unique among themselves; a short-id suffix could collide with an existing slug.
+UPDATE projects SET slug = substr(slug, 1, 26) || '-' || lower(id)
  WHERE slug IS NOT NULL
    AND rowid NOT IN (SELECT MIN(rowid) FROM projects WHERE slug IS NOT NULL GROUP BY slug);
 CREATE UNIQUE INDEX projects_slug_global_uq ON projects (slug) WHERE slug IS NOT NULL;
