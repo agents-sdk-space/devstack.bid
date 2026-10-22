@@ -22,6 +22,7 @@ export type AuditEvent =
   | "env.saved"
   | "env.removed"
   | "ai_site.turn"
+  | "project.ai_turn"
   | "ai_site.promote"
   | "ai_site.export";
 

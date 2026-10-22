@@ -40,3 +40,12 @@ Status 2026-10-22: code complete and tested locally; **not provisioned** (see Bl
 - Dry runs: `wrangler deploy --dry-run` passes with no Docker (base); `wrangler deploy -c wrangler.release.jsonc --dry-run` builds the image and lists BUILD_CONTAINER, BUILD_QUEUE, BUILD_ARTIFACTS and SITES.
 - Unit tests: `tests/build-executor.test.ts`, `tests/hosting.test.ts`, `tests/security-review.test.ts`.
 - Real end-to-end without Docker: `E2E_BUILD=1 npx vitest run tests/build-executor.test.ts` runs `container/build-server.mjs` locally, clones `sveltejs/template@5b3da65`, `npm install`, `npm run build`, and the executor publishes `public/` and serves it by hostname.
+
+## Preview environment variables never hold production secrets
+
+Preview builds (webhook pushes to non-production branches, PRs, and AI chat commits on `devstack/ai`) run the
+project's own code: at build time (Next.js SSG / `next build`, Vite plugins, PostCSS/Tailwind/Babel configs) and
+again at runtime in the preview Worker. Making build configs read-only for the AI (`READ_ONLY` in
+`src/lib/aisite/repo-turn.ts`) lowers the risk but cannot remove it, because application code itself executes.
+The safeguard is the environment boundary: **never put production secrets in the `preview` environment**. Use
+separate, low-privilege test keys for preview, and keep production keys only in the `production` environment.

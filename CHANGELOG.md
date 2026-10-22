@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0-rc.3] - 2026-10-22
+
+### Fixed (Subdev + Supdev review of rc.2)
+- One AI turn now produces exactly one build job and one quota count: `ai-turn` passes the webhook's idempotency key
+  `gh:preview:devstack/ai:<sha>` to `startContainerBuild`, and a matching active job is reused before any quota
+  (daily/hourly) is spent. Sync merge commits (base → `devstack/ai`) are remembered in KV (10 min TTL) and the
+  webhook skips them (`ignored:ai_sync_merge`).
+- `ai-turn` reserves the daily AI turn BEFORE syncing `devstack/ai`, so a full quota leaves no dangling merge commit.
+- `postcss.config.*`, `tailwind.config.*`, `babel.config.*` and `.babelrc` are read-only for the AI (basename match).
+- Docs: preview environment variables must never hold production secrets (app code runs at build/SSG and in the preview Worker).
+- `listWritableRepos` includes `organization_member` repos and paginates (100/page, up to 5 pages), so org repos
+  appear in import and AI push pickers.
+
+## [0.13.0-rc.2] - 2026-10-22
+
+### Fixed (Subdev + Supdev review of rc.1)
+- `ai-turn` checks the GitHub token and build quota (daily D1 + hourly KV, read-only) BEFORE reserving the AI
+  turn or calling the model. If the build cannot start after the commit, it returns 202 with the commit and
+  `build.status: "build_quota"` (or `build_not_started`) instead of 429.
+- Tier limits apply to every build trigger: `startContainerBuild` resolves the owner's tier itself, and webhook
+  builds (`autodeploy.ts`) pass `limitsForUser` + KV explicitly. The webhook 20/hour per-project cap still applies too.
+- Direct deploys (`takeQuota("deploy")`) use the tier's `deploysPerDay` instead of the capacity value.
+- The hourly KV build window is consumed only after the token and branch/commit checks pass.
+- `devstack/ai` is synced with the default branch before each AI turn using GitHub's merges API (merge commit;
+  never reset or force). A merge conflict returns 409 `ai_branch_diverged`.
+- `ai-turn` has its own per-minute key `ai-turn:<uid>` (not shared with the static AI builder); the daily AI cap is shared.
+- (Supdev, Medium) The AI may not write `package.json`, `next.config.*`, `vite.config.*`, `tsconfig*.json`
+  (read-only context, writes rejected with `ai_output_rejected`); `.npmrc` and `middleware.[jt]s` are fully blocked.
+  No dependency edits in this version.
+- (Supdev) Tiers match stable ids: `DEVSTACK_ADMIN_UIDS` / `DEVSTACK_PAID_UIDS` (users.id) and
+  `DEVSTACK_ADMIN_GITHUB_IDS` / `DEVSTACK_PAID_GITHUB_IDS` (numeric GitHub id). Login lists are DEPRECATED for tiers
+  and honoured only with `DEVSTACK_TIER_ALLOW_LOGINS=1`.
+- (Supdev) Symlink (120000) and submodule (160000) tree entries are never read for AI context.
+
+No migrations.
+
+## [0.13.0-rc.1] - 2026-10-22
+
+### Changed
+- Every Stack Template goes through the real build pipeline. The Next.js templates (`nextjs-dashboard`,
+  `nextjs-ai-chat`, `collab-workspace`) are no longer static exports: they build with OpenNext
+  (`opennextjs-cloudflare build` → `.open-next/`) and deploy as a per-project server Worker. They ship
+  `open-next.config.ts`, `wrangler.jsonc` and pinned `@opennextjs/cloudflare` 1.20.10 / `wrangler` 4.149.0 with
+  regenerated lockfiles. Vite templates keep building to `dist/` in the container. Deploy profiles updated.
+
+### Added
+- `POST /api/projects/:id/ai-turn`: AI chat builder for any repo-backed project/template. The AI edit is validated
+  (no `.env`, `.github/`, lockfiles, wrangler/open-next config, build output), committed as ONE commit on
+  `devstack/ai`, then built by the container pipeline as a preview. Nothing is published directly.
+- Per-user tiers (`src/lib/limits/tiers.ts`): free / paid (`DEVSTACK_PAID_LOGINS`) / admin (`AISITE_ADMIN_LOGINS`),
+  overridable with `DEVSTACK_TIER_<TIER>_<FIELD>`. Defaults (AI/day, AI/min, builds/hour, builds/day, deploys/day):
+  free 20/4/3/10/5, paid 200/10/20/60/50, admin 1000/30/60/300/200. AI daily caps are atomic in D1 (`ai_quota`),
+  builds/day counted in D1 (`build_jobs`), AI/min and builds/hour are KV fixed windows.
+  Applied to AI site turns, project AI turns, manual builds and import builds (webhook builds keep their 20/hour cap).
+
+No migrations.
+
 ## [0.12.0-rc.5] - 2026-10-22
 
 ### Fixed (review nits)

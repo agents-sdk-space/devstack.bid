@@ -10,6 +10,10 @@ import { sqliteD1 } from "./helpers/sqlite-d1";
 import { sweepBuilds } from "@/lib/build/sweep";
 import { failJob } from "@/lib/build/jobs";
 
+// Tier caps are tested in templates-via-deploy.test.ts; these flows push many commits for one user.
+process.env.DEVSTACK_TIER_FREE_BUILDS_PER_HOUR = "1000";
+process.env.DEVSTACK_TIER_FREE_BUILDS_PER_DAY = "1000";
+
 const keys = sealKeys("test-cookie-secret-0123456789abcdef", {});
 const SHA = "5b3da65ea310f98480c5258af97ff4d5c6f9d5b0";
 const SHA2 = "1111111111111111111111111111111111111111";
@@ -371,5 +375,28 @@ describe("handleGitEvent", () => {
     db.raw.exec("PRAGMA recursive_triggers = OFF; DROP TRIGGER git_pending_on_deactivate; UPDATE project_connections SET status = 'revoked', can_push = 1 WHERE id = 'c1'");
     expect(await drainPending(db, keys, b, { project_id: "projA-0001", environment: "production", ref: "main" }, gh.f)).toEqual({ status: "ignored:not_linked" });
     expect(b.sent.length).toBe(sentBefore);
+  });
+});
+
+describe("rc.3: one AI turn = one build job + one quota count", () => {
+  it("sync merge is skipped by the webhook; route + webhook builds of the AI commit dedupe", async () => {
+    const { startContainerBuild } = await import("@/lib/build/executor");
+    const { AI_BRANCH, aiTurnBuildKey, rememberSyncMerge } = await import("@/lib/aisite/repo-turn");
+    const { buildHourKey } = await import("@/lib/limits/tiers");
+    const store = new Map<string, string>();
+    const kv = { get: async (k: string) => store.get(k) ?? null, put: async (k: string, v: string) => { store.set(k, v); } };
+    const db = await setup();
+    const b = bindings({ kv } as never);
+    const MERGE = "a".repeat(40), AI = "b".repeat(40);
+    await rememberSyncMerge(kv, "acme/site", MERGE);
+    expect((await handleGitEvent(db, keys, b, "push", push(AI_BRANCH, MERGE), ghFetch().f)).status).toBe("ignored:ai_sync_merge:1");
+    const project = db.raw.prepare("SELECT * FROM projects WHERE id = 'projA-0001'").get() as never;
+    const r = await startContainerBuild(db, keys, b, "userA", project, { ref: AI_BRANCH, environment: "preview", trigger: "manual", commit: AI, kv, idempotencyKey: aiTurnBuildKey(AI) });
+    const w = await handleGitEvent(db, keys, b, "push", push(AI_BRANCH, AI), ghFetch().f);
+    expect(w.buildJobId).toBe(r.job.id);
+    expect((db.raw.prepare("SELECT count(*) n FROM build_jobs").get() as { n: number }).n).toBe(1);
+    expect(b.sent).toHaveLength(1);
+    const hour = [...store.entries()].filter(([k]) => k.startsWith(`rl:${buildHourKey("userA")}:`));
+    expect(hour.map(([, v]) => v)).toEqual(["1"]);
   });
 });

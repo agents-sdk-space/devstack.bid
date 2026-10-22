@@ -41,19 +41,19 @@ const STATIC_FILES = ["wrangler.jsonc (assets.directory)"];
 
 export const DEPLOY_PROFILES: Record<string, DeployProfile> = {
   "nextjs-dashboard": {
-    id: "nextjs-dashboard", source: "stack-template", target: "worker-assets", path: "cf-build",
-    build: "npm run build", entry: null, assetsDir: "out", requiredFiles: STATIC_FILES, secrets: [],
+    id: "nextjs-dashboard", source: "stack-template", target: "opennext", path: "cf-build",
+    build: "npm run build", entry: ".open-next/worker.js", assetsDir: ".open-next/assets", requiredFiles: NEXT_FILES, secrets: [],
     flags: [],
   },
   "nextjs-ai-chat": {
-    id: "nextjs-ai-chat", source: "stack-template", target: "worker-assets", path: "cf-build",
-    build: "npm run build", entry: null, assetsDir: "out", requiredFiles: STATIC_FILES, secrets: [],
-    flags: ["Static export: no API route or server key. The page calls NEXT_PUBLIC_CHAT_API (your own endpoint that holds the model key) or runs in demo mode."],
+    id: "nextjs-ai-chat", source: "stack-template", target: "opennext", path: "cf-build",
+    build: "npm run build", entry: ".open-next/worker.js", assetsDir: ".open-next/assets", requiredFiles: NEXT_FILES, secrets: [],
+    flags: ["Server app (OpenNext): add API routes under app/api; keep model keys as Worker secrets, never in code."],
   },
   "collab-workspace": {
-    id: "collab-workspace", source: "stack-template", target: "worker-assets", path: "cf-build",
-    build: "npm run build", entry: null, assetsDir: "out", requiredFiles: STATIC_FILES, secrets: [],
-    flags: ["Static export: realtime sync is between tabs of one browser (BroadcastChannel). Cross-device sync needs a backend (e.g. Durable Objects)."],
+    id: "collab-workspace", source: "stack-template", target: "opennext", path: "cf-build",
+    build: "npm run build", entry: ".open-next/worker.js", assetsDir: ".open-next/assets", requiredFiles: NEXT_FILES, secrets: [],
+    flags: ["Server app (OpenNext). Realtime sync is still between tabs of one browser (BroadcastChannel); cross-device sync needs a backend (e.g. Durable Objects)."],
   },
   "vite-react-game": {
     id: "vite-react-game", source: "stack-template", target: "worker-assets", path: "cf-build",

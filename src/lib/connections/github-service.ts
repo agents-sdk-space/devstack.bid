@@ -1,4 +1,5 @@
 import "server-only";
+import { limitsForUser } from "@/lib/limits/tiers";
 import { templateBuild } from "@/lib/projects/template-seed";
 import {
   commitFiles,
@@ -32,8 +33,10 @@ export class ServiceError extends Error {
 const RULES = { repo: LIMITS.reposPerDay, pr: LIMITS.prsPerDay, deploy: LIMITS.deploysPerDay };
 
 export async function takeQuota(db: D1Like, uid: string, kind: "repo" | "pr" | "deploy"): Promise<void> {
-  const r = await consume(db, customerRules(uid, kind, RULES));
-  if (!r.ok) throw new ServiceError("rate_limited", `Daily ${kind} limit reached (${RULES[kind]}/day). Resets at midnight Bangkok time. / ครบโควตา ${kind} ของวันนี้แล้ว`, 429);
+  // Deploys follow the user's tier; repo/PR caps stay capacity-derived (GitHub secondary limits).
+  const rules = kind === "deploy" ? { ...RULES, deploy: (await limitsForUser(db, uid)).deploysPerDay } : RULES;
+  const r = await consume(db, customerRules(uid, kind, rules));
+  if (!r.ok) throw new ServiceError("rate_limited", `Daily ${kind} limit reached (${rules[kind]}/day). Resets at midnight Bangkok time. / ครบโควตา ${kind} ของวันนี้แล้ว`, 429);
 }
 
 /** Create a repo in the customer's account, optionally seed files in one commit, and record a project. */
