@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0-rc.1] - 2026-10-22
+
+Branch `feat/new-project-platform` merged with `feat/restore-rc5`.
+
+### Added
+
+- **New Project platform** at `/new`: import a GitHub repository (search, branch, root directory, framework detection, build settings), upload a zip, or start from a template; deployment detail pages; D1 migrations 0013–0015.
+- **rc.5 restored**: full setup-script copy (PR #39) and AI planner links to Expo, Android Studio, Replit and GitHub Codespaces.
+
+### Fixed
+
+- **GitHub connect returns to the page it started from** (`/new`, keeping `?mode=`). Return paths are same-origin only (no open redirect, no `/login` or `/api` loops), re-checked on success, and kept on `/login` after a failure.
+- **GitHub sign-in and API calls failing with HTTP 525**: a Worker on a custom domain gets 525 from `github.com`/`api.github.com` (cloudflare/workerd#7042). All server-side GitHub calls now go through `ghFetch`, which retries a 525 once over a `cloudflare:sockets` TLS connection (GitHub hosts only).
+
 ## [0.8.0-rc.3] - 2026-10-17
 
 Release branch `release/2026-10-17`: `fix/github-oauth-525` + `feat/ui-glowcard-spline` + chat knowledge and persona.
