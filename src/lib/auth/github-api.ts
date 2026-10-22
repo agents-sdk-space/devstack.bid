@@ -1,4 +1,5 @@
 import "server-only";
+import { socketFetch } from "@/lib/server/socket-fetch";
 import { redactSecrets } from "@/lib/ai/openai";
 
 /** GitHub REST + OAuth token exchange. Tokens are passed in headers and never logged. */
@@ -21,11 +22,13 @@ export class GithubApiError extends Error {
 }
 
 /** Retry transient edge/upstream failures (5xx incl. Cloudflare 52x, network errors) with a short backoff. */
-export async function fetchRetry(input: string, init: RequestInit, attempts = 3, f: typeof fetch = fetch): Promise<Response> {
+export async function fetchRetry(input: string, init: RequestInit, attempts = 3, f: typeof fetch = fetch, socketFallback?: (input: string, init: RequestInit) => Promise<Response>): Promise<Response> {
   let last: unknown;
   for (let i = 0; i < attempts; i++) {
     try {
-      const res = await f(input, init);
+      let res = await f(input, init);
+      // Workers on a custom domain get 525 from github.com (cloudflare/workerd#7042): retry over a raw TLS socket.
+      if (res.status === 525) res = await (socketFallback ?? socketFetch)(input, init).catch(() => res);
       if (res.status < 500 || i === attempts - 1) return res;
       last = res;
     } catch (err) {

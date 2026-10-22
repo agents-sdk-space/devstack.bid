@@ -8,6 +8,12 @@
 import handler from "./.open-next/worker.js";
 import type { D1Like } from "@/lib/chat/store";
 import { sweepBuilds } from "@/lib/build/sweep";
+import { connect } from "cloudflare:sockets";
+import { registerSocketConnect, type ConnectFn } from "@/lib/server/socket-fetch";
+
+// fetch() to github.com from a custom-domain Worker returns 525 (cloudflare/workerd#7042); the
+// GitHub client falls back to a raw TLS socket. Only this wrangler-bundled entry can import it.
+registerSocketConnect(connect as unknown as ConnectFn);
 
 // Re-export the Durable Object classes OpenNext ships (unused bindings today, kept for parity).
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- see note
