@@ -12,6 +12,7 @@ const STATIC = new Set([
   "/builder",
   "/chat",
   "/chat/dev",
+  "/chat/build",
   "/factory",
   "/design",
   "/login",

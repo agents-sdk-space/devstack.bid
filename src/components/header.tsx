@@ -19,6 +19,7 @@ export const NAV = [
   { href: "/templates", key: "nav.templates", Icon: LayoutGrid },
   { href: "/builder", key: "nav.builder", Icon: Blocks },
   { href: "/chat", key: "nav.chat", Icon: MessagesSquare },
+  { href: "/chat/build", key: "nav.aiBuild", Icon: Blocks, wide: true },
   { href: "/chat/dev", key: "nav.devChat", Icon: SquareTerminal, wide: true },
   { href: "/factory", key: "nav.factory", Icon: FlaskConical, wide: true },
   { href: "/docs/platform", key: "nav.functions", Icon: Layers },

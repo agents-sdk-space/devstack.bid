@@ -165,6 +165,12 @@
     "head_sampling_rate": 1
   },
   "upload_source_maps": true,
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "SET_ID_OF_nvx-stack-builder-kv"
+    }
+  ],
   "queues": {
     "producers": [
       {

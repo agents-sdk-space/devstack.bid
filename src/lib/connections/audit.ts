@@ -16,7 +16,10 @@ export type AuditEvent =
   | "fix.committed"
   | "cli.scaffold"
   | "env.saved"
-  | "env.removed";
+  | "env.removed"
+  | "ai_site.turn"
+  | "ai_site.promote"
+  | "ai_site.export";
 
 export async function audit(db: D1Like, userId: string, event: AuditEvent, subject?: string): Promise<void> {
   try {

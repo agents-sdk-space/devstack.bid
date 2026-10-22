@@ -192,6 +192,7 @@ const dict = {
   },
   "chat.factoryLink": { en: "Need more? Use your own key in the Sandbox Factory", th: "อยากใช้มากกว่านี้? ใช้ key ของตัวเองใน Sandbox Factory" },
   "nav.devChat": { en: "Dev Chat", th: "Dev Chat" },
+  "nav.aiBuild": { en: "Build with AI", th: "สร้างเว็บด้วย AI" },
   "chat.mode.agent": { en: "Orchestrator agent", th: "Orchestrator agent" },
   "chat.sandboxAgentOnly": { en: "The sandbox runs with the Orchestrator agent. Pick it in the model picker for images, research and files.", th: "sandbox ทำงานกับ Orchestrator agent เลือกในตัวเลือกโมเดลเพื่อสร้างภาพ ค้นคว้า และสร้างไฟล์" },
   "chat.attach": { en: "Attach a file", th: "แนบไฟล์" },
