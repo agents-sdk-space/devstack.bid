@@ -4,6 +4,7 @@
  * stays in the cookie and is not copied into the URL.
  */
 
+import { safeNext } from "@/lib/auth/github-policy";
 import { AUTH_COOKIE, OAUTH_STATE_COOKIE, clearCookie, namedCookie, signPayload, verifyPayload } from "@/lib/chat/identity";
 
 export const OAUTH_COOKIE_PATH = "/api/auth";
@@ -76,10 +77,11 @@ export async function pkcePair(): Promise<{ verifier: string; challenge: string 
   return { verifier, challenge: b64url(new Uint8Array(digest)) };
 }
 
-export function oauthFail(origin: string, secure: boolean, code: string, provider: AuthProvider): Response {
+export function oauthFail(origin: string, secure: boolean, code: string, provider: AuthProvider, next?: string | null): Response {
   const allowed = code === "missing" || code === "error" || code === "denied" ? code : "error";
+  const back = next ? safeNext(next, "") : "";
   const headers = new Headers({
-    Location: new URL(`/login?auth=${allowed}&provider=${provider}`, origin).toString(),
+    Location: new URL(`/login?auth=${allowed}&provider=${provider}${back ? `&next=${encodeURIComponent(back)}` : ""}`, origin).toString(),
     "Cache-Control": "no-store",
   });
   headers.append("Set-Cookie", clearCookie(OAUTH_STATE_COOKIE, secure, OAUTH_COOKIE_PATH));
@@ -90,7 +92,7 @@ export function oauthFail(origin: string, secure: boolean, code: string, provide
 export const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
 export function signedInRedirect(origin: string, secure: boolean, next: string, sessionValue: string, status = 302): Response {
-  const headers = new Headers({ Location: new URL(next, origin).toString(), "Cache-Control": "no-store" });
+  const headers = new Headers({ Location: new URL(safeNext(next), origin).toString(), "Cache-Control": "no-store" });
   headers.append("Set-Cookie", namedCookie(AUTH_COOKIE, sessionValue, secure, AUTH_COOKIE_MAX_AGE));
   headers.append("Set-Cookie", clearCookie(OAUTH_STATE_COOKIE, secure, OAUTH_COOKIE_PATH));
   return new Response(null, { status, headers });

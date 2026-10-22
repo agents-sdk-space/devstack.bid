@@ -5,6 +5,7 @@ import { FolderGit2, GitBranch, Lock, RefreshCw, Search } from "lucide-react";
 import { Badge, buttonClasses, Card, EmptyState, Input, Label, Segmented, Select, Skeleton } from "@/components/ui";
 import { useLang } from "@/components/prefs";
 import { UploadZipPanel } from "./upload-zip-panel";
+import { githubConnectHref } from "@/lib/auth/github-policy";
 
 export type TemplateOption = { id: string; name: { en: string; th: string }; target: string };
 type Repo = { id: number; fullName: string; owner: string; private: boolean; defaultBranch: string; updatedAt: string | null };
@@ -12,6 +13,16 @@ type Framework = { id: string; label: string; install: string | null; build: str
 type Inspect = { repo: string; private: boolean; defaultBranch: string; ref: string; branches: string[]; roots: string[]; root: string; framework: Framework; truncated: boolean };
 type ListState = { kind: "loading" } | { kind: "ok"; repos: Repo[]; hasMore: boolean; page: number } | { kind: "reauth"; message: string } | { kind: "denied"; message: string } | { kind: "error"; message: string };
 type Mode = "git" | "upload" | "template";
+
+const MODES: readonly Mode[] = ["git", "upload", "template"];
+export function isMode(v: string | null): v is Mode {
+  return v !== null && (MODES as readonly string[]).includes(v);
+}
+
+/** Connect-GitHub link that returns to this exact page (path + query), same-origin only. */
+function ConnectLink({ className, children }: { className: string; children: React.ReactNode }) {
+  return <a href={githubConnectHref("/new")} className={className} onClick={(e) => { e.currentTarget.href = githubConnectHref(`${location.pathname}${location.search}`); }}>{children}</a>;
+}
 
 const FRAMEWORK_IDS = ["nextjs", "vite", "astro", "sveltekit", "remix", "react-router", "nuxt", "static", "worker", "node", "unknown"] as const;
 
@@ -24,10 +35,17 @@ async function getJson(url: string, init?: RequestInit) {
 const alertCls = "mt-3 rounded-lg border border-fg/40 px-3 py-2 text-sm text-fg";
 
 /** /new — New Project: import a Git repo (real GitHub reads), upload files, or create from a template. */
-export function NewProject({ templates }: { templates: TemplateOption[] }) {
+export function NewProject({ templates, initialMode }: { templates: TemplateOption[]; initialMode?: string | null }) {
   const { lang } = useLang();
   const th = lang === "th";
-  const [mode, setMode] = useState<Mode>("git");
+  // Mode lives in the URL (?mode=) so the GitHub OAuth round-trip lands back on the same tab.
+  const [mode, setModeState] = useState<Mode>(isMode(initialMode ?? null) ? (initialMode as Mode) : "git");
+  const setMode = useCallback((m: Mode) => {
+    setModeState(m);
+    const u = new URL(location.href);
+    if (m === "git") u.searchParams.delete("mode"); else u.searchParams.set("mode", m);
+    history.replaceState(history.state, "", `${u.pathname}${u.search}${u.hash}`);
+  }, []);
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:py-10">
       <h1 className="text-2xl font-semibold tracking-tight text-fg">{th ? "สร้างโปรเจกต์ใหม่" : "New Project"}</h1>
@@ -83,7 +101,7 @@ function ImportGit({ th }: { th: boolean }) {
         {list.kind === "loading" && <div className="space-y-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}</div>}
         {list.kind === "reauth" && (
           <EmptyState title={th ? "เชื่อมต่อ GitHub" : "Connect GitHub"} description={list.message || (th ? "เชื่อมต่อหรือเชื่อมต่อใหม่เพื่อดูรายการ repo" : "Connect (or reconnect) GitHub to list your repositories.")}
-            action={<a href="/api/auth/github?next=/new" className={buttonClasses("primary", "md")}><FolderGit2 className="h-4 w-4" aria-hidden />{th ? "เชื่อมต่อ GitHub" : "Connect GitHub"}</a>} />
+            action={<ConnectLink className={buttonClasses("primary", "md")}><FolderGit2 className="h-4 w-4" aria-hidden />{th ? "เชื่อมต่อ GitHub" : "Connect GitHub"}</ConnectLink>} />
         )}
         {list.kind === "denied" && (
           <div role="alert" className={alertCls}>
@@ -230,7 +248,7 @@ function FromTemplate({ th, templates }: { th: boolean; templates: TemplateOptio
         <label className="flex items-center gap-2 self-end pb-2 text-sm text-fg"><input type="checkbox" checked={priv} onChange={(e) => setPriv(e.target.checked)} className="accent-current" />{th ? "ส่วนตัว" : "Private"}</label>
         <div className="sm:col-span-2"><button type="submit" disabled={busy || !name || !id} className={buttonClasses("primary", "md")}>{busy ? (th ? "กำลังสร้าง..." : "Creating...") : (th ? "สร้างโปรเจกต์" : "Create project")}</button></div>
       </form>
-      {err && <p role="alert" className={alertCls}>{err}{/github/i.test(err) && <> · <a href="/api/auth/github?next=/new" className="underline underline-offset-4">{th ? "เชื่อมต่อ GitHub" : "Connect GitHub"}</a></>}</p>}
+      {err && <p role="alert" className={alertCls}>{err}{/github/i.test(err) && <> · <ConnectLink className="underline underline-offset-4">{th ? "เชื่อมต่อ GitHub" : "Connect GitHub"}</ConnectLink></>}</p>}
     </Card>
   );
 }

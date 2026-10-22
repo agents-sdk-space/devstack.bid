@@ -41,11 +41,26 @@ export function planAccountLink(anonId: string | null, existingId: string | null
   return { userId: freshId, promoteAnon: false, create: true, moveFrom: null };
 }
 
-/** Same-site path only. Rejects protocol-relative and API URLs. */
-export function safeNext(raw: string | null | undefined): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\") || /[\u0000-\u001f]/.test(raw)) return "/chat";
-  if (raw.startsWith("/api/") || raw.startsWith("/api?")) return "/chat";
-  return raw.slice(0, 200);
+/** Same-site path only. Rejects protocol-relative, absolute, API and /login (loop) URLs. */
+export function safeNext(raw: string | null | undefined, fallback = "/chat"): string {
+  if (!raw || raw.length > 200 || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\") || /[\u0000-\u001f\u007f]/.test(raw)) return fallback;
+  let path: URL;
+  try {
+    path = new URL(raw, "https://same-origin.invalid");
+  } catch {
+    return fallback;
+  }
+  if (path.origin !== "https://same-origin.invalid") return fallback;
+  const p = path.pathname;
+  if (p.startsWith("//") || p.includes("\\")) return fallback;
+  if (p === "/api" || p.startsWith("/api/") || p === "/login" || p.startsWith("/login/")) return fallback;
+  return `${p}${path.search}${path.hash}`;
+}
+
+/** Link that starts GitHub OAuth and comes back to `returnTo` (same-origin path + query). */
+export function githubConnectHref(returnTo: string, scope?: "public"): string {
+  const next = safeNext(returnTo, "/");
+  return `/api/auth/github?${scope ? `scope=${scope}&` : ""}next=${encodeURIComponent(next)}`;
 }
 
 const PATH_RE = /^[A-Za-z0-9][A-Za-z0-9._@~/-]{0,199}$/;
