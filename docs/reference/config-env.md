@@ -114,6 +114,8 @@ Studio (`/studio`) ไม่มี secret ของตัวเอง ใช้ 
 | `SITES` | R2 bucket `devstack-sites` | — | ไฟล์เว็บที่ build แล้ว (`sites/<deploymentId>/…`) และ hostname → deployment (`hosts/<label>.json`) อ่านโดย Worker `devstack-sites` ต้องสร้างก่อน deploy: `wrangler r2 bucket create devstack-sites` |
 | `BUILD_QUEUE` | Queue `devstack-build-jobs` | — | คิวงาน build (producer + consumer ใน Worker หลัก, ครั้งละ 1 ข้อความ, พร้อมกันสูงสุด 2) ต้องสร้างก่อน deploy: `wrangler queues create devstack-build-jobs` |
 | `BUILD_CONTAINER` | Durable Object + Container `BuildContainer` | — | 1 container ต่อ 1 build จาก `container/Dockerfile` (max_instances 2) ต้องใช้ Workers Paid และ Docker ตอน deploy |
+
+`BUILD_ARTIFACTS`, `SITES`, `BUILD_QUEUE` และ `BUILD_CONTAINER` อยู่ใน [`release/build-bindings.jsonc`](../../release/build-bindings.jsonc) เท่านั้น (ไม่อยู่ใน `wrangler.jsonc`) ใช้ตอน `npm run deploy:release` (`-c wrangler.release.jsonc`, ต้องมี Docker) ส่วน `npm run deploy:hotfix` ใช้ `wrangler.jsonc` และไม่ต้องมี Docker ดู [BUILD-EXECUTOR.md](../platform/BUILD-EXECUTOR.md)
 | `CREDENTIALS_KEY` | Secrets Store (`default_secrets_store` `b56dddabe7d74172932cf26f4a2ab03f`, secret `CREDENTIALS_KEY`) | 32 ไบต์ base64 | คีย์เข้ารหัส v2 ของ token ลูกค้า (connections, Environment) โค้ดอ่านด้วย `await env.CREDENTIALS_KEY.get()` ถ้าไม่มี binding จะใช้ Worker secret ชื่อเดียวกัน แล้วค่อยถอยไป v1 ไม่มีสำเนาสำรอง (เจ้าของตัดสินใจ 2026-10-15) ถ้าคีย์หาย ลูกค้าต้องผูกบัญชีใหม่ |
 
 `ASSETS_BUCKET` (R2 bucket `nvx-assets`) **ยังไม่ได้เพิ่ม** เพราะบัญชียังไม่เปิด R2 ขั้นตอนอยู่ที่ [d1-database.md](../operations/d1-database.md) อย่าใส่ binding ก่อนมี bucket จริง เพราะ deploy จะล้ม

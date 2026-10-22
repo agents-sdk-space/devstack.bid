@@ -22,14 +22,21 @@ Status 2026-10-22: code complete and tested locally; **not provisioned** (see Bl
 - Recommendation: move user sites to a dedicated registrable domain (for example `devstack.app`) so user JavaScript is not same-site with `devstack.bid`.
 
 ## Blocked (needs the owner / infrastructure)
-- **Container image**: `wrangler deploy` builds `container/Dockerfile` with Docker; no Docker on the build box.
+- **Container image**: built and verified locally (see Verified). Pushing it happens only as part of `npm run deploy:release`, which needs a GO.
 - **Queue / R2 buckets** not created yet: `wrangler queues create devstack-build-jobs`, `wrangler r2 bucket create devstack-build-artifacts`, `wrangler r2 bucket create devstack-sites`.
 - **Wildcard DNS + route** (the API token has no Zone DNS permission):
   - DNS: `AAAA  *  100::  proxied` in zone `devstack.bid` (apex, `www` and all other records unchanged).
   - Worker route: `*.devstack.bid/*` → Worker `devstack-sites` (deploy with `wrangler deploy -c sites-worker/wrangler.jsonc`). The zone already has a route `*.devstack.bid` with no Worker; it must be replaced by (or narrowed to) the route above.
   - Then set `SITES_DNS_READY=1`.
-- The next production deploy of `nvx-stack-builder` needs all of the above, because `wrangler.jsonc` now declares the bindings.
+
+## Deploy configs (hotfix vs full release)
+- `wrangler.jsonc` (base, **hotfix**): no Containers, Durable Object, Queue or build R2. `npm run deploy:hotfix` (same as `npm run deploy`) never needs Docker. The executor reports the missing bindings (`missingInfra`) and builds stay queued/blocked.
+- `release/build-bindings.jsonc`: the build-executor bindings only. `npm run cf:release-config` merges them over the base into `wrangler.release.jsonc` (generated, committed; `tests/release-config.test.ts` fails if it is stale).
+- `npm run deploy:release` = regenerate + `opennextjs-cloudflare deploy -c wrangler.release.jsonc`. Needs Docker plus the Queue and buckets above.
+- After the first release deploy (DO migration `v1-build-container` applied), prefer `deploy:release` for later deploys. A hotfix deploy keeps `BuildContainer` exported, so it does not delete the class, but it removes the bindings until the next release deploy.
 
 ## Verified
+- Docker 26.1.5 on the box (dockerd started by hand, no systemd). `docker build --network host -t devstack-builder:local container/` (the box sandbox only gives apt network on the host network). The real container (runs as `node`, uid 1000) built `sveltejs/template@5b3da65` through `POST /build` → `{"t":"result","ok":true}`, and `GET /artifact` returned a tar with `index.html`, `global.css`, `favicon.png` and `build/bundle.{js,css}`.
+- Dry runs: `wrangler deploy --dry-run` passes with no Docker (base); `wrangler deploy -c wrangler.release.jsonc --dry-run` builds the image and lists BUILD_CONTAINER, BUILD_QUEUE, BUILD_ARTIFACTS and SITES.
 - Unit tests: `tests/build-executor.test.ts`, `tests/hosting.test.ts`, `tests/security-review.test.ts`.
 - Real end-to-end without Docker: `E2E_BUILD=1 npx vitest run tests/build-executor.test.ts` runs `container/build-server.mjs` locally, clones `sveltejs/template@5b3da65`, `npm install`, `npm run build`, and the executor publishes `public/` and serves it by hostname.

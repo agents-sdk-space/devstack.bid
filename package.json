@@ -37,7 +37,10 @@
     "licenses:check": "node scripts/third-party-licenses.mjs --check",
     "plugins:sync": "node scripts/sync-plugin-catalog.mjs",
     "plugins:check": "node scripts/sync-plugin-catalog.mjs --check",
-    "cli:test": "npm --prefix packages/nvx21st test"
+    "cli:test": "npm --prefix packages/nvx21st test",
+    "cf:release-config": "node scripts/gen-release-config.mjs",
+    "deploy:hotfix": "npm run cf:build && opennextjs-cloudflare deploy",
+    "deploy:release": "node scripts/gen-release-config.mjs && npm run cf:build && opennextjs-cloudflare deploy -c wrangler.release.jsonc"
   },
   "dependencies": {
     "@cloudflare/containers": "^0.3.7",
@@ -79,6 +82,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "hast-util-to-string": "^3.0.1",
     "jsdom": "^29.1.1",
+    "json5": "^2.2.3",
     "lowlight": "^3.3.0",
     "mermaid": "^12.2.0",
     "rehype-sanitize": "^6.0.0",
