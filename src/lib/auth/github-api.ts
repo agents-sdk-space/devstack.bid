@@ -137,15 +137,26 @@ export interface GhRepo {
   defaultBranch: string;
 }
 
-export async function listWritableRepos(token: string): Promise<GhRepo[]> {
-  const res = await ghFetch(`${API}/user/repos?per_page=50&sort=updated&affiliation=owner,collaborator`, { headers: headers(token) });
-  if (res.status === 401) throw new GithubApiError("GitHub rejected the saved sign-in. Sign in again. / GitHub ไม่รับการเข้าสู่ระบบที่บันทึกไว้ กรุณาเข้าใหม่", 401);
-  if (!res.ok) throw new GithubApiError("Couldn't list repositories. / ดึงรายการรีโพซิทอรีไม่สำเร็จ", res.status);
-  const rows = (await res.json()) as { full_name?: string; private?: boolean; default_branch?: string; permissions?: { push?: boolean } }[];
-  return rows
-    .filter((r) => r.permissions?.push && r.full_name && r.default_branch)
-    .slice(0, 40)
-    .map((r) => ({ fullName: r.full_name!, private: Boolean(r.private), defaultBranch: r.default_branch! }));
+/** Repos the user can push to: own, collaborator and organization member repos; paginated (100/page, bounded). */
+export async function listWritableRepos(token: string, maxPages = 5, limit = 300): Promise<GhRepo[]> {
+  type Row = { full_name?: string; private?: boolean; default_branch?: string; permissions?: { push?: boolean } };
+  const out: GhRepo[] = [];
+  const seen = new Set<string>();
+  for (let page = 1; page <= maxPages; page++) {
+    const res = await ghFetch(`${API}/user/repos?per_page=100&page=${page}&sort=updated&affiliation=owner,collaborator,organization_member`, { headers: headers(token) });
+    if (res.status === 401) throw new GithubApiError("GitHub rejected the saved sign-in. Sign in again. / GitHub ไม่รับการเข้าสู่ระบบที่บันทึกไว้ กรุณาเข้าใหม่", 401);
+    if (!res.ok) throw new GithubApiError("Couldn't list repositories. / ดึงรายการรีโพซิทอรีไม่สำเร็จ", res.status);
+    const rows = (await res.json()) as Row[];
+    if (!Array.isArray(rows)) break;
+    for (const r of rows) {
+      if (!r.permissions?.push || !r.full_name || !r.default_branch || seen.has(r.full_name)) continue;
+      seen.add(r.full_name);
+      out.push({ fullName: r.full_name, private: Boolean(r.private), defaultBranch: r.default_branch });
+      if (out.length >= limit) return out;
+    }
+    if (rows.length < 100) break;
+  }
+  return out;
 }
 
 function utf8ToB64(s: string): string {
@@ -406,7 +417,10 @@ export async function listBranches(token: string, owner: string, repo: string): 
 }
 
 /** Merge `head` into `base` (server-side merge commit, never a force update). 201 merged, 204 already up to date, 409 conflict. */
-export async function mergeInto(token: string, owner: string, repo: string, base: string, head: string): Promise<"merged" | "up_to_date" | "conflict"> {
-  const { status } = await gh(token, "POST", `${rp(owner, repo)}/merges`, { base, head, commit_message: `Merge ${head} into ${base} (devstack AI sync)` }, [204, 409]);
-  return status === 204 ? "up_to_date" : status === 409 ? "conflict" : "merged";
+export async function mergeInto(token: string, owner: string, repo: string, base: string, head: string, onMerged?: (sha: string) => Promise<void> | void): Promise<"merged" | "up_to_date" | "conflict"> {
+  const { status, data } = await gh<{ sha?: string }>(token, "POST", `${rp(owner, repo)}/merges`, { base, head, commit_message: `Merge ${head} into ${base} (devstack AI sync)` }, [204, 409]);
+  if (status === 204) return "up_to_date";
+  if (status === 409) return "conflict";
+  if (onMerged && typeof data?.sha === "string" && /^[a-f0-9]{40}$/i.test(data.sha)) await onMerged(data.sha.toLowerCase());
+  return "merged";
 }

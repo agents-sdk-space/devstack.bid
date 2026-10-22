@@ -15,7 +15,7 @@ import { directBlocked, generateEdit } from "@/lib/aisite/llm";
 import { aiSiteRuntime } from "@/lib/aisite/runtime";
 import { body } from "@/lib/aisite/route-helpers";
 import { MAX_PROMPT_CHARS, reserveAiTurn } from "@/lib/aisite/service";
-import { AI_BRANCH, aiTurnMinuteKey, syncAiBranch, editableEntries, RepoEditError, repoChanges, repoContext } from "@/lib/aisite/repo-turn";
+import { AI_BRANCH, aiTurnBuildKey, aiTurnMinuteKey, rememberSyncMerge, syncAiBranch, editableEntries, RepoEditError, repoChanges, repoContext } from "@/lib/aisite/repo-turn";
 import { limitsForUser } from "@/lib/limits/tiers";
 
 /**
@@ -51,9 +51,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     const [owner, repo] = p.repo_full_name.split("/");
     const base = p.default_branch || "main";
     // Keep devstack/ai current with the default branch: server-side merge only (never reset/force); conflict → 409.
-    const sync = await syncAiBranch(token, owner, repo, base);
-    if (sync === "conflict") return json({ error: `${AI_BRANCH} has diverged from ${base} and cannot be merged automatically. Merge or close it on GitHub first. / branch ${AI_BRANCH} ชนกับ ${base} กรุณา merge บน GitHub ก่อน`, code: "ai_branch_diverged" }, 409);
+    // Reserve the daily AI turn first so a full quota never leaves a dangling sync merge commit on devstack/ai.
     if (!(await reserveAiTurn(a.db, a.uid, lim.aiPerDay))) return json({ error: `Daily AI limit reached (${lim.aiPerDay}/day). / ครบโควตา AI วันนี้แล้ว`, code: "daily_limit", tier: lim.tier }, 429);
+    // The sync merge commit is remembered (KV, short TTL) so the webhook does not build it.
+    const sync = await syncAiBranch(token, owner, repo, base, undefined, (sha) => rememberSyncMerge(kv, p.repo_full_name!, sha));
+    if (sync === "conflict") return json({ error: `${AI_BRANCH} has diverged from ${base} and cannot be merged automatically. Merge or close it on GitHub first. / branch ${AI_BRANCH} ชนกับ ${base} กรุณา merge บน GitHub ก่อน`, code: "ai_branch_diverged" }, 409);
     const root = p.root_directory ? `${p.root_directory}/` : "";
     const tree = await readTree(token, owner, repo, AI_BRANCH);
     const files = [];
@@ -72,7 +74,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     await audit(a.db, a.uid, "project.ai_turn", `${p.repo_full_name}@${commit.sha.slice(0, 7)}`);
     const done = { ok: true, changed: changes.length, summary: edit.summary, model, via, branch: AI_BRANCH, commit: commit.sha, commitUrl: commit.url, tier: lim.tier };
     try {
-      const r = await startContainerBuild(a.db, a.keys, builds, a.uid, p, { ref: AI_BRANCH, environment: "preview", trigger: "manual", commit: commit.sha, limits: lim, kv });
+      const r = await startContainerBuild(a.db, a.keys, builds, a.uid, p, { ref: AI_BRANCH, environment: "preview", trigger: "manual", commit: commit.sha, limits: lim, kv, idempotencyKey: aiTurnBuildKey(commit.sha) });
       return json({ ...done, build: { status: "queued", job: jobView(r.job), deploymentId: r.deploymentId, previewUrl: r.previewUrl } }, 202);
     } catch (e) {
       // The commit is already saved: report it (202) with the build status instead of failing the whole turn.

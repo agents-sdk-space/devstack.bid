@@ -83,6 +83,14 @@ export async function startContainerBuild(
   const slug = siteSlug(project.slug || project.name);
   if (!slug) throw new ServiceError("invalid", "Project name cannot be used as a site hostname.", 422);
   // Tier limits apply to every trigger (manual, import, AI turn, webhook): resolved from the user's stable id.
+  // Same idempotency key already queued/built (e.g. ai-turn route + webhook for one AI commit): reuse it without spending quota.
+  if (opts.idempotencyKey) {
+    const dup = await db.prepare("SELECT * FROM build_jobs WHERE project_id = ?1 AND idempotency_key = ?2 AND status NOT IN ('failed','canceled','timed_out')").bind(project.id, opts.idempotencyKey).first<BuildJobRow>();
+    if (dup) {
+      const existing = await db.prepare("SELECT id FROM deployments WHERE build_job_id = ?1").bind(dup.id).first<{ id: string }>();
+      if (existing) return { job: dup, deploymentId: existing.id, previewUrl: `https://${previewHost(slug, existing.id)}`, productionUrl: dup.environment === "production" ? `https://${productionHost(slug)}` : null };
+    }
+  }
   const lim = opts.limits ?? (await limitsForUser(db, uid));
   const kv = opts.kv ?? b.kv ?? null;
   if ((await userBuildsToday(db, uid)) >= lim.buildsPerDay) throw new ServiceError("limit", `Daily build limit reached (${lim.buildsPerDay}/day). / ครบโควตา build วันนี้แล้ว`, 429);
