@@ -7,6 +7,7 @@ import { parseHost } from "./hostnames";
 
 export interface R2ObjectLike { body: ReadableStream; httpEtag?: string; size?: number; httpMetadata?: { contentType?: string } }
 export interface R2BucketLike {
+  delete?(key: string): Promise<unknown>;
   get(key: string): Promise<(R2ObjectLike & { json?<T>(): Promise<T>; text?(): Promise<string> }) | null>;
   put(key: string, value: ArrayBuffer | Uint8Array | string | ReadableStream, opts?: { httpMetadata?: { contentType?: string } }): Promise<unknown>;
 }
@@ -104,7 +105,15 @@ export function unavailable(status = 503): Response {
   );
 }
 
-interface HTMLRewriterLike { on(sel: string, h: { element(e: { append(c: string, o: { html: boolean }): void }): void }): HTMLRewriterLike; transform(r: Response): Response }
+type Appendable = { append(c: string, o: { html: boolean }): void };
+interface HTMLRewriterLike { on(sel: string, h: { element(e: Appendable): void }): HTMLRewriterLike; onDocument(h: { end(e: Appendable): void }): HTMLRewriterLike; transform(r: Response): Response }
+
+export function previewExpired(): Response {
+  return new Response(
+    "<!doctype html><meta charset=utf-8><title>Preview expired</title><body style=\"font:16px system-ui;margin:3rem\"><h1>This preview has expired</h1><p>Old preview deployments on devstack.bid are removed automatically. Open the project's main address or deploy a new preview.</p></body>",
+    { status: 410, headers: { ...BASE_HEADERS, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } },
+  );
+}
 
 export interface ProxyOpts { proxyKey?: string | null; fetcher?: typeof fetch }
 
@@ -138,7 +147,11 @@ export async function proxyToWorker(req: Request, worker: string, subdomain: str
     return unavailable(502);
   }
   const fromProject = res.headers.get("x-devstack-origin") === "project";
-  if (!fromProject && (res.status === 404 || res.status >= 500)) return unavailable(res.status === 404 ? 503 : 502);
+  if (!fromProject && (res.status === 404 || res.status >= 500)) {
+    // A deleted (cleaned-up) preview Worker: say so instead of "temporarily unavailable".
+    if (res.status === 404 && PREVIEW_WORKER.test(worker)) return previewExpired();
+    return unavailable(res.status === 404 ? 503 : 502);
+  }
   const out = new Headers(res.headers);
   for (const k of DROP_RESPONSE) out.delete(k);
   for (const [k, v] of Object.entries(BASE_HEADERS)) {
@@ -148,16 +161,22 @@ export async function proxyToWorker(req: Request, worker: string, subdomain: str
   const loc = out.get("location");
   if (loc) { try { const l = new URL(loc, target); if (l.host === target.host) { l.host = url.host; out.set("location", l.toString()); } } catch { out.delete("location"); } }
   const type = out.get("content-type") ?? "";
-  if (type.toLowerCase().startsWith("text/html") && req.method !== "HEAD" && res.status !== 204 && res.status !== 304 && res.body) {
+  const lt = type.toLowerCase();
+  if ((lt.startsWith("text/html") || lt.startsWith("application/xhtml+xml")) && req.method !== "HEAD" && res.status !== 204 && res.status !== 304 && res.body) {
+    // The body is re-emitted decoded; never keep the upstream encoding header.
+    out.delete("content-encoding");
     const Rewriter = (globalThis as { HTMLRewriter?: new () => HTMLRewriterLike }).HTMLRewriter;
     const plain = new Response(res.body, { status: res.status, statusText: res.statusText, headers: out });
     if (Rewriter) {
-      // Streamed: no buffering of large pages, no memory spikes.
+      // Streamed: no buffering. Appended inside <body>; documents without <body> get it at document end.
       const badge = reportBadge(url.hostname);
-      return new Rewriter().on("body", { element(e) { e.append(badge, { html: true }); } }).transform(plain);
+      let placed = false;
+      return new Rewriter()
+        .on("body", { element(e) { placed = true; e.append(badge, { html: true }); } })
+        .onDocument({ end(e) { if (!placed) e.append(badge, { html: true }); } })
+        .transform(plain);
     }
     const html = await plain.text();
-    out.delete("content-encoding");
     return new Response(injectBadge(html, url.hostname), { status: res.status, statusText: res.statusText, headers: out });
   }
   return new Response(res.body, { status: res.status, statusText: res.statusText, headers: out });

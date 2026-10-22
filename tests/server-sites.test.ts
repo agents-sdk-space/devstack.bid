@@ -193,45 +193,79 @@ describe("proxy target is always the project worker host (N1 SSRF)", () => {
 });
 
 describe("preview worker cleanup", () => {
-  const P = "site-0123456789abcdef0123";
   const day = 86_400_000, now = Date.parse("2026-10-22T00:00:00Z");
-  function api(scripts: { id: string; ageDays: number }[], tagged = (n: string) => n !== `${P}-cccccccccccc`) {
+  it("keeps newest 5 always, deletes only old + provably-owned previews, removes their aliases", async () => {
+    const { serverWorkerName, cleanupPreviewWorkers } = await import("@/lib/hosting/server-worker");
+    const P = await serverWorkerName("proj-A");
+    const Q = await serverWorkerName("proj-B");
+    const pv = (base: string, i: number) => `${base}-${i.toString(16).padStart(12, "0")}`;
+    const scripts = [
+      { id: P, ageDays: 400 }, { id: "nvx-stack-builder", ageDays: 400 }, { id: "site-e2e-next-1022", ageDays: 400 },
+      ...Array.from({ length: 7 }, (_, i) => ({ id: pv(P, i), ageDays: 20 + i })), // all old: newest 5 kept, 2 deleted
+      ...Array.from({ length: 7 }, (_, i) => ({ id: pv(Q, i), ageDays: i })),      // over cap but young: kept
+    ];
+    // pv(P,6) is tagged with another project's id → hash mismatch → never deleted.
+    const tagFor = (n: string) => (n === pv(P, 6) ? "devstack-project-proj-B" : n.startsWith(P) ? "devstack-project-proj-A" : "devstack-project-proj-B");
     const deleted: string[] = [];
     const fetcher = (async (url: string, init: RequestInit) => {
       const path = url.replace("https://api.cloudflare.com/client/v4/accounts/a", "");
-      if (path === "/workers/scripts") return new Response(JSON.stringify({ success: true, result: scripts.map((s) => ({ id: s.id, modified_on: new Date(now - s.ageDays * day).toISOString() })) }));
+      if (path === "/workers/scripts") return new Response(JSON.stringify({ success: true, result: scripts.map((x) => ({ id: x.id, modified_on: new Date(now - x.ageDays * day).toISOString() })) }));
       const name = path.split("/")[3].split("?")[0];
-      if (path.endsWith("/script-settings")) return new Response(JSON.stringify({ success: true, result: { tags: tagged(name) ? ["devstack-project-x"] : [] } }));
+      if (path.endsWith("/script-settings")) return new Response(JSON.stringify({ success: true, result: { tags: [tagFor(name)] } }));
       if (init.method === "DELETE") { deleted.push(name); return new Response(JSON.stringify({ success: true, result: null })); }
       return new Response("{}", { status: 500 });
     }) as unknown as typeof fetch;
-    return { api: { accountId: "a", token: "t", fetcher }, deleted };
-  }
-  it("deletes only old/over-cap tagged previews; never production, platform or untagged", async () => {
-    const scripts = [
-      { id: P, ageDays: 400 }, { id: "nvx-stack-builder", ageDays: 400 }, { id: "site-e2e-next-1022", ageDays: 400 },
-      { id: `${P}-aaaaaaaaaaaa`, ageDays: 1 }, { id: `${P}-bbbbbbbbbbbb`, ageDays: 30 }, { id: `${P}-cccccccccccc`, ageDays: 30 },
-      ...Array.from({ length: 6 }, (_, i) => ({ id: `${P.slice(0, -1)}9-${String(i).repeat(12)}`, ageDays: i })),
-    ];
-    const { api: a, deleted } = api(scripts);
-    const { cleanupPreviewWorkers } = await import("@/lib/hosting/server-worker");
-    await cleanupPreviewWorkers(a, { now, maxAgeDays: 14, keepPerProject: 5 });
-    expect(deleted.sort()).toEqual([`${P}-bbbbbbbbbbbb`, `${P.slice(0, -1)}9-555555555555`]);
+    const store = new Map<string, string>([
+      [`workers/${pv(P, 5)}.json`, JSON.stringify({ labels: ["shop-aaaaaa", "shop"] })],
+      ["hosts/shop-aaaaaa.json", JSON.stringify({ projectId: "proj-A", worker: pv(P, 5) })],
+      ["hosts/shop.json", JSON.stringify({ projectId: "proj-A", worker: P })],
+    ]);
+    const bucket = { get: async (k: string) => (store.has(k) ? { text: async () => store.get(k)! } : null), put: async () => undefined, delete: async (k: string) => { store.delete(k); } } as never;
+    const out = await cleanupPreviewWorkers({ accountId: "a", token: "t", fetcher }, { now, bucket });
+    expect(out).toEqual([pv(P, 5)]);
+    expect(deleted).toEqual([pv(P, 5)]);
+    expect(store.has("hosts/shop-aaaaaa.json")).toBe(false);
+    expect(store.has("hosts/shop.json")).toBe(true); // production alias points elsewhere → untouched
+    expect(store.has(`workers/${pv(P, 5)}.json`)).toBe(false);
+  });
+});
+
+describe("preview expired page", () => {
+  it("a deleted preview worker shows 410 preview expired; production shows unavailable", async () => {
+    const f = (async () => new Response("nope", { status: 404 })) as unknown as typeof fetch;
+    const pv = await proxyToWorker(new Request("https://shop-aaaaaa.devstack.bid/"), `${W}-aaaaaaaaaaaa`, "sub", f);
+    expect(pv.status).toBe(410);
+    expect(await pv.text()).toContain("preview has expired");
+    expect(await (await proxyToWorker(new Request("https://shop.devstack.bid/"), W, "sub", f)).text()).toContain("temporarily unavailable");
   });
 });
 
 describe("badge via HTMLRewriter when available", () => {
   it("streams through HTMLRewriter (no res.text())", async () => {
     const used: string[] = [];
-    class FakeRewriter { sel = ""; h: { element(e: { append(c: string, o: { html: boolean }): void }): void } | null = null;
+    class FakeRewriter { sel = ""; h: { element(e: { append(c: string, o: { html: boolean }): void }): void } | null = null; d: { end(e: { append(c: string, o: { html: boolean }): void }): void } | null = null;
       on(sel: string, h: FakeRewriter["h"]) { this.sel = sel; this.h = h; return this; }
-      transform(r: Response) { let added = ""; this.h!.element({ append: (c) => { added = c; } }); used.push(this.sel); return new Response(`[rewritten:${added.includes("data-devstack-badge")}]`, r); } }
+      onDocument(d: FakeRewriter["d"]) { this.d = d; return this; }
+      transform(r: Response) { let added = ""; this.h!.element({ append: (c) => { added += c; } }); this.d!.end({ append: (c) => { added += c; } }); used.push(this.sel); return new Response(`[rewritten:${(added.match(/data-devstack-badge/g) ?? []).length}]`, r); } }
     (globalThis as Record<string, unknown>).HTMLRewriter = FakeRewriter;
     try {
-      const fetcher = (async () => new Response("<body>x</body>", { headers: { "x-devstack-origin": "project", "content-type": "text/html" } })) as unknown as typeof fetch;
+      const fetcher = (async () => new Response("<body>x</body>", { headers: { "x-devstack-origin": "project", "content-type": "text/html", "content-encoding": "gzip" } })) as unknown as typeof fetch;
       const res = await proxyToWorker(new Request("https://shop.devstack.bid/"), W, "sub", { fetcher });
-      expect(await res.text()).toBe("[rewritten:true]");
+      expect(await res.text()).toBe("[rewritten:1]"); // body found → no second badge at document end
+      expect(res.headers.get("content-encoding")).toBeNull();
       expect(used).toEqual(["body"]);
+    } finally { delete (globalThis as Record<string, unknown>).HTMLRewriter; }
+  });
+});
+
+describe("badge at document end when there is no <body>", () => {
+  it("uses onDocument end", async () => {
+    let got = "";
+    class R { on() { return this; } onDocument(d: { end(e: { append(c: string): void }): void }) { d.end({ append: (c) => { got = c; } }); return this; } transform(r: Response) { return r; } }
+    (globalThis as Record<string, unknown>).HTMLRewriter = R;
+    try {
+      await proxyToWorker(new Request("https://shop.devstack.bid/"), W, "sub", (async () => new Response("<p>x", { headers: { "x-devstack-origin": "project", "content-type": "application/xhtml+xml" } })) as unknown as typeof fetch);
+      expect(got).toContain("data-devstack-badge");
     } finally { delete (globalThis as Record<string, unknown>).HTMLRewriter; }
   });
 });

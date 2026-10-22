@@ -59,8 +59,13 @@ the `devstack.bid` zone, and proxying avoids one route per customer.
 - Direct `workers.dev` hits are answered by the guard with 404 unless they carry the proxy key.
   Exception: static files served by the ASSETS binding are matched before any code runs, so
   public assets (`/_next/static/…`) are also reachable directly. They are public anyway.
-- Preview Workers are cleaned up by the 5-minute cron (`cleanupPreviewWorkers`): strict preview name
-  + owner tag, keep newest 5 per project, delete after 14 days.
+- Preview Workers are cleaned up by the 5-minute cron (`cleanupPreviewWorkers`). A preview Worker is
+  deleted only if it is NOT one of its project's newest 5 (always kept) AND older than 14 days AND
+  its name matches `site-<20hex>-<12hex>` AND its owner tag's project id hashes to the name prefix.
+  Host aliases pointing at it (tracked in R2 `workers/<name>.json`) are removed; a preview URL
+  whose Worker is gone shows "This preview has expired" (410).
+- Proxied HTML gets the badge via HTMLRewriter (inside `<body>`, or at document end when there is
+  no body; also for `application/xhtml+xml`). `Content-Encoding` is dropped on rewritten bodies.
 - The proxy target host is fixed; the request path can never change it (see tests "N1 SSRF").
 - Next action (before opening server sites widely): move customer Workers to a separate
   Cloudflare account or Workers for Platforms dispatch namespace; delete preview Workers after N days.

@@ -55,8 +55,20 @@ export async function promoteProduction(bucket: R2BucketLike, slug: string, proj
 export async function publishServer(bucket: R2BucketLike, slug: string, projectId: string, deploymentId: string, worker: string, production: boolean, domain = PLATFORM_DOMAIN): Promise<{ preview: string; production: string | null }> {
   const pv = previewHost(slug, deploymentId, domain);
   await alias(bucket, pv, projectId, deploymentId, domain, worker);
+  await indexWorker(bucket, worker, pv.slice(0, -domain.length - 1));
   if (!production) return { preview: `https://${pv}`, production: null };
   const prod = productionHost(slug, domain);
   await alias(bucket, prod, projectId, deploymentId, domain, worker);
+  await indexWorker(bucket, worker, prod.slice(0, -domain.length - 1));
   return { preview: `https://${pv}`, production: `https://${prod}` };
+}
+
+/** Record which host labels point at a Worker so preview cleanup can remove the aliases. */
+async function indexWorker(bucket: R2BucketLike, worker: string, label: string) {
+  const key = `workers/${worker}.json`;
+  const cur = await bucket.get(key);
+  let labels: string[] = [];
+  if (cur) { try { labels = (JSON.parse(cur.text ? await cur.text() : await new Response(cur.body).text()) as { labels?: string[] }).labels ?? []; } catch { labels = []; } }
+  if (!labels.includes(label)) labels.push(label);
+  await bucket.put(key, JSON.stringify({ worker, labels: labels.slice(-50) }), { httpMetadata: { contentType: "application/json" } });
 }

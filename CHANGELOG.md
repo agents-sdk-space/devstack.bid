@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.11.0-rc.3] - 2026-10-22
 
+### Fixed (review lows)
+- Preview cleanup always keeps the newest 5 per project (delete = beyond 5 AND older than 14 days) and requires the
+  owner tag's project hash to match the name; deleted previews lose their host aliases and show "preview expired".
+- Badge injection falls back to document end (no `<body>`, XHTML); rewritten bodies drop `Content-Encoding`.
+
 ### Security (Supdev re-review of 5cd9d3f)
 - N1: the server-site proxy builds its target from the fixed `https://<worker>.<sub>.workers.dev` host and only sets
   pathname/search, then asserts the host; paths like `//evil.com/x`, `/\evil.com`, `/%2F%2Fevil.com` can no longer

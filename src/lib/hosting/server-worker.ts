@@ -9,7 +9,7 @@
  * platform guard module that only answers requests carrying the per-worker proxy key that
  * devstack-sites injects. The API token never enters the container (SITES_CF_API_TOKEN).
  */
-import { PLATFORM_WORKERS, PREVIEW_WORKER, SERVER_WORKER } from "./serve";
+import { PLATFORM_WORKERS, PREVIEW_WORKER, SERVER_WORKER, type R2BucketLike } from "./serve";
 export { PLATFORM_WORKERS };
 
 export interface BundleFile { path: string; bytes: Uint8Array }
@@ -173,13 +173,24 @@ export async function deployServerWorker(api: CfApi, name: string, b: ServerBund
   return { versionId: up?.deployment_id ?? up?.id ?? null, assets: b.assets.length };
 }
 
-export interface CleanupOpts { maxAgeDays?: number; keepPerProject?: number; now?: number; max?: number }
+export interface CleanupOpts { maxAgeDays?: number; keepPerProject?: number; now?: number; max?: number; bucket?: R2BucketLike | null }
+
+/** Project id from an owner tag, if the tag is ours. */
+export function tagProject(tags: string[] | null | undefined): string | null {
+  const t = (tags ?? []).find((x) => x.startsWith("devstack-project-"));
+  return t ? t.slice("devstack-project-".length) || null : null;
+}
+
+/** R2 index of hostnames that point at a Worker (written by publishServer, used by cleanup). */
+export const workerIndexKey = (worker: string) => `workers/${worker}.json`;
 
 /**
- * Delete old preview Workers. Only names matching PREVIEW_WORKER (site-<20hex>-<12hex>) that carry a
- * devstack owner tag are ever touched; production Workers and platform Workers can never match.
- * Per project the newest `keepPerProject` previews are kept; older ones past `maxAgeDays` and any
- * beyond the cap are deleted. Returns deleted names.
+ * Delete old preview Workers. A Worker is deleted only when ALL hold:
+ *  - its name matches PREVIEW_WORKER (site-<20hex>-<12hex>; production/platform names never match),
+ *  - it is NOT among the newest `keepPerProject` (default 5) previews of its project (these are always kept),
+ *  - it is older than `maxAgeDays` (default 14),
+ *  - its owner tag is ours AND sha256("project:"+tagged id)[0:20] equals the project hash in the name.
+ * Host aliases that still point at a deleted Worker are removed, so its preview URL shows "preview expired".
  */
 export async function cleanupPreviewWorkers(api: CfApi, o: CleanupOpts = {}): Promise<string[]> {
   const now = o.now ?? Date.now();
@@ -196,13 +207,38 @@ export async function cleanupPreviewWorkers(api: CfApi, o: CleanupOpts = {}): Pr
   const doomed: string[] = [];
   for (const arr of byProject.values()) {
     arr.sort((a, b) => b.at - a.at);
-    arr.forEach((w, i) => { if (i >= keep || now - w.at > maxAge) doomed.push(w.id); });
+    arr.forEach((w, i) => { if (i >= keep && now - w.at > maxAge) doomed.push(w.id); });
   }
   const deleted: string[] = [];
   for (const name of doomed.slice(0, o.max ?? 25)) {
     const st = await call<{ tags?: string[] | null }>(api, `/workers/scripts/${name}/script-settings`, { method: "GET" }).catch(() => null);
-    if (!(st?.tags ?? []).some((t) => t.startsWith("devstack-project-"))) continue; // not ours → never delete
-    await call(api, `/workers/scripts/${name}?force=true`, { method: "DELETE" }).then(() => deleted.push(name)).catch(() => null);
+    const pid = tagProject(st?.tags);
+    if (!pid || `site-${await hex(`project:${pid}`, 20)}` !== name.slice(0, "site-".length + 20)) continue; // not provably ours
+    const ok = await call(api, `/workers/scripts/${name}?force=true`, { method: "DELETE" }).then(() => true).catch(() => false);
+    if (!ok) continue;
+    deleted.push(name);
+    if (o.bucket) await removeAliases(o.bucket, name).catch(() => null);
   }
   return deleted;
+}
+
+async function readJson<T>(bucket: R2BucketLike, key: string): Promise<T | null> {
+  const obj = await bucket.get(key);
+  if (!obj) return null;
+  const text = obj.text ? await obj.text() : await new Response(obj.body).text();
+  try { return JSON.parse(text) as T; } catch { return null; }
+}
+
+/** Remove hosts/<label>.json records that still point at `worker`, then the index itself. */
+export async function removeAliases(bucket: R2BucketLike, worker: string): Promise<string[]> {
+  if (!bucket.delete) return [];
+  const idx = await readJson<{ labels?: string[] }>(bucket, workerIndexKey(worker));
+  const removed: string[] = [];
+  for (const label of idx?.labels ?? []) {
+    if (!/^[a-z0-9-]{1,63}$/.test(label)) continue;
+    const rec = await readJson<{ worker?: string }>(bucket, `hosts/${label}.json`);
+    if (rec?.worker === worker) { await bucket.delete(`hosts/${label}.json`); removed.push(label); }
+  }
+  await bucket.delete(workerIndexKey(worker));
+  return removed;
 }
