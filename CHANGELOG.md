@@ -27,6 +27,7 @@ Release branch `release/2026-10-17`: `fix/github-oauth-525` + `feat/ui-glowcard-
 
 ### Added
 
+- AI planner now has optional links to Expo, Android Studio, Replit and GitHub Codespaces as alternative development platforms; these are external resources, not generated templates.
 - **Create token menu** next to every token/key input (Connections, direct deploy, AI agent panel, Sandbox Factory, Environment): links to the official Cloudflare, GitHub fine-grained, OpenAI, Vercel and Hugging Face token pages (URLs verified against provider docs 2026-10-15). Monochrome, keyboard operable, our own component.
 - **Remember checkbox** (default off) next to each token input. Off = used once for that request, never persisted. On = sealed with CREDENTIALS_KEY v2 into the new **/settings/environment** page (name + created/updated/last-used only, delete). D1 migration `0012_user_environment.sql`; API `/api/environment`. Direct deploy accepts a one-off Cloudflare token and falls back to remembered `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`.
 - **Chat stream archive to R2** (binding `CHAT_STREAMS`, bucket `nvx-chat-streams`): each turn's streamed reply and thinking steps are written to `chat/<uid>/<conversationId>/<messageId>.json`. D1 history and the UI are unchanged.
@@ -39,6 +40,8 @@ Release branch `release/2026-10-17`: `fix/github-oauth-525` + `feat/ui-glowcard-
 - Sandbox Factory no longer keeps the OpenAI key in `sessionStorage`.
 
 ### Fixed
+
+- **Copied setup script skipped starter files.** The Builder's script panel and copy buttons now use the same full scripts as `setup.sh` / `setup.ps1` downloads: starter files are written before the build, and dev-server, manual and publish steps stay commented out. The AI preview also includes AI-generated starter files using the same custom steps as loading the plan into Builder. The chat site plan no longer lists dev-server, manual or publish commands. Regression tests: `tests/copy-complete-scripts.test.ts`. Not yet run on a real Windows PowerShell.
 
 - **Sign-up looked dead.** On `/login`, "Create a DevStack account" relied on the browser's native validation (`required`, `type=email`, `minLength=10`). When the email or a password under 10 characters was invalid, the browser blocked the POST and only showed a native bubble, in English, which is easy to miss and missing in some in-app or mobile browsers. The form now uses `noValidate` and checks its own rules, matching the server (valid email, 10–200 characters). It always shows a visible TH/EN message and focuses the field. A double submit is ignored, and the pending state resets after back/forward navigation. Regression test: `tests/login-form.test.tsx`.
 - `/api/connections`, `/api/projects`, `/api/deployments` and `/api/environment` reads were throttled by the fixed 4 / 60 s `NVX_CHAT_LIMITER` binding (deploy-status polling every 3 s returned 429). Reads now use the per-isolate limiter at each route's `perMinute`; writes keep the shared binding.

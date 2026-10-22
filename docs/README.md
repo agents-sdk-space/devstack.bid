@@ -49,6 +49,7 @@
 - **architecture/** สถาปัตยกรรม
   - [overview.md](./architecture/overview.md), [data-flow.md](./architecture/data-flow.md), [templates-and-composer.md](./architecture/templates-and-composer.md), [scripts-and-share.md](./architecture/scripts-and-share.md), [ai-planner.md](./architecture/ai-planner.md), [api-hardening.md](./architecture/api-hardening.md), [ui-framework.md](./architecture/ui-framework.md), [cloudflare-runtime.md](./architecture/cloudflare-runtime.md), [docs-site.md](./architecture/docs-site.md)
 - **history/** [SUBSYSTEM-HISTORY.md](./history/SUBSYSTEM-HISTORY.md) ไทม์ไลน์ของแต่ละ subsystem พร้อม commit
+- **verification/** [Release candidate 0.8.0-rc.5](./verification/release-candidate-0.8.0-rc.5-2026-10-19.md) ผลตรวจ, ข้อจำกัด และสถานะ production deployment
 - **operations/** การรันและดูแล
   - [local-dev.md](./operations/local-dev.md), [env-secrets.md](./operations/env-secrets.md), [deploy-cloudflare.md](./operations/deploy-cloudflare.md), [rollback.md](./operations/rollback.md), [monitoring.md](./operations/monitoring.md), [rate-limits-cost.md](./operations/rate-limits-cost.md), [custom-domain.md](./operations/custom-domain.md)
   - คู่มือ deploy ฉบับเต็มเดิม: [DEPLOY.md](./DEPLOY.md) (TH + EN)

@@ -16,7 +16,7 @@
 | [`src/data/runtime-steps.ts`](../../src/data/runtime-steps.ts) | `nvmStep`, `pnpmStep`, `yarnStep`, `pythonCheckStep`, `uvInstallStep`, `uvPythonStep` |
 | [`src/data/addon-steps.ts`](../../src/data/addon-steps.ts) | `ADDON_LABELS` และ `addonSteps(template, config)`: Tailwind (Vite), Ruff, Vitest, pytest, Docker (Dockerfile ตาม `template.docker.kind`), CI (GitHub Actions ตาม `template.ci`) |
 | [`src/lib/placeholders.ts`](../../src/lib/placeholders.ts) | `sanitizeProjectName`, `addonOn`, `buildContext`, `resolveText` |
-| [`src/lib/composer.ts`](../../src/lib/composer.ts) | `DEFAULT_CONFIG`, `configForTemplate`, `normalizeConfig`, `adaptForPowerShell`, `dedupeSteps`, `composeSteps`, `applyEdits`, `moveStep`, `flattenCommands` |
+| [`src/lib/composer.ts`](../../src/lib/composer.ts) | `DEFAULT_CONFIG`, `configForTemplate`, `normalizeConfig`, `adaptForPowerShell`, `dedupeSteps`, `composeSteps`, `applyEdits`, `moveStep`, `flattenCommands` (นับ/สรุปคำสั่ง ไม่ใช่สคริปต์ที่ให้คัดลอก ดู `scripts.ts`) |
 
 ## ขั้นตอนการทำงาน
 
