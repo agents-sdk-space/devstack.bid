@@ -384,6 +384,7 @@ const dict = {
   "docs.forAgents": { en: "For AI agents: llms.txt", th: "สำหรับ AI agent: llms.txt" },
   "nav.menu": { en: "Open menu", th: "เปิดเมนู" },
   "nav.builderShort": { en: "Builder", th: "ตัวสร้าง" },
+  "nav.newProject": { en: "New Project", th: "สร้างโปรเจกต์ใหม่" },
   "nav.start": { en: "Start building", th: "เริ่มสร้าง" },
   "footer.product": { en: "Product", th: "ผลิตภัณฑ์" },
   "footer.resources": { en: "Resources", th: "แหล่งข้อมูล" },

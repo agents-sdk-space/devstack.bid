@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { AppWindow, Blocks, BookOpen, Bot, House, Languages, Layers, LayoutGrid, Menu, FlaskConical, MessagesSquare, Moon, Palette, SquareTerminal, Sun } from "lucide-react";
+import { AppWindow, Blocks, FolderPlus, BookOpen, Bot, House, Languages, Layers, LayoutGrid, Menu, FlaskConical, MessagesSquare, Moon, Palette, SquareTerminal, Sun } from "lucide-react";
 import { Button, buttonClasses, cn, Dialog, DialogContent, DialogTrigger, SearchIcon, Tooltip } from "@/components/ui";
 import { AccountButton } from "./account-button";
 import { SetupCursor } from "./setup-cursor";
@@ -14,8 +14,9 @@ import type { DictKey } from "@/lib/i18n";
 import { useDarkMode, useLang } from "./prefs";
 import { CookiePreferences } from "./cookie-preferences";
 
-const NAV = [
+export const NAV = [
   { href: "/", key: "nav.home", Icon: House },
+  { href: "/new", key: "nav.newProject", Icon: FolderPlus },
   { href: "/templates", key: "nav.templates", Icon: LayoutGrid },
   { href: "/builder", key: "nav.builder", Icon: Blocks },
   { href: "/chat", key: "nav.chat", Icon: MessagesSquare },
@@ -50,8 +51,9 @@ function NavLink({
   );
 }
 
-/** The four links in the bar (nextjs.org-style restraint). Everything else lives in the menu sheet. */
-const PRIMARY: { href: string; key: "nav.templates" | "nav.builderShort" | "nav.chat" | "nav.docs" }[] = [
+/** The links in the bar (nextjs.org-style restraint). Everything else lives in the menu sheet. */
+export const PRIMARY: { href: string; key: "nav.newProject" | "nav.templates" | "nav.builderShort" | "nav.chat" | "nav.docs" }[] = [
+  { href: "/new", key: "nav.newProject" },
   { href: "/templates", key: "nav.templates" },
   { href: "/builder", key: "nav.builderShort" },
   { href: "/chat", key: "nav.chat" },
@@ -132,6 +134,9 @@ export function Header() {
             <DialogContent side="right" title={t("nav.mainMenu")} closeLabel={t("nav.close")}>
               <div className="mb-4 space-y-2">
                 <AccountButton next={pathname} full onNavigate={() => setMenuOpen(false)} />
+                <Link href="/new" onClick={() => setMenuOpen(false)} className={buttonClasses("primary", "md", "w-full")}>
+                  <FolderPlus className="h-4 w-4" aria-hidden /> {t("nav.newProject")}
+                </Link>
                 <SetupCursor appearance="menu" />
                 <div className="flex gap-2 sm:hidden">
                   <Button variant="secondary" size="sm" className="flex-1" onClick={() => setLang(lang === "en" ? "th" : "en")} aria-label={t("toggle.langLabel")}>

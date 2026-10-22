@@ -48,7 +48,7 @@ export function ProjectsList() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:py-10">
-      <div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-semibold tracking-tight text-fg">{th ? "โปรเจกต์" : "Projects"}</h1><a href="/new" className={`${buttonClasses("primary", "sm")} ml-auto`}><Plus className="h-4 w-4" aria-hidden />{th ? "โปรเจกต์ใหม่" : "New Project"}</a></div>
+      <div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-semibold tracking-tight text-fg">{th ? "โปรเจกต์" : "Projects"}</h1><a href="/new" data-testid="projects-new" className={`${buttonClasses("primary", "md")} ml-auto max-sm:w-full`}><Plus className="h-4 w-4" aria-hidden />{th ? "สร้างโปรเจกต์ใหม่" : "New Project"}</a></div>
       <p className="mt-1 text-sm text-subtle">{th ? "repo ที่ DevStack สร้างในบัญชี GitHub ของคุณ (มีโควตารายวัน)" : "Repositories DevStack created in your GitHub account (daily quota applies)."}{" "}<a href="/settings/cli" className="underline underline-offset-4 hover:text-fg">{th ? "หรือสร้างจาก Terminal / ดาวน์โหลด zip" : "Or start from Terminal / download a zip"}</a></p>
       {error && <p role="alert" className="mt-4 rounded-lg border border-fg/40 px-3 py-2 text-sm text-fg">{error}</p>}
       <UploadZipPanel onDone={(id) => { location.href = `/projects/${encodeURIComponent(id)}`; }} />
@@ -63,7 +63,12 @@ export function ProjectsList() {
         </form>
       </Card>
       <ul className="mt-6 divide-y divide-border rounded-xl border border-border">
-        {items.length === 0 && <li className="px-4 py-6 text-center text-sm text-subtle">{th ? "ยังไม่มีโปรเจกต์" : "No projects yet."}</li>}
+        {items.length === 0 && (
+          <li className="px-4 py-8 text-center">
+            <p className="text-sm text-subtle">{th ? "ยังไม่มีโปรเจกต์ นำเข้า repo จาก GitHub อัปโหลดไฟล์ หรือเริ่มจากเทมเพลต" : "No projects yet. Import a GitHub repository, upload files, or start from a template."}</p>
+            <a href="/new" data-testid="projects-empty-new" className={`${buttonClasses("primary", "md")} mt-4`}><Plus className="h-4 w-4" aria-hidden />{th ? "สร้างโปรเจกต์ใหม่" : "New Project"}</a>
+          </li>
+        )}
         {items.map((p) => (
           <li key={p.id}>
             <a href={`/projects/${p.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fg">
