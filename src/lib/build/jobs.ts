@@ -173,6 +173,10 @@ export async function failJob(
 ): Promise<{ failed: BuildJobRow | null; retry: BuildJobRow | null }> {
   const failed = await transitionJob(db, id, from, code === "timed_out" ? "timed_out" : "failed", { error_code: code }, now);
   if (!failed || !shouldRetry(failed, code)) return { failed, retry: null };
+  // Git auto-deploy: a newer commit is waiting for this slot → don't retry the old one (the newer one builds instead).
+  const newer = await db.prepare("SELECT commit_sha FROM git_pending_builds WHERE project_id = ?1 AND environment = ?2 AND ref = ?3")
+    .bind(failed.project_id, failed.environment, failed.environment === "production" ? "" : failed.ref ?? "").first<{ commit_sha: string }>().catch(() => null);
+  if (newer && newer.commit_sha !== failed.commit_sha) return { failed, retry: null };
   const { job } = await createBuildJob(db, {
     projectId: failed.project_id, userId: failed.user_id, environment: failed.environment, trigger: "retry", commitSha: failed.commit_sha, ref: failed.ref,
     executor: failed.executor, config: JSON.parse(failed.config_snapshot || "{}"), attempt: failed.attempt + 1, maxAttempts: failed.max_attempts,

@@ -5,9 +5,16 @@
 import type { D1Like } from "@/lib/chat/store";
 import { appendEvent, failJob, sweepTimeouts } from "./jobs";
 
-export async function sweepBuilds(db: D1Like, now = Date.now()): Promise<{ timedOut: string[]; deploymentsClosed: number }> {
+export type SlotFreed = (job: { project_id: string; environment: "preview" | "production"; ref: string | null }) => Promise<unknown>;
+
+export async function sweepBuilds(db: D1Like, now = Date.now(), onSlotFreed?: SlotFreed): Promise<{ timedOut: string[]; deploymentsClosed: number }> {
   const timedOut = await sweepTimeouts(db, now);
   for (const id of timedOut) await appendEvent(db, id, { level: "error", phase: "timed_out", message: "No progress within the phase time limit; marked timed out by the sweeper." }).catch(() => null);
+  // Git auto-deploy: a timed-out job frees its slot → start the newest waiting commit for it.
+  if (onSlotFreed) for (const id of timedOut) {
+    const j = await db.prepare("SELECT project_id, environment, ref FROM build_jobs WHERE id = ?1").bind(id).first<{ project_id: string; environment: "preview" | "production"; ref: string | null }>().catch(() => null);
+    if (j) await onSlotFreed(j).catch(() => null);
+  }
   const closed = await db
     .prepare(
       "UPDATE deployments SET status = 'failed', error_code = (SELECT COALESCE(j.error_code, j.status) FROM build_jobs j WHERE j.id = deployments.build_job_id), error_log = 'Build job ended without a result (' || (SELECT j.status FROM build_jobs j WHERE j.id = deployments.build_job_id) || ').', finished_at = ?1 WHERE status IN ('queued','uploading') AND build_job_id IN (SELECT id FROM build_jobs WHERE status IN ('failed','canceled','timed_out')) RETURNING id"
@@ -28,7 +35,7 @@ export const REQUEUE_BASE_MS = 2 * 60_000;
  * After MAX_REQUEUES re-deliveries the job is failed with a clear message instead of staying queued.
  * runContainerJob only claims rows still in `queued`, so a duplicate delivery is a no-op.
  */
-export async function requeueOrphans(db: D1Like, send: (body: { jobId: string }) => Promise<unknown>, now = Date.now(), staleMs = 3 * 60_000): Promise<number> {
+export async function requeueOrphans(db: D1Like, send: (body: { jobId: string }) => Promise<unknown>, now = Date.now(), staleMs = 3 * 60_000, onSlotFreed?: SlotFreed): Promise<number> {
   const rows = await db
     .prepare(
       "UPDATE build_jobs SET requeue_count = requeue_count + 1, next_attempt_at = ?1 + ?4 * (1 << MIN(requeue_count, 4)) WHERE id IN (SELECT id FROM build_jobs WHERE status = 'queued' AND executor = 'cf-container' AND cancel_requested = 0 AND started_at IS NULL AND created_at < ?2 AND (next_attempt_at IS NULL OR next_attempt_at < ?1) AND created_at > ?3 LIMIT 10) AND status = 'queued' AND (next_attempt_at IS NULL OR next_attempt_at < ?1) RETURNING id, requeue_count - 1 AS requeues"
@@ -39,7 +46,8 @@ export async function requeueOrphans(db: D1Like, send: (body: { jobId: string })
   for (const r of rows.results ?? []) {
     if ((r.requeues ?? 0) >= MAX_REQUEUES) {
       await appendEvent(db, r.id, { level: "error", phase: "queued", message: `Build never started: the build queue did not pick it up after ${MAX_REQUEUES} re-deliveries. Please redeploy; if it keeps happening, contact support.` }).catch(() => null);
-      await failJob(db, r.id, "queued", "queue_lost", now).catch(() => null);
+      const lost = await failJob(db, r.id, "queued", "queue_lost", now).catch(() => null);
+      if (lost?.failed && onSlotFreed) await onSlotFreed(lost.failed).catch(() => null);
       continue;
     }
     await appendEvent(db, r.id, { level: "warn", phase: "requeued", message: `Build was not picked up; re-delivered to the build queue (${(r.requeues ?? 0) + 1}/${MAX_REQUEUES}).` }).catch(() => null);

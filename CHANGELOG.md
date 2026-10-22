@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0-rc.3] - 2026-10-22
+
+### Fixed (Subdev review of 275322f)
+- Jobs closed by the sweeper (`timed_out`) or by `requeueOrphans` (`queue_lost`) now start the newest waiting commit
+  for their slot; the cron also runs `drainFreeSlots`, which starts every `git_pending_builds` row whose slot is free.
+- A pending commit overwritten by a newer push gets a `failure` status "Superseded by newer commit <sha>".
+- `failJob` does not schedule a retry when a newer commit is waiting for the same slot.
+- Delivery claim extracted to `claimDelivery`; tested that a redelivery stuck in `processing` > 15 min is reprocessed
+  without a second build (idempotency key), and finished deliveries stay deduped.
+
 ## [0.12.0-rc.2] - 2026-10-22
 
 ### Fixed (Subdev review of 10faf17)

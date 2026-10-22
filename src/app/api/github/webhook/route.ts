@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import { chatRuntime } from "@/lib/chat/runtime";
 import { verifyWebhook } from "@/lib/github/webhook";
-import { handleGitEvent } from "@/lib/github/autodeploy";
+import { claimDelivery, handleGitEvent } from "@/lib/github/autodeploy";
 import { routeBuildBindings } from "@/lib/build/bindings";
 import { resolveSealKeys } from "@/lib/connections/credentials";
 
@@ -29,11 +29,8 @@ export async function POST(req: Request) {
   const { db, waitUntil } = await chatRuntime();
   if (!db) return Response.json({ ok: false, reason: "unavailable" }, { status: 503 });
   const repoId = (result.payload.repository as { id?: unknown } | undefined)?.id;
-  const ins = await db
-    .prepare("INSERT INTO webhook_deliveries (delivery_id, provider, event, installation_id, repo_id, signature_ok, status) VALUES (?1, 'github', ?2, ?3, ?4, 1, 'received') ON CONFLICT (delivery_id) DO UPDATE SET status = 'redelivered' WHERE webhook_deliveries.status IN ('received', 'redelivered') OR webhook_deliveries.status LIKE 'failed:%' OR (webhook_deliveries.status = 'processing' AND webhook_deliveries.received_at < ?5) RETURNING delivery_id")
-    // A redelivery (GitHub "Redeliver") reprocesses a delivery that never finished or failed; done ones stay deduped.
-    .bind(result.delivery, result.event, result.installationId, typeof repoId === "number" ? repoId : null, Date.now() - 15 * 60_000)
-    .first<{ delivery_id: string }>();
+  // A redelivery (GitHub "Redeliver") reprocesses a delivery that never finished or failed; done ones stay deduped.
+  const ins = await claimDelivery(db, { delivery: result.delivery, event: result.event, installationId: result.installationId, repoId: typeof repoId === "number" ? repoId : null });
   if (!ins) return Response.json({ ok: true, duplicate: true }, { status: 200 });
   const record = (status: string, jobId: string | null) =>
     db.prepare("UPDATE webhook_deliveries SET status = ?2, build_job_id = ?3 WHERE delivery_id = ?1").bind(result.delivery, status.slice(0, 120), jobId).run().catch(() => null);

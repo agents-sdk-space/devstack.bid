@@ -217,6 +217,9 @@ async function buildOne(db: D1Like, keys: SealKeys, b: BuildBindings, plan: GitP
   } catch (e) {
     if (e instanceof ServiceError && e.code === "conflict") {
       // An older build is still stopping: remember only the newest commit for this slot; it starts when that build ends.
+      const slotRef = environment === "production" ? "" : plan.branch;
+      const prev = await db.prepare("SELECT commit_sha FROM git_pending_builds WHERE project_id = ?1 AND environment = ?2 AND ref = ?3").bind(projectId, environment, slotRef).first<{ commit_sha: string }>();
+      if (prev && prev.commit_sha !== plan.sha) await report(prev.commit_sha, "failure", null, `Superseded by newer commit ${plan.sha.slice(0, 7)}`);
       await db.prepare(
         "INSERT INTO git_pending_builds (project_id, user_id, environment, ref, commit_sha, kind, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7) ON CONFLICT (project_id, environment, ref) DO UPDATE SET commit_sha = excluded.commit_sha, kind = excluded.kind, user_id = excluded.user_id, updated_at = excluded.updated_at"
       ).bind(projectId, uid, environment, environment === "production" ? "" : plan.branch, plan.sha, plan.kind, now()).run();
@@ -254,6 +257,39 @@ export async function drainPending(
   } catch {
     return null;
   }
+}
+
+/**
+ * Cron: start every waiting commit whose slot is free again (covers builds closed by the sweeper, lost queue
+ * messages, or anything else that ended without the executor's drain). Never throws.
+ */
+export async function drainFreeSlots(db: D1Like, keys: SealKeys, b: BuildBindings, f: typeof fetch = fetch, now: () => number = Date.now): Promise<number> {
+  let started = 0;
+  try {
+    const rows = (await db.prepare("SELECT project_id, environment, ref FROM git_pending_builds ORDER BY updated_at LIMIT 20").all<{ project_id: string; environment: "preview" | "production"; ref: string }>()).results ?? [];
+    for (const r of rows) {
+      const busy = r.environment === "production"
+        ? await db.prepare(`SELECT id FROM build_jobs WHERE project_id = ?1 AND environment = 'production' AND status IN ${ACTIVE} LIMIT 1`).bind(r.project_id).first()
+        : await db.prepare(`SELECT id FROM build_jobs WHERE project_id = ?1 AND environment = 'preview' AND coalesce(ref, '') = ?2 AND status IN ${ACTIVE} LIMIT 1`).bind(r.project_id, r.ref).first();
+      if (busy) continue;
+      const res = await drainPending(db, keys, b, { project_id: r.project_id, environment: r.environment, ref: r.ref }, f, now);
+      if (res?.status === "queued") started++;
+    }
+  } catch { /* best effort; next cron run retries */ }
+  return started;
+}
+
+/**
+ * Atomically claim a webhook delivery. New → claimed. Already seen → claimed again only when the earlier attempt
+ * never finished (`received`/`redelivered`), failed (`failed:*`), or has been `processing` for over 15 minutes.
+ * Re-running is safe: builds are idempotent per (environment, branch, commit).
+ */
+export async function claimDelivery(db: D1Like, d: { delivery: string; event: string; installationId: number | null; repoId: number | null }, now = Date.now()): Promise<boolean> {
+  const row = await db
+    .prepare("INSERT INTO webhook_deliveries (delivery_id, provider, event, installation_id, repo_id, signature_ok, status) VALUES (?1, 'github', ?2, ?3, ?4, 1, 'received') ON CONFLICT (delivery_id) DO UPDATE SET status = 'redelivered' WHERE webhook_deliveries.status IN ('received', 'redelivered') OR webhook_deliveries.status LIKE 'failed:%' OR (webhook_deliveries.status = 'processing' AND webhook_deliveries.received_at < ?5) RETURNING delivery_id")
+    .bind(d.delivery, d.event, d.installationId, d.repoId, now - 15 * 60_000)
+    .first<{ delivery_id: string }>();
+  return !!row;
 }
 
 /**

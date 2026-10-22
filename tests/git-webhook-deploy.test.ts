@@ -3,10 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 import { runContainerJob, type BuildBindings, type ContainerStub } from "@/lib/build/executor";
 import { sealKeys, seal } from "@/lib/connections/credentials";
-import { aggregateStatus, autoDeployAllowed, handleGitEvent, takeWebhookSlot, planFromEvent, WEBHOOK_BUILDS_PER_HOUR } from "@/lib/github/autodeploy";
+import { aggregateStatus, autoDeployAllowed, claimDelivery, drainFreeSlots, drainPending, handleGitEvent, takeWebhookSlot, planFromEvent, WEBHOOK_BUILDS_PER_HOUR } from "@/lib/github/autodeploy";
 import { verifyWebhook } from "@/lib/github/webhook";
 import type { R2BucketLike } from "@/lib/hosting/serve";
 import { sqliteD1 } from "./helpers/sqlite-d1";
+import { sweepBuilds } from "@/lib/build/sweep";
+import { failJob } from "@/lib/build/jobs";
 
 const keys = sealKeys("test-cookie-secret-0123456789abcdef", {});
 const SHA = "5b3da65ea310f98480c5258af97ff4d5c6f9d5b0";
@@ -269,5 +271,74 @@ describe("handleGitEvent", () => {
     const r2 = await handleGitEvent(db, keys, b, "push", push("main"), ghFetch().f);
     expect(r2.status).toBe("queued:1");
     expect(r2.buildJobId).not.toBe(r1.buildJobId);
+  });
+
+  // Put a running production build (SHA) in place, then a pending newer commit.
+  async function runningWithPending(db: ReturnType<typeof sqliteD1>, b: BuildBindings, gh: ReturnType<typeof ghFetch>) {
+    const r1 = await handleGitEvent(db, keys, b, "push", push("main", SHA), gh.f);
+    db.raw.prepare("UPDATE build_jobs SET status = 'building', heartbeat_at = 1, created_at = 1 WHERE id = ?").run(r1.buildJobId);
+    expect((await handleGitEvent(db, keys, b, "push", push("main", SHA2), gh.f)).status).toBe("pending:1");
+    return r1.buildJobId!;
+  }
+
+  it("sweeper timeout frees the slot and starts the newest waiting commit", async () => {
+    const db = await setup();
+    const b = bindings();
+    const gh = ghFetch();
+    const old = await runningWithPending(db, b, gh);
+    const r = await sweepBuilds(db, Date.now(), (j) => drainPending(db, keys, b, j, gh.f));
+    expect(r.timedOut).toContain(old);
+    const next = db.raw.prepare("SELECT status, environment FROM build_jobs WHERE commit_sha = ?").get(SHA2) as Record<string, string>;
+    expect(next).toEqual({ status: "queued", environment: "production" });
+    expect(db.raw.prepare("SELECT COUNT(*) AS n FROM git_pending_builds").get()).toEqual({ n: 0 });
+    // Nothing timed-out retried in the slot (newer commit wins).
+    expect(db.raw.prepare("SELECT COUNT(*) AS n FROM build_jobs WHERE commit_sha = ? AND status = 'queued'").get(SHA)).toEqual({ n: 0 });
+  });
+
+  it("cron drainFreeSlots starts waiting commits whose slot is free, leaves busy ones", async () => {
+    const db = await setup();
+    const b = bindings();
+    const gh = ghFetch();
+    const old = await runningWithPending(db, b, gh);
+    expect(await drainFreeSlots(db, keys, b, gh.f)).toBe(0); // still building
+    db.raw.prepare("UPDATE build_jobs SET status = 'failed' WHERE id = ?").run(old);
+    expect(await drainFreeSlots(db, keys, b, gh.f)).toBe(1);
+    expect((db.raw.prepare("SELECT status FROM build_jobs WHERE commit_sha = ?").get(SHA2) as { status: string }).status).toBe("queued");
+  });
+
+  it("an overwritten pending commit gets a failure status", async () => {
+    const db = await setup();
+    const b = bindings();
+    const gh = ghFetch();
+    await runningWithPending(db, b, gh);
+    await handleGitEvent(db, keys, b, "push", push("main", "2222222222222222222222222222222222222222"), gh.f);
+    expect(gh.calls.some((c) => c.url.endsWith(SHA2) && c.body.state === "failure" && String(c.body.description) === `Superseded by newer commit ${"2222222222222222222222222222222222222222".slice(0, 7)}`)).toBe(true);
+    expect(db.raw.prepare("SELECT commit_sha FROM git_pending_builds").get()).toEqual({ commit_sha: "2222222222222222222222222222222222222222" });
+  });
+
+  it("failJob does not retry an old commit when a newer one is waiting", async () => {
+    const db = await setup();
+    const b = bindings();
+    const gh = ghFetch();
+    const old = await runningWithPending(db, b, gh);
+    db.raw.prepare("UPDATE build_jobs SET max_attempts = 3 WHERE id = ?").run(old);
+    const r = await failJob(db, old, "building", "executor_lost");
+    expect(r.failed).toBeTruthy();
+    expect(r.retry).toBeNull();
+  });
+
+  it("redelivery of a delivery stuck in processing > 15 min is reclaimed but never double-builds", async () => {
+    const db = await setup();
+    const b = bindings();
+    const d = { delivery: "72d3162e-cc78-11e3-81ab-4c9367dc0958", event: "push", installationId: null, repoId: REPO_ID };
+    expect(await claimDelivery(db, d)).toBe(true);
+    const r1 = await handleGitEvent(db, keys, b, "push", push("main"), ghFetch().f);
+    db.raw.prepare("UPDATE webhook_deliveries SET status = 'processing', received_at = ? WHERE delivery_id = ?").run(Date.now() - 16 * 60_000, d.delivery);
+    expect(await claimDelivery(db, d)).toBe(true); // stuck → reprocess
+    const r2 = await handleGitEvent(db, keys, b, "push", push("main"), ghFetch().f);
+    expect(r2.buildJobId).toBe(r1.buildJobId);
+    expect(b.sent).toHaveLength(1);
+    db.raw.prepare("UPDATE webhook_deliveries SET status = 'queued:1' WHERE delivery_id = ?").run(d.delivery);
+    expect(await claimDelivery(db, d)).toBe(false); // finished → deduped
   });
 });

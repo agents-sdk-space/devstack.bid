@@ -61,4 +61,14 @@ the same token as manual builds. Limits: 20 webhook builds per project per hour,
 - **Anyone with push access to a linked repo can run code in a preview build that sees the project's `preview`
   environment variables.** Put only preview-safe values there; production values are used only for production-branch
   builds. Fork PRs never build.
-- Follow-up: post statuses with a short-lived GitHub App installation token instead of the owner's OAuth token.
+
+### Follow-ups (logged, not done)
+1. **can_push re-check:** push permission is checked once at import. Re-check it (e.g. daily, or on each delivery
+   with the owner's token) so a collaborator who lost access stops auto-deploying.
+2. **R2 worker index, one key per label:** `workers/<worker>.json` is read-modify-write. Store
+   `workers/<worker>/<label>` (one object per label) or use a conditional put with the ETag once the binding wrapper
+   exposes `onlyIf`/`list`. Today the race is unlikely (one active production build per project; previews have
+   their own Worker).
+3. **Installation token for statuses:** once the GitHub App exists, post commit statuses with a short-lived,
+   single-repo installation token instead of the owner's OAuth token.
+4. Retries of webhook builds use trigger `retry`, so they don't post a final commit status.
