@@ -89,7 +89,7 @@ export function DeviceApprove() {
 
         {phase === "review" && info && (
           <div className="mt-4 space-y-3 text-sm">
-            <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1">
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
               <dt className="text-subtle">{t("Device", "อุปกรณ์")}</dt>
               <dd className="text-fg">{info.clientName} <span className="text-xs text-subtle">({t("name reported by the device, unverified", "ชื่อที่อุปกรณ์แจ้งมา ยังไม่ได้ยืนยัน")})</span></dd>
               <dt className="text-subtle">{t("Requested", "เวลาที่ขอ")}</dt>
