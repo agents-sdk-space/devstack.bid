@@ -285,3 +285,32 @@ describe("placeholder workers and extra modules", () => {
     expect(b.modules?.map((m) => [m.name, m.type])).toEqual([["abc-yoga.wasm", "application/wasm"]]);
   });
 });
+
+describe("deployServerWorker asset MIME types", () => {
+  it("uploads each asset part with a Content-Type from its extension (Workers Assets serves that type)", async () => {
+    const uploads: FormData[] = [];
+    let manifest: Record<string, { hash: string }> = {};
+    const fetcher = (async (url: string, init: RequestInit) => {
+      if (url.endsWith("/script-settings")) return new Response(JSON.stringify({ success: false, errors: [{ code: 10007, message: "missing" }] }), { status: 404 });
+      if (url.includes("assets-upload-session")) {
+        manifest = JSON.parse(String(init.body)).manifest;
+        return new Response(JSON.stringify({ success: true, result: { jwt: "sess", buckets: [Object.values(manifest).map((m) => m.hash)] } }), { status: 200 });
+      }
+      if (url.includes("assets/upload")) { uploads.push(init.body as FormData); return new Response(JSON.stringify({ success: true, result: { jwt: "done" } }), { status: 200 }); }
+      return new Response(JSON.stringify({ success: true, result: { id: "v1" } }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const b = readServerBundle([
+      { path: "server.json", bytes: enc("{}") }, { path: "worker/worker.js", bytes: enc("export default {}") },
+      { path: "assets/_next/static/chunks/x.css", bytes: enc("body{}") }, { path: "assets/_next/static/chunks/y.js", bytes: enc("1") },
+      { path: "assets/font.woff2", bytes: enc("f") }, { path: "assets/blob.unknownext", bytes: enc("z") },
+    ])!;
+    await deployServerWorker({ accountId: "a", token: "t", proxySecret: "s".repeat(40), fetcher }, W, b, "p");
+    expect(uploads).toHaveLength(1);
+    const typeOf = (p: string) => (uploads[0].get(manifest[p].hash) as Blob).type;
+    expect(typeOf("/_next/static/chunks/x.css")).toMatch(/^text\/css/);
+    expect(typeOf("/_next/static/chunks/y.js")).toMatch(/^text\/javascript/);
+    expect(typeOf("/font.woff2")).toBe("font/woff2");
+    expect(typeOf("/blob.unknownext")).toBe("application/octet-stream");
+    expect(await (uploads[0].get(manifest["/_next/static/chunks/y.js"].hash) as Blob).text()).toBe(btoa("1"));
+  });
+});

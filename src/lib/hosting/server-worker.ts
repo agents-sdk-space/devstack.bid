@@ -9,7 +9,7 @@
  * platform guard module that only answers requests carrying the per-worker proxy key that
  * devstack-sites injects. The API token never enters the container (SITES_CF_API_TOKEN).
  */
-import { PLATFORM_WORKERS, PREVIEW_WORKER, SERVER_WORKER, type R2BucketLike } from "./serve";
+import { contentType, PLATFORM_WORKERS, PREVIEW_WORKER, SERVER_WORKER, type R2BucketLike } from "./serve";
 export { PLATFORM_WORKERS };
 
 export interface BundleFile { path: string; bytes: Uint8Array }
@@ -172,7 +172,9 @@ export async function deployServerWorker(api: CfApi, name: string, b: ServerBund
     completion = session.jwt;
     for (const bucket of session.buckets ?? []) {
       const form = new FormData();
-      for (const h of bucket) { const f = byHash.get(h); if (f) form.append(h, b64(f.bytes)); }
+      // Workers Assets serves each file with the MIME type of its upload part. A bare string part has no type,
+      // so assets were served without Content-Type; with our `nosniff` header browsers then refuse CSS/JS.
+      for (const h of bucket) { const f = byHash.get(h); if (f) form.append(h, new File([b64(f.bytes)], h, { type: contentType(f.path) })); }
       const r = await call<{ jwt?: string } | null>(api, `/workers/assets/upload?base64=true`, { method: "POST", body: form }, session.jwt);
       if (r && r.jwt) completion = r.jwt;
     }
