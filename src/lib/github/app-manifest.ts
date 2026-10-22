@@ -147,7 +147,8 @@ let appCache: { at: number; value: AppBundle | null } | null = null;
 export async function cachedAppBundle(load: () => Promise<AppBundle | null>, now = Date.now()): Promise<AppBundle | null> {
   if (appCache && now - appCache.at < APP_CACHE_TTL_MS) return appCache.value;
   const value = await load();
-  appCache = { at: now, value };
+  // Never cache "no app yet": the first App delivery right after creation must see the new row.
+  appCache = value ? { at: now, value } : null;
   return value;
 }
 export function resetAppCache(): void { appCache = null; }

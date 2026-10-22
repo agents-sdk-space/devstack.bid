@@ -11,7 +11,12 @@ secret and private key **sealed** in D1 table `github_app` (migration 0022, sing
 Each delivery is verified with exactly one secret: if `X-GitHub-Hook-Installation-Target-ID` (type `integration`) equals the
 stored app id, only the App secret (cached per isolate for 60 s); otherwise only `GITHUB_APP_WEBHOOK_SECRET`.
 **Rotating `CHAT_COOKIE_SECRET` (without `CREDENTIALS_KEY` set) makes the sealed App bundle unreadable**: App webhooks then fail
-with 401 until the row is deleted and the app re-created (or its secrets re-sealed). Set `CREDENTIALS_KEY` before rotating. Manifest: webhook `/api/github/webhook`, events push + pull_request, permissions contents:write,
+with 401 until the row is deleted and the app re-created (or its secrets re-sealed). Set `CREDENTIALS_KEY` before rotating.
+The opened bundle is cached per isolate for up to 60 s, so after replacing the stored App (or its webhook secret) deliveries
+signed with the new secret may get 401 for up to a minute; GitHub's redelivery covers that window.
+
+**Release checklist:** `GITHUB_APP_ADMIN_IDS` (numeric GitHub ids) must be set in `wrangler.release.jsonc` vars; if empty,
+nobody can open the manifest page (403). Manifest: webhook `/api/github/webhook`, events push + pull_request, permissions contents:write,
 metadata:read, pull_requests:read, statuses:write. The section below describes the earlier plan and is kept for history.
 
 ## Permissions (least privilege)
