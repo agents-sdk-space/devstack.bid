@@ -8,8 +8,8 @@ import { websiteTheme } from "./website-theme";
 /**
  * Files committed to a new repo created from a template on /new.
  * Templates with a complete project in template-projects/ (all /new templates) get that project:
- * package.json, package-lock.json and sources, building to static output (out/ or dist/) on devstack's
- * build container. Other templates get their starter files + setup.sh. Unknown ids get [] (no fallback).
+ * package.json, package-lock.json and sources, built on devstack's build container: Next.js
+ * templates are server apps (OpenNext → .open-next/ → per-project Worker), Vite templates build to dist/. Other templates get their starter files + setup.sh. Unknown ids get [] (no fallback).
  */
 
 /** Build settings stored on the project so the container builds the right folder. */
@@ -19,7 +19,7 @@ export function templateBuild(templateId: string): TemplateBuild | null {
   const files = TEMPLATE_PROJECTS[templateId];
   if (!files) return null;
   const next = files.some((f) => f.path === "next.config.mjs");
-  return { framework: next ? "nextjs" : "vite", install: "npm ci", build: "npm run build", output: next ? "out" : "dist" };
+  return { framework: next ? "nextjs" : "vite", install: "npm ci", build: "npm run build", output: next ? ".open-next" : "dist" };
 }
 
 /** Plain text safe inside HTML text/attributes, JSX text and JS string literals. */
@@ -65,7 +65,7 @@ export function templateSeedFiles(templateId: string, repoName: string, descript
       return { path: f.path, content: fill(f.content) };
     });
     const b = templateBuild(templateId)!;
-    out.push({ path: "README.md", content: `# ${title}\n\n${desc}\n\nCreated on devstack.bid from the **${template.name.en}** template.\n\n\`\`\`bash\nnpm ci\nnpm run dev     # local preview\nnpm run build   # static output in ${b.output}/\n\`\`\`\n` });
+    out.push({ path: "README.md", content: `# ${title}\n\n${desc}\n\nCreated on devstack.bid from the **${template.name.en}** template.\n\n\`\`\`bash\nnpm ci\nnpm run dev     # local preview\nnpm run build   # ${b.framework === "nextjs" ? "server build (OpenNext) in" : "static output in"} ${b.output}/\n\`\`\`\n` });
     return out;
   }
   const config = configForTemplate(templateId, { projectName: repoName });

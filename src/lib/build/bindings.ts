@@ -15,6 +15,7 @@ export function buildBindings(env: Record<string, unknown>): BuildBindings {
     sites: (env.SITES as R2BucketLike | undefined) ?? null,
     container,
     dnsReady: env.SITES_DNS_READY === "1",
+    kv: (env.KV as BuildBindings["kv"]) ?? null,
     // Platform token for per-project server Workers (Workers Scripts: Edit). Never sent to the container.
     cfApi: typeof env.SITES_CF_API_TOKEN === "string" && env.SITES_CF_API_TOKEN && typeof env.SITES_CF_ACCOUNT_ID === "string" && env.SITES_CF_ACCOUNT_ID
       && typeof env.SITES_PROXY_SECRET === "string" && env.SITES_PROXY_SECRET.length >= 32

@@ -8,6 +8,7 @@
  * The result is reported back as a GitHub commit status with the deployment URL.
  * Nothing here logs the payload, tokens or signatures.
  */
+import { limitsForUser } from "@/lib/limits/tiers";
 import type { D1Like } from "@/lib/chat/store";
 import { loadGithubToken, type SealKeys } from "@/lib/connections/credentials";
 import type { ProjectRow } from "@/lib/connections/projects";
@@ -16,6 +17,7 @@ import { safeBranch } from "@/lib/auth/github-policy";
 import { startContainerBuild, type BuildBindings } from "@/lib/build/executor";
 import { transitionJob } from "@/lib/build/jobs";
 import { siteSlug } from "@/lib/hosting/hostnames";
+import { AI_BRANCH, isSyncMerge } from "@/lib/aisite/repo-turn";
 
 const SHA = /^[a-f0-9]{40}$/i;
 const ZERO = /^0{40}$/;
@@ -185,6 +187,8 @@ async function buildOne(db: D1Like, keys: SealKeys, b: BuildBindings, plan: GitP
   const token = await loadGithubToken(db, keys, uid);
   const report = (sha: string, state: CommitState, url: string | null, description: string) =>
     token ? postCommitStatus(token, project.repo_full_name!, sha, { state, url, context, description }, f) : Promise.resolve(false);
+  // devstack AI sync merges (base → devstack/ai) are not built: the AI commit that follows is built once by the ai-turn route.
+  if (plan.kind === "push" && environment === "preview" && plan.branch === AI_BRANCH && (await isSyncMerge(b.kv ?? null, project.repo_full_name, plan.sha))) return { status: "ignored:ai_sync_merge" };
   if (!fromPending) {
     if (!(await takeWebhookSlot(db, projectId, now()))) {
       await report(plan.sha, "failure", null, `Not built: limit of ${WEBHOOK_BUILDS_PER_HOUR} automatic builds per hour reached. Push again later or deploy from devstack.bid.`);
@@ -210,6 +214,8 @@ async function buildOne(db: D1Like, keys: SealKeys, b: BuildBindings, plan: GitP
     const r = await startContainerBuild(db, keys, b, uid, project, {
       ref: plan.branch, commit: plan.sha, environment, trigger: plan.kind,
       idempotencyKey: `gh:${environment}:${plan.branch}:${plan.sha}`,
+      // Webhook builds use the project owner's tier (buildsPerDay / buildsPerHour) and the KV hourly window.
+      limits: await limitsForUser(db, uid), kv: b.kv ?? null,
     });
     const url = environment === "production" ? r.productionUrl : r.previewUrl;
     await report(plan.sha, "pending", url, environment === "production" ? "Production build queued" : "Preview build queued");

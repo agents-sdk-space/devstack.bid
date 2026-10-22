@@ -18,7 +18,10 @@ import { promoteProduction, publishPreview, publishServer, writeSite } from "@/l
 import { CfApiError, deployServerWorker, readServerBundle, serverWorkerName, type CfApi } from "@/lib/hosting/server-worker";
 import { sanitizeLog } from "@/lib/deploy/sanitize";
 import type { R2BucketLike } from "@/lib/hosting/serve";
-import { BUILD_TIMEOUT_MS, claimWithCap, DAILY_BUILDS_PER_USER, userBuildsToday } from "./caps";
+import { kvRateLimit, type KvLike } from "@/lib/aisite/kv-limit";
+import { buildHourKey, limitsForUser, type TierLimits } from "@/lib/limits/tiers";
+import { kvHasRoom } from "@/lib/aisite/kv-limit";
+import { BUILD_TIMEOUT_MS, claimWithCap, userBuildsToday } from "./caps";
 import { appendEvent, createBuildJob, createLogStream, failJob, finishCanceled, heartbeat, transitionJob, type BuildJobRow, type Environment } from "./jobs";
 import type { BuildState } from "./state";
 import { readTar } from "./tar";
@@ -37,6 +40,15 @@ export interface BuildBindings {
   cfApi?: CfApi | null;
   /** Injected in tests for GitHub commit statuses; defaults to global fetch. */
   fetch?: typeof fetch;
+  /** Workers KV for the hourly build window (null → in-memory fallback). */
+  kv?: KvLike | null;
+}
+
+/** Read-only build quota check (daily D1 + hourly KV) used before spending an AI turn. */
+export async function buildQuotaRoom(db: D1Like, kv: KvLike | null, uid: string, lim: Pick<TierLimits, "buildsPerDay" | "buildsPerHour">): Promise<string | null> {
+  if ((await userBuildsToday(db, uid)) >= lim.buildsPerDay) return `Daily build limit reached (${lim.buildsPerDay}/day). / ครบโควตา build วันนี้แล้ว`;
+  if (!(await kvHasRoom(kv, buildHourKey(uid), lim.buildsPerHour, 3600))) return `Hourly build limit reached (${lim.buildsPerHour}/hour). / build ถี่เกินไป รอสักครู่`;
+  return null;
 }
 
 /** Which pieces are missing (reported as Blocked, never faked). */
@@ -62,7 +74,7 @@ export async function startContainerBuild(
   b: BuildBindings,
   uid: string,
   project: ProjectRow,
-  opts: { ref?: string | null; environment?: Environment; trigger?: "manual" | "push" | "pr" | "redeploy"; commit?: string | null; idempotencyKey?: string | null } = {},
+  opts: { ref?: string | null; environment?: Environment; trigger?: "manual" | "push" | "pr" | "redeploy"; commit?: string | null; idempotencyKey?: string | null; limits?: Pick<TierLimits, "buildsPerDay" | "buildsPerHour"> | null; kv?: KvLike | null } = {},
   lookup: typeof getBranchSha = getBranchSha
 ): Promise<{ job: BuildJobRow; deploymentId: string; previewUrl: string; productionUrl: string | null }> {
   const missing = missingInfra(b);
@@ -70,7 +82,18 @@ export async function startContainerBuild(
   if (!project.repo_full_name) throw new ServiceError("invalid", "Container builds need a GitHub repository.", 422);
   const slug = siteSlug(project.slug || project.name);
   if (!slug) throw new ServiceError("invalid", "Project name cannot be used as a site hostname.", 422);
-  if ((await userBuildsToday(db, uid)) >= DAILY_BUILDS_PER_USER) throw new ServiceError("limit", `Daily build limit reached (${DAILY_BUILDS_PER_USER}/day). / ครบโควตา build วันนี้แล้ว`, 429);
+  // Tier limits apply to every trigger (manual, import, AI turn, webhook): resolved from the user's stable id.
+  // Same idempotency key already queued/built (e.g. ai-turn route + webhook for one AI commit): reuse it without spending quota.
+  if (opts.idempotencyKey) {
+    const dup = await db.prepare("SELECT * FROM build_jobs WHERE project_id = ?1 AND idempotency_key = ?2 AND status NOT IN ('failed','canceled','timed_out')").bind(project.id, opts.idempotencyKey).first<BuildJobRow>();
+    if (dup) {
+      const existing = await db.prepare("SELECT id FROM deployments WHERE build_job_id = ?1").bind(dup.id).first<{ id: string }>();
+      if (existing) return { job: dup, deploymentId: existing.id, previewUrl: `https://${previewHost(slug, existing.id)}`, productionUrl: dup.environment === "production" ? `https://${productionHost(slug)}` : null };
+    }
+  }
+  const lim = opts.limits ?? (await limitsForUser(db, uid));
+  const kv = opts.kv ?? b.kv ?? null;
+  if ((await userBuildsToday(db, uid)) >= lim.buildsPerDay) throw new ServiceError("limit", `Daily build limit reached (${lim.buildsPerDay}/day). / ครบโควตา build วันนี้แล้ว`, 429);
   const token = await loadGithubToken(db, keys, uid);
   if (!token) throw new ServiceError("reauth", "Connect GitHub first. / เชื่อมต่อ GitHub ก่อน", 401);
   const ref = safeBranch(opts.ref || project.production_branch || project.default_branch || "main");
@@ -80,6 +103,8 @@ export async function startContainerBuild(
   const pinned = opts.commit && /^[a-f0-9]{40}$/i.test(opts.commit) ? opts.commit.toLowerCase() : null;
   const commit = pinned ?? (await lookup(token, owner, repo, ref));
   if (!commit) throw new ServiceError("invalid", `Branch ${ref} not found.`, 404);
+  // Hourly window is consumed only after token + ref checks pass (a failed precondition costs nothing).
+  if (!(await kvRateLimit(kv, buildHourKey(uid), lim.buildsPerHour, 3600))) throw new ServiceError("limit", `Hourly build limit reached (${lim.buildsPerHour}/hour). / build ถี่เกินไป รอสักครู่`, 429);
   const environment = opts.environment ?? "production";
   const { job, created } = await createBuildJob(db, {
     projectId: project.id, userId: uid, executor: "cf-container", environment, trigger: opts.trigger ?? "manual", commitSha: commit, ref, maxAttempts: 2,
