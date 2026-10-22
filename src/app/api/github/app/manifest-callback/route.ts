@@ -11,7 +11,10 @@ export async function GET(req: Request) {
   if (isResponse(a)) return a;
   const u = new URL(req.url);
   const state = u.searchParams.get("state");
-  if (!(await verifyState(chatEnv().CHAT_COOKIE_SECRET!, a.uid, state)) || !(await consumeState(a.db, state!))) {
+  // Verify the signed state, but burn the single-use nonce only AFTER GitHub accepted the code. Consuming it
+  // first meant a failed/aborted first hit (mobile double-load, dropped connection, deploy) left only "expired".
+  if (!(await verifyState(chatEnv().CHAT_COOKIE_SECRET!, a.uid, state))) {
+    console.warn(JSON.stringify({ at: "api/github/app/manifest-callback", event: "state_invalid", hasState: !!state }));
     return page("Expired", `<p>This link expired or is invalid. Open the create page again. / ลิงก์หมดอายุ เปิดหน้าสร้างใหม่อีกครั้ง</p><p><a class="btn" href="/api/github/app/manifest">Start again / เริ่มใหม่</a></p>`, 400);
   }
   const existing = await appExists(a.db);
@@ -21,7 +24,11 @@ export async function GET(req: Request) {
     bundle = await convertManifest(u.searchParams.get("code") ?? "");
   } catch (err) {
     console.warn(JSON.stringify({ at: "api/github/app/manifest-callback", event: "conversion_failed", reason: err instanceof Error ? err.message : "error" }));
-    return page("Failed", `<p>GitHub didn't accept the code (it works once, within 1 hour). / GitHub ไม่รับรหัส ลองใหม่อีกครั้ง</p><p><a class="btn" href="/api/github/app/manifest">Start again / เริ่มใหม่</a></p>`, 502);
+    return page("Failed", `<p>GitHub didn't accept the code (it works once, within 1 hour). If GitHub already created the app, delete it in GitHub settings, then start again. / GitHub ไม่รับรหัส ถ้ามีแอปถูกสร้างแล้วให้ลบบน GitHub แล้วเริ่มใหม่</p><p><a class="btn" href="/api/github/app/manifest">Start again / เริ่มใหม่</a></p>`, 502);
+  }
+  if (!(await consumeState(a.db, state!))) {
+    console.warn(JSON.stringify({ at: "api/github/app/manifest-callback", event: "state_reused", appId: bundle.id }));
+    return page("Expired", `<p>This link expired or is invalid. Open the create page again. / ลิงก์หมดอายุ เปิดหน้าสร้างใหม่อีกครั้ง</p><p><a class="btn" href="/api/github/app/manifest">Start again / เริ่มใหม่</a></p>`, 400);
   }
   const stored = await storeAppBundle(a.db, a.keys, bundle, a.uid);
   if (!stored) return page("Already set up", `<p>An app is already stored; this one was not saved. Delete the extra app <a href="${escapeHtml(bundle.html_url)}">${escapeHtml(bundle.slug)}</a> on GitHub. / มีแอปอยู่แล้ว</p>`, 409);
