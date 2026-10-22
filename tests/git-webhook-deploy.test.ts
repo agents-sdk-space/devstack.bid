@@ -10,6 +10,10 @@ import { sqliteD1 } from "./helpers/sqlite-d1";
 import { sweepBuilds } from "@/lib/build/sweep";
 import { failJob } from "@/lib/build/jobs";
 
+// Tier caps are tested in templates-via-deploy.test.ts; these flows push many commits for one user.
+process.env.DEVSTACK_TIER_FREE_BUILDS_PER_HOUR = "1000";
+process.env.DEVSTACK_TIER_FREE_BUILDS_PER_DAY = "1000";
+
 const keys = sealKeys("test-cookie-secret-0123456789abcdef", {});
 const SHA = "5b3da65ea310f98480c5258af97ff4d5c6f9d5b0";
 const SHA2 = "1111111111111111111111111111111111111111";

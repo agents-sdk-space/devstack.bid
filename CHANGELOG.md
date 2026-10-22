@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0-rc.2] - 2026-10-22
+
+### Fixed (Subdev + Supdev review of rc.1)
+- `ai-turn` checks the GitHub token and build quota (daily D1 + hourly KV, read-only) BEFORE reserving the AI
+  turn or calling the model. If the build cannot start after the commit, it returns 202 with the commit and
+  `build.status: "build_quota"` (or `build_not_started`) instead of 429.
+- Tier limits apply to every build trigger: `startContainerBuild` resolves the owner's tier itself, and webhook
+  builds (`autodeploy.ts`) pass `limitsForUser` + KV explicitly. The webhook 20/hour per-project cap still applies too.
+- Direct deploys (`takeQuota("deploy")`) use the tier's `deploysPerDay` instead of the capacity value.
+- The hourly KV build window is consumed only after the token and branch/commit checks pass.
+- `devstack/ai` is synced with the default branch before each AI turn using GitHub's merges API (merge commit;
+  never reset or force). A merge conflict returns 409 `ai_branch_diverged`.
+- `ai-turn` has its own per-minute key `ai-turn:<uid>` (not shared with the static AI builder); the daily AI cap is shared.
+- (Supdev, Medium) The AI may not write `package.json`, `next.config.*`, `vite.config.*`, `tsconfig*.json`
+  (read-only context, writes rejected with `ai_output_rejected`); `.npmrc` and `middleware.[jt]s` are fully blocked.
+  No dependency edits in this version.
+- (Supdev) Tiers match stable ids: `DEVSTACK_ADMIN_UIDS` / `DEVSTACK_PAID_UIDS` (users.id) and
+  `DEVSTACK_ADMIN_GITHUB_IDS` / `DEVSTACK_PAID_GITHUB_IDS` (numeric GitHub id). Login lists are DEPRECATED for tiers
+  and honoured only with `DEVSTACK_TIER_ALLOW_LOGINS=1`.
+- (Supdev) Symlink (120000) and submodule (160000) tree entries are never read for AI context.
+
+No migrations.
+
 ## [0.13.0-rc.1] - 2026-10-22
 
 ### Changed

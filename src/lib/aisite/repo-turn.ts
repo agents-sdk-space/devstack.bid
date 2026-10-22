@@ -4,16 +4,26 @@
  * then the real build pipeline (container build → static site or OpenNext Worker) produces a preview.
  * Pure helpers here are unit-tested; the route wires GitHub, limits and the build executor.
  */
-import type { FileChange } from "@/lib/auth/github-api";
+import { createBranch, getBranchSha, mergeInto, type FileChange } from "@/lib/auth/github-api";
 import { editContext, type FileEdit, type SiteFileText } from "./files";
 
 export const AI_BRANCH = "devstack/ai";
+/** Own per-minute window for repo AI turns (not shared with the static AI builder's `ai-site:` key); the daily cap IS shared. */
+export const aiTurnMinuteKey = (uid: string) => `ai-turn:${uid}`;
 export const REPO_MAX_FILES = 60;
 export const REPO_MAX_FILE_BYTES = 120 * 1024;
 const EDITABLE = /\.(jsx?|tsx?|mjs|cjs|css|html|json|md|svg|txt)$/i;
-/** Never read or written by the AI: secrets, CI, lockfiles, deploy config, build output, dependencies. */
-const BLOCKED = /(^|\/)(\.env(\..*)?|\.dev\.vars.*|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|wrangler\.(jsonc?|toml)|open-next\.config\.ts)$|^\.github\/|(^|\/)(node_modules|\.git|\.next|\.open-next|out|dist|build)\//i;
+/**
+ * Never read or written by the AI: secrets, CI, lockfiles, deploy config, build output, dependencies.
+ * Build-controlling files (package.json scripts/deps, next/vite/ts config, .npmrc, middleware) run code in the
+ * build container, so they are read-only context at most and never written (no dependency edits in this version).
+ */
+const BLOCKED = /(^|\/)(\.env(\..*)?|\.dev\.vars.*|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|wrangler\.(jsonc?|toml)|open-next\.config\.ts|\.npmrc|middleware\.[jt]s)$|^\.github\/|(^|\/)(node_modules|\.git|\.next|\.open-next|out|dist|build)\//i;
 const SEG = /^[A-Za-z0-9_@\[\]()][A-Za-z0-9_.@\[\]()-]{0,79}$/;
+
+/** Visible to the model as context but never writable. */
+const READ_ONLY = /^(package\.json|next\.config\.[cm]?[jt]s|vite\.config\.[cm]?[jt]s|tsconfig[^/]*\.json)$/i;
+export const isReadOnly = (p: string) => READ_ONLY.test(p.split("/").pop() ?? "");
 
 export function repoPathOk(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
@@ -26,9 +36,9 @@ export function repoPathOk(raw: unknown): string | null {
 }
 
 /** Choose which tree entries the AI may see (and later edit). */
-export function editableEntries(entries: { path: string; type: string; size?: number }[], root = ""): string[] {
+export function editableEntries(entries: { path: string; type: string; size?: number; mode?: string }[], root = ""): string[] {
   return entries
-    .filter((e) => e.type === "blob" && (!root || e.path.startsWith(root)) && (e.size ?? 0) <= REPO_MAX_FILE_BYTES && repoPathOk(e.path.slice(root.length)))
+    .filter((e) => e.type === "blob" && e.mode !== "120000" && e.mode !== "160000" && (!root || e.path.startsWith(root)) && (e.size ?? 0) <= REPO_MAX_FILE_BYTES && repoPathOk(e.path.slice(root.length)))
     .map((e) => e.path)
     .sort((a, b) => a.split("/").length - b.split("/").length || a.localeCompare(b))
     .slice(0, REPO_MAX_FILES);
@@ -42,12 +52,12 @@ export function repoChanges(current: SiteFileText[], edit: FileEdit): FileChange
   const before = new Map(map);
   for (const d of edit.delete ?? []) {
     const p = repoPathOk(d);
-    if (!p || !map.has(p)) throw new RepoEditError(`Cannot delete: ${String(d).slice(0, 80)}`);
+    if (!p || !map.has(p) || isReadOnly(p)) throw new RepoEditError(`Cannot delete: ${String(d).slice(0, 80)}`);
     map.delete(p);
   }
   for (const w of edit.write ?? []) {
     const p = repoPathOk(w.path);
-    if (!p) throw new RepoEditError(`Path not allowed: ${String(w.path).slice(0, 80)}`);
+    if (!p || isReadOnly(p)) throw new RepoEditError(`Path not allowed: ${String(w.path).slice(0, 80)}`);
     const c = String(w.content ?? "");
     if (new TextEncoder().encode(c).length > REPO_MAX_FILE_BYTES) throw new RepoEditError(`File too large: ${p}`);
     map.set(p, c);
@@ -55,7 +65,7 @@ export function repoChanges(current: SiteFileText[], edit: FileEdit): FileChange
   for (const r of edit.replace ?? []) {
     const p = repoPathOk(r.path);
     const cur = p ? map.get(p) : undefined;
-    if (!p || cur === undefined || !r.find) throw new RepoEditError(`Cannot edit: ${String(r.path).slice(0, 80)}`);
+    if (!p || isReadOnly(p) || cur === undefined || !r.find) throw new RepoEditError(`Cannot edit: ${String(r.path).slice(0, 80)}`);
     const i = cur.indexOf(r.find);
     if (i < 0 || cur.indexOf(r.find, i + 1) >= 0) throw new RepoEditError(`Edit did not match exactly once in ${p}`);
     map.set(p, cur.slice(0, i) + String(r.with ?? "") + cur.slice(i + r.find.length));
@@ -69,5 +79,19 @@ export function repoChanges(current: SiteFileText[], edit: FileEdit): FileChange
 
 export function repoContext(files: SiteFileText[], framework: string | null): string {
   const kind = framework === "nextjs" ? "a Next.js App Router project (server app built with OpenNext; app/ directory, JSX)" : "a Vite project (index.html + src/)";
-  return `PROJECT MODE: this is ${kind}, not a single static page. Edit the existing source files; do NOT require index.html at the root; do not touch package.json dependencies unless asked; lockfiles, wrangler config, .env and .github are off-limits.\n\n${editContext(files)}`;
+  return `PROJECT MODE: this is ${kind}, not a single static page. Edit the existing source files; do NOT require index.html at the root; package.json, next/vite/tsconfig config are READ-ONLY (edits are rejected; no new dependencies); lockfiles, wrangler config, .npmrc, middleware, .env and .github are off-limits.\n\n${editContext(files)}`;
+}
+
+export interface SyncDeps { getBranchSha: typeof getBranchSha; createBranch: typeof createBranch; mergeInto: typeof mergeInto }
+
+/**
+ * Bring devstack/ai up to date with the default branch. Missing branch → created from base. Existing → server-side
+ * merge of base into it (GitHub merges API; never a reset or force push). Conflict → "conflict" (route returns 409).
+ */
+export async function syncAiBranch(token: string, owner: string, repo: string, base: string, d: SyncDeps = { getBranchSha, createBranch, mergeInto }): Promise<"created" | "merged" | "up_to_date" | "conflict"> {
+  if (!(await d.getBranchSha(token, owner, repo, AI_BRANCH))) {
+    await d.createBranch(token, owner, repo, AI_BRANCH, base);
+    return "created";
+  }
+  return d.mergeInto(token, owner, repo, AI_BRANCH, base);
 }
