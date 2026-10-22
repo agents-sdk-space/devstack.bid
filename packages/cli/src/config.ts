@@ -44,7 +44,7 @@ export function readAuth(env: NodeJS.ProcessEnv = process.env): ResolvedAuth | n
   }
   if (!saved.token) return null;
   if (!TOKEN_RE.test(saved.token)) throw new Error(`${file} contains an invalid token; run devstack logout`);
-  const savedApi = apiBase({}, saved.api);
+  const savedApi = apiBase({} as NodeJS.ProcessEnv, saved.api);
   if (api !== savedApi) throw new Error(`Your saved login is for ${savedApi}, but DEVSTACK_API is ${api}. The saved token will not be sent there; set DEVSTACK_TOKEN for that server or unset DEVSTACK_API.`);
   return { token: saved.token, api, login: saved.login ?? null, source: "file" };
 }
