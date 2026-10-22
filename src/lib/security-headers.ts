@@ -29,6 +29,14 @@ export function contentSecurityPolicy(dev = false): string {
   ].join("; ");
 }
 
+/** CSP for /api/github/app/manifest only: the page's form posts the App manifest to github.com. No scripts. */
+export function githubManifestContentSecurityPolicy(dev = false): string {
+  return contentSecurityPolicy(dev)
+    .split("; ")
+    .map((d) => (d.startsWith("form-action ") ? "form-action https://github.com" : d.startsWith("script-src ") ? "script-src 'none'" : d))
+    .join("; ");
+}
+
 /**
  * CSP for the internal /ui-lab preview only (noindex, not linked). Same as the site CSP plus what
  * the Spline 3D runtime needs: the scene file (prod.spline.design), its WASM/JS helpers

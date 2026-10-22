@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 import { KNOWN_TEMPLATE_IDS } from "./src/data/template-ids";
 import docsNav from "./src/generated/docs-nav.json";
-import { securityHeaders, uiLabContentSecurityPolicy } from "./src/lib/security-headers";
+import { githubManifestContentSecurityPolicy, securityHeaders, uiLabContentSecurityPolicy } from "./src/lib/security-headers";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -55,6 +55,8 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: securityHeaders(isDev) },
       // Later entries win for the same key: relax the CSP for the internal Spline demo only.
       { source: "/ui-lab", headers: [{ key: "Content-Security-Policy", value: uiLabContentSecurityPolicy(isDev) }] },
+      // GitHub App manifest page: its form posts to github.com (admin only, no scripts).
+      { source: "/api/github/app/manifest", headers: [{ key: "Content-Security-Policy", value: githubManifestContentSecurityPolicy(isDev) }] },
     ];
   },
 };
