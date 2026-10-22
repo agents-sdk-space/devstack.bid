@@ -16,7 +16,8 @@ describe("learn page", () => {
     learn.unmount();
 
     render(<Home />);
-    for (const a of screen.getAllByRole("link", { name: /Start building/ })) expect(a.getAttribute("href")).toBe("/learn");
+    // Home CTAs now go straight to creating a project (the platform deploys today); /learn stays in the header.
+    for (const a of screen.getAllByRole("link", { name: /Start a new project/ })) expect(a.getAttribute("href")).toBe("/new");
   });
 
   it("opens create or ask from the header control", async () => {
