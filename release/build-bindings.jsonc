@@ -8,8 +8,7 @@
     { "binding": "SITES", "bucket_name": "devstack-sites" }
   ],
   // AI chat builder: Workers KV nvx-stack-builder-kv for rate-limit counters and short caches ONLY (never source data).
-  // BLOCKED: set the real namespace id (wrangler kv namespace list) before a full release; deploy fails loudly until then.
-  "kv_namespaces": [{ "binding": "KV", "id": "SET_ID_OF_nvx-stack-builder-kv" }],
+  "kv_namespaces": [{ "binding": "KV", "id": "7fcbeb7d5603411287c90e570cafa0dc" }],
   "queues": {
     "producers": [{ "binding": "BUILD_QUEUE", "queue": "devstack-build-jobs" }],
     "consumers": [{ "queue": "devstack-build-jobs", "max_batch_size": 1, "max_batch_timeout": 1, "max_retries": 10, "max_concurrency": 2 }]
