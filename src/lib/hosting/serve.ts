@@ -113,7 +113,13 @@ export async function proxyToWorker(req: Request, worker: string, subdomain: str
   const o: ProxyOpts = typeof opts === "function" ? { fetcher: opts } : opts;
   const fetcher = o.fetcher ?? fetch;
   const url = new URL(req.url);
-  const target = new URL(`${url.pathname}${url.search}`, `https://${worker}.${subdomain}.workers.dev`);
+  // Never resolve the request path against the base: "//evil.com/x" would change the host (open proxy / key leak).
+  const expectedHost = `${worker}.${subdomain}.workers.dev`;
+  if (!SERVER_WORKER.test(worker) || PLATFORM_WORKER_NAMES.has(worker) || !/^[a-z0-9-]{1,63}$/.test(subdomain)) return unavailable(502);
+  const target = new URL(`https://${expectedHost}`);
+  target.pathname = url.pathname;
+  target.search = url.search;
+  if (target.host !== expectedHost || target.protocol !== "https:") return unavailable(502);
   const headers = new Headers();
   for (const k of FORWARD_REQUEST_HEADERS) { const v = req.headers.get(k); if (v !== null) headers.set(k, v); }
   headers.set("X-Forwarded-Host", url.hostname);

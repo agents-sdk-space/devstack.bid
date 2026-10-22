@@ -177,3 +177,17 @@ describe("devstack-sites server proxy", () => {
     expect(down.status).toBe(502);
   });
 });
+
+describe("proxy target is always the project worker host (N1 SSRF)", () => {
+  const paths = ["//evil.com/x", "/\\evil.com/x", "/%2F%2Fevil.com/x", "//evil.com", "/%5Cevil.com", "///evil.com/x", "/@evil.com", "/..//evil.com"];
+  for (const p of paths) {
+    it(`keeps host for ${p}`, async () => {
+      const seen: string[] = [];
+      const fetcher = (async (u: string) => { seen.push(u); return new Response("ok", { headers: { "x-devstack-origin": "project" } }); }) as unknown as typeof fetch;
+      const req = new Request("https://shop.devstack.bid/");
+      Object.defineProperty(req, "url", { value: "https://shop.devstack.bid" + p });
+      await proxyToWorker(req, W, "sub", { fetcher, proxyKey: "KEY" });
+      for (const u of seen) expect(new URL(u).host).toBe(`${W}.sub.workers.dev`);
+    });
+  }
+});
