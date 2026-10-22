@@ -15,7 +15,7 @@ type SocketLike = {
 export type ConnectFn = (address: { hostname: string; port: number }, options: { secureTransport: "on"; allowHalfOpen: boolean }) => SocketLike;
 
 const ALLOWED_HOSTS = new Set(["github.com", "api.github.com"]);
-const MAX_BYTES = 2_000_000;
+const MAX_BYTES = 10_000_000;
 
 // Stored on globalThis: custom-worker.ts and the Next.js server chunks hold separate copies of this module.
 const KEY = Symbol.for("devstack.socketConnect");

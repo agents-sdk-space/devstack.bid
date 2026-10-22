@@ -22,13 +22,26 @@ export class GithubApiError extends Error {
 }
 
 /** Retry transient edge/upstream failures (5xx incl. Cloudflare 52x, network errors) with a short backoff. */
+/**
+ * fetch() for GitHub hosts. On a custom-domain Worker, github.com/api.github.com answer 525
+ * (cloudflare/workerd#7042), so a 525 is retried once over a raw TLS socket (socketFetch).
+ * Every server-side GitHub call in this module goes through here.
+ */
+export async function ghFetch(
+  input: string,
+  init: RequestInit = {},
+  deps: { f?: typeof fetch; socket?: (input: string, init: RequestInit) => Promise<Response> } = {}
+): Promise<Response> {
+  const res = await (deps.f ?? fetch)(input, init);
+  if (res.status !== 525) return res;
+  return (deps.socket ?? socketFetch)(input, init).catch(() => res);
+}
+
 export async function fetchRetry(input: string, init: RequestInit, attempts = 3, f: typeof fetch = fetch, socketFallback?: (input: string, init: RequestInit) => Promise<Response>): Promise<Response> {
   let last: unknown;
   for (let i = 0; i < attempts; i++) {
     try {
-      let res = await f(input, init);
-      // Workers on a custom domain get 525 from github.com (cloudflare/workerd#7042): retry over a raw TLS socket.
-      if (res.status === 525) res = await (socketFallback ?? socketFetch)(input, init).catch(() => res);
+      const res = await ghFetch(input, init, { f, socket: socketFallback });
       if (res.status < 500 || i === attempts - 1) return res;
       last = res;
     } catch (err) {
@@ -75,7 +88,7 @@ export async function exchangeCode(opts: { clientId: string; clientSecret: strin
 }
 
 /** Revoke this app's OAuth grant for the user at GitHub (Basic auth with the app's client id/secret). */
-export async function revokeGrant(opts: { clientId: string; clientSecret: string; token: string }, f: typeof fetch = fetch): Promise<boolean> {
+export async function revokeGrant(opts: { clientId: string; clientSecret: string; token: string }, f: typeof fetch = ghFetch as typeof fetch): Promise<boolean> {
   const res = await f(`${API}/applications/${encodeURIComponent(opts.clientId)}/grant`, {
     method: "DELETE",
     headers: {
@@ -105,7 +118,7 @@ export async function fetchProfile(token: string): Promise<GhProfile> {
   if (!u.id || !u.login || !/^[A-Za-z0-9-]{1,39}$/.test(u.login)) throw new GithubApiError("GitHub profile was incomplete", 502);
   let email = u.email && /^[^\s@]+@[^\s@]+$/.test(u.email) ? u.email : null;
   if (!email) {
-    const emails = await fetch(`${API}/user/emails`, { headers: headers(token) });
+    const emails = await ghFetch(`${API}/user/emails`, { headers: headers(token) });
     if (emails.ok) {
       const list = (await emails.json()) as { email?: string; primary?: boolean; verified?: boolean }[];
       const pick = list.find((e) => e.primary && e.verified) ?? list.find((e) => e.verified);
@@ -123,7 +136,7 @@ export interface GhRepo {
 }
 
 export async function listWritableRepos(token: string): Promise<GhRepo[]> {
-  const res = await fetch(`${API}/user/repos?per_page=50&sort=updated&affiliation=owner,collaborator`, { headers: headers(token) });
+  const res = await ghFetch(`${API}/user/repos?per_page=50&sort=updated&affiliation=owner,collaborator`, { headers: headers(token) });
   if (res.status === 401) throw new GithubApiError("GitHub rejected the saved sign-in. Sign in again. / GitHub ไม่รับการเข้าสู่ระบบที่บันทึกไว้ กรุณาเข้าใหม่", 401);
   if (!res.ok) throw new GithubApiError("Couldn't list repositories. / ดึงรายการรีโพซิทอรีไม่สำเร็จ", res.status);
   const rows = (await res.json()) as { full_name?: string; private?: boolean; default_branch?: string; permissions?: { push?: boolean } }[];
@@ -148,7 +161,7 @@ export async function putFile(
 ): Promise<{ url: string; commit: string }> {
   const path = spec.path.split("/").map(encodeURIComponent).join("/");
   const url = `${API}/repos/${encodeURIComponent(spec.owner)}/${encodeURIComponent(spec.repo)}/contents/${path}`;
-  const get = await fetch(`${url}?ref=${encodeURIComponent(spec.branch)}`, { headers: headers(token) });
+  const get = await ghFetch(`${url}?ref=${encodeURIComponent(spec.branch)}`, { headers: headers(token) });
   let sha: string | undefined;
   if (get.status === 200) {
     const existing = (await get.json()) as { sha?: string; type?: string };
@@ -157,7 +170,7 @@ export async function putFile(
   } else if (get.status !== 404) {
     throw new GithubApiError("Couldn't read the existing file. / อ่านไฟล์เดิมไม่สำเร็จ", get.status);
   }
-  const put = await fetch(url, {
+  const put = await ghFetch(url, {
     method: "PUT",
     headers: headers(token, { "Content-Type": "application/json" }),
     body: JSON.stringify({
@@ -182,7 +195,7 @@ export async function putFile(
 
 async function gh<T>(token: string, method: string, path: string, body?: unknown, okStatuses: number[] = []): Promise<{ status: number; data: T }> {
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch(`${API}${path}`, {
+    const res = await ghFetch(`${API}${path}`, {
       method,
       headers: headers(token, body ? { "Content-Type": "application/json" } : {}),
       body: body ? JSON.stringify(body) : undefined,
