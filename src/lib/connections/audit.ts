@@ -11,6 +11,7 @@ export type AuditEvent =
   | "deploy.started"
   | "deploy.live"
   | "deploy.failed"
+  | "deploy.cancel"
   | "fix.committed"
   | "cli.scaffold"
   | "env.saved"

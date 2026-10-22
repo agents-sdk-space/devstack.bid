@@ -1,0 +1,9 @@
+# Milestone 2: direct deploys as build jobs, logs, cancel, redeploy, sweeper
+
+- `startDeploy` now creates a `build_jobs` row first (executor `direct`, environment `preview`, `max_attempts` 1, trigger `manual` or, for a pinned SHA, `redeploy`). The `deployments` row stores `build_job_id` and `trigger`.
+- `runDirectDeploy` moves the job through queued → claimed → uploading → succeeded, or to failed or canceled. Each step writes a redacted log line: queued (repo, branch, commit, profile), claimed, selected N files and their size, uploading to the Worker, the live URL, and an error line with a hint if something fails. The `deployments` row follows the job, so the existing UI keeps working.
+- Cancel is checked at two points: once after the job is claimed and again before the upload starts. An upload that has already started is allowed to finish.
+- `GET /api/deployments/:id/logs?after=<seq>` returns only the owner's data: the deployment, the job and up to 500 log lines after `after`. `next` gives the last sequence number, so polling can resume where it stopped.
+- `POST /api/deployments/:id/cancel` requires same-origin, is owner-scoped and can be called repeatedly. It returns 409 for older deployments that have no build job.
+- `/deployments/[id]` shows the status, a timeline of the build phases, logs that refresh every 2 seconds while the job is active, a Cancel button (only while active) and a Redeploy button (only when finished). Redeploy sends the stored commit SHA to the existing `POST /api/projects/:id/deploy`. Each item in a project's deployment timeline links to this page.
+- Sweeper cron: `wrangler.jsonc` has `triggers.crons: ["*/5 * * * *"]` and `main: custom-worker.ts`, which wraps the OpenNext worker and adds a `scheduled` handler that calls `sweepBuilds`. It was checked locally with `wrangler dev --test-scheduled` and `wrangler deploy --dry-run`. It only takes effect when the Worker is deployed.

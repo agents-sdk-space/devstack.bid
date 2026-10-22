@@ -70,6 +70,7 @@ export function DirectDeployPanel({ projectId, profile }: { projectId: string; p
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <StatusPill status={d.status} />
               <span className="font-mono text-xs text-subtle">{d.ref} · {new Date(d.createdAt).toLocaleString()}</span>
+              <a href={`/deployments/${encodeURIComponent(d.id)}`} className="text-xs text-subtle underline underline-offset-4 hover:text-fg">{th ? "รายละเอียด / logs" : "Details / logs"}</a>
               {d.fixAttempts > 0 && <span className="font-mono text-[11px] text-subtle">fix {d.fixAttempts}/{d.maxFixAttempts}</span>}
             </div>
             {d.url && d.status === "live" && <div className="mt-1"><LiveUrl url={d.url} /></div>}

@@ -65,6 +65,7 @@ export function isKnownSitePath(pathname: string): boolean {
   const plug = path.match(/^\/plugins\/([^/]+)$/);
   if (plug) return PLUGIN_NAMES.has(plug[1]);
   if (/^\/projects\/[^/]+$/.test(path)) return true;
+  if (/^\/deployments\/[^/]+$/.test(path)) return true;
   if (path.startsWith("/api/")) return true;
   if (path.startsWith("/_next/")) return true;
   if (path.startsWith("/docs-assets/")) return true;

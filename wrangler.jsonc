@@ -4,7 +4,9 @@
   // next.config.ts), approved by the owner on 2026-10-11. workers.dev stays enabled as a fallback.
   // Do not add other routes/domains without approval.
   "name": "nvx-stack-builder",
-  "main": ".open-next/worker.js",
+  "main": "custom-worker.ts",
+  // custom-worker.ts imports server modules (sweeper) outside Next's bundler; "server-only" is a no-op there.
+  "alias": { "server-only": "./node_modules/server-only/empty.js" },
   "compatibility_date": "2026-10-06",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "workers_dev": true,
@@ -139,6 +141,8 @@
       "simple": { "limit": 20, "period": 60 }
     }
   ],
+  // Build-job sweeper (src/lib/build/sweep.ts): times out stale jobs every 5 minutes. Takes effect only on deploy.
+  "triggers": { "crons": ["*/5 * * * *"] },
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
