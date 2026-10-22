@@ -1,5 +1,7 @@
 # D1 Migration Plan (additive only)
 
+Status: **0013 and 0014 are written (Milestone 1)** and applied locally/in tests only; 0015–0016 are planned (renumbered so the shipped ones stay contiguous).
+
 Rules: new files `0013+`, `STRICT`, `ALTER TABLE ... ADD COLUMN` (nullable or defaulted) only, no drops/renames, every table user-scoped (`user_id` FK, `ON DELETE CASCADE`). Apply **local only** (`npm run db:migrate:local`) until "GO — PUBLISH" names the remote migration. Existing readers keep working because no column changes meaning.
 
 ## Reuse existing tables
@@ -42,7 +44,7 @@ CREATE TABLE project_connections (
 CREATE INDEX project_connections_repo_idx ON project_connections (provider, repo_id);
 ```
 
-## 0014_build_pipeline.sql
+## 0015_build_pipeline.sql
 ```sql
 ALTER TABLE deployments ADD COLUMN environment TEXT NOT NULL DEFAULT 'preview'; -- preview|production
 ALTER TABLE deployments ADD COLUMN build_job_id TEXT;
@@ -81,7 +83,7 @@ CREATE TABLE build_events (
 ) STRICT;
 ```
 
-## 0015_project_env_webhooks.sql
+## 0014_project_env_webhooks.sql
 ```sql
 CREATE TABLE environment_variables (
   id TEXT PRIMARY KEY NOT NULL,

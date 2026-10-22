@@ -48,7 +48,7 @@ export function ProjectsList() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:py-10">
-      <h1 className="text-2xl font-semibold tracking-tight text-fg">{th ? "โปรเจกต์" : "Projects"}</h1>
+      <div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-semibold tracking-tight text-fg">{th ? "โปรเจกต์" : "Projects"}</h1><a href="/new" className={`${buttonClasses("primary", "sm")} ml-auto`}><Plus className="h-4 w-4" aria-hidden />{th ? "โปรเจกต์ใหม่" : "New Project"}</a></div>
       <p className="mt-1 text-sm text-subtle">{th ? "repo ที่ DevStack สร้างในบัญชี GitHub ของคุณ (มีโควตารายวัน)" : "Repositories DevStack created in your GitHub account (daily quota applies)."}{" "}<a href="/settings/cli" className="underline underline-offset-4 hover:text-fg">{th ? "หรือสร้างจาก Terminal / ดาวน์โหลด zip" : "Or start from Terminal / download a zip"}</a></p>
       {error && <p role="alert" className="mt-4 rounded-lg border border-fg/40 px-3 py-2 text-sm text-fg">{error}</p>}
       <UploadZipPanel onDone={(id) => { location.href = `/projects/${encodeURIComponent(id)}`; }} />

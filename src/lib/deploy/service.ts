@@ -139,7 +139,10 @@ export async function startDeploy(
   const cred = once ?? (await loadCredential(db, keys, uid, "cloudflare")) ?? (await rememberedCloudflare(db, keys, uid));
   if (!cred) throw new ServiceError("reauth", "Connect Cloudflare in /settings/connections first. / เชื่อมต่อ Cloudflare ก่อน", 401);
   const [owner, repo] = upload ? ["", ""] : project.repo_full_name!.split("/");
-  const tree = upload ? null : await readTree(gh!, owner, repo, ref);
+  const rawTree = upload ? null : await readTree(gh!, owner, repo, ref);
+  // Imported monorepo projects (migration 0013): deploy only the configured root directory.
+  const root = !upload && project.root_directory ? `${project.root_directory}/` : "";
+  const tree = rawTree && root ? { ...rawTree, entries: rawTree.entries.filter((e) => e.path.startsWith(root)).map((e) => ({ ...e, path: e.path.slice(root.length) })) } : rawTree;
   const uploaded = upload ? await loadProjectFiles(db, project.id) : null;
   if (upload && !uploaded!.length) throw new ServiceError("invalid", "Upload a deploy zip first. / อัปโหลด zip ก่อน", 422);
   const profile = upload ? profileById(project.template_id) ?? uploadProfile(uploaded!) : resolveProfile(project.template_id, tree!.entries.filter((e) => e.type === "blob").map((e) => e.path));

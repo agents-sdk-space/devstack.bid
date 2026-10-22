@@ -324,3 +324,63 @@ export async function readBlob(token: string, owner: string, repo: string, sha: 
   const bin = atob(data.content.replace(/\n/g, ""));
   return Uint8Array.from(bin, (c) => c.charCodeAt(0));
 }
+
+/* ---------- New Project platform (Milestone 1): read-only import helpers ---------- */
+
+export interface GhRepoListing {
+  id: number;
+  fullName: string;
+  owner: string;
+  private: boolean;
+  defaultBranch: string;
+  canPush: boolean;
+  updatedAt: string | null;
+}
+
+type RawRepo = { id?: number; full_name?: string; owner?: { login?: string }; private?: boolean; default_branch?: string; permissions?: { pull?: boolean; push?: boolean }; updated_at?: string };
+
+const toListing = (r: RawRepo): GhRepoListing | null =>
+  r.id && r.full_name && r.default_branch && r.permissions?.pull !== false
+    ? { id: r.id, fullName: r.full_name, owner: r.owner?.login ?? r.full_name.split("/")[0], private: Boolean(r.private), defaultBranch: r.default_branch, canPush: Boolean(r.permissions?.push), updatedAt: r.updated_at ?? null }
+    : null;
+
+/**
+ * Repositories the token can read (owner, collaborator, organization member), newest first.
+ * `q` filters by name across up to 3 pages of 100; without `q`, returns one page of `perPage`.
+ */
+export async function listAccessibleRepos(token: string, opts: { page?: number; perPage?: number; q?: string } = {}): Promise<{ repos: GhRepoListing[]; page: number; hasMore: boolean }> {
+  const q = (opts.q ?? "").trim().toLowerCase().slice(0, 100);
+  const perPage = Math.min(Math.max(opts.perPage ?? 30, 1), 100);
+  const page = Math.min(Math.max(Math.floor(opts.page ?? 1), 1), 50);
+  const base = "/user/repos?sort=updated&affiliation=owner,collaborator,organization_member";
+  if (!q) {
+    const { data } = await gh<RawRepo[]>(token, "GET", `${base}&per_page=${perPage}&page=${page}`);
+    const rows = Array.isArray(data) ? data : [];
+    return { repos: rows.map(toListing).filter((x): x is GhRepoListing => !!x), page, hasMore: rows.length === perPage };
+  }
+  const out: GhRepoListing[] = [];
+  let more = false;
+  for (let p = 1; p <= 3; p++) {
+    const { data } = await gh<RawRepo[]>(token, "GET", `${base}&per_page=100&page=${p}`);
+    const rows = Array.isArray(data) ? data : [];
+    for (const r of rows) {
+      const l = toListing(r);
+      if (l && l.fullName.toLowerCase().includes(q)) out.push(l);
+    }
+    more = rows.length === 100;
+    if (!more) break;
+  }
+  return { repos: out.slice(0, perPage), page: 1, hasMore: out.length > perPage || more };
+}
+
+/** Repo metadata incl. the stable numeric id (survives renames). 404 = no access or not found. */
+export async function getRepoMeta(token: string, owner: string, repo: string): Promise<{ id: number; fullName: string; private: boolean; defaultBranch: string }> {
+  const { data } = await gh<RawRepo>(token, "GET", rp(owner, repo));
+  if (!data.id || !data.full_name) throw new GithubApiError("Repository not found or not accessible.", 404);
+  return { id: data.id, fullName: data.full_name, private: Boolean(data.private), defaultBranch: data.default_branch ?? "main" };
+}
+
+export async function listBranches(token: string, owner: string, repo: string): Promise<string[]> {
+  const { data } = await gh<{ name?: string }[]>(token, "GET", `${rp(owner, repo)}/branches?per_page=100`);
+  return (Array.isArray(data) ? data : []).map((b) => b.name).filter((n): n is string => typeof n === "string").slice(0, 100);
+}

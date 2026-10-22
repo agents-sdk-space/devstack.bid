@@ -8,6 +8,17 @@ export interface ProjectRow {
   repo_full_name: string | null;
   default_branch: string | null;
   created_at: number;
+  /** Migration 0013 (absent on rows read before it is applied). */
+  slug?: string | null;
+  source?: string | null;
+  root_directory?: string | null;
+  framework?: string | null;
+  install_command?: string | null;
+  build_command?: string | null;
+  output_directory?: string | null;
+  node_version?: string | null;
+  production_branch?: string | null;
+  provider?: string | null;
 }
 
 export async function insertProject(db: D1Like, p: { id: string; userId: string; name: string; templateId: string | null; repo: string | null; branch: string | null }): Promise<void> {
@@ -40,5 +51,12 @@ export const projectView = (p: ProjectRow) => ({
   defaultBranch: p.default_branch,
   repoUrl: p.repo_full_name ? `https://github.com/${p.repo_full_name}` : null,
   source: p.repo_full_name ? ("github" as const) : ("upload" as const),
+  origin: p.source ?? "legacy",
+  slug: p.slug ?? null,
+  rootDirectory: p.root_directory ?? "",
+  framework: p.framework ?? null,
+  build: { installCommand: p.install_command ?? null, buildCommand: p.build_command ?? null, outputDirectory: p.output_directory ?? null, nodeVersion: p.node_version ?? null },
+  productionBranch: p.production_branch ?? p.default_branch,
+  provider: p.provider ?? "cloudflare",
   createdAt: p.created_at,
 });

@@ -6,6 +6,7 @@ export type AuditEvent =
   | "credential.removed"
   | "github.revoked"
   | "project.created"
+  | "project.imported"
   | "pr.opened"
   | "deploy.started"
   | "deploy.live"

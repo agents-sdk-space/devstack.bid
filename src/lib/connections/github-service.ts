@@ -17,7 +17,7 @@ import { insertProject, type ProjectRow } from "./projects";
 
 export class ServiceError extends Error {
   constructor(
-    public code: "rate_limited" | "invalid" | "reauth" | "github" | "conflict",
+    public code: "rate_limited" | "invalid" | "reauth" | "github" | "conflict" | "forbidden" | "limit",
     message: string,
     public status = 400
   ) {

@@ -9,7 +9,7 @@ import { isBundleSafePath, type BundleFile } from "./bundle";
 import { DEPLOY_PROFILES, detectProfile, type DeployProfile } from "./templates";
 
 export class UploadError extends Error {
-  constructor(public code: "bad_zip" | "too_large" | "too_many_files" | "bad_path" | "secret_file" | "secret_content" | "empty" | "needs_build" | "not_deployable" | "file_too_large", message: string, public path?: string) { super(message); }
+  constructor(public code: "bad_zip" | "too_large" | "too_many_files" | "bad_path" | "secret_file" | "secret_content" | "empty" | "needs_build" | "not_deployable" | "file_too_large" | "symlink", message: string, public path?: string) { super(message); }
 }
 
 /** One D1 row holds at most 2 MB; keep a margin. */
@@ -36,6 +36,14 @@ export function scanSecrets(path: string, bytes: Uint8Array): string | null {
   return null;
 }
 
+const S_IFMT = 0o170000;
+const S_IFLNK = 0o120000;
+/** True for zip entries created from a symlink (unix permissions carry the file type). */
+export function isSymlinkEntry(f: { unixPermissions?: number | string | null }): boolean {
+  const m = typeof f.unixPermissions === "number" ? f.unixPermissions : typeof f.unixPermissions === "string" ? parseInt(f.unixPermissions, 8) : NaN;
+  return Number.isFinite(m) && (m & S_IFMT) === S_IFLNK;
+}
+
 /** Parse and validate an uploaded zip. Returns kept files, stripped paths and the detected deploy profile. */
 export async function parseDeployZip(zipBytes: Uint8Array): Promise<{ files: BundleFile[]; stripped: string[]; profile: DeployProfile; root: string | null }> {
   if (zipBytes.length > LIMITS.maxBundleBytes) throw new UploadError("too_large", `Zip larger than ${Math.round(LIMITS.maxBundleBytes / 1048576)} MB.`);
@@ -50,6 +58,9 @@ export async function parseDeployZip(zipBytes: Uint8Array): Promise<{ files: Bun
 
   const names = entries.map((f) => f.name.replace(/^\.\/+/, ""));
   if (names.some((n) => n.includes("\\") || n.startsWith("/") || n.split("/").includes(".."))) throw new UploadError("bad_path", "Zip contains an unsafe path.", names.find((n) => n.includes("..") || n.startsWith("/") || n.includes("\\")));
+  // Symlinks (unix mode S_IFLNK) could point outside the project once extracted by a builder: reject.
+  const link = entries.find((f) => isSymlinkEntry(f));
+  if (link) throw new UploadError("symlink", "Zip contains a symbolic link. Replace it with the real file.", link.name.slice(0, 120));
   const firstSegs = new Set(names.map((n) => (n.includes("/") ? n.split("/")[0] : "")));
   const root = firstSegs.size === 1 && !firstSegs.has("") ? [...firstSegs][0] : null;
   if (names.filter((n) => !n.startsWith("__MACOSX/")).length === 0) throw new UploadError("empty", "The zip is empty.");
