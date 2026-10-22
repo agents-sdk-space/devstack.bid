@@ -23,19 +23,23 @@ export interface ProjectRow {
 
 export async function insertProject(
   db: D1Like,
-  p: { id: string; userId: string; name: string; templateId: string | null; repo: string | null; branch: string | null; build?: { framework: string; install: string; build: string; output: string } | null }
+  p: { id: string; userId: string; name: string; templateId: string | null; repo: string | null; branch: string | null; build?: { framework: string; install: string; build: string; output: string } | null; slug?: string | null }
 ): Promise<void> {
+  // The site host comes from slug || name: reserve it in the slug column (checked by assertSlugUsable beforehand).
+  const withSlug = async () => { if (p.slug) await db.prepare("UPDATE projects SET slug = ?1 WHERE id = ?2 AND user_id = ?3 AND slug IS NULL").bind(p.slug, p.id, p.userId).run(); };
   if (p.build) {
     await db
       .prepare("INSERT INTO projects (id, user_id, name, template_id, repo_full_name, default_branch, framework, install_command, build_command, output_directory, node_version) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, '22')")
       .bind(p.id, p.userId, p.name, p.templateId, p.repo, p.branch, p.build.framework, p.build.install, p.build.build, p.build.output)
       .run();
+    await withSlug();
     return;
   }
   await db
     .prepare("INSERT INTO projects (id, user_id, name, template_id, repo_full_name, default_branch) VALUES (?1, ?2, ?3, ?4, ?5, ?6)")
     .bind(p.id, p.userId, p.name, p.templateId, p.repo, p.branch)
     .run();
+  await withSlug();
 }
 
 export async function listProjects(db: D1Like, userId: string): Promise<ProjectRow[]> {

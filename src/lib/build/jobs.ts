@@ -67,7 +67,8 @@ export function snapshotConfig(config: Record<string, unknown> = {}): string {
 const errText = (e: unknown) => String((e as Error)?.message ?? e);
 /** SQLite/D1 report the violated columns: idempotency index vs the one-active-per-environment index. */
 const isIdemViolation = (e: unknown) => /UNIQUE/i.test(errText(e)) && /idempotency_key/.test(errText(e));
-const isActiveViolation = (e: unknown) => /UNIQUE/i.test(errText(e)) && /environment/.test(errText(e));
+// Migration 0020 split the index: SQLite reports "build_jobs.project_id" (production) or "index 'build_jobs_active_preview_uq'".
+const isActiveViolation = (e: unknown) => /UNIQUE/i.test(errText(e)) && !isIdemViolation(e) && /build_jobs\.project_id|build_jobs_active_|environment/.test(errText(e));
 
 export async function getJob(db: D1Like, uid: string, id: string): Promise<BuildJobRow | null> {
   if (!/^[a-z0-9-]{8,64}$/.test(id)) return null;
@@ -75,7 +76,7 @@ export async function getJob(db: D1Like, uid: string, id: string): Promise<Build
 }
 
 async function byIdem(db: D1Like, projectId: string, key: string) {
-  return db.prepare("SELECT * FROM build_jobs WHERE project_id = ?1 AND idempotency_key = ?2").bind(projectId, key).first<BuildJobRow>();
+  return db.prepare("SELECT * FROM build_jobs WHERE project_id = ?1 AND idempotency_key = ?2 AND status NOT IN ('failed','canceled','timed_out')").bind(projectId, key).first<BuildJobRow>();
 }
 
 /**
@@ -90,6 +91,8 @@ export async function createBuildJob(db: D1Like, j: NewJob): Promise<{ job: Buil
   }
   const id = crypto.randomUUID();
   const config = snapshotConfig(j.config);
+  // A failed/canceled job with this key must not block a rebuild: free the key (keeps the old row for history).
+  if (key) await db.prepare("UPDATE build_jobs SET idempotency_key = NULL WHERE project_id = ?1 AND idempotency_key = ?2 AND status IN ('failed','canceled','timed_out')").bind(j.projectId, key).run();
   try {
     const row = await db
       .prepare(
@@ -170,6 +173,10 @@ export async function failJob(
 ): Promise<{ failed: BuildJobRow | null; retry: BuildJobRow | null }> {
   const failed = await transitionJob(db, id, from, code === "timed_out" ? "timed_out" : "failed", { error_code: code }, now);
   if (!failed || !shouldRetry(failed, code)) return { failed, retry: null };
+  // Git auto-deploy: a newer commit is waiting for this slot → don't retry the old one (the newer one builds instead).
+  const newer = await db.prepare("SELECT commit_sha FROM git_pending_builds WHERE project_id = ?1 AND environment = ?2 AND ref = ?3")
+    .bind(failed.project_id, failed.environment, failed.environment === "production" ? "" : failed.ref ?? "").first<{ commit_sha: string }>().catch(() => null);
+  if (newer && newer.commit_sha !== failed.commit_sha) return { failed, retry: null };
   const { job } = await createBuildJob(db, {
     projectId: failed.project_id, userId: failed.user_id, environment: failed.environment, trigger: "retry", commitSha: failed.commit_sha, ref: failed.ref,
     executor: failed.executor, config: JSON.parse(failed.config_snapshot || "{}"), attempt: failed.attempt + 1, maxAttempts: failed.max_attempts,

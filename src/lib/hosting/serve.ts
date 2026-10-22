@@ -57,6 +57,14 @@ function notFound(msg = "Not found") {
   return new Response(msg, { status: 404, headers: { ...BASE_HEADERS, "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } });
 }
 
+/** True when hosts/<label>.json is an expired-preview tombstone. */
+export async function isExpiredHost(bucket: R2BucketLike, label: string): Promise<boolean> {
+  const o = await bucket.get(`hosts/${label}.json`);
+  if (!o) return false;
+  const text = o.text ? await o.text() : await new Response(o.body).text();
+  try { return (JSON.parse(text) as { expired?: unknown }).expired === true; } catch { return false; }
+}
+
 export async function resolveDeployment(bucket: R2BucketLike, label: string): Promise<string | null> {
   const o = await bucket.get(`hosts/${label}.json`);
   if (!o) return null;
@@ -108,10 +116,35 @@ export function unavailable(status = 503): Response {
 type Appendable = { append(c: string, o: { html: boolean }): void };
 interface HTMLRewriterLike { on(sel: string, h: { element(e: Appendable): void }): HTMLRewriterLike; onDocument(h: { end(e: Appendable): void }): HTMLRewriterLike; transform(r: Response): Response }
 
-export function previewExpired(): Response {
+/**
+ * One language from Accept-Language: the tag with the highest q (first wins on a tie). Thai → "th", anything
+ * else → "en". Header missing or empty → "both".
+ */
+export function pickLanguage(header: string | null | undefined): "th" | "en" | "both" {
+  const raw = (header ?? "").trim();
+  if (!raw) return "both";
+  let best: { tag: string; q: number } | null = null;
+  for (const part of raw.split(",").slice(0, 20)) {
+    const [tag, ...params] = part.trim().toLowerCase().split(";");
+    if (!tag) continue;
+    const qp = params.map((x) => x.trim()).find((x) => x.startsWith("q="));
+    const q = qp ? Number(qp.slice(2)) : 1;
+    if (!Number.isFinite(q) || q <= 0) continue;
+    if (!best || q > best.q) best = { tag, q };
+  }
+  if (!best) return "both";
+  return best.tag === "th" || best.tag.startsWith("th-") ? "th" : "en";
+}
+
+/** 410 for an expired preview host, in the visitor's language (both only when Accept-Language is missing). */
+export function previewExpired(acceptLanguage: string | null = null): Response {
+  const lang = pickLanguage(acceptLanguage);
+  const thai = "<h1 lang=th>พรีวิวนี้หมดอายุแล้ว</h1><p lang=th>พรีวิวเก่าบน devstack.bid จะถูกลบอัตโนมัติ เปิดที่อยู่หลักของโปรเจกต์ หรือ deploy พรีวิวใหม่</p>";
+  const eng = "<h1 lang=en>This preview has expired</h1><p lang=en>Old preview deployments on devstack.bid are removed automatically. Open the project's main address or deploy a new preview.</p>";
+  const body = lang === "th" ? thai : lang === "en" ? eng : `${thai}<hr>${eng}`;
   return new Response(
-    "<!doctype html><meta charset=utf-8><title>Preview expired</title><body style=\"font:16px system-ui;margin:3rem\"><h1>This preview has expired</h1><p>Old preview deployments on devstack.bid are removed automatically. Open the project's main address or deploy a new preview.</p></body>",
-    { status: 410, headers: { ...BASE_HEADERS, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } },
+    `<!doctype html><meta charset=utf-8><title>Preview expired / พรีวิวหมดอายุ</title><body style="font:16px system-ui;margin:3rem">${body}</body>`,
+    { status: 410, headers: { ...BASE_HEADERS, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", Vary: "Accept-Language" } },
   );
 }
 
@@ -149,7 +182,7 @@ export async function proxyToWorker(req: Request, worker: string, subdomain: str
   const fromProject = res.headers.get("x-devstack-origin") === "project";
   if (!fromProject && (res.status === 404 || res.status >= 500)) {
     // A deleted (cleaned-up) preview Worker: say so instead of "temporarily unavailable".
-    if (res.status === 404 && PREVIEW_WORKER.test(worker)) return previewExpired();
+    if (res.status === 404 && PREVIEW_WORKER.test(worker)) return previewExpired(req.headers.get("accept-language"));
     return unavailable(res.status === 404 ? 503 : 502);
   }
   const out = new Headers(res.headers);
@@ -199,7 +232,7 @@ export async function serveSite(req: Request, bucket: R2BucketLike, domain?: str
   const host = parseHost(url.hostname, domain);
   if (host.kind !== "site") return notFound("Unknown site");
   const deploymentId = await resolveDeployment(bucket, host.label);
-  if (!deploymentId) return notFound("This site has no deployment yet.");
+  if (!deploymentId) return (await isExpiredHost(bucket, host.label)) ? previewExpired(req.headers.get("accept-language")) : notFound("This site has no deployment yet.");
   const path = objectPath(url.pathname);
   if (path === null) return notFound();
   const candidates = path === "" ? ["index.html"] : /\.[a-z0-9]+$/i.test(path) ? [path] : [`${path}.html`, `${path}/index.html`, path];

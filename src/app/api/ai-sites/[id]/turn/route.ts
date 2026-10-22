@@ -1,3 +1,4 @@
+import { routeBuildBindings } from "@/lib/build/bindings";
 import { connection } from "next/server";
 import { json } from "@/lib/chat/runtime";
 import { audit } from "@/lib/connections/audit";
@@ -31,7 +32,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (!(await reserveAiTurn(a.db, a.uid))) return json({ error: `Daily AI limit reached (${DAILY_AI_TURNS_PER_USER}/day). / ครบโควตา AI วันนี้แล้ว`, code: "daily_limit" }, 429);
   try {
     const id = (await ctx.params).id;
-    const project = id === "new" ? await createAiProject(a.db, a.uid, (await titleFor(prompt, rt.ai, rt.waiModel, rt.llm.gatewayId)).title) : await requireAiProject(a.db, a.uid, id);
+    const project = id === "new" ? await createAiProject(a.db, a.uid, (await titleFor(prompt, rt.ai, rt.waiModel, rt.llm.gatewayId)).title, (await routeBuildBindings()).sites) : await requireAiProject(a.db, a.uid, id);
     await addMessage(a.db, { projectId: project.id, uid: a.uid, role: "user", content: prompt });
     const cur = await latestVersion(a.db, project.id);
     const files = filesOf(cur);

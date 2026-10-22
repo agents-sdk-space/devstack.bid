@@ -1,4 +1,5 @@
 import "server-only";
+import { routeBuildBindings } from "@/lib/build/bindings";
 import {
   createBranch,
   getPullRequest,
@@ -94,7 +95,7 @@ export async function runCustomerTool(name: string, args: Record<string, unknown
         if (!v.ok) throw new CustomerToolError(`Files rejected: ${v.error}${v.path ? ` (${v.path})` : ""}`);
         files = v.files;
       }
-      const res = await createProjectRepo(ctx.db, token, ctx.uid, { name: String(args.name ?? ""), private: args.private !== false, description: typeof args.description === "string" ? args.description : undefined, files });
+      const res = await createProjectRepo(ctx.db, token, ctx.uid, { name: String(args.name ?? ""), private: args.private !== false, description: typeof args.description === "string" ? args.description : undefined, files }, (await routeBuildBindings()).sites);
       return { project: projectView(res.project), url: res.htmlUrl, commit: res.commit ?? null };
     }
     case "github_create_branch": {

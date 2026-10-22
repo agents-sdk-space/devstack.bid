@@ -148,6 +148,10 @@ describe("6. globally unique slugs", () => {
     const b = await createAiProject(db, "u2", "Cafe");
     expect(a.slug).toBe("cafe");
     expect(b.slug).not.toBe("cafe");
+    // Same slug gate as import: an R2 host record / tombstone of another project and preview-shaped names are skipped.
+    const sites = { get: async (k: string) => (k === "hosts/tea.json" ? { text: async () => JSON.stringify({ projectId: null, expired: true }) } : null), put: async () => undefined } as never;
+    const t = await createAiProject(db, "u1", "Tea", sites);
+    expect(t.slug).toBe("tea-2");
   });
 });
 

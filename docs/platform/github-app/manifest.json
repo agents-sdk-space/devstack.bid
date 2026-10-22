@@ -3,9 +3,14 @@
   "url": "https://devstack.bid",
   "description": "Import repositories into DevStack and deploy them to your Cloudflare account.",
   "public": true,
-  "hook_attributes": { "url": "https://devstack.bid/api/github/webhook", "active": true },
+  "hook_attributes": {
+    "url": "https://devstack.bid/api/github/webhook",
+    "active": true
+  },
   "redirect_url": "https://devstack.bid/api/github/app/manifest-callback",
-  "callback_urls": ["https://devstack.bid/api/github/app/callback"],
+  "callback_urls": [
+    "https://devstack.bid/api/github/app/callback"
+  ],
   "setup_url": "https://devstack.bid/api/github/app/setup",
   "setup_on_update": true,
   "request_oauth_on_install": false,
@@ -14,7 +19,12 @@
     "metadata": "read",
     "pull_requests": "read",
     "deployments": "write",
-    "checks": "write"
+    "checks": "write",
+    "statuses": "write"
   },
-  "default_events": ["push", "pull_request", "repository"]
+  "default_events": [
+    "push",
+    "pull_request",
+    "repository"
+  ]
 }

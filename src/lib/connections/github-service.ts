@@ -15,6 +15,9 @@ import type { D1Like } from "@/lib/chat/store";
 import { audit } from "./audit";
 import { LIMITS, changeBranchName, safeRepoName } from "./policy";
 import { insertProject, type ProjectRow } from "./projects";
+import { assertSlugUsable } from "@/lib/projects/slug-gate";
+import { siteSlug } from "@/lib/hosting/hostnames";
+import type { R2BucketLike } from "@/lib/hosting/serve";
 
 export class ServiceError extends Error {
   constructor(
@@ -38,17 +41,21 @@ export async function createProjectRepo(
   db: D1Like,
   token: string,
   uid: string,
-  spec: { name: string; private: boolean; templateId?: string | null; description?: string; files?: FileChange[] }
+  spec: { name: string; private: boolean; templateId?: string | null; description?: string; files?: FileChange[] },
+  sites: R2BucketLike | null = null
 ): Promise<{ project: ProjectRow; htmlUrl: string; commit?: string }> {
   const name = safeRepoName(spec.name);
   if (!name) throw new ServiceError("invalid", "Repository name is invalid. / ชื่อ repo ไม่ถูกต้อง");
+  // Same slug gate as import/AI: checked before the GitHub repo is created.
+  const slug = siteSlug(name);
+  if (slug) await assertSlugUsable(db, slug, null, sites);
   await takeQuota(db, uid, "repo");
   const repo = await createRepo(token, { name, private: spec.private, description: spec.description });
   const [owner, rname] = repo.fullName.split("/");
   let commit: string | undefined;
   if (spec.files?.length) commit = (await commitFiles(token, { owner, repo: rname, branch: repo.defaultBranch, message: "chore: scaffold from DevStack", files: spec.files })).sha;
   const project: ProjectRow = { id: crypto.randomUUID(), user_id: uid, name, template_id: spec.templateId ?? null, repo_full_name: repo.fullName, default_branch: repo.defaultBranch, created_at: Date.now() };
-  await insertProject(db, { id: project.id, userId: uid, name, templateId: project.template_id, repo: repo.fullName, branch: repo.defaultBranch, build: spec.templateId ? templateBuild(spec.templateId) : null });
+  await insertProject(db, { id: project.id, userId: uid, name, templateId: project.template_id, repo: repo.fullName, branch: repo.defaultBranch, build: spec.templateId ? templateBuild(spec.templateId) : null, slug });
   await audit(db, uid, "project.created", repo.fullName);
   return { project, htmlUrl: repo.htmlUrl, commit };
 }

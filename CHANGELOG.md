@@ -5,6 +5,87 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0-rc.5] - 2026-10-22
+
+### Fixed (review nits)
+- A host tombstone with no owner (`projectId` null) blocks every project in `assertSlugUsable` (moved to
+  `src/lib/projects/slug-gate.ts`).
+- The slug gate (with the `SITES` bucket) now runs on every creation path: import, template / CLI / chat-tool create
+  (`createProjectRepo`, checked before the GitHub repo is created), zip upload, and AI site create. Those paths also
+  store the reserved slug. AI fallback suffixes are 7 chars so they are never preview-shaped.
+- The 410 page picks one language from the highest-q (first on tie) Accept-Language tag; Thai only for `th`/`th-*`,
+  English otherwise; both only when the header is missing.
+
+## [0.12.0-rc.4] - 2026-10-22
+
+### Fixed / hardened
+- Confirmed: the cron's preview cleanup passes the `SITES` bucket, so `removeAliases` writes the
+  `{projectId, expired:true}` tombstone; tested end to end (cleanup → same host → 410).
+- The 410 "preview expired" page is Thai or English from `Accept-Language`, both when unclear (`Vary: Accept-Language`).
+- Migration **0021** (local only): unlinking (connection deleted or no longer `active`) deletes the project's
+  `git_pending_builds`; project delete already cascades. `drainPending` re-checks the link (active, same owner,
+  push/installation gate) before starting a build.
+- `assertSlugUsable()` is the single slug gate (taken, preview-shaped `<existing-slug>-<6>`, R2 host record or expired
+  tombstone held by another project). Import uses it with the `SITES` bucket; there is no rename/slug-change route
+  today, and any future one must call it.
+- `projectHash()` is shared by Worker naming and cleanup; tested against an independent sha256.
+
+## [0.12.0-rc.3] - 2026-10-22
+
+### Fixed (Subdev review of 275322f)
+- Jobs closed by the sweeper (`timed_out`) or by `requeueOrphans` (`queue_lost`) now start the newest waiting commit
+  for their slot; the cron also runs `drainFreeSlots`, which starts every `git_pending_builds` row whose slot is free.
+- A pending commit overwritten by a newer push gets a `failure` status "Superseded by newer commit <sha>".
+- `failJob` does not schedule a retry when a newer commit is waiting for the same slot.
+- Delivery claim extracted to `claimDelivery`; tested that a redelivery stuck in `processing` > 15 min is reprocessed
+  without a second build (idempotency key), and finished deliveries stay deduped.
+
+## [0.12.0-rc.2] - 2026-10-22
+
+### Fixed (Subdev review of 10faf17)
+- **Concurrent pushes no longer error out.** Newest commit wins per slot (production, or one preview branch):
+  an older *queued* build is canceled (`superseded`, failure status "Superseded by <sha>"); a *running* one gets
+  `cancel_requested` and the newest commit is stored in `git_pending_builds` (one row per slot, overwritten by newer
+  pushes) and starts automatically when that build ends.
+- Migration **0020** (local only, not applied remotely): the one-active index is split into production
+  (per project) and preview (per project **and branch**), so different branches/PRs build in parallel.
+- Commit status context includes the project slug: `devstack/<slug>/production|preview`.
+- `webhook_deliveries.status` aggregates every linked project, e.g. `queued:2,rate_limited:1`.
+- The webhook answers 202 right after verify + dedupe; build work runs in `ctx.waitUntil` (status `processing` until done).
+- Rate-limited pushes get a `failure` status with a clear message instead of `error`.
+
+### Security (Supdev review of 10faf17)
+- **M1: linking a public repo no longer grants auto-deploy.** Import records `can_push` (importer had push/admin).
+  A connection without an installation auto-deploys only when `can_push = 1`; the first signed delivery carrying
+  `installation.id` binds it, after which only that installation's deliveries build (`installation_mismatch` otherwise).
+  Existing connections default to `can_push = 0` → re-import (or bind via the GitHub App) to enable auto-deploy.
+- Rate limit is one atomic conditional upsert (`git_rate`, migration 0020).
+- A repo renamed/transferred under the same id updates `repo_full_name`.
+- Redelivered webhooks that are still `received`, `failed:*` or stuck `processing` (>15 min) are reprocessed.
+- Expired preview hosts keep a tombstone `{projectId, expired:true}` → 410 "preview expired", never claimable by another
+  project; new project names shaped `<existing-slug>-<6 chars>` are refused.
+- Failed/canceled/timed-out jobs no longer hold their idempotency key (same commit can be rebuilt).
+
+## [0.12.0-rc.1] - 2026-10-22
+
+### Added — Git auto-deploy (Vercel-style)
+- `POST /api/github/webhook` now acts on verified `push` and `pull_request` deliveries for repositories linked to a
+  project (`project_connections.repo_id`):
+  - push to the project's production branch (`production_branch`, else `default_branch`) → production build;
+  - push to any other branch, or PR `opened` / `synchronize` / `reopened` → preview build with its own URL;
+  - the exact pushed commit is built (pinned SHA from the signed payload); the same commit/branch/environment is
+    built once (idempotency key `gh:<env>:<branch>:<sha>`), so push + PR synchronize don't double-build.
+- GitHub commit status `devstack/preview` / `devstack/production`: `pending` with the URL when queued, `success`
+  with the live URL or `failure` with the error code when the build finishes, `error` when it could not start.
+- New `src/lib/github/autodeploy.ts` (+ `tests/git-webhook-deploy.test.ts`, 9 tests).
+
+### Security
+- Signature (`X-Hub-Signature-256`, HMAC-SHA256, constant-time `crypto.subtle.verify`) is checked before JSON parse
+  (unchanged); delivery dedupe on `X-GitHub-Delivery`; outcome recorded on `webhook_deliveries.status/build_job_id`.
+- Unlinked repos, tags, branch deletions and **fork PRs are ignored** (fork code never runs with the owner's token
+  or env vars). At most 20 webhook builds per project per hour (plus the existing daily per-user cap).
+- No payload, signature or token is logged; status bodies never contain the token.
+
 ## [0.11.0-rc.3] - 2026-10-22
 
 ### Fixed (review lows)

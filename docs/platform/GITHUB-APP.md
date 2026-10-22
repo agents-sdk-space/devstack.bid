@@ -27,3 +27,52 @@ Events: `push`, `pull_request`, `repository`. `installation` and `installation_r
 
 ## Rotation
 Generate a new private key in the GitHub App settings, run `wrangler secret put GITHUB_APP_PRIVATE_KEY`, then delete the old key on GitHub. The webhook secret is rotated the same way; accept both secrets for 10 minutes during the switch.
+
+## Git auto-deploy (0.12.0-rc.1)
+`/api/github/webhook` builds on `push` and `pull_request` (see `src/lib/github/autodeploy.ts`):
+
+| Event | Result |
+|---|---|
+| push to `production_branch` (else `default_branch`) | production build → `https://<slug>.devstack.bid` |
+| push to another branch | preview build → `https://<slug>-<id>.devstack.bid` |
+| PR opened / synchronize / reopened (same repo) | preview build |
+| fork PR, tag push, branch delete, PR closed, unlinked repo | ignored (recorded in `webhook_deliveries.status`) |
+
+The commit gets a status (`devstack/<slug>/preview` or `devstack/<slug>/production`) with the URL.
+Newest commit wins: a newer push cancels the older queued build, or (if it is already running) asks it to stop and
+builds the newest commit as soon as it ends (`git_pending_builds`, migration 0020). Different branches and PRs build
+in parallel. The webhook answers 202 immediately; builds start in the background. Until the GitHub App exists,
+statuses are posted with the project owner's GitHub OAuth token (scope `repo` covers `repo:status`) and the clone uses
+the same token as manual builds. Limits: 20 webhook builds per project per hour, plus the daily per-user cap.
+
+### Owner setup (one of)
+- **GitHub App (preferred):** create it from `github-app/manifest.json` (webhook URL
+  `https://devstack.bid/api/github/webhook`, events `push` + `pull_request`, permissions contents:read,
+  metadata:read, pull_requests:read, deployments:write, checks:write, **commit statuses: write**), then set
+  `GITHUB_APP_WEBHOOK_SECRET` with `wrangler secret put` (value pasted at the prompt).
+- **Per-repository webhook (works today, no App):** repo → Settings → Webhooks → Add: Payload URL
+  `https://devstack.bid/api/github/webhook`, content type `application/json`, secret = the same value as
+  `GITHUB_APP_WEBHOOK_SECRET`, events "push" and "pull requests".
+
+### Who can trigger builds (security)
+- Auto-deploy runs only if the project's connection is bound to the delivering GitHub App installation, or (before
+  binding) the importer had push/admin on the repo at import time. Importing someone else's public repo never
+  auto-deploys.
+- **Anyone with push access to a linked repo can run code in a preview build that sees the project's `preview`
+  environment variables.** Put only preview-safe values there; production values are used only for production-branch
+  builds. Fork PRs never build.
+
+### Follow-ups (logged, not done)
+1. **can_push re-check:** push permission is checked once at import. Re-check it (e.g. daily, or on each delivery
+   with the owner's token) so a collaborator who lost access stops auto-deploying.
+2. **R2 worker index, one key per label:** `workers/<worker>.json` is read-modify-write. Store
+   `workers/<worker>/<label>` (one object per label) or use a conditional put with the ETag once the binding wrapper
+   exposes `onlyIf`/`list`. Today the race is unlikely (one active production build per project; previews have
+   their own Worker).
+3. **Installation token for statuses:** once the GitHub App exists, post commit statuses with a short-lived,
+   single-repo installation token instead of the owner's OAuth token.
+4. Retries of webhook builds use trigger `retry`, so they don't post a final commit status.
+
+### Slugs and expired previews
+Every path that sets or changes a project slug must call `assertSlugUsable(db, slug, projectId, SITES)`
+(`src/lib/projects/import.ts`). Expired preview hosts keep `{projectId, expired:true}` and answer 410 in Thai/English.

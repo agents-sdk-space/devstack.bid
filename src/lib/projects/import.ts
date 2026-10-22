@@ -2,6 +2,7 @@
  * Import an EXISTING GitHub repository as a DevStack project (no repo copy is created).
  * Read-only on GitHub: repo metadata, branches, tree, package.json. Writes only to D1 (owner-scoped).
  */
+import type { R2BucketLike } from "@/lib/hosting/serve";
 import { GithubApiError, getRepoMeta, listBranches, readFile, readTree } from "@/lib/auth/github-api";
 import { parseRepo, safeBranch } from "@/lib/auth/github-policy";
 import type { D1Like } from "@/lib/chat/store";
@@ -59,13 +60,18 @@ export async function inspectRepo(token: string, input: { repo: unknown; ref?: u
   }
 }
 
+export { assertSlugUsable } from "./slug-gate";
+import { assertSlugUsable } from "./slug-gate";
+
 /** POST /api/projects/import — validate everything against GitHub, then persist project + connection in one batch. */
 export async function importRepo(
   db: D1Like,
   token: string,
   uid: string,
   body: { repo?: unknown; branch?: unknown; rootDirectory?: unknown; name?: unknown; build?: unknown },
-  gh: GithubReader = githubReader
+  gh: GithubReader = githubReader,
+  /** SITES bucket: lets the expired-host check see tombstones. Null → DB checks only. */
+  sites: R2BucketLike | null = null
 ): Promise<ProjectRow> {
   const { owner, name } = repoParts(body.repo);
   const slugV = validateSlug(body.name ?? name);
@@ -93,8 +99,7 @@ export async function importRepo(
   if (Number(count?.n ?? 0) >= MAX_PROJECTS_PER_USER) throw new ServiceError("limit", `Project limit reached (${MAX_PROJECTS_PER_USER}).`, 409);
   const dupe = await db.prepare("SELECT id FROM projects WHERE user_id = ?1 AND repo_full_name = ?2 AND root_directory = ?3").bind(uid, meta!.fullName, root).first<{ id: string }>();
   if (dupe) throw new ServiceError("conflict", "This repository (and root) is already a project. / repo นี้ถูกนำเข้าแล้ว", 409);
-  const slugTaken = await db.prepare("SELECT id FROM projects WHERE slug = ?1").bind(slugV.slug).first<{ id: string }>();
-  if (slugTaken) throw new ServiceError("conflict", `Project name "${slugV.slug}" is already used. / ชื่อนี้ถูกใช้แล้ว`, 409);
+  await assertSlugUsable(db, slugV.slug, null, sites);
 
   const c = cfgV.config;
   const id = crypto.randomUUID();
@@ -104,8 +109,8 @@ export async function importRepo(
     db.prepare(
       "INSERT INTO projects (id, user_id, name, template_id, repo_full_name, default_branch, slug, source, root_directory, framework, install_command, build_command, output_directory, node_version, production_branch, provider, updated_at) VALUES (?1, ?2, ?3, NULL, ?4, ?5, ?6, 'github_import', ?7, ?8, ?9, ?10, ?11, ?12, ?13, 'cloudflare', ?14)"
     ).bind(id, uid, slugV.slug, meta!.fullName, branch!, slugV.slug, root, c.framework, c.installCommand, c.buildCommand, c.outputDirectory, c.nodeVersion, branch!, now),
-    db.prepare("INSERT INTO project_connections (id, project_id, user_id, provider, installation_id, repo_id, repo_full_name, private) VALUES (?1, ?2, ?3, 'github', NULL, ?4, ?5, ?6)")
-      .bind(crypto.randomUUID(), id, uid, meta!.id, meta!.fullName, meta!.private ? 1 : 0),
+    db.prepare("INSERT INTO project_connections (id, project_id, user_id, provider, installation_id, repo_id, repo_full_name, private, can_push) VALUES (?1, ?2, ?3, 'github', NULL, ?4, ?5, ?6, ?7)")
+      .bind(crypto.randomUUID(), id, uid, meta!.id, meta!.fullName, meta!.private ? 1 : 0, meta!.canPush ? 1 : 0),
   ]).catch((e: unknown) => {
     if (/UNIQUE/i.test(String((e as Error)?.message)) && /slug/i.test(String((e as Error)?.message))) throw new ServiceError("conflict", `Project name "${slugV.slug}" is already used. / ชื่อนี้ถูกใช้แล้ว`, 409);
     throw e;
