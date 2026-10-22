@@ -1,3 +1,4 @@
+import { ghFetch } from "@/lib/auth/github-api";
 /**
  * Git auto-deploy from verified GitHub webhooks (Vercel-style):
  *   push to the project's production branch     → production build
@@ -107,7 +108,7 @@ export async function postCommitStatus(
   repoFullName: string,
   sha: string,
   s: { state: CommitState; url: string | null; context: string; description: string },
-  f: typeof fetch = fetch
+  f: typeof fetch = ghFetch as typeof fetch
 ): Promise<boolean> {
   if (!SHA.test(sha) || !/^[\w.-]+\/[\w.-]+$/.test(repoFullName)) return false;
   try {
@@ -145,7 +146,7 @@ export async function handleGitEvent(
   b: BuildBindings,
   event: string,
   payload: Record<string, unknown>,
-  f: typeof fetch = fetch,
+  f: typeof fetch = ghFetch as typeof fetch,
   now: () => number = Date.now
 ): Promise<HandleResult> {
   const plan = planFromEvent(event, payload);
@@ -246,7 +247,7 @@ async function buildOne(db: D1Like, keys: SealKeys, b: BuildBindings, plan: GitP
 export async function drainPending(
   db: D1Like, keys: SealKeys, b: BuildBindings,
   job: { project_id: string; environment: "preview" | "production"; ref: string | null },
-  f: typeof fetch = fetch, now: () => number = Date.now
+  f: typeof fetch = ghFetch as typeof fetch, now: () => number = Date.now
 ): Promise<OneResult | null> {
   try {
     const key = job.environment === "production" ? "" : job.ref ?? "";
@@ -272,7 +273,7 @@ export async function drainPending(
  * Cron: start every waiting commit whose slot is free again (covers builds closed by the sweeper, lost queue
  * messages, or anything else that ended without the executor's drain). Never throws.
  */
-export async function drainFreeSlots(db: D1Like, keys: SealKeys, b: BuildBindings, f: typeof fetch = fetch, now: () => number = Date.now): Promise<number> {
+export async function drainFreeSlots(db: D1Like, keys: SealKeys, b: BuildBindings, f: typeof fetch = ghFetch as typeof fetch, now: () => number = Date.now): Promise<number> {
   let started = 0;
   try {
     const rows = (await db.prepare("SELECT project_id, environment, ref FROM git_pending_builds ORDER BY updated_at LIMIT 20").all<{ project_id: string; environment: "preview" | "production"; ref: string }>()).results ?? [];
@@ -310,7 +311,7 @@ export async function reportBuildResult(
   keys: SealKeys,
   job: { user_id: string; project_id: string; commit_sha: string | null; trigger: string; environment: "preview" | "production"; config_snapshot?: string },
   outcome: { ok: boolean; url: string | null; message: string },
-  f: typeof fetch = fetch
+  f: typeof fetch = ghFetch as typeof fetch
 ): Promise<boolean> {
   if ((job.trigger !== "push" && job.trigger !== "pr") || !job.commit_sha) return false;
   try {

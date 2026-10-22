@@ -1,3 +1,4 @@
+import { ghFetch } from "@/lib/auth/github-api";
 /**
  * GitHub App manifest flow (https://docs.github.com/apps/sharing-github-apps/registering-a-github-app-from-a-manifest).
  * 1. An admin opens /api/github/app/manifest → a page whose button (no script) posts the manifest to GitHub with a
@@ -80,7 +81,7 @@ export interface AppBundle {
 }
 
 /** POST /app-manifests/{code}/conversions. Throws on failure without echoing the response body. */
-export async function convertManifest(code: string, f: typeof fetch = fetch): Promise<AppBundle> {
+export async function convertManifest(code: string, f: typeof fetch = ghFetch as typeof fetch): Promise<AppBundle> {
   if (!/^[A-Za-z0-9_-]{8,100}$/.test(code)) throw new Error("bad_code");
   const res = await f(`https://api.github.com/app-manifests/${code}/conversions`, {
     method: "POST",
