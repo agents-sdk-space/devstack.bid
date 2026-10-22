@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0-rc.1] - 2026-10-22
+
+### Changed
+- Every Stack Template goes through the real build pipeline. The Next.js templates (`nextjs-dashboard`,
+  `nextjs-ai-chat`, `collab-workspace`) are no longer static exports: they build with OpenNext
+  (`opennextjs-cloudflare build` → `.open-next/`) and deploy as a per-project server Worker. They ship
+  `open-next.config.ts`, `wrangler.jsonc` and pinned `@opennextjs/cloudflare` 1.20.10 / `wrangler` 4.149.0 with
+  regenerated lockfiles. Vite templates keep building to `dist/` in the container. Deploy profiles updated.
+
+### Added
+- `POST /api/projects/:id/ai-turn`: AI chat builder for any repo-backed project/template. The AI edit is validated
+  (no `.env`, `.github/`, lockfiles, wrangler/open-next config, build output), committed as ONE commit on
+  `devstack/ai`, then built by the container pipeline as a preview. Nothing is published directly.
+- Per-user tiers (`src/lib/limits/tiers.ts`): free / paid (`DEVSTACK_PAID_LOGINS`) / admin (`AISITE_ADMIN_LOGINS`),
+  overridable with `DEVSTACK_TIER_<TIER>_<FIELD>`. Defaults (AI/day, AI/min, builds/hour, builds/day, deploys/day):
+  free 20/4/3/10/5, paid 200/10/20/60/50, admin 1000/30/60/300/200. AI daily caps are atomic in D1 (`ai_quota`),
+  builds/day counted in D1 (`build_jobs`), AI/min and builds/hour are KV fixed windows.
+  Applied to AI site turns, project AI turns, manual builds and import builds (webhook builds keep their 20/hour cap).
+
+No migrations.
+
 ## [0.12.0-rc.5] - 2026-10-22
 
 ### Fixed (review nits)

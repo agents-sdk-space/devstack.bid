@@ -6,6 +6,8 @@ import { getProject } from "@/lib/connections/projects";
 import { gate, isResponse } from "@/lib/connections/route-kit";
 import { routeBuildBindings } from "@/lib/build/bindings";
 import { startContainerBuild } from "@/lib/build/executor";
+import { limitsFor } from "@/lib/limits/tiers";
+import { aiSiteRuntime } from "@/lib/aisite/runtime";
 import { jobView } from "@/lib/build/jobs";
 import { HttpError, readJsonBody } from "@/lib/server/http";
 
@@ -27,6 +29,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       ref: typeof body.ref === "string" ? body.ref : null,
       environment: body.environment === "preview" ? "preview" : "production",
       trigger: "redeploy",
+      limits: limitsFor(a.login), kv: (await aiSiteRuntime()).kv,
     });
     await audit(a.db, a.uid, "build.started", `${p.repo_full_name}@${r.job.ref}`);
     return json({ ok: true, job: jobView(r.job), deploymentId: r.deploymentId, previewUrl: r.previewUrl, productionUrl: r.productionUrl }, 202);

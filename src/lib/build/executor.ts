@@ -18,6 +18,8 @@ import { promoteProduction, publishPreview, publishServer, writeSite } from "@/l
 import { CfApiError, deployServerWorker, readServerBundle, serverWorkerName, type CfApi } from "@/lib/hosting/server-worker";
 import { sanitizeLog } from "@/lib/deploy/sanitize";
 import type { R2BucketLike } from "@/lib/hosting/serve";
+import { kvRateLimit, type KvLike } from "@/lib/aisite/kv-limit";
+import type { TierLimits } from "@/lib/limits/tiers";
 import { BUILD_TIMEOUT_MS, claimWithCap, DAILY_BUILDS_PER_USER, userBuildsToday } from "./caps";
 import { appendEvent, createBuildJob, createLogStream, failJob, finishCanceled, heartbeat, transitionJob, type BuildJobRow, type Environment } from "./jobs";
 import type { BuildState } from "./state";
@@ -62,7 +64,7 @@ export async function startContainerBuild(
   b: BuildBindings,
   uid: string,
   project: ProjectRow,
-  opts: { ref?: string | null; environment?: Environment; trigger?: "manual" | "push" | "pr" | "redeploy"; commit?: string | null; idempotencyKey?: string | null } = {},
+  opts: { ref?: string | null; environment?: Environment; trigger?: "manual" | "push" | "pr" | "redeploy"; commit?: string | null; idempotencyKey?: string | null; limits?: Pick<TierLimits, "buildsPerDay" | "buildsPerHour"> | null; kv?: KvLike | null } = {},
   lookup: typeof getBranchSha = getBranchSha
 ): Promise<{ job: BuildJobRow; deploymentId: string; previewUrl: string; productionUrl: string | null }> {
   const missing = missingInfra(b);
@@ -70,7 +72,9 @@ export async function startContainerBuild(
   if (!project.repo_full_name) throw new ServiceError("invalid", "Container builds need a GitHub repository.", 422);
   const slug = siteSlug(project.slug || project.name);
   if (!slug) throw new ServiceError("invalid", "Project name cannot be used as a site hostname.", 422);
-  if ((await userBuildsToday(db, uid)) >= DAILY_BUILDS_PER_USER) throw new ServiceError("limit", `Daily build limit reached (${DAILY_BUILDS_PER_USER}/day). / ครบโควตา build วันนี้แล้ว`, 429);
+  const perDay = opts.limits?.buildsPerDay ?? DAILY_BUILDS_PER_USER;
+  if ((await userBuildsToday(db, uid)) >= perDay) throw new ServiceError("limit", `Daily build limit reached (${perDay}/day). / ครบโควตา build วันนี้แล้ว`, 429);
+  if (opts.limits && !(await kvRateLimit(opts.kv ?? null, `build-h:${uid}`, opts.limits.buildsPerHour, 3600))) throw new ServiceError("limit", `Hourly build limit reached (${opts.limits.buildsPerHour}/hour). / build ถี่เกินไป รอสักครู่`, 429);
   const token = await loadGithubToken(db, keys, uid);
   if (!token) throw new ServiceError("reauth", "Connect GitHub first. / เชื่อมต่อ GitHub ก่อน", 401);
   const ref = safeBranch(opts.ref || project.production_branch || project.default_branch || "main");

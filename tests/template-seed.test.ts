@@ -32,8 +32,8 @@ describe("/new templates commit complete, buildable projects", () => {
     expect(validateChangeSet(files).ok).toBe(true);
     expect(files.some((f) => /__[A-Z_]+__/.test(f.content ?? ""))).toBe(false);
     const b = templateBuild(id)!;
-    expect(b.output).toBe(profileById(id)!.assetsDir);
-    if (b.framework === "nextjs") expect(get("next.config.mjs")).toContain('output: "export"');
+    expect(b.framework === "nextjs" ? `${b.output}/assets` : b.output).toBe(profileById(id)!.assetsDir);
+    if (b.framework === "nextjs") { expect(get("next.config.mjs")).not.toContain('output: "export"'); expect(get("open-next.config.ts")).toContain("defineCloudflareConfig"); }
     expect(files.some((f) => /^(app|pages)\/api\//.test(f.path) || /\.env(\.local)?$/.test(f.path))).toBe(false);
   });
 
