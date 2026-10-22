@@ -25,7 +25,7 @@ export function CliKeys() {
     const r = await fetch("/api/mcp/keys", { cache: "no-store" });
     const b = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(b.error ?? "Could not load keys");
-    return ((b.clients ?? []) as Client[]).filter((c) => c.scopes.length === 1 && c.scopes[0] === "cli:setup");
+    return ((b.clients ?? []) as Client[]).filter((c) => c.scopes.length > 0 && c.scopes.every((x) => x === "cli:setup" || x === "cli:deploy"));
   }, []);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export function CliKeys() {
   async function create() {
     setBusy(true); setError(""); setFreshKey("");
     try {
-      const r = await fetch("/api/mcp/keys", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: `CLI ${new Date().toISOString().slice(0, 10)}`, scopes: ["cli:setup"] }) });
+      const r = await fetch("/api/mcp/keys", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: `CLI ${new Date().toISOString().slice(0, 10)}`, scopes: ["cli:setup", "cli:deploy"] }) });
       const b = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(b.error ?? "Could not create key");
       setFreshKey(b.key);
@@ -71,7 +71,7 @@ export function CliKeys() {
 
       <Card className="mt-6 p-5">
         <h2 className="text-base font-semibold text-fg">{th ? "1. สร้าง CLI key" : "1. Create a CLI key"}</h2>
-        <p className="mt-1 text-sm text-subtle">{th ? "คีย์ใช้ได้แค่สร้างโปรเจกต์ (cli:setup) เก็บเป็นค่าแฮช แสดงครั้งเดียว เพิกถอนได้ทุกเมื่อ" : "Scoped to project setup only (cli:setup), stored hashed, shown once, revocable anytime."}</p>
+        <p className="mt-1 text-sm text-subtle">{th ? "ใช้กับ `npx @lsuperdev/devstack login --token` (สิทธิ์ cli:setup, cli:deploy) เก็บเป็นค่าแฮช แสดงครั้งเดียว เพิกถอนได้ทุกเมื่อ" : "For `npx @lsuperdev/devstack login --token` (scopes cli:setup, cli:deploy), stored hashed, shown once, revocable anytime."}</p>
         <button type="button" disabled={busy} onClick={() => void create()} className={buttonClasses("primary", "md", "mt-4")}><Plus className="h-4 w-4" aria-hidden />{th ? "สร้างคีย์" : "Create key"}</button>
         {freshKey && <div className="mt-4 rounded-xl border border-fg/30 p-4">
           <p className="text-sm font-semibold text-fg">{th ? "คัดลอกตอนนี้ ระบบจะไม่แสดงซ้ำ" : "Copy it now. It will not be shown again."}</p>
@@ -105,7 +105,7 @@ export function CliKeys() {
         <h2 className="text-base font-semibold text-fg">{th ? "CLI key ที่ใช้งานอยู่" : "Active CLI keys"}</h2>
         {clients.length === 0 ? <p className="mt-3 text-sm text-subtle">{th ? "ยังไม่มีคีย์" : "No active keys."}</p> : <ul className="mt-3 space-y-3">
           {clients.map((c) => <li key={c.id} className="flex items-center justify-between gap-3 rounded-xl border border-border p-4">
-            <div className="min-w-0"><p className="truncate text-sm font-medium text-fg">{c.name}</p><p className="mt-1 text-xs text-subtle">cli:setup · {c.rateLimit}/min</p></div>
+            <div className="min-w-0"><p className="truncate text-sm font-medium text-fg">{c.name}</p><p className="mt-1 text-xs text-subtle">{c.scopes.join(", ")} · {c.rateLimit}/min</p></div>
             <button type="button" disabled={busy} onClick={() => void revoke(c.id)} className={buttonClasses("ghost", "sm")}><Trash2 className="h-4 w-4" aria-hidden />{th ? "เพิกถอน" : "Revoke"}</button>
           </li>)}
         </ul>}

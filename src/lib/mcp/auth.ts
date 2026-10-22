@@ -10,6 +10,7 @@ export const MCP_SCOPES = [
   "github:read",
   "github:write",
   "cli:setup",
+  "cli:deploy",
 ] as const;
 export type McpScope = (typeof MCP_SCOPES)[number];
 

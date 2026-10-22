@@ -40,7 +40,8 @@
     "cli:test": "npm --prefix packages/nvx21st test",
     "cf:release-config": "node scripts/gen-release-config.mjs",
     "deploy:hotfix": "npm run cf:build && opennextjs-cloudflare deploy",
-    "deploy:release": "node scripts/gen-release-config.mjs && npm run cf:build && opennextjs-cloudflare deploy -c wrangler.release.jsonc"
+    "deploy:release": "node scripts/gen-release-config.mjs && npm run cf:build && opennextjs-cloudflare deploy -c wrangler.release.jsonc",
+    "cli:devstack:test": "npm --prefix packages/cli test"
   },
   "dependencies": {
     "@cloudflare/containers": "^0.3.7",

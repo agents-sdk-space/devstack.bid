@@ -12,7 +12,7 @@ import { HttpError, readJsonBody } from "@/lib/server/http";
 /** POST /api/projects/:id/builds {ref?, environment?: "preview"|"production"} — container build (user click). */
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   await connection();
-  const a = await gate(req, { write: true, burstKey: "build-new", perMinute: 4 });
+  const a = await gate(req, { write: true, burstKey: "build-new", perMinute: 4, bearer: true });
   if (isResponse(a)) return a;
   const p = await getProject(a.db, a.uid, (await ctx.params).id);
   if (!p) return json({ error: "Not found. / ไม่พบโปรเจกต์", code: "not_found" }, 404);

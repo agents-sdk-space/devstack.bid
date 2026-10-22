@@ -14,7 +14,7 @@ type Ctx = { params: Promise<{ id: string }> };
 /** GET /api/projects/:id/deploy — deployment timeline. */
 export async function GET(req: Request, ctx: Ctx) {
   await connection();
-  const a = await gate(req, { write: false, burstKey: "dep-list", perMinute: 60 });
+  const a = await gate(req, { write: false, burstKey: "dep-list", perMinute: 60, bearer: true });
   if (isResponse(a)) return a;
   const p = await getProject(a.db, a.uid, (await ctx.params).id);
   if (!p) return json({ error: "Not found. / ไม่พบโปรเจกต์", code: "not_found" }, 404);

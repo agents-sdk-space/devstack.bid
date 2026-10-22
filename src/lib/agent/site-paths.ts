@@ -34,6 +34,7 @@ const STATIC = new Set([
   "/terms",
   "/terms/api",
   "/security",
+  "/cli/device",
   "/settings/cli",
   "/settings/connections",
   "/settings/environment",

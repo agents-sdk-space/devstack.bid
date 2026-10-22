@@ -7,7 +7,7 @@ import { deploymentView, getDeployment } from "@/lib/deploy/service";
 /** GET /api/deployments/:id/logs?after=<seq> — redacted build log lines after `after` (resumable) + job + deployment. */
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   await connection();
-  const a = await gate(req, { write: false, burstKey: "dep-logs", perMinute: 120 });
+  const a = await gate(req, { write: false, burstKey: "dep-logs", perMinute: 120, bearer: true });
   if (isResponse(a)) return a;
   const d = await getDeployment(a.db, a.uid, (await ctx.params).id);
   if (!d) return json({ error: "Not found.", code: "not_found" }, 404);

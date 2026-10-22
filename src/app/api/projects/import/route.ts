@@ -12,7 +12,7 @@ import { HttpError, readJsonBody } from "@/lib/server/http";
 /** POST /api/projects/import {repo, branch?, rootDirectory?, name?, build?} — link an existing GitHub repo (no copy). */
 export async function POST(req: Request) {
   await connection();
-  const a = await gate(req, { write: true, burstKey: "proj-import", perMinute: 6 });
+  const a = await gate(req, { write: true, burstKey: "proj-import", perMinute: 6, bearer: true });
   if (isResponse(a)) return a;
   let body: Record<string, unknown>;
   try {

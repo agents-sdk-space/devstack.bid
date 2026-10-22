@@ -7,6 +7,7 @@ import { getAccount, type D1Like } from "@/lib/chat/store";
 import { clientIp } from "@/lib/server/http";
 import { checkRateLimit } from "@/lib/server/rate-limit";
 import { resolveSealKeys, type SealKeys } from "./credentials";
+import { authenticateMcpClient, consumeMcpClient } from "@/lib/mcp/auth";
 
 export interface Actor {
   uid: string;
@@ -20,7 +21,8 @@ export interface Actor {
  * Shared gate for /api/connections, /api/projects and /api/deployments: same-origin on writes,
  * burst limiter, signed-in non-anonymous user, D1 present. Returns a Response on failure.
  */
-export async function gate(req: Request, opts: { write: boolean; burstKey: string; perMinute: number }): Promise<Actor | Response> {
+export async function gate(req: Request, opts: { write: boolean; burstKey: string; perMinute: number; bearer?: boolean }): Promise<Actor | Response> {
+  if (opts.bearer && /^Bearer\s/i.test(req.headers.get("authorization") ?? "")) return bearerGate(req);
   if (opts.write && !strictOrigin(req)) return json({ error: "Cross-site request blocked. / คำขอข้ามไซต์ถูกปฏิเสธ", code: "forbidden" }, 403);
   const env = chatEnv();
   if (!env.CHAT_COOKIE_SECRET) return json({ error: "Not signed in. / ยังไม่ได้เข้าสู่ระบบ", code: "unauthorized" }, 401);
@@ -35,6 +37,25 @@ export async function gate(req: Request, opts: { write: boolean; burstKey: strin
   const account = await getAccount(db, actor.uid).catch(() => null);
   if (!account) return json({ error: "Sign in with an account (not a guest browser). / กรุณาเข้าสู่ระบบด้วยบัญชี", code: "account_required" }, 401);
   return { uid: actor.uid, db, keys: await resolveSealKeys(env.CHAT_COOKIE_SECRET), provider: account.provider, login: account.login };
+}
+
+/**
+ * CLI path (`devstack` npm package): hashed, revocable api_clients key with the `cli:deploy` scope, per-key
+ * D1 rate limit. No cookie is involved, so the same-origin check does not apply (a bearer header can't be
+ * attached cross-site by a browser). Only routes that opt in with `bearer: true` accept it.
+ */
+async function bearerGate(req: Request): Promise<Actor | Response> {
+  const env = chatEnv();
+  const { db } = await chatRuntime();
+  if (!db || !env.CHAT_COOKIE_SECRET) return json({ error: "Storage unavailable. / ระบบจัดเก็บไม่พร้อม", code: "no_database" }, 503);
+  const { client } = await authenticateMcpClient(req, db);
+  if (!client) return json({ error: "Invalid or revoked token. Run `devstack login`. / token ไม่ถูกต้องหรือถูกเพิกถอน", code: "unauthorized" }, 401);
+  if (!client.scopes.includes("cli:deploy")) return json({ error: "This key lacks the cli:deploy scope. / คีย์นี้ไม่มีสิทธิ์ cli:deploy", code: "scope" }, 403);
+  const rl = await consumeMcpClient(db, client);
+  if (!rl.ok) return json({ error: "Too many requests. / ส่งคำขอถี่เกินไป", code: "rate_limited" }, 429, { "Retry-After": String(rl.retryAfter) });
+  const account = await getAccount(db, client.userId).catch(() => null);
+  if (!account) return json({ error: "Account not found. / ไม่พบบัญชี", code: "account_required" }, 401);
+  return { uid: client.userId, db, keys: await resolveSealKeys(env.CHAT_COOKIE_SECRET), provider: account.provider, login: account.login };
 }
 
 export const isResponse = (x: unknown): x is Response => x instanceof Response;

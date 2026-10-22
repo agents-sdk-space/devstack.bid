@@ -11,7 +11,7 @@ import { KNOWN_TEMPLATE_IDS } from "@/data/template-ids";
 /** GET /api/projects — the caller's projects. */
 export async function GET(req: Request) {
   await connection();
-  const a = await gate(req, { write: false, burstKey: "proj-list", perMinute: 30 });
+  const a = await gate(req, { write: false, burstKey: "proj-list", perMinute: 30, bearer: true });
   if (isResponse(a)) return a;
   return json({ projects: (await listProjects(a.db, a.uid).catch(() => [])).map(projectView) }, 200, { "Cache-Control": "no-store" });
 }
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 /** POST /api/projects {name, private, templateId?, files?[]} — create a repo in the customer's GitHub (capacity-derived daily quota). */
 export async function POST(req: Request) {
   await connection();
-  const a = await gate(req, { write: true, burstKey: "proj-new", perMinute: 4 });
+  const a = await gate(req, { write: true, burstKey: "proj-new", perMinute: 4, bearer: true });
   if (isResponse(a)) return a;
   let body: { name?: unknown; private?: unknown; templateId?: unknown; description?: unknown; files?: unknown };
   try {
