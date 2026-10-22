@@ -68,6 +68,7 @@
   "vars": {
     "TURNSTILE_SITE_KEY": "0x4AAAAAAFXrTVkaNC9mWvUR",
     "TURNSTILE_HOSTNAMES": "devstack.bid",
+    "GITHUB_APP_ADMIN_LOGINS": "thanabartbb",
     "SITES_CF_ACCOUNT_ID": "2d92bd5b25768fa9093d6adc0a8887fc",
     "OPENAI_MODEL": "gpt-6.1-sol",
     "OPENAI_MAX_OUTPUT_TOKENS": "6000",

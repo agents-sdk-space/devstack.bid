@@ -2,6 +2,16 @@
 
 The manifest is in `docs/platform/github-app/manifest.json`. `/workspace/out/github-app-create.html` posts it to `https://github.com/organizations/agents-sdk-space/settings/apps/new?state=<random>`. The state value is kept next to the HTML file in `github-app-state.txt`. **The app has not been created.** An org owner has to open the HTML page and confirm on GitHub.
 
+## One-click creation (manifest flow, 0.12.x)
+Signed in as an admin (`GITHUB_APP_ADMIN_LOGINS`, default `thanabartbb`), open
+`https://devstack.bid/api/github/app/manifest` (org `agents-sdk-space`; `?owner=personal` for your own account, `?owner=<org>` for another org).
+Click **Continue to GitHub**, then **Create GitHub App**. GitHub redirects to `/api/github/app/manifest-callback`, which checks the
+signed 10-minute `state` (bound to the admin's user id), converts the code, and stores the app id, client id/secret, webhook
+secret and private key **sealed** in D1 table `github_app` (migration 0022, single row, never overwritten). Nothing secret is shown.
+App deliveries (with an installation id) are verified with the stored App webhook secret; per-repository webhooks keep using
+`GITHUB_APP_WEBHOOK_SECRET`. Manifest: webhook `/api/github/webhook`, events push + pull_request, permissions contents:write,
+metadata:read, pull_requests:read, statuses:write. The section below describes the earlier plan and is kept for history.
+
 ## Permissions (least privilege)
 | Permission | Level | Why |
 |---|---|---|
