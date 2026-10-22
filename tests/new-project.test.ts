@@ -5,7 +5,7 @@ import { sqliteD1 } from "./helpers/sqlite-d1";
 import { getProject, listProjects } from "@/lib/connections/projects";
 import { ServiceError } from "@/lib/connections/github-service";
 import { candidateRoots, detectFramework, underRoot, validateBuildConfig, validateOutputDirectory, validateRootDirectory, validateSlug } from "@/lib/projects/config";
-import { importRepo, inspectRepo, type GithubReader } from "@/lib/projects/import";
+import { assertSlugUsable, importRepo, inspectRepo, type GithubReader } from "@/lib/projects/import";
 import { GithubApiError } from "@/lib/auth/github-api";
 import { isSymlinkEntry, parseDeployZip, UploadError } from "@/lib/deploy/upload";
 
@@ -93,6 +93,11 @@ describe("importRepo (real SQLite + migrations 0001–0014)", () => {
     const q = await importRepo(db, "t", "userB", { repo: "public/lib" }, reader({ canPush: false }));
     expect(db.raw.prepare("SELECT can_push FROM project_connections WHERE project_id = ?").get(q.id)).toEqual({ can_push: 0 });
     await expect(importRepo(db, "t", "userB", { repo: "x/y", name: "web-a1b2c3" }, reader())).rejects.toMatchObject({ code: "conflict" });
+    // Expired-host tombstone of another project keeps the name reserved; the same project may reuse it.
+    const sites = { get: async (k: string) => (k === "hosts/old-site.json" ? { text: async () => JSON.stringify({ projectId: "proj-gone", expired: true }) } : null), put: async () => undefined } as never;
+    await expect(importRepo(db, "t", "userB", { repo: "x/old", name: "old-site" }, reader(), sites)).rejects.toMatchObject({ code: "conflict" });
+    await expect(assertSlugUsable(db, "old-site", "proj-gone", sites)).resolves.toBeUndefined();
+    await expect(assertSlugUsable(db, "web-a1b2c3", p.id)).resolves.toBeUndefined(); // a project may take its own preview shape
   });
   it("rejects duplicates and slug collisions; allows another root of the same repo", async () => {
     const db = sqliteD1(); seedUsers(db);

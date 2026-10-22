@@ -72,3 +72,7 @@ the same token as manual builds. Limits: 20 webhook builds per project per hour,
 3. **Installation token for statuses:** once the GitHub App exists, post commit statuses with a short-lived,
    single-repo installation token instead of the owner's OAuth token.
 4. Retries of webhook builds use trigger `retry`, so they don't post a final commit status.
+
+### Slugs and expired previews
+Every path that sets or changes a project slug must call `assertSlugUsable(db, slug, projectId, SITES)`
+(`src/lib/projects/import.ts`). Expired preview hosts keep `{projectId, expired:true}` and answer 410 in Thai/English.

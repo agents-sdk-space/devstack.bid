@@ -41,9 +41,12 @@ export function assertCustomerWorker(name: string): string {
  * Worker name from ids, never from the (reusable) slug. Production: one per project.
  * Preview: one per deployment, so a preview build can never replace production code.
  */
+/** The 20-hex project part of every server Worker name. Shared by naming and cleanup (must never diverge). */
+export const projectHash = (projectId: string) => hex(`project:${projectId}`, 20);
+
 export async function serverWorkerName(projectId: string, deploymentId?: string | null): Promise<string> {
   if (!projectId) throw new Error("invalid_project");
-  const base = `site-${await hex(`project:${projectId}`, 20)}`;
+  const base = `site-${await projectHash(projectId)}`;
   return assertCustomerWorker(deploymentId ? `${base}-${await hex(`deployment:${deploymentId}`, 12)}` : base);
 }
 
@@ -238,7 +241,7 @@ export async function cleanupPreviewWorkers(api: CfApi, o: CleanupOpts = {}): Pr
   for (const name of doomed.slice(0, o.max ?? 25)) {
     const st = await call<{ tags?: string[] | null }>(api, `/workers/scripts/${name}/script-settings`, { method: "GET" }).catch(() => null);
     const pid = tagProject(st?.tags);
-    if (!pid || `site-${await hex(`project:${pid}`, 20)}` !== name.slice(0, "site-".length + 20)) continue; // not provably ours
+    if (!pid || `site-${await projectHash(pid)}` !== name.slice(0, "site-".length + 20)) continue; // not provably ours
     const ok = await call(api, `/workers/scripts/${name}?force=true`, { method: "DELETE" }).then(() => true).catch(() => false);
     if (!ok) continue;
     deleted.push(name);

@@ -285,3 +285,51 @@ describe("placeholder workers and extra modules", () => {
     expect(b.modules?.map((m) => [m.name, m.type])).toEqual([["abc-yoga.wasm", "application/wasm"]]);
   });
 });
+
+describe("expired previews and worker naming", () => {
+  it("cleanup → same host answers 410 preview expired (Thai/English by Accept-Language)", async () => {
+    const { serverWorkerName, cleanupPreviewWorkers } = await import("@/lib/hosting/server-worker");
+    const { serveSite } = await import("@/lib/hosting/serve");
+    const now = Date.parse("2026-10-22T00:00:00Z");
+    const P = await serverWorkerName("proj-A");
+    const pvs = Array.from({ length: 6 }, (_, i) => `${P}-${i.toString(16).padStart(12, "0")}`);
+    const fetcher = (async (url: string, init: RequestInit) => {
+      const path = url.replace("https://api.cloudflare.com/client/v4/accounts/a", "");
+      if (path === "/workers/scripts") return new Response(JSON.stringify({ success: true, result: pvs.map((id, i) => ({ id, modified_on: new Date(now - (30 + i) * 86_400_000).toISOString() })) }));
+      if (path.endsWith("/script-settings")) return new Response(JSON.stringify({ success: true, result: { tags: ["devstack-project-proj-A"] } }));
+      if (init.method === "DELETE") return new Response(JSON.stringify({ success: true, result: null }));
+      return new Response("{}", { status: 500 });
+    }) as unknown as typeof fetch;
+    const oldest = pvs[5];
+    const store = new Map<string, string>([
+      [`workers/${oldest}.json`, JSON.stringify({ labels: ["shop-zzzzzz"] })],
+      ["hosts/shop-zzzzzz.json", JSON.stringify({ projectId: "proj-A", deploymentId: "dep-00000001", worker: oldest })],
+    ]);
+    const bucket = { get: async (k: string) => (store.has(k) ? { text: async () => store.get(k)!, body: new Response(store.get(k)!).body! } : null), put: async (k: string, v: string) => { store.set(k, v); }, delete: async (k: string) => { store.delete(k); } } as never;
+    expect(await cleanupPreviewWorkers({ accountId: "a", token: "t", fetcher }, { now, bucket })).toEqual([oldest]);
+    const th = await serveSite(new Request("https://shop-zzzzzz.devstack.bid/", { headers: { "accept-language": "th-TH,th;q=0.9" } }), bucket, "devstack.bid", { workersSubdomain: "examplessdk", fetcher });
+    expect(th.status).toBe(410);
+    const thText = await th.text();
+    expect(thText).toContain("พรีวิวนี้หมดอายุแล้ว");
+    expect(thText).not.toContain("This preview has expired");
+    const en = await serveSite(new Request("https://shop-zzzzzz.devstack.bid/", { headers: { "accept-language": "en-US,en;q=0.9" } }), bucket, "devstack.bid");
+    expect(en.status).toBe(410);
+    expect(await en.text()).toContain("This preview has expired");
+    const both = await (await serveSite(new Request("https://shop-zzzzzz.devstack.bid/"), bucket, "devstack.bid")).text();
+    expect(both).toContain("พรีวิวนี้หมดอายุแล้ว");
+    expect(both).toContain("This preview has expired");
+  });
+
+  it("cleanup's project hash is exactly the prefix used to name the Worker", async () => {
+    const { serverWorkerName, projectHash } = await import("@/lib/hosting/server-worker");
+    for (const pid of ["proj-A", "0f3c9e1a-1111-4222-8333-444455556666"]) {
+      const h = await projectHash(pid);
+      expect(h).toMatch(/^[a-f0-9]{20}$/);
+      expect(await serverWorkerName(pid)).toBe(`site-${h}`);
+      expect((await serverWorkerName(pid, "dep-12345678")).startsWith(`site-${h}-`)).toBe(true);
+      const { createHash } = await import("node:crypto");
+      expect(h).toBe(createHash("sha256").update(`project:${pid}`).digest("hex").slice(0, 20));
+    }
+  });
+});
+

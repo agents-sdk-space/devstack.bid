@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0-rc.4] - 2026-10-22
+
+### Fixed / hardened
+- Confirmed: the cron's preview cleanup passes the `SITES` bucket, so `removeAliases` writes the
+  `{projectId, expired:true}` tombstone; tested end to end (cleanup → same host → 410).
+- The 410 "preview expired" page is Thai or English from `Accept-Language`, both when unclear (`Vary: Accept-Language`).
+- Migration **0021** (local only): unlinking (connection deleted or no longer `active`) deletes the project's
+  `git_pending_builds`; project delete already cascades. `drainPending` re-checks the link (active, same owner,
+  push/installation gate) before starting a build.
+- `assertSlugUsable()` is the single slug gate (taken, preview-shaped `<existing-slug>-<6>`, R2 host record or expired
+  tombstone held by another project). Import uses it with the `SITES` bucket; there is no rename/slug-change route
+  today, and any future one must call it.
+- `projectHash()` is shared by Worker naming and cleanup; tested against an independent sha256.
+
 ## [0.12.0-rc.3] - 2026-10-22
 
 ### Fixed (Subdev review of 275322f)

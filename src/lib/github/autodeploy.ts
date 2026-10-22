@@ -248,8 +248,11 @@ export async function drainPending(
       .bind(job.project_id, job.environment, key)
       .first<{ project_id: string; user_id: string; environment: string; ref: string; commit_sha: string; kind: string }>();
     if (!row) return null;
-    const conn = await db.prepare("SELECT repo_id FROM project_connections WHERE project_id = ?1 AND provider = 'github' AND status = 'active'").bind(row.project_id).first<{ repo_id: number | null }>();
-    if (!conn?.repo_id) return { status: "ignored:not_linked" };
+    // Re-check the link at start time: it may have been unlinked, re-owned or lost its permission while waiting.
+    const conn = await db.prepare("SELECT repo_id, user_id, installation_id, can_push FROM project_connections WHERE project_id = ?1 AND provider = 'github' AND status = 'active'")
+      .bind(row.project_id).first<{ repo_id: number | null; user_id: string; installation_id: number | null; can_push: number }>();
+    if (!conn?.repo_id || conn.user_id !== row.user_id) return { status: "ignored:not_linked" };
+    if (!autoDeployAllowed(conn, conn.installation_id).ok) return { status: "ignored:not_allowed" };
     const project = await db.prepare("SELECT production_branch, default_branch FROM projects WHERE id = ?1").bind(row.project_id).first<{ production_branch: string | null; default_branch: string | null }>();
     const branch = row.environment === "production" ? project?.production_branch || project?.default_branch || "main" : row.ref;
     const kind = row.kind === "pr" ? "pr" : "push";

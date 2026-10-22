@@ -341,4 +341,35 @@ describe("handleGitEvent", () => {
     db.raw.prepare("UPDATE webhook_deliveries SET status = 'queued:1' WHERE delivery_id = ?").run(d.delivery);
     expect(await claimDelivery(db, d)).toBe(false); // finished → deduped
   });
+
+  it("unlinking a repo or deleting the project drops its waiting commits", async () => {
+    for (const how of ["delete-conn", "deactivate", "delete-project"] as const) {
+      const db = await setup();
+      const b = bindings();
+      const gh = ghFetch();
+      await runningWithPending(db, b, gh);
+      expect(db.raw.prepare("SELECT COUNT(*) AS n FROM git_pending_builds").get()).toEqual({ n: 1 });
+      if (how === "delete-conn") db.raw.exec("DELETE FROM project_connections WHERE id = 'c1'");
+      if (how === "deactivate") db.raw.exec("UPDATE project_connections SET status = 'revoked' WHERE id = 'c1'");
+      if (how === "delete-project") db.raw.exec("DELETE FROM projects WHERE id = 'projA-0001'");
+      expect(db.raw.prepare("SELECT COUNT(*) AS n FROM git_pending_builds").get()).toEqual({ n: 0 });
+    }
+  });
+
+  it("drainPending re-checks the link before starting (inactive or no longer allowed → no build)", async () => {
+    const db = await setup();
+    const b = bindings();
+    const gh = ghFetch();
+    const old = await runningWithPending(db, b, gh);
+    db.raw.prepare("UPDATE build_jobs SET status = 'failed' WHERE id = ?").run(old);
+    // Simulate a row that survived (e.g. written before migration 0021) while the link lost push permission.
+    db.raw.exec("UPDATE project_connections SET can_push = 0 WHERE id = 'c1'");
+    const sentBefore = b.sent.length;
+    expect(await drainPending(db, keys, b, { project_id: "projA-0001", environment: "production", ref: "main" }, gh.f)).toEqual({ status: "ignored:not_allowed" });
+    expect(b.sent.length).toBe(sentBefore);
+    db.raw.exec(`INSERT INTO git_pending_builds (project_id, user_id, environment, ref, commit_sha, kind) VALUES ('projA-0001', 'userA', 'production', '', '${SHA2}', 'push')`);
+    db.raw.exec("PRAGMA recursive_triggers = OFF; DROP TRIGGER git_pending_on_deactivate; UPDATE project_connections SET status = 'revoked', can_push = 1 WHERE id = 'c1'");
+    expect(await drainPending(db, keys, b, { project_id: "projA-0001", environment: "production", ref: "main" }, gh.f)).toEqual({ status: "ignored:not_linked" });
+    expect(b.sent.length).toBe(sentBefore);
+  });
 });

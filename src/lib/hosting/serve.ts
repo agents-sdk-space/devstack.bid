@@ -116,10 +116,17 @@ export function unavailable(status = 503): Response {
 type Appendable = { append(c: string, o: { html: boolean }): void };
 interface HTMLRewriterLike { on(sel: string, h: { element(e: Appendable): void }): HTMLRewriterLike; onDocument(h: { end(e: Appendable): void }): HTMLRewriterLike; transform(r: Response): Response }
 
-export function previewExpired(): Response {
+/** 410 for an expired preview host. Thai or English from Accept-Language; both when unclear. */
+export function previewExpired(acceptLanguage: string | null = null): Response {
+  const al = (acceptLanguage ?? "").toLowerCase();
+  const th = /(^|,)\s*th\b/.test(al);
+  const en = /(^|,)\s*en\b/.test(al);
+  const thai = "<h1 lang=th>พรีวิวนี้หมดอายุแล้ว</h1><p lang=th>พรีวิวเก่าบน devstack.bid จะถูกลบอัตโนมัติ เปิดที่อยู่หลักของโปรเจกต์ หรือ deploy พรีวิวใหม่</p>";
+  const eng = "<h1 lang=en>This preview has expired</h1><p lang=en>Old preview deployments on devstack.bid are removed automatically. Open the project's main address or deploy a new preview.</p>";
+  const body = th && !en ? thai : en && !th ? eng : `${thai}<hr>${eng}`;
   return new Response(
-    "<!doctype html><meta charset=utf-8><title>Preview expired</title><body style=\"font:16px system-ui;margin:3rem\"><h1>This preview has expired</h1><p>Old preview deployments on devstack.bid are removed automatically. Open the project's main address or deploy a new preview.</p></body>",
-    { status: 410, headers: { ...BASE_HEADERS, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } },
+    `<!doctype html><meta charset=utf-8><title>Preview expired / พรีวิวหมดอายุ</title><body style="font:16px system-ui;margin:3rem">${body}</body>`,
+    { status: 410, headers: { ...BASE_HEADERS, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", Vary: "Accept-Language" } },
   );
 }
 
@@ -157,7 +164,7 @@ export async function proxyToWorker(req: Request, worker: string, subdomain: str
   const fromProject = res.headers.get("x-devstack-origin") === "project";
   if (!fromProject && (res.status === 404 || res.status >= 500)) {
     // A deleted (cleaned-up) preview Worker: say so instead of "temporarily unavailable".
-    if (res.status === 404 && PREVIEW_WORKER.test(worker)) return previewExpired();
+    if (res.status === 404 && PREVIEW_WORKER.test(worker)) return previewExpired(req.headers.get("accept-language"));
     return unavailable(res.status === 404 ? 503 : 502);
   }
   const out = new Headers(res.headers);
@@ -207,7 +214,7 @@ export async function serveSite(req: Request, bucket: R2BucketLike, domain?: str
   const host = parseHost(url.hostname, domain);
   if (host.kind !== "site") return notFound("Unknown site");
   const deploymentId = await resolveDeployment(bucket, host.label);
-  if (!deploymentId) return (await isExpiredHost(bucket, host.label)) ? previewExpired() : notFound("This site has no deployment yet.");
+  if (!deploymentId) return (await isExpiredHost(bucket, host.label)) ? previewExpired(req.headers.get("accept-language")) : notFound("This site has no deployment yet.");
   const path = objectPath(url.pathname);
   if (path === null) return notFound();
   const candidates = path === "" ? ["index.html"] : /\.[a-z0-9]+$/i.test(path) ? [path] : [`${path}.html`, `${path}/index.html`, path];

@@ -2,6 +2,7 @@
  * Import an EXISTING GitHub repository as a DevStack project (no repo copy is created).
  * Read-only on GitHub: repo metadata, branches, tree, package.json. Writes only to D1 (owner-scoped).
  */
+import type { R2BucketLike } from "@/lib/hosting/serve";
 import { GithubApiError, getRepoMeta, listBranches, readFile, readTree } from "@/lib/auth/github-api";
 import { parseRepo, safeBranch } from "@/lib/auth/github-policy";
 import type { D1Like } from "@/lib/chat/store";
@@ -59,13 +60,38 @@ export async function inspectRepo(token: string, input: { repo: unknown; ref?: u
   }
 }
 
+/**
+ * Every way a project gets (or changes) its slug MUST call this: import today, and any future rename/slug-change
+ * route. Refuses a slug that is (1) another project's slug, (2) shaped like another project's preview host
+ * `<existing-slug>-<6 chars>`, or (3) still held by another project's host record in R2 (incl. expired tombstones).
+ */
+export async function assertSlugUsable(db: D1Like, slug: string, projectId: string | null, sites: R2BucketLike | null = null): Promise<void> {
+  const taken = await db.prepare("SELECT id FROM projects WHERE slug = ?1").bind(slug).first<{ id: string }>();
+  if (taken && taken.id !== projectId) throw new ServiceError("conflict", `Project name "${slug}" is already used. / ชื่อนี้ถูกใช้แล้ว`, 409);
+  const previewShape = /^(.+)-[a-z0-9]{6}$/.exec(slug);
+  if (previewShape) {
+    const base = await db.prepare("SELECT id FROM projects WHERE slug = ?1").bind(previewShape[1]).first<{ id: string }>();
+    if (base && base.id !== projectId) throw new ServiceError("conflict", `Project name "${slug}" looks like a preview address of another project. / ชื่อนี้ซ้ำกับรูปแบบลิงก์ preview`, 409);
+  }
+  if (sites) {
+    const rec = await sites.get(`hosts/${slug}.json`);
+    if (rec) {
+      let owner: unknown = null;
+      try { owner = (JSON.parse(rec.text ? await rec.text() : await new Response(rec.body).text()) as { projectId?: unknown }).projectId; } catch { owner = null; }
+      if (owner !== projectId) throw new ServiceError("conflict", `Project name "${slug}" is still reserved by an earlier site. / ชื่อนี้ยังถูกจองโดยเว็บเดิม`, 409);
+    }
+  }
+}
+
 /** POST /api/projects/import — validate everything against GitHub, then persist project + connection in one batch. */
 export async function importRepo(
   db: D1Like,
   token: string,
   uid: string,
   body: { repo?: unknown; branch?: unknown; rootDirectory?: unknown; name?: unknown; build?: unknown },
-  gh: GithubReader = githubReader
+  gh: GithubReader = githubReader,
+  /** SITES bucket: lets the expired-host check see tombstones. Null → DB checks only. */
+  sites: R2BucketLike | null = null
 ): Promise<ProjectRow> {
   const { owner, name } = repoParts(body.repo);
   const slugV = validateSlug(body.name ?? name);
@@ -93,12 +119,7 @@ export async function importRepo(
   if (Number(count?.n ?? 0) >= MAX_PROJECTS_PER_USER) throw new ServiceError("limit", `Project limit reached (${MAX_PROJECTS_PER_USER}).`, 409);
   const dupe = await db.prepare("SELECT id FROM projects WHERE user_id = ?1 AND repo_full_name = ?2 AND root_directory = ?3").bind(uid, meta!.fullName, root).first<{ id: string }>();
   if (dupe) throw new ServiceError("conflict", "This repository (and root) is already a project. / repo นี้ถูกนำเข้าแล้ว", 409);
-  const slugTaken = await db.prepare("SELECT id FROM projects WHERE slug = ?1").bind(slugV.slug).first<{ id: string }>();
-  // <existing-slug>-<6 chars> is the preview hostname shape of another project: never hand it out.
-  const previewShape = /^(.+)-[a-z0-9]{6}$/.exec(slugV.slug);
-  if (previewShape && (await db.prepare("SELECT id FROM projects WHERE slug = ?1").bind(previewShape[1]).first<{ id: string }>()))
-    throw new ServiceError("conflict", `Project name "${slugV.slug}" looks like a preview address of another project. / ชื่อนี้ซ้ำกับรูปแบบลิงก์ preview`, 409);
-  if (slugTaken) throw new ServiceError("conflict", `Project name "${slugV.slug}" is already used. / ชื่อนี้ถูกใช้แล้ว`, 409);
+  await assertSlugUsable(db, slugV.slug, null, sites);
 
   const c = cfgV.config;
   const id = crypto.randomUUID();

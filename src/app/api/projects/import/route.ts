@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const token = await loadGithubToken(a.db, a.keys, a.uid);
   if (!token) return json({ error: "Connect GitHub first. / เชื่อมต่อ GitHub ก่อน", code: "reauth" }, 401);
   try {
-    const p = await importRepo(a.db, token, a.uid, body);
+    const p = await importRepo(a.db, token, a.uid, body, undefined, (await routeBuildBindings()).sites);
     // Import → first production build (Vercel-style). Missing infrastructure is reported as blocked, never faked.
     let build: Record<string, unknown>;
     try {
