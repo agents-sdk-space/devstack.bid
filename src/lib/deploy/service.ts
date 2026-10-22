@@ -1,5 +1,5 @@
 import "server-only";
-import { readBlob, readTree } from "@/lib/auth/github-api";
+import { getBranchSha, readBlob, readTree } from "@/lib/auth/github-api";
 import { safeBranch } from "@/lib/auth/github-policy";
 import type { D1Like } from "@/lib/chat/store";
 import { audit } from "@/lib/connections/audit";
@@ -114,6 +114,19 @@ async function rememberedCloudflare(db: D1Like, keys: SealKeys, uid: string): Pr
   return secret && account && /^[a-f0-9]{32}$/.test(account) ? { secret, meta: { account_id: account } } : null;
 }
 
+export const COMMIT_SHA = /^[a-f0-9]{40}$/i;
+
+/** Branch → commit SHA (or validate a pinned SHA's format). Missing branch = 422, not a silent default. */
+export async function resolveCommit(
+  token: string, owner: string, repo: string, ref: string, pinned: string | null,
+  lookup: typeof getBranchSha = getBranchSha
+): Promise<string> {
+  if (pinned) return pinned;
+  const sha = await lookup(token, owner, repo, ref);
+  if (!sha || !COMMIT_SHA.test(sha)) throw new ServiceError("invalid", `Branch "${ref}" not found. / ไม่พบ branch`, 422);
+  return sha.toLowerCase();
+}
+
 /**
  * POST /api/projects/:id/deploy. Validates synchronously (quota, one in flight, credentials, profile),
  * records a `queued` deployment and runs the upload in the background.
@@ -130,7 +143,9 @@ export async function startDeploy(
   once?: { secret: string; meta: CredentialMeta } | null
 ): Promise<DeploymentRow> {
   const upload = !project.repo_full_name;
-  const ref = upload ? "upload" : safeBranch(rawRef || project.default_branch || "main");
+  // A 40-hex ref = "redeploy this exact commit"; otherwise a branch name.
+  const pinned = !upload && rawRef && COMMIT_SHA.test(rawRef) ? rawRef.toLowerCase() : null;
+  const ref = upload ? "upload" : pinned ?? safeBranch(rawRef || project.default_branch || "main");
   if (!ref) throw new ServiceError("invalid", "Invalid ref. / ref ไม่ถูกต้อง");
   const inflight = await db.prepare("SELECT id FROM deployments WHERE project_id = ?1 AND status IN ('queued','uploading') AND created_at > ?2").bind(project.id, Date.now() - 15 * 60_000).first<{ id: string }>();
   if (inflight) throw new ServiceError("conflict", "A deploy is already running for this project. / มี deploy กำลังทำงานอยู่", 409);
@@ -139,7 +154,9 @@ export async function startDeploy(
   const cred = once ?? (await loadCredential(db, keys, uid, "cloudflare")) ?? (await rememberedCloudflare(db, keys, uid));
   if (!cred) throw new ServiceError("reauth", "Connect Cloudflare in /settings/connections first. / เชื่อมต่อ Cloudflare ก่อน", 401);
   const [owner, repo] = upload ? ["", ""] : project.repo_full_name!.split("/");
-  const rawTree = upload ? null : await readTree(gh!, owner, repo, ref);
+  // Resolve the branch to a commit first and read the tree AT that commit, so commit_sha is exactly what was deployed.
+  const commitSha = upload ? null : await resolveCommit(gh!, owner, repo, ref, pinned);
+  const rawTree = upload ? null : await readTree(gh!, owner, repo, commitSha!);
   // Imported monorepo projects (migration 0013): deploy only the configured root directory.
   const root = !upload && project.root_directory ? `${project.root_directory}/` : "";
   const tree = rawTree && root ? { ...rawTree, entries: rawTree.entries.filter((e) => e.path.startsWith(root)).map((e) => ({ ...e, path: e.path.slice(root.length) })) } : rawTree;
@@ -150,7 +167,7 @@ export async function startDeploy(
   if (!provider) throw new ServiceError("invalid", profile.path === "none" ? ERROR_HINTS.not_deployable : ERROR_HINTS.needs_build, 422);
   await takeQuota(db, uid, "deploy");
   const id = crypto.randomUUID();
-  await db.prepare("INSERT INTO deployments (id, project_id, user_id, ref, target, status) VALUES (?1, ?2, ?3, ?4, ?5, 'queued')").bind(id, project.id, uid, ref, provider.target).run();
+  await db.prepare("INSERT INTO deployments (id, project_id, user_id, ref, commit_sha, target, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'queued')").bind(id, project.id, uid, ref, commitSha, provider.target).run();
   await audit(db, uid, "deploy.started", `${project.repo_full_name ?? `upload:${project.id}`}@${ref}`);
   const name = safeWorkerName(project.name) ?? `devstack-${id.slice(0, 8)}`;
 
@@ -174,5 +191,5 @@ export async function startDeploy(
       }
     })()
   );
-  return { id, project_id: project.id, user_id: uid, commit_sha: null, ref, target: provider.target, status: "queued", url: null, cf_version_id: null, error_code: null, error_log: null, fix_attempts: 0, created_at: Date.now(), finished_at: null };
+  return { id, project_id: project.id, user_id: uid, commit_sha: commitSha, ref, target: provider.target, status: "queued", url: null, cf_version_id: null, error_code: null, error_log: null, fix_attempts: 0, created_at: Date.now(), finished_at: null };
 }

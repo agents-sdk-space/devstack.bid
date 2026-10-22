@@ -3,6 +3,10 @@
  * removes known secrets verbatim plus anything shaped like a token, caps the length.
  */
 const PATTERNS: RegExp[] = [
+  /(?<=:\/\/)[^/\s:@]+:[^/\s@]+(?=@)/g, // credentials embedded in URLs (git remotes, registry URLs)
+  /\bnpm_[A-Za-z0-9]{36}\b/g, // npm automation tokens
+  /\bAKIA[0-9A-Z]{16}\b/g, // AWS access key ids
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)/g,
   /\bBearer\s+[A-Za-z0-9._~+/=-]{8,}/gi,
   /\bgh[pousr]_[A-Za-z0-9]{20,}\b/g,
   /\bgithub_pat_[A-Za-z0-9_]{20,}\b/g,

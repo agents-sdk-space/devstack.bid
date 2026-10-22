@@ -1,43 +1,13 @@
 // New Project platform (Milestone 1): unit + security tests. D1 = real SQLite with the real migrations.
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
-import { DatabaseSync } from "node:sqlite";
 import JSZip from "jszip";
 import { describe, expect, it } from "vitest";
-import type { D1Like } from "@/lib/chat/store";
+import { sqliteD1 } from "./helpers/sqlite-d1";
 import { getProject, listProjects } from "@/lib/connections/projects";
 import { ServiceError } from "@/lib/connections/github-service";
 import { candidateRoots, detectFramework, underRoot, validateBuildConfig, validateOutputDirectory, validateRootDirectory, validateSlug } from "@/lib/projects/config";
 import { importRepo, inspectRepo, type GithubReader } from "@/lib/projects/import";
 import { GithubApiError } from "@/lib/auth/github-api";
 import { isSymlinkEntry, parseDeployZip, UploadError } from "@/lib/deploy/upload";
-
-function sqliteD1(): D1Like & { raw: DatabaseSync } {
-  const raw = new DatabaseSync(":memory:");
-  raw.exec("PRAGMA foreign_keys = ON");
-  const dir = join(process.cwd(), "migrations");
-  for (const f of readdirSync(dir).filter((x) => x.endsWith(".sql")).sort()) raw.exec(readFileSync(join(dir, f), "utf8"));
-  const stmt = (sql: string, args: unknown[] = []) => {
-    const conv = sql.replace(/\?(\d+)/g, "?");
-    const order = [...sql.matchAll(/\?(\d+)/g)].map((m) => Number(m[1]) - 1);
-    const vals = () => (order.length ? order.map((i) => args[i]) : args) as never[];
-    return {
-      bind: (...a: unknown[]) => stmt(sql, a),
-      async all() { const s = raw.prepare(conv); return /^\s*(SELECT|WITH)/i.test(sql) || /RETURNING/i.test(sql) ? { results: s.all(...vals()) } : (s.run(...vals()), { results: [] }); },
-      async run() { return this.all(); },
-      async first() { return ((await this.all()).results?.[0] ?? null) as never; },
-    };
-  };
-  return {
-    raw,
-    prepare: (s: string) => stmt(s) as never,
-    batch: async (list: unknown[]) => {
-      raw.exec("BEGIN");
-      try { const out = []; for (const s of list as { all(): Promise<unknown> }[]) out.push(await s.all()); raw.exec("COMMIT"); return out as never; }
-      catch (e) { raw.exec("ROLLBACK"); throw e; }
-    },
-  };
-}
 
 const tree = (paths: string[]) => ({ entries: paths.map((path) => ({ path, type: "blob", sha: "a".repeat(40), size: 10 })), truncated: false });
 
