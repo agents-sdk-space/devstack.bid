@@ -13,7 +13,12 @@ import { PLATFORM_WORKERS, PREVIEW_WORKER, SERVER_WORKER, type R2BucketLike } fr
 export { PLATFORM_WORKERS };
 
 export interface BundleFile { path: string; bytes: Uint8Array }
-export interface ServerBundle { worker: Uint8Array; assets: BundleFile[]; compatibilityDate: string; compatibilityFlags: string[] }
+export interface ExtraModule { name: string; bytes: Uint8Array; type: string }
+export interface ServerBundle { worker: Uint8Array; assets: BundleFile[]; compatibilityDate: string; compatibilityFlags: string[]; modules?: ExtraModule[] }
+
+/** Extra modules wrangler emits next to worker.js (e.g. resvg/yoga .wasm for next/og). */
+const MODULE_TYPES: Record<string, string> = { wasm: "application/wasm", js: "application/javascript+module", mjs: "application/javascript+module", cjs: "application/javascript", txt: "text/plain", bin: "application/octet-stream", html: "text/plain", sql: "text/plain" };
+const MODULE_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 
 /** Platform-fixed runtime settings. Customers cannot change them (SSRF: global_fetch_strictly_public stays on). */
 export const SERVER_COMPAT_DATE = "2026-10-01";
@@ -55,12 +60,24 @@ export function readServerBundle(files: BundleFile[]): ServerBundle | null {
   const meta = files.find((f) => strip(f.path) === "server.json");
   const worker = files.find((f) => strip(f.path) === "worker/worker.js");
   if (!meta || !worker) return null;
+  const modules: ExtraModule[] = [];
+  for (const f of files) {
+    const p = strip(f.path);
+    if (!p.startsWith("worker/") || p === "worker/worker.js" || p.endsWith("/") || p.endsWith(".map") || p.endsWith("README.md")) continue;
+    const name = p.slice("worker/".length);
+    const ext = name.split(".").pop()?.toLowerCase() ?? "";
+    // Flat names only; the guard's own module name is reserved.
+    if (!MODULE_NAME.test(name) || name === "devstack-guard.js" || !MODULE_TYPES[ext]) continue;
+    modules.push({ name, bytes: f.bytes, type: MODULE_TYPES[ext] });
+  }
+  if (modules.length > 50) throw new Error("too_many_modules");
+  if (worker.bytes.length + modules.reduce((n, m) => n + m.bytes.length, 0) > MAX_WORKER_BYTES * 3) throw new Error("worker_too_large");
   if (worker.bytes.length > MAX_WORKER_BYTES) throw new Error("worker_too_large");
   const assets = files
     .filter((f) => strip(f.path).startsWith("assets/") && !strip(f.path).endsWith("/"))
     .map((f) => ({ path: "/" + strip(f.path).slice("assets/".length), bytes: f.bytes }))
     .filter((f) => f.path.length > 1 && !f.path.includes(".."));
-  return { worker: worker.bytes, assets, compatibilityDate: SERVER_COMPAT_DATE, compatibilityFlags: [...SERVER_COMPAT_FLAGS] };
+  return { worker: worker.bytes, assets, compatibilityDate: SERVER_COMPAT_DATE, compatibilityFlags: [...SERVER_COMPAT_FLAGS], modules };
 }
 
 /**
@@ -120,7 +137,14 @@ export const OWNER_TAG = (projectId: string) => `devstack-project-${projectId.re
 export async function checkOwnership(api: CfApi, name: string, projectId: string): Promise<"new" | "owned"> {
   try {
     const s = await call<{ tags?: string[] | null }>(api, `/workers/scripts/${name}/script-settings`, { method: "GET" });
-    if ((s?.tags ?? []).includes(OWNER_TAG(projectId))) return "owned";
+    const tags = s?.tags ?? [];
+    if (tags.includes(OWNER_TAG(projectId))) return "owned";
+    if (!tags.length) {
+      // An assets-upload session creates an empty placeholder (no versions, no tags) before the first PUT.
+      // If that PUT failed, the placeholder has no code at all, so it can be claimed.
+      const v = await call<{ items?: unknown[] }>(api, `/workers/scripts/${name}/versions`, { method: "GET" });
+      if (!(v?.items ?? []).length) return "new";
+    }
     throw new Error("worker_owner_mismatch");
   } catch (e) {
     if (e instanceof CfApiError && (e.status === 404 || e.cfCode === 10007)) return "new";
@@ -168,6 +192,7 @@ export async function deployServerWorker(api: CfApi, name: string, b: ServerBund
   form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
   form.append("devstack-guard.js", new Blob([GUARD_MODULE], { type: "application/javascript+module" }), "devstack-guard.js");
   form.append("worker.js", new Blob([b.worker as BlobPart], { type: "application/javascript+module" }), "worker.js");
+  for (const m of b.modules ?? []) form.append(m.name, new Blob([m.bytes as BlobPart], { type: m.type }), m.name);
   const up = await call<{ id?: string; deployment_id?: string | null }>(api, `/workers/scripts/${name}`, { method: "PUT", body: form });
   await call(api, `/workers/scripts/${name}/subdomain`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ enabled: true, previews_enabled: false }) });
   return { versionId: up?.deployment_id ?? up?.id ?? null, assets: b.assets.length };

@@ -269,3 +269,19 @@ describe("badge at document end when there is no <body>", () => {
     } finally { delete (globalThis as Record<string, unknown>).HTMLRewriter; }
   });
 });
+
+describe("placeholder workers and extra modules", () => {
+  it("claims an empty placeholder (no tags, no versions) but not a tag-less Worker with code", async () => {
+    const mk = (items: unknown[]) => (async (url: string) => new Response(JSON.stringify({ success: true, result: url.endsWith("/versions") ? { items } : { tags: null } }))) as unknown as typeof fetch;
+    expect(await checkOwnership({ accountId: "a", token: "t", fetcher: mk([]) }, W, "p")).toBe("new");
+    await expect(checkOwnership({ accountId: "a", token: "t", fetcher: mk([{ id: "v" }]) }, W, "p")).rejects.toThrow("worker_owner_mismatch");
+  });
+  it("uploads sibling wasm modules from worker/, skips maps and unsafe names", async () => {
+    const b = readServerBundle([
+      { path: "server.json", bytes: enc("{}") }, { path: "worker/worker.js", bytes: enc("x") },
+      { path: "worker/abc-yoga.wasm", bytes: new Uint8Array([0, 97, 115, 109]) }, { path: "worker/worker.js.map", bytes: enc("{}") },
+      { path: "worker/devstack-guard.js", bytes: enc("evil") }, { path: "worker/sub/x.wasm", bytes: enc("x") }, { path: "worker/README.md", bytes: enc("r") },
+    ])!;
+    expect(b.modules?.map((m) => [m.name, m.type])).toEqual([["abc-yoga.wasm", "application/wasm"]]);
+  });
+});
