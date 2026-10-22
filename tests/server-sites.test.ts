@@ -314,3 +314,28 @@ describe("deployServerWorker asset MIME types", () => {
     expect(await (uploads[0].get(manifest["/_next/static/chunks/y.js"].hash) as Blob).text()).toBe(btoa("1"));
   });
 });
+
+describe("asset hash version + MIME table", () => {
+  it("versions assetHash so pre-fix (untyped) uploads are not deduped", async () => {
+    const { assetHash, ASSET_HASH_VERSION } = await import("@/lib/hosting/server-worker");
+    expect(ASSET_HASH_VERSION).toBe("v2:");
+    const f = { path: "/a.css", bytes: enc("body{}") };
+    const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(btoa("body{}") + "css"));
+    const legacy = [...new Uint8Array(d)].slice(0, 16).map((b) => b.toString(16).padStart(2, "0")).join("");
+    const h = await assetHash(f);
+    expect(h).toMatch(/^[0-9a-f]{32}$/);
+    expect(h).not.toBe(legacy);
+    expect(await assetHash(f)).toBe(h);
+  });
+  it("maps fonts, media and data formats", async () => {
+    const { contentType } = await import("@/lib/hosting/serve");
+    expect(contentType("/f.ttf")).toBe("font/ttf");
+    expect(contentType("/f.otf")).toBe("font/otf");
+    expect(contentType("/f.eot")).toBe("application/vnd.ms-fontobject");
+    expect(contentType("/d.csv")).toMatch(/^text\/csv/);
+    expect(contentType("/s.MP3")).toBe("audio/mpeg");
+    expect(contentType("/v.webm")).toBe("video/webm");
+    expect(contentType("/s.ogg")).toBe("audio/ogg");
+    expect(contentType("/x.nope")).toBe("application/octet-stream");
+  });
+});

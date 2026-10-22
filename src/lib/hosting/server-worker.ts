@@ -106,9 +106,12 @@ function b64(bytes: Uint8Array): string {
   return btoa(s);
 }
 
-async function assetHash(f: BundleFile): Promise<string> {
+/** Bumped when upload semantics change: v2 = parts carry a MIME type. Workers Assets dedupes by hash, so files
+ *  uploaded untyped before v2 would otherwise never be re-sent. */
+export const ASSET_HASH_VERSION = "v2:";
+export async function assetHash(f: BundleFile): Promise<string> {
   const ext = f.path.includes(".") ? f.path.slice(f.path.lastIndexOf(".") + 1) : "";
-  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(b64(f.bytes) + ext));
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ASSET_HASH_VERSION + b64(f.bytes) + ext));
   return [...new Uint8Array(d)].slice(0, 16).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 

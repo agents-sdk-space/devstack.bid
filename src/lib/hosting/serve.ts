@@ -17,6 +17,10 @@ const TYPES: Record<string, string> = {
   json: "application/json", svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp",
   avif: "image/avif", ico: "image/x-icon", txt: "text/plain; charset=utf-8", xml: "application/xml", woff: "font/woff", woff2: "font/woff2",
   wasm: "application/wasm", map: "application/json", webmanifest: "application/manifest+json", pdf: "application/pdf", mp4: "video/mp4",
+  ttf: "font/ttf", otf: "font/otf", eot: "application/vnd.ms-fontobject", csv: "text/csv; charset=utf-8", mp3: "audio/mpeg",
+  webm: "video/webm", ogg: "audio/ogg", wav: "audio/wav", m4a: "audio/mp4", mov: "video/quicktime", htm: "text/html; charset=utf-8",
+  md: "text/markdown; charset=utf-8", bmp: "image/bmp", apng: "image/apng", rss: "application/rss+xml", atom: "application/atom+xml",
+  zip: "application/zip", gz: "application/gzip",
 };
 export const contentType = (path: string) => TYPES[path.split(".").pop()?.toLowerCase() ?? ""] ?? "application/octet-stream";
 
