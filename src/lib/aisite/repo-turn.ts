@@ -91,22 +91,25 @@ export interface SyncDeps { getBranchSha: typeof getBranchSha; createBranch: typ
 export async function syncAiBranch(token: string, owner: string, repo: string, base: string, d: SyncDeps = { getBranchSha, createBranch, mergeInto }, onMerged?: (sha: string) => Promise<void> | void): Promise<"created" | "merged" | "up_to_date" | "conflict"> {
   if (!(await d.getBranchSha(token, owner, repo, AI_BRANCH))) {
     await d.createBranch(token, owner, repo, AI_BRANCH, base);
+    // The new branch points at base's head: its push webhook must not build it (the AI commit that follows is built once).
+    const head = await d.getBranchSha(token, owner, repo, AI_BRANCH).catch(() => null);
+    if (head && onMerged) await onMerged(head);
     return "created";
   }
   return d.mergeInto(token, owner, repo, AI_BRANCH, base, onMerged);
 }
 
 /** KV marker for sync merge commits on devstack/ai: the webhook skips building them (the AI commit that follows is built once). */
-export const aiSyncMergeKey = (repoFullName: string, sha: string) => `ai-sync-merge:${repoFullName.toLowerCase()}:${sha.toLowerCase()}`;
+export const aiSyncMergeKey = (projectId: string, repoFullName: string, sha: string) => `ai-sync-merge:${projectId}:${repoFullName.toLowerCase()}:${sha.toLowerCase()}`;
 export const AI_SYNC_MERGE_TTL = 600;
 export interface KvMark { get(key: string): Promise<string | null>; put(key: string, value: string, opts?: { expirationTtl?: number }): Promise<void> }
-export async function rememberSyncMerge(kv: KvMark | null, repoFullName: string, sha: string): Promise<void> {
+export async function rememberSyncMerge(kv: KvMark | null, projectId: string, repoFullName: string, sha: string): Promise<void> {
   if (!kv) return;
-  try { await kv.put(aiSyncMergeKey(repoFullName, sha), "1", { expirationTtl: AI_SYNC_MERGE_TTL }); } catch { /* soft: worst case one extra build */ }
+  try { await kv.put(aiSyncMergeKey(projectId, repoFullName, sha), "1", { expirationTtl: AI_SYNC_MERGE_TTL }); } catch { /* soft: worst case one extra build */ }
 }
-export async function isSyncMerge(kv: KvMark | null, repoFullName: string, sha: string): Promise<boolean> {
+export async function isSyncMerge(kv: KvMark | null, projectId: string, repoFullName: string, sha: string): Promise<boolean> {
   if (!kv) return false;
-  try { return (await kv.get(aiSyncMergeKey(repoFullName, sha))) === "1"; } catch { return false; }
+  try { return (await kv.get(aiSyncMergeKey(projectId, repoFullName, sha))) === "1"; } catch { return false; }
 }
 /** Same key the webhook uses for a push to devstack/ai, so route + webhook builds of one AI commit dedupe to one job. */
 export const aiTurnBuildKey = (sha: string) => `gh:preview:${AI_BRANCH}:${sha.toLowerCase()}`;

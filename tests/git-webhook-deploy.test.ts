@@ -381,14 +381,17 @@ describe("handleGitEvent", () => {
 describe("rc.3: one AI turn = one build job + one quota count", () => {
   it("sync merge is skipped by the webhook; route + webhook builds of the AI commit dedupe", async () => {
     const { startContainerBuild } = await import("@/lib/build/executor");
-    const { AI_BRANCH, aiTurnBuildKey, rememberSyncMerge } = await import("@/lib/aisite/repo-turn");
+    const { AI_BRANCH, aiTurnBuildKey, rememberSyncMerge, isSyncMerge } = await import("@/lib/aisite/repo-turn");
     const { buildHourKey } = await import("@/lib/limits/tiers");
     const store = new Map<string, string>();
     const kv = { get: async (k: string) => store.get(k) ?? null, put: async (k: string, v: string) => { store.set(k, v); } };
     const db = await setup();
     const b = bindings({ kv } as never);
     const MERGE = "a".repeat(40), AI = "b".repeat(40);
-    await rememberSyncMerge(kv, "acme/site", MERGE);
+    await rememberSyncMerge(kv, "otherProj", "acme/site", MERGE);
+    // A marker from another project on the same repo must not suppress this project's build.
+    expect((await isSyncMerge(kv, "projA-0001", "acme/site", MERGE))).toBe(false);
+    await rememberSyncMerge(kv, "projA-0001", "acme/site", MERGE);
     expect((await handleGitEvent(db, keys, b, "push", push(AI_BRANCH, MERGE), ghFetch().f)).status).toBe("ignored:ai_sync_merge:1");
     const project = db.raw.prepare("SELECT * FROM projects WHERE id = 'projA-0001'").get() as never;
     const r = await startContainerBuild(db, keys, b, "userA", project, { ref: AI_BRANCH, environment: "preview", trigger: "manual", commit: AI, kv, idempotencyKey: aiTurnBuildKey(AI) });

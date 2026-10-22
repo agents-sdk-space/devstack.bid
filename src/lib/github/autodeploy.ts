@@ -189,7 +189,7 @@ async function buildOne(db: D1Like, keys: SealKeys, b: BuildBindings, plan: GitP
   const report = (sha: string, state: CommitState, url: string | null, description: string) =>
     token ? postCommitStatus(token, project.repo_full_name!, sha, { state, url, context, description }, f) : Promise.resolve(false);
   // devstack AI sync merges (base → devstack/ai) are not built: the AI commit that follows is built once by the ai-turn route.
-  if (plan.kind === "push" && environment === "preview" && plan.branch === AI_BRANCH && (await isSyncMerge(b.kv ?? null, project.repo_full_name, plan.sha))) return { status: "ignored:ai_sync_merge" };
+  if (plan.kind === "push" && environment === "preview" && plan.branch === AI_BRANCH && (await isSyncMerge(b.kv ?? null, project.id, project.repo_full_name, plan.sha))) return { status: "ignored:ai_sync_merge" };
   if (!fromPending) {
     if (!(await takeWebhookSlot(db, projectId, now()))) {
       await report(plan.sha, "failure", null, `Not built: limit of ${WEBHOOK_BUILDS_PER_HOUR} automatic builds per hour reached. Push again later or deploy from devstack.bid.`);
