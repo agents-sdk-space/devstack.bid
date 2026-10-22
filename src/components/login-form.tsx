@@ -47,6 +47,9 @@ export function LoginForm({ next, auth, provider, turnstileSiteKey = "" }: { nex
   const alert = notice(auth, provider);
   const [pending, setPending] = useState<string | null>(null);
   const [problem, setProblem] = useState<DictKey | null>(null);
+  // Controlled so the typed password survives any re-render, and the length is visible while typing.
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   // Back/forward cache restores the page with the old "pending" state; reset it so the buttons work again.
   useEffect(() => {
@@ -121,8 +124,31 @@ export function LoginForm({ next, auth, provider, turnstileSiteKey = "" }: { nex
           {(props) => <Input {...props} name="email" type="email" autoComplete="username" autoCapitalize="none" spellCheck={false} required maxLength={200} />}
         </Field>
         <Field label={t("auth.password")} hint={t("auth.passwordHint")}>
-          {(props) => <Input {...props} name="password" type="password" autoComplete="current-password" required minLength={10} maxLength={200} />}
+          {(props) => (
+            <Input
+              {...props}
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              required
+              minLength={10}
+              maxLength={200}
+              value={password}
+              onChange={(e) => setPassword(e.currentTarget.value)}
+            />
+          )}
         </Field>
+        <div className="-mt-2 flex items-center justify-between text-xs text-subtle">
+          <span data-testid="password-count" aria-live="polite">
+            {t("auth.passwordCount").replace("{n}", String(password.length))}
+          </span>
+          <button type="button" className="underline" onClick={() => setShowPassword((v) => !v)} aria-pressed={showPassword}>
+            {showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+          </button>
+        </div>
         {turnstileSiteKey && <TurnstileWidget siteKey={turnstileSiteKey} action={TURNSTILE_ACTION} lang={lang} onToken={setCaptcha} />}
         <div className="flex flex-col gap-2 sm:flex-row">
           <button type="submit" name="action" value="login" className={buttonClasses("primary", "md", "w-full")} aria-disabled={pending !== null}>
