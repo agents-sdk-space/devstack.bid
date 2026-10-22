@@ -14,7 +14,8 @@ import { ServiceError } from "@/lib/connections/github-service";
 import { getBranchSha } from "@/lib/auth/github-api";
 import { safeBranch } from "@/lib/auth/github-policy";
 import { previewHost, productionHost, siteSlug } from "@/lib/hosting/hostnames";
-import { promoteProduction, publishPreview, writeSite } from "@/lib/hosting/publish";
+import { promoteProduction, publishPreview, publishServer, writeSite } from "@/lib/hosting/publish";
+import { deployServerWorker, readServerBundle, serverWorkerName, type CfApi } from "@/lib/hosting/server-worker";
 import type { R2BucketLike } from "@/lib/hosting/serve";
 import { BUILD_TIMEOUT_MS, claimWithCap, DAILY_BUILDS_PER_USER, userBuildsToday } from "./caps";
 import { appendEvent, createBuildJob, createLogStream, failJob, finishCanceled, heartbeat, transitionJob, type BuildJobRow, type Environment } from "./jobs";
@@ -30,6 +31,8 @@ export interface BuildBindings {
   sites: R2BucketLike | null;
   container: ((jobId: string) => ContainerStub) | null;
   dnsReady: boolean;
+  /** Cloudflare API access for per-project server Workers; null → server builds are Blocked. */
+  cfApi?: CfApi | null;
 }
 
 /** Which pieces are missing (reported as Blocked, never faked). */
@@ -211,6 +214,20 @@ export async function runContainerJob(db: D1Like, keys: SealKeys, b: BuildBindin
     const tar = new Uint8Array(await art.arrayBuffer());
     await b.artifacts!.put(`artifacts/${jobId}.tar`, tar, { httpMetadata: { contentType: "application/x-tar" } });
     const files = readTar(tar);
+    const bundle = readServerBundle(files);
+    if (bundle) {
+      // Server app (Next.js/OpenNext): its own Worker `site-<slug>`, proxied by devstack-sites.
+      if (!b.cfApi) return fail("invalid_config", "Server (Next.js) sites need the platform Cloudflare API token (SITES_CF_API_TOKEN); it is not configured.");
+      const worker = serverWorkerName(cfg.slug);
+      await log.line(`Server build detected: deploying Worker ${worker} (${bundle.assets.length} assets).`);
+      try { await deployServerWorker(b.cfApi, worker, bundle); } catch (e) { return fail("cf_api", `Worker upload failed: ${String((e as Error)?.message ?? e).slice(0, 200)}`); }
+      const urls = await publishServer(b.sites!, cfg.slug, project.id, dep.id, worker, job.environment === "production");
+      await transitionJob(db, jobId, "uploading", "succeeded", { artifact_key: `artifacts/${jobId}.tar` }, now());
+      await log.line(`Ready: ${urls.preview}${urls.production ? ` (production ${urls.production})` : ""}`);
+      await closeDeployment("live", { url: urls.preview, alias: urls.production });
+      await saveLog();
+      return "done";
+    }
     const written = await writeSite(b.sites!, dep.id, files);
     await log.line(`Uploaded ${written.files} files (${Math.round(written.bytes / 1024)} KiB).`);
     const preview = await publishPreview(b.sites!, cfg.slug, project.id, dep.id);

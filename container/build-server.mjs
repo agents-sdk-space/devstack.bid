@@ -3,7 +3,7 @@
 // The GitHub token is passed to git via an http.extraheader in GIT_CONFIG_* env (never argv, never logged).
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join, normalize } from "node:path";
 
 const WORK = process.env.BUILD_WORKDIR || "/work";
@@ -116,10 +116,41 @@ async function build(spec, emit) {
   }
   const out = normalize(join(dir, spec.output || "."));
   if (!out.startsWith(SRC) || !existsSync(out) || !statSync(out).isDirectory()) return { ok: false, code: "missing_index", message: `output directory "${spec.output || "."}" not found` };
+  // Server app (OpenNext for Cloudflare): bundle .open-next/worker.js into one module + assets.
+  const openNext = existsSync(join(out, "worker.js")) && existsSync(join(out, "assets")) ? out : existsSync(join(dir, ".open-next", "worker.js")) ? join(dir, ".open-next") : null;
+  if (openNext && !existsSync(join(out, "index.html"))) {
+    const r = await bundleServer(dir, openNext, env, emit);
+    if (state.canceled) return { ok: false, code: "canceled" };
+    if (!r.ok) return r;
+    state.output = r.output;
+    emit({ t: "phase", phase: "uploading" });
+    return { ok: true, server: true };
+  }
   if (!existsSync(join(out, "index.html"))) return { ok: false, code: "missing_index", message: "index.html not found in the output directory (static output required)" };
   state.output = out;
   emit({ t: "phase", phase: "uploading" });
   return { ok: true };
+}
+
+/** `wrangler deploy --dry-run` bundles the OpenNext worker (no Cloudflare credentials involved). */
+export async function bundleServer(dir, openNext, env, emit) {
+  const outDir = join(WORK, "server-bundle");
+  mkdirSync(join(outDir, "worker"), { recursive: true });
+  const flags = ["nodejs_compat", "global_fetch_strictly_public"];
+  const date = "2026-10-01";
+  const cfg = join(WORK, "server-wrangler.json");
+  writeFileSync(cfg, JSON.stringify({ name: "devstack-server-bundle", main: join(openNext, "worker.js"), compatibility_date: date, compatibility_flags: flags, assets: { directory: join(openNext, "assets"), binding: "ASSETS" } }));
+  emit({ t: "log", phase: "building", chunk: "$ wrangler deploy --dry-run (bundle server worker)\n" });
+  const local = join(dir, "node_modules", ".bin", "wrangler");
+  const [cmd, args] = existsSync(local) ? [local, []] : ["npx", ["--yes", "wrangler@4"]];
+  const r = await run(cmd, [...args, "deploy", "--dry-run", "--config", cfg, "--outdir", join(outDir, "worker")], { cwd: dir, env: { ...env, WRANGLER_SEND_METRICS: "false" } }, "building", emit);
+  if (r.code !== 0) return { ok: false, code: "build_failed", message: `server bundle exited with ${r.code}` };
+  if (!existsSync(join(outDir, "worker", "worker.js"))) return { ok: false, code: "missing_index", message: "server bundle produced no worker.js" };
+  const cp = await run("cp", ["-r", join(openNext, "assets"), join(outDir, "assets")], { cwd: dir, env }, "building", emit);
+  if (cp.code !== 0) return { ok: false, code: "build_failed", message: "could not copy server assets" };
+  for (const f of ["worker.js.map", "README.md"]) { try { rmSync(join(outDir, "worker", f), { force: true }); } catch {} }
+  writeFileSync(join(outDir, "server.json"), JSON.stringify({ compatibility_date: date, compatibility_flags: flags }));
+  return { ok: true, output: outDir };
 }
 
 const server = createServer(async (req, res) => {

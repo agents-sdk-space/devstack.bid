@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0-rc.1] - 2026-10-22
+
+### Added
+- Server (Next.js/OpenNext) sites: the build container bundles `.open-next` into one Worker module; the platform
+  uploads it as Worker `site-<slug>` via the Cloudflare API and `devstack-sites` proxies `<slug>.devstack.bid` to it
+  (docs/platform/SERVER-SITES.md). Requires the `SITES_CF_API_TOKEN` secret.
+- Cron re-delivers orphaned queued build jobs.
+- Template work from `fix/templates`: buildable template projects, `static-website` template, picker routing.
+
+### Fixed
+- `executor_lost` errors now include the container start failure reason.
+- OpenNext builds no longer fail with `missing_index`.
+- Restored `src/lib/build/*`, `/chat/build` page and the user guide PDF deleted by mistake in f040e19.
+
 ## [0.10.0-rc.1] - 2026-10-22
 
 ### Added

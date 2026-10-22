@@ -15,6 +15,10 @@ export function buildBindings(env: Record<string, unknown>): BuildBindings {
     sites: (env.SITES as R2BucketLike | undefined) ?? null,
     container,
     dnsReady: env.SITES_DNS_READY === "1",
+    // Platform token for per-project server Workers (Workers Scripts: Edit). Never sent to the container.
+    cfApi: typeof env.SITES_CF_API_TOKEN === "string" && env.SITES_CF_API_TOKEN && typeof env.SITES_CF_ACCOUNT_ID === "string" && env.SITES_CF_ACCOUNT_ID
+      ? { token: env.SITES_CF_API_TOKEN, accountId: env.SITES_CF_ACCOUNT_ID }
+      : null,
   };
 }
 

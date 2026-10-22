@@ -24,7 +24,7 @@ export class HostTakenError extends Error {
 }
 
 /** Point a hostname at a deployment. A hostname belongs to the first project that claims it. */
-async function alias(bucket: R2BucketLike, host: string, projectId: string, deploymentId: string, domain: string) {
+async function alias(bucket: R2BucketLike, host: string, projectId: string, deploymentId: string, domain: string, worker?: string) {
   const label = host.slice(0, -domain.length - 1);
   const key = `hosts/${label}.json`;
   const cur = await bucket.get(key);
@@ -34,7 +34,7 @@ async function alias(bucket: R2BucketLike, host: string, projectId: string, depl
     try { owner = (JSON.parse(text) as { projectId?: unknown }).projectId; } catch { owner = null; }
     if (owner !== projectId) throw new HostTakenError(host);
   }
-  await bucket.put(key, JSON.stringify({ projectId, deploymentId, updatedAt: Date.now() }), { httpMetadata: { contentType: "application/json" } });
+  await bucket.put(key, JSON.stringify(worker ? { projectId, deploymentId, worker, updatedAt: Date.now() } : { projectId, deploymentId, updatedAt: Date.now() }), { httpMetadata: { contentType: "application/json" } });
 }
 
 /** Preview URL for one deployment (immutable). */
@@ -49,4 +49,14 @@ export async function promoteProduction(bucket: R2BucketLike, slug: string, proj
   const host = productionHost(slug, domain);
   await alias(bucket, host, projectId, deploymentId, domain);
   return `https://${host}`;
+}
+
+/** Point the production host (and this deployment's preview host) at the project's server Worker. */
+export async function publishServer(bucket: R2BucketLike, slug: string, projectId: string, deploymentId: string, worker: string, production: boolean, domain = PLATFORM_DOMAIN): Promise<{ preview: string; production: string | null }> {
+  const pv = previewHost(slug, deploymentId, domain);
+  await alias(bucket, pv, projectId, deploymentId, domain, worker);
+  if (!production) return { preview: `https://${pv}`, production: null };
+  const prod = productionHost(slug, domain);
+  await alias(bucket, prod, projectId, deploymentId, domain, worker);
+  return { preview: `https://${pv}`, production: `https://${prod}` };
 }

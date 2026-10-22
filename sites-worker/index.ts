@@ -5,7 +5,7 @@
 import { serveSite, type R2BucketLike } from "../src/lib/hosting/serve";
 
 export default {
-  async fetch(req: Request, env: { SITES: R2BucketLike; PLATFORM_DOMAIN?: string }): Promise<Response> {
+  async fetch(req: Request, env: { SITES: R2BucketLike; PLATFORM_DOMAIN?: string; WORKERS_SUBDOMAIN?: string }): Promise<Response> {
     const domain = env.PLATFORM_DOMAIN || "devstack.bid";
     const u = new URL(req.url);
     // The *.devstack.bid route also captures www; send it to the platform apex.
@@ -14,7 +14,7 @@ export default {
       return Response.redirect(u.toString(), 301);
     }
     try {
-      return await serveSite(req, env.SITES, env.PLATFORM_DOMAIN || "devstack.bid");
+      return await serveSite(req, env.SITES, env.PLATFORM_DOMAIN || "devstack.bid", { workersSubdomain: env.WORKERS_SUBDOMAIN });
     } catch {
       return new Response("Site temporarily unavailable", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } });
     }

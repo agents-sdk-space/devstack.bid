@@ -68,7 +68,43 @@ export async function resolveDeployment(bucket: R2BucketLike, label: string): Pr
   }
 }
 
-export async function serveSite(req: Request, bucket: R2BucketLike, domain?: string): Promise<Response> {
+/** Per-project server Worker name (Next.js/OpenNext sites); only `site-<slug>` names are accepted. */
+export const SERVER_WORKER = /^site-[a-z0-9](?:[a-z0-9-]{0,56}[a-z0-9])?$/;
+
+export async function resolveServerWorker(bucket: R2BucketLike, label: string): Promise<string | null> {
+  const o = await bucket.get(`hosts/${label}.json`);
+  if (!o) return null;
+  const text = o.text ? await o.text() : await new Response(o.body).text();
+  try {
+    const w = (JSON.parse(text) as { worker?: unknown }).worker;
+    return typeof w === "string" && SERVER_WORKER.test(w) ? w : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Forward a request to the project's own Worker on workers.dev, keeping method, path, query and body. */
+export async function proxyToWorker(req: Request, worker: string, subdomain: string, fetcher: typeof fetch = fetch): Promise<Response> {
+  const url = new URL(req.url);
+  const target = new URL(`${url.pathname}${url.search}`, `https://${worker}.${subdomain}.workers.dev`);
+  const headers = new Headers(req.headers);
+  headers.set("X-Forwarded-Host", url.hostname);
+  headers.set("X-Forwarded-Proto", "https");
+  const res = await fetcher(target.toString(), { method: req.method, headers, body: req.method === "GET" || req.method === "HEAD" ? undefined : req.body, redirect: "manual" });
+  const out = new Headers(res.headers);
+  const loc = out.get("location");
+  if (loc) { try { const l = new URL(loc, target); if (l.host === target.host) { l.host = url.host; out.set("location", l.toString()); } } catch { /* keep */ } }
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers: out });
+}
+
+export async function serveSite(req: Request, bucket: R2BucketLike, domain?: string, opts: { workersSubdomain?: string; fetcher?: typeof fetch } = {}): Promise<Response> {
+  if (opts.workersSubdomain) {
+    const h = parseHost(new URL(req.url).hostname, domain);
+    if (h.kind === "site") {
+      const worker = await resolveServerWorker(bucket, h.label);
+      if (worker) return proxyToWorker(req, worker, opts.workersSubdomain, opts.fetcher);
+    }
+  }
   if (req.method !== "GET" && req.method !== "HEAD") return new Response("Method not allowed", { status: 405, headers: { ...BASE_HEADERS, Allow: "GET, HEAD" } });
   const url = new URL(req.url);
   const host = parseHost(url.hostname, domain);

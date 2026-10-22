@@ -4,10 +4,12 @@
   "name": "devstack-sites",
   "main": "index.ts",
   "compatibility_date": "2026-10-06",
+  // Server sites are proxied to site-<slug>.<WORKERS_SUBDOMAIN>.workers.dev over the public internet.
+  "compatibility_flags": ["global_fetch_strictly_public"],
   "workers_dev": false,
   "preview_urls": false,
   "routes": [{ "pattern": "*.devstack.bid/*", "zone_name": "devstack.bid" }],
   "r2_buckets": [{ "binding": "SITES", "bucket_name": "devstack-sites" }],
-  "vars": { "PLATFORM_DOMAIN": "devstack.bid" },
+  "vars": { "PLATFORM_DOMAIN": "devstack.bid", "WORKERS_SUBDOMAIN": "examplessdk" },
   "observability": { "enabled": true }
 }
