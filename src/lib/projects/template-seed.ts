@@ -36,6 +36,10 @@ function npmName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 100) || "devstack-app";
 }
 
+/** Local env/secret files never go into a customer repo (only .env.example is allowed). */
+const SECRET_FILE = /(^|\/)(\.env(\..+)?|\.dev\.vars)$/;
+export const isSeedSecretPath = (p: string) => SECRET_FILE.test(p) && !/(^|\/)\.env\.example$/.test(p);
+
 export function templateSeedFiles(templateId: string, repoName: string, description?: string): FileChange[] {
   const template = getTemplate(templateId);
   if (!template) return [];
@@ -51,7 +55,7 @@ export function templateSeedFiles(templateId: string, repoName: string, descript
       __FG__: th.fg, __MUTED__: th.muted, __RADIUS__: th.radius, __FONT__: th.font, __LAYOUT__: th.layout,
     };
     const fill = (s: string) => s.replace(/__[A-Z_]+?__/g, (m) => vars[m] ?? m);
-    const out: FileChange[] = project.map((f) => {
+    const out: FileChange[] = project.filter((f) => !isSeedSecretPath(f.path)).map((f) => {
       if (f.path === "package.json" || f.path === "package-lock.json") {
         const j = JSON.parse(f.content);
         j.name = slug;
@@ -67,7 +71,7 @@ export function templateSeedFiles(templateId: string, repoName: string, descript
   const config = configForTemplate(templateId, { projectName: repoName });
   const steps = composeSteps(config);
   const files = new Map<string, string>();
-  for (const s of steps) for (const f of s.files) if (!/(^|\/)\.env(\.local)?$/.test(f.path)) files.set(f.path, f.content);
+  for (const s of steps) for (const f of s.files) if (!isSeedSecretPath(f.path)) files.set(f.path, f.content);
   files.set("setup.sh", toBash(steps, config, "en"));
   files.set("README.md", toReadme(steps, config, "en"));
   return [...files].map(([path, content]) => ({ path, content }));

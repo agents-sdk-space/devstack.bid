@@ -7,10 +7,12 @@ import { join, relative } from "node:path";
 const ROOT = new URL("../template-projects/", import.meta.url).pathname;
 const OUT = new URL("../src/data/template-projects.generated.ts", import.meta.url).pathname;
 const SKIP = new Set(["node_modules", "dist", "out", ".next"]);
+// Same rule as isSeedSecretPath in src/lib/projects/template-seed.ts: never embed local env/secret files.
+const SECRET = (name) => /^(\.env(\..+)?|\.dev\.vars)$/.test(name) && name !== ".env.example";
 
 function walk(dir, base, acc) {
   for (const name of readdirSync(dir).sort()) {
-    if (SKIP.has(name)) continue;
+    if (SKIP.has(name) || SECRET(name)) continue;
     const p = join(dir, name);
     if (statSync(p).isDirectory()) walk(p, base, acc);
     else acc.push({ path: relative(base, p), content: readFileSync(p, "utf8") });

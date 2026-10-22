@@ -8,7 +8,7 @@ import { KNOWN_TEMPLATE_IDS } from "@/data/template-ids";
 import { chooseTemplate } from "@/lib/ai/fallback";
 import { validateChangeSet } from "@/lib/connections/policy";
 import { profileById } from "@/lib/deploy/templates";
-import { safeText, templateBuild, templateSeedFiles } from "@/lib/projects/template-seed";
+import { isSeedSecretPath, safeText, templateBuild, templateSeedFiles } from "@/lib/projects/template-seed";
 import { BANNED_HUES, pickHue, websiteTheme } from "@/lib/projects/website-theme";
 
 /** The templates offered on /new (same filter as src/app/new/page.tsx). */
@@ -55,6 +55,14 @@ describe("/new templates commit complete, buildable projects", () => {
     expect(safeText(`a<script>"x"{y}\`$z\\`, 100)).toBe("a script x y z");
     const f = templateSeedFiles("static-website", "x", `</title><script>alert(1)</script>`);
     expect(f.find((x) => x.path === "index.html")!.content).not.toContain("<script>alert");
+  });
+});
+
+describe("secret files are never seeded", () => {
+  it.each([".env", ".env.local", ".env.production", ".env.development", ".dev.vars", "app/.env.production", "sub/.dev.vars"])("%s is excluded", (p) => expect(isSeedSecretPath(p)).toBe(true));
+  it.each([".env.example", "app/.env.example", "env.ts", ".envrc.md", "README.md"])("%s is allowed", (p) => expect(isSeedSecretPath(p)).toBe(false));
+  it("no template seeds any secret file", () => {
+    for (const id of KNOWN_TEMPLATE_IDS) expect(templateSeedFiles(id, "demo").filter((f) => isSeedSecretPath(f.path)), id).toEqual([]);
   });
 });
 
