@@ -7,6 +7,7 @@ import { listProjects, projectView } from "@/lib/connections/projects";
 import { gate, isResponse } from "@/lib/connections/route-kit";
 import { HttpError, readJsonBody } from "@/lib/server/http";
 import { KNOWN_TEMPLATE_IDS } from "@/data/template-ids";
+import { templateSeedFiles } from "@/lib/projects/template-seed";
 
 /** GET /api/projects — the caller's projects. */
 export async function GET(req: Request) {
@@ -35,6 +36,9 @@ export async function POST(req: Request) {
     const v = validateChangeSet(body.files);
     if (!v.ok) return json({ error: `Files rejected: ${v.error}${v.path ? ` (${v.path})` : ""}`, code: v.error }, 400);
     files = v.files;
+  } else if (templateId) {
+    // Seed the chosen template's own files; without this every template repo was the same README-only repo.
+    files = templateSeedFiles(templateId, String(body.name ?? ""));
   }
   try {
     const r = await createProjectRepo(a.db, token, a.uid, { name: String(body.name ?? ""), private: body.private !== false, templateId, description: typeof body.description === "string" ? body.description : undefined, files });
