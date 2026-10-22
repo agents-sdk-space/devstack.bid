@@ -15,7 +15,8 @@ import { getBranchSha } from "@/lib/auth/github-api";
 import { safeBranch } from "@/lib/auth/github-policy";
 import { previewHost, productionHost, siteSlug } from "@/lib/hosting/hostnames";
 import { promoteProduction, publishPreview, publishServer, writeSite } from "@/lib/hosting/publish";
-import { deployServerWorker, readServerBundle, serverWorkerName, type CfApi } from "@/lib/hosting/server-worker";
+import { CfApiError, deployServerWorker, readServerBundle, serverWorkerName, type CfApi } from "@/lib/hosting/server-worker";
+import { sanitizeLog } from "@/lib/deploy/sanitize";
 import type { R2BucketLike } from "@/lib/hosting/serve";
 import { BUILD_TIMEOUT_MS, claimWithCap, DAILY_BUILDS_PER_USER, userBuildsToday } from "./caps";
 import { appendEvent, createBuildJob, createLogStream, failJob, finishCanceled, heartbeat, transitionJob, type BuildJobRow, type Environment } from "./jobs";
@@ -179,8 +180,8 @@ export async function runContainerJob(db: D1Like, keys: SealKeys, b: BuildBindin
       body: JSON.stringify({ repo: project.repo_full_name, commit: job.commit_sha, root: cfg.root ?? "", install: cfg.install, build: cfg.build, output: cfg.output, env, token: conn && conn.private === 0 ? null : token }),
     });
     if (!res.ok || !res.body) {
-      // Surface the Containers runtime reason (e.g. "Failed to start container: …"); it never carries secrets.
-      const why = (await res.text().catch(() => "")).replace(/\s+/g, " ").trim().slice(0, 300);
+      // Surface the Containers runtime reason (e.g. "Failed to start container: …"), redacted like every log line.
+      const why = sanitizeLog((await res.text().catch(() => "")).replace(/\s+/g, " ").trim(), secrets, 300);
       return fail("executor_lost", `Build container did not start (HTTP ${res.status})${why ? `: ${why}` : ""}.`);
     }
     const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
@@ -218,10 +219,17 @@ export async function runContainerJob(db: D1Like, keys: SealKeys, b: BuildBindin
     if (bundle) {
       // Server app (Next.js/OpenNext): its own Worker `site-<slug>`, proxied by devstack-sites.
       if (!b.cfApi) return fail("invalid_config", "Server (Next.js) sites need the platform Cloudflare API token (SITES_CF_API_TOKEN); it is not configured.");
-      const worker = serverWorkerName(cfg.slug);
-      await log.line(`Server build detected: deploying Worker ${worker} (${bundle.assets.length} assets).`);
-      try { await deployServerWorker(b.cfApi, worker, bundle); } catch (e) { return fail("cf_api", `Worker upload failed: ${String((e as Error)?.message ?? e).slice(0, 200)}`); }
-      const urls = await publishServer(b.sites!, cfg.slug, project.id, dep.id, worker, job.environment === "production");
+      const production = job.environment === "production";
+      // Name from ids (not the reusable slug); previews get their own Worker so they never replace production.
+      const worker = await serverWorkerName(project.id, production ? null : dep.id);
+      await log.line(`Server build detected: deploying the project Worker (${bundle.assets.length} assets).`);
+      try { await deployServerWorker(b.cfApi, worker, bundle, project.id); } catch (e) {
+        const code = e instanceof CfApiError ? e.code : String((e as Error)?.message ?? "error").replace(/[^a-z0-9_]/gi, "").slice(0, 40) || "error";
+        // Full detail stays in server logs only; the user sees a stable error code.
+        console.warn(JSON.stringify({ at: "server-worker-deploy", jobId, code, detail: e instanceof CfApiError ? e.detail : undefined }));
+        return fail("cf_api", `Worker upload failed (error code ${code}).`);
+      }
+      const urls = await publishServer(b.sites!, cfg.slug, project.id, dep.id, worker, production);
       await transitionJob(db, jobId, "uploading", "succeeded", { artifact_key: `artifacts/${jobId}.tar` }, now());
       await log.line(`Ready: ${urls.preview}${urls.production ? ` (production ${urls.production})` : ""}`);
       await closeDeployment("live", { url: urls.preview, alias: urls.production });

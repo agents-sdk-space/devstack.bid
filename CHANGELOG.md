@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0-rc.2] - 2026-10-22
+
+### Security (Supdev review of cff8391 = FAIL, fixed)
+- `devstack-sites` proxy forwards only an allowlist of request headers (no `Cookie`, `Authorization`, `CF-*`) and
+  removes every `Set-Cookie` from server-site responses (no cookie tossing onto devstack.bid).
+- Server-site responses now carry the platform security headers (`frame-ancestors`, `nosniff`, …) and the report badge.
+- Customer `server.json` is ignored: compatibility flags are fixed to `nodejs_compat` + `global_fetch_strictly_public`
+  and the date is pinned (closes an SSRF path).
+- Server Worker names come from the project id (`site-<hash>`), previews get their own Worker
+  (`site-<hash>-<hash>`), names are hard-checked against `^site-[a-f0-9]{20}(-[a-f0-9]{12})?$` and a platform
+  denylist, and an owner tag is checked before every upload (no slug-reuse overwrite).
+- Each server Worker is wrapped in a platform guard that rejects direct `workers.dev` requests without the
+  per-worker proxy key (HMAC of `SITES_PROXY_SECRET`) and hides that key from customer code.
+- Upstream workers.dev 404/5xx that are not from the project Worker show "Site temporarily unavailable".
+- Container start errors are redacted with `sanitizeLog`; Cloudflare API errors are logged server-side and users see
+  only an error code.
+
+### Fixed
+- Orphaned queued jobs are re-delivered with atomic exponential backoff (`UPDATE … RETURNING`) and failed with
+  `queue_lost` and a clear message after 4 re-deliveries.
+- Login: the password counter no longer announces every keystroke (only the 10-character threshold), shows an
+  "OK" text at 10+, and the show-password toggle resets on submit and `pagehide`.
+- Removed `packages/cli/node_modules` from git.
+
 ## [0.11.0-rc.1] - 2026-10-22
 
 ### Added
