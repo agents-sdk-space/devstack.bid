@@ -66,6 +66,36 @@ export function scrubCheckout(src, repo) {
   writeFileSync(cfg, kept.join("\n"));
 }
 
+
+const OPENNEXT_PKG = "@opennextjs/cloudflare@1";
+const OPENNEXT_CONFIG = `import { defineCloudflareConfig } from "@opennextjs/cloudflare";\n\n// Added by DevStack at build time (repo had no open-next.config.ts).\nexport default defineCloudflareConfig();\n`;
+const anyOf = (dir, names) => names.some((n) => existsSync(join(dir, n)));
+
+/** Plain create-next-app repos have no Cloudflare config: add it at build time so the OpenNext build works with no manual steps. Returns the files written. */
+export function prepareOpenNext(dir, buildCmd) {
+  if (!/(^|\s)opennextjs-cloudflare(\s|$)/.test(buildCmd ?? "") || !existsSync(join(dir, "package.json"))) return [];
+  let pkg;
+  try { pkg = JSON.parse(readFileSync(join(dir, "package.json"), "utf8")); } catch { return []; }
+  if (!pkg.dependencies?.next && !pkg.devDependencies?.next) return [];
+  const added = [];
+  if (!anyOf(dir, ["open-next.config.ts", "open-next.config.mjs", "open-next.config.js"])) { writeFileSync(join(dir, "open-next.config.ts"), OPENNEXT_CONFIG); added.push("open-next.config.ts"); }
+  if (!anyOf(dir, ["wrangler.jsonc", "wrangler.json", "wrangler.toml"])) {
+    const name = String(pkg.name || "app").toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/^-+|-+$/g, "").slice(0, 63) || "app";
+    writeFileSync(join(dir, "wrangler.jsonc"), JSON.stringify({ name, main: ".open-next/worker.js", compatibility_date: "2026-10-01", compatibility_flags: ["nodejs_compat", "global_fetch_strictly_public"], assets: { directory: ".open-next/assets", binding: "ASSETS" } }, null, 2) + "\n");
+    added.push("wrangler.jsonc");
+  }
+  return added;
+}
+
+/** Install command for the OpenNext adapter when the repo doesn't depend on it (null when already installed). */
+export function openNextInstallCmd(dir, pm) {
+  if (existsSync(join(dir, "node_modules", "@opennextjs", "cloudflare", "package.json"))) return null;
+  if (pm === "pnpm") return `pnpm add -D ${OPENNEXT_PKG}`;
+  if (pm === "yarn") return `yarn add -D ${OPENNEXT_PKG}`;
+  if (pm === "bun") return `bun add -d ${OPENNEXT_PKG}`;
+  return `npm install --no-save ${OPENNEXT_PKG}`;
+}
+
 async function build(spec, emit) {
   if (!REPO.test(spec.repo) || !SHA.test(spec.commit) || !REL.test(spec.root ?? "") || !REL.test(spec.output ?? "")) throw Object.assign(new Error("invalid build spec"), { code: "invalid_config" });
   mkdirSync(HOME_DIR, { recursive: true });
@@ -101,12 +131,22 @@ async function build(spec, emit) {
     if (state.canceled) return { ok: false, code: "canceled" };
     if (r.code !== 0) return { ok: false, code: "install_failed", message: `install exited with ${r.code}` };
   }
-  emit({ t: "phase", phase: "building" });
   let buildCmd = spec.build;
   if (!buildCmd && existsSync(join(dir, "package.json"))) {
     const pkg = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
     if (pkg.scripts?.build) buildCmd = `${detected.pm ?? "npm"} run build`;
   }
+  const added = prepareOpenNext(dir, buildCmd);
+  if (added.length) emit({ t: "log", phase: "installing", chunk: `Repo has no Cloudflare config; added ${added.join(", ")} for this build (commit them to customize).\n` });
+  const adapter = buildCmd && /(^|\s)opennextjs-cloudflare(\s|$)/.test(buildCmd) ? openNextInstallCmd(dir, detected.pm) : null;
+  if (adapter) {
+    emit({ t: "log", phase: "installing", chunk: `@opennextjs/cloudflare is not a dependency; installing it for this build.\n$ ${adapter}\n` });
+    const a = argv(adapter);
+    const r = await run(a[0], a.slice(1), { cwd: dir, env: { ...env, NODE_ENV: "development" } }, "installing", emit);
+    if (state.canceled) return { ok: false, code: "canceled" };
+    if (r.code !== 0) return { ok: false, code: "install_failed", message: `could not add @opennextjs/cloudflare (exit ${r.code}); it needs next >=15.5.28 (15.x) or >=16.4.1, so upgrade next in package.json` };
+  }
+  emit({ t: "phase", phase: "building" });
   if (buildCmd) {
     emit({ t: "log", phase: "building", chunk: `$ ${buildCmd}\n` });
     const a = argv(buildCmd);
