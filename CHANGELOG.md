@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0-rc.3] - 2026-10-22
+
+### Fixed (Subdev + Supdev review of rc.2)
+- One AI turn now produces exactly one build job and one quota count: `ai-turn` passes the webhook's idempotency key
+  `gh:preview:devstack/ai:<sha>` to `startContainerBuild`, and a matching active job is reused before any quota
+  (daily/hourly) is spent. Sync merge commits (base → `devstack/ai`) are remembered in KV (10 min TTL) and the
+  webhook skips them (`ignored:ai_sync_merge`).
+- `ai-turn` reserves the daily AI turn BEFORE syncing `devstack/ai`, so a full quota leaves no dangling merge commit.
+- `postcss.config.*`, `tailwind.config.*`, `babel.config.*` and `.babelrc` are read-only for the AI (basename match).
+- Docs: preview environment variables must never hold production secrets (app code runs at build/SSG and in the preview Worker).
+- `listWritableRepos` includes `organization_member` repos and paginates (100/page, up to 5 pages), so org repos
+  appear in import and AI push pickers.
+
 ## [0.13.0-rc.2] - 2026-10-22
 
 ### Fixed (Subdev + Supdev review of rc.1)
