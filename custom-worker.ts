@@ -21,6 +21,9 @@ registerSocketConnect(connect as unknown as ConnectFn);
 export { DOQueueHandler, DOShardedTagCache, BucketCachePurge } from "./.open-next/worker.js";
 
 import { Container } from "@cloudflare/containers";
+// Required: BuildContainer sets allowedHosts, which routes egress through ctx.exports.ContainerProxy.
+// Without this export every container start fails with HTTP 500 (seen as executor_lost).
+export { ContainerProxy } from "@cloudflare/containers";
 import { buildBindings } from "@/lib/build/bindings";
 import { runContainerJob } from "@/lib/build/executor";
 import { resolveSealKeys } from "@/lib/connections/credentials";

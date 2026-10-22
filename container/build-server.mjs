@@ -3,7 +3,7 @@
 // The GitHub token is passed to git via an http.extraheader in GIT_CONFIG_* env (never argv, never logged).
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, normalize } from "node:path";
 
 const WORK = process.env.BUILD_WORKDIR || "/work";
@@ -44,6 +44,28 @@ function argv(cmd) {
   return cmd.trim().split(/\s+/);
 }
 
+/** Remove the clone credential from the git env object (it is never passed to install/build). */
+export function scrubGitEnv(gitEnv) {
+  for (const k of Object.keys(gitEnv)) if (k.startsWith("GIT_CONFIG_")) delete gitEnv[k];
+}
+
+/** Rewrite .git/config so no extraheader, credential helper or token-bearing remote URL survives into install/build. */
+export function scrubCheckout(src, repo) {
+  const cfg = join(src, ".git", "config");
+  if (!existsSync(cfg)) return;
+  const kept = [];
+  let section = "";
+  for (const line of readFileSync(cfg, "utf8").split("\n")) {
+    const t = line.trim();
+    if (t.startsWith("[")) { section = t.toLowerCase(); if (section.startsWith("[credential") || section.startsWith("[http")) continue; }
+    else if (section.startsWith("[credential") || section.startsWith("[http")) continue;
+    if (/^\s*(extraheader|helper)\s*=/i.test(line)) continue;
+    if (/^\s*url\s*=/i.test(line)) { kept.push(`\turl = https://github.com/${repo}.git`); continue; }
+    kept.push(line);
+  }
+  writeFileSync(cfg, kept.join("\n"));
+}
+
 async function build(spec, emit) {
   if (!REPO.test(spec.repo) || !SHA.test(spec.commit) || !REL.test(spec.root ?? "") || !REL.test(spec.output ?? "")) throw Object.assign(new Error("invalid build spec"), { code: "invalid_config" });
   mkdirSync(HOME_DIR, { recursive: true });
@@ -61,8 +83,11 @@ async function build(spec, emit) {
   for (const args of [["init", "-q", SRC], ["-C", SRC, "remote", "add", "origin", `https://github.com/${spec.repo}.git`], ["-C", SRC, "fetch", "-q", "--depth", "1", "origin", spec.commit], ["-C", SRC, "checkout", "-q", "FETCH_HEAD"]]) {
     const r = await run("git", args, { cwd: WORK, env: gitEnv }, "installing", emit);
     if (state.canceled) return { ok: false, code: "canceled" };
-    if (r.code !== 0) return { ok: false, code: "github", message: `git ${args.find((a) => !a.startsWith("-") && a !== SRC) ?? ""} failed (exit ${r.code})` };
+    if (r.code !== 0) { scrubGitEnv(gitEnv); return { ok: false, code: "github", message: `git ${args.find((a) => !a.startsWith("-") && a !== SRC) ?? ""} failed (exit ${r.code})` }; }
   }
+  // Clone done: drop the credential from memory and make sure nothing credential-like stays in the checkout.
+  scrubGitEnv(gitEnv);
+  scrubCheckout(SRC, spec.repo);
   const dir = normalize(join(SRC, spec.root || "."));
   if (!dir.startsWith(SRC) || !existsSync(dir)) return { ok: false, code: "invalid_config", message: "root directory not found" };
   const env = { ...baseEnv, ...userEnv, NODE_ENV: "production" };
@@ -133,4 +158,4 @@ const server = createServer(async (req, res) => {
   res.statusCode = 404;
   res.end();
 });
-server.listen(Number(process.env.PORT || 8080));
+if (!process.env.BUILD_SERVER_NO_LISTEN) server.listen(Number(process.env.PORT || 8080));

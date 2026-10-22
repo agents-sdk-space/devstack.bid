@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0-rc.1] - 2026-10-22
+
+### Added
+- AI chat builder at /chat/build: chat with AI to create and edit static sites, versioned snapshots, static publish to
+  `<slug>-<id>.devstack.bid`, promote to `<slug>.devstack.bid`, restore, inline build log, export to GitHub (migration 0016).
+- Site safety: report badge + /report (site_reports), atomic AI quota, globally unique slugs (migration 0017).
+- LLM calls routed through Cloudflare AI Gateway `devstack-ai`; Workers AI titles; KV rate-limit counters.
+
+### Security
+- Session cookie `__Host-nvx_auth` with migrate-on-read of the legacy cookie (legacy reads stop 2026-11-21).
+- Strict `Origin: https://devstack.bid` on signed-in writes; sites CSP `frame-ancestors https://devstack.bid`.
+
+### Fixed
+- Build executor: ContainerProxy export, deployment relink on retry, clone credential scrubbed (from 0.9.x build fixes).
+
+### Notes
+- `feat/cli` has `0016_cli_device_codes.sql`, which conflicts with 0016 here: renumber it to 0018 before merging.
+
 ## [0.9.0-rc.1] - 2026-10-22
 
 Branch `feat/new-project-platform` merged with `feat/restore-rc5`.

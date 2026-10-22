@@ -6,6 +6,13 @@ import { serveSite, type R2BucketLike } from "../src/lib/hosting/serve";
 
 export default {
   async fetch(req: Request, env: { SITES: R2BucketLike; PLATFORM_DOMAIN?: string }): Promise<Response> {
+    const domain = env.PLATFORM_DOMAIN || "devstack.bid";
+    const u = new URL(req.url);
+    // The *.devstack.bid route also captures www; send it to the platform apex.
+    if (u.hostname === `www.${domain}`) {
+      u.hostname = domain;
+      return Response.redirect(u.toString(), 301);
+    }
     try {
       return await serveSite(req, env.SITES, env.PLATFORM_DOMAIN || "devstack.bid");
     } catch {
