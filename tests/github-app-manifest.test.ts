@@ -140,6 +140,15 @@ describe("webhook secret selection", () => {
     await cachedAppBundle(l, 61_000);
     expect(l).toHaveBeenCalledTimes(2);
   });
+  it("does not cache a missing app", async () => {
+    resetAppCache();
+    let v: AppBundle | null = null;
+    const l = vi.fn(async () => v);
+    expect(await cachedAppBundle(l, 0)).toBeNull();
+    v = bundle;
+    expect(await cachedAppBundle(l, 1000)).toEqual(bundle);
+    expect(l).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("admin", () => {
