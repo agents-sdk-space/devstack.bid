@@ -54,7 +54,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     // Reserve the daily AI turn first so a full quota never leaves a dangling sync merge commit on devstack/ai.
     if (!(await reserveAiTurn(a.db, a.uid, lim.aiPerDay))) return json({ error: `Daily AI limit reached (${lim.aiPerDay}/day). / ครบโควตา AI วันนี้แล้ว`, code: "daily_limit", tier: lim.tier }, 429);
     // The sync merge commit is remembered (KV, short TTL) so the webhook does not build it.
-    const sync = await syncAiBranch(token, owner, repo, base, undefined, (sha) => rememberSyncMerge(kv, p.repo_full_name!, sha));
+    const sync = await syncAiBranch(token, owner, repo, base, undefined, (sha) => rememberSyncMerge(kv, p.id, p.repo_full_name!, sha));
     if (sync === "conflict") return json({ error: `${AI_BRANCH} has diverged from ${base} and cannot be merged automatically. Merge or close it on GitHub first. / branch ${AI_BRANCH} ชนกับ ${base} กรุณา merge บน GitHub ก่อน`, code: "ai_branch_diverged" }, 409);
     const root = p.root_directory ? `${p.root_directory}/` : "";
     const tree = await readTree(token, owner, repo, AI_BRANCH);

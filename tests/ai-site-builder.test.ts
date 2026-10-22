@@ -64,6 +64,8 @@ describe("ai site llm", () => {
     const ai = { run: vi.fn<(...a: unknown[]) => Promise<{ response: string }>>(async () => ({ response: "Bean House!" })) };
     expect(await titleFor("x", ai, "@cf/x", "gw")).toEqual({ title: "Bean House", via: "workers-ai" });
     expect(ai.run.mock.calls[0][2]).toEqual({ gateway: { id: "gw", skipCache: true } });
+    // gemma-4: thinking off + enough tokens, otherwise the title comes back empty.
+    expect(ai.run.mock.calls[0][1]).toMatchObject({ max_tokens: 24, chat_template_kwargs: { enable_thinking: false } });
   });
 });
 

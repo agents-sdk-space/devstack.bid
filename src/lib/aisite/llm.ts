@@ -112,12 +112,15 @@ export async function generateEdit(
   }
 }
 
+/** gemma-4 spends tokens on hidden reasoning unless thinking is disabled; 16 tokens produced empty titles. */
+export const TITLE_MAX_TOKENS = 24;
+
 /** Short project title via Workers AI (cheap). Falls back to the first words of the prompt. */
 export async function titleFor(prompt: string, ai: AiBinding | null, model: string, gatewayId?: string): Promise<{ title: string; via: string }> {
   const fallback = prompt.replace(/\s+/g, " ").trim().split(" ").slice(0, 5).join(" ").slice(0, 40) || "AI site";
   if (!ai) return { title: fallback, via: "fallback" };
   try {
-    const out = (await ai.run(model, { messages: [{ role: "system", content: "Reply with a 2-4 word website project title in English, letters and spaces only." }, { role: "user", content: prompt.slice(0, 500) }], max_tokens: 16 }, gatewayRunOptions(gatewayId))) as { response?: string };
+    const out = (await ai.run(model, { messages: [{ role: "system", content: "Reply with a 2-4 word website project title in English, letters and spaces only." }, { role: "user", content: prompt.slice(0, 500) }], max_tokens: TITLE_MAX_TOKENS, chat_template_kwargs: { enable_thinking: false } }, gatewayRunOptions(gatewayId))) as { response?: string };
     const t = String(out?.response ?? "").replace(/[^A-Za-z0-9 ]+/g, "").trim().slice(0, 40);
     return t ? { title: t, via: "workers-ai" } : { title: fallback, via: "fallback" };
   } catch {

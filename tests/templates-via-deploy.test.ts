@@ -99,6 +99,13 @@ describe("rc.2 review fixes", () => {
     expect(await syncAiBranch("t", "o", "r", "main", deps("abc", "conflict"))).toBe("conflict");
     expect(calls).toEqual(["create:devstack/ai<-main", "merge:devstack/ai<-main", "merge:devstack/ai<-main"]);
   });
+  it("first turn: a newly created devstack/ai head is remembered so its webhook is not built", async () => {
+    let n = 0;
+    const marked: string[] = [];
+    const d = { getBranchSha: async () => (n++ === 0 ? null : "f".repeat(40)), createBranch: async () => "s", mergeInto: async () => "merged" } as never;
+    expect(await syncAiBranch("t", "o", "r", "main", d, (sha) => { marked.push(sha); })).toBe("created");
+    expect(marked).toEqual(["f".repeat(40)]);
+  });
   it("ai-turn has its own minute key; kvHasRoom does not increment", async () => {
     expect(aiTurnMinuteKey("u")).toBe("ai-turn:u");
     const store = new Map<string, string>();
