@@ -56,6 +56,7 @@
     "TURNSTILE_SITE_KEY": "0x4AAAAAAFXrTVkaNC9mWvUR",
     "TURNSTILE_HOSTNAMES": "devstack.bid",
     "GITHUB_APP_ADMIN_IDS": "326990420",
+    "DEVSTACK_ADMIN_GITHUB_IDS": "326990420",
     // Account for per-project server Workers (token: SITES_CF_API_TOKEN secret, Workers Scripts: Edit).
     "SITES_CF_ACCOUNT_ID": "2d92bd5b25768fa9093d6adc0a8887fc",
     "OPENAI_MODEL": "gpt-6.1-sol",
