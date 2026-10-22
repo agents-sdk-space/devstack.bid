@@ -35,11 +35,17 @@ export function safeClientName(input: unknown): string {
   return s || "devstack CLI";
 }
 
-/** IPv4 → a.b.c.x ; IPv6 already /64 from clientIp. */
+/** IPv4 → a.b.c.x ; IPv6 → first 4 groups ::/64. */
 export function coarseIp(ip: string): string | null {
   if (!ip || ip === "local") return null;
   const v4 = ip.match(/^(\d+\.\d+\.\d+)\.\d+$/);
-  return v4 ? `${v4[1]}.x` : ip.slice(0, 45);
+  if (v4) return `${v4[1]}.x`;
+  if (ip.includes(":")) {
+    const head = ip.split("::")[0].split(":").filter(Boolean).slice(0, 4);
+    while (head.length < 4) head.push("0");
+    return `${head.join(":")}::/64`;
+  }
+  return null;
 }
 
 export class DeviceError extends Error { constructor(public code: "busy") { super(code); } }
