@@ -13,6 +13,23 @@ type Load = { kind: "loading" } | { kind: "error"; status: number; message: stri
 
 const PHASES = ["queued", "claimed", "installing", "building", "uploading", "succeeded"] as const;
 const POLL_MS = 2000;
+const NEAR_BOTTOM_PX = 40;
+
+/** Poll delay after `failures` consecutive errors: 2s, 4s, 8s … capped at 30s. */
+export function pollDelay(failures: number): number {
+  return Math.min(30_000, POLL_MS * 2 ** Math.max(0, failures));
+}
+
+/** Auto-scroll only when the reader is already at (or within 40px of) the bottom. */
+export function nearBottom(el: { scrollTop: number; clientHeight: number; scrollHeight: number }, px = NEAR_BOTTOM_PX): boolean {
+  return el.scrollHeight - el.scrollTop - el.clientHeight <= px;
+}
+
+export function lineClass(level: string): string {
+  if (level === "error") return "border-l-2 border-danger bg-danger-soft pl-2 text-danger";
+  if (level === "warn") return "border-l-2 border-warning bg-warning-soft pl-2 text-warning-fg";
+  return "pl-2.5 text-subtle";
+}
 
 /** /deployments/:id — status, phase timeline, live (polled, resumable) logs, Cancel and Redeploy. */
 export function DeploymentDetail({ id }: { id: string }) {
@@ -26,12 +43,22 @@ export function DeploymentDetail({ id }: { id: string }) {
   const [actionErr, setActionErr] = useState("");
   const next = useRef(0);
   const logBox = useRef<HTMLPreElement>(null);
+  const stick = useRef(true);
+  const failures = useRef(0);
+  const [reconnecting, setReconnecting] = useState(false);
 
   const poll = useCallback(async (): Promise<boolean> => {
     const r = await fetch(`/api/deployments/${encodeURIComponent(id)}/logs?after=${next.current}`, { cache: "no-store" }).catch(() => null);
-    if (!r) { setLoad({ kind: "error", status: 0, message: "Network error" }); return true; }
+    if (!r || r.status >= 500) {
+      failures.current += 1;
+      setReconnecting(true);
+      setLoad((l) => (l.kind === "ok" ? l : { kind: "error", status: r?.status ?? 0, message: "Network error" }));
+      return true;
+    }
     const b = await r.json().catch(() => ({}));
     if (!r.ok) { setLoad({ kind: "error", status: r.status, message: b.error ?? "Request failed" }); return false; }
+    failures.current = 0;
+    setReconnecting(false);
     setDep(b.deployment); setJob(b.job);
     if (b.events?.length) { setEvents((e) => [...e, ...b.events]); next.current = b.next; }
     setLoad({ kind: "ok" });
@@ -41,12 +68,12 @@ export function DeploymentDetail({ id }: { id: string }) {
   useEffect(() => {
     let on = true;
     let t: ReturnType<typeof setTimeout>;
-    const tick = async () => { const more = await poll(); if (on && more) t = setTimeout(tick, POLL_MS); };
+    const tick = async () => { const more = await poll(); if (on && more) t = setTimeout(tick, pollDelay(failures.current)); };
     void tick();
     return () => { on = false; clearTimeout(t); };
   }, [poll]);
 
-  useEffect(() => { logBox.current?.scrollTo({ top: logBox.current.scrollHeight }); }, [events.length]);
+  useEffect(() => { if (stick.current) logBox.current?.scrollTo({ top: logBox.current.scrollHeight }); }, [events.length]);
 
   async function cancel() {
     setBusy("cancel"); setActionErr("");
@@ -60,12 +87,13 @@ export function DeploymentDetail({ id }: { id: string }) {
   async function redeploy() {
     if (!dep) return;
     setBusy("redeploy"); setActionErr("");
-    const body = dep.commit ? { ref: dep.commit } : {};
-    const r = await fetch(`/api/projects/${encodeURIComponent(dep.projectId)}/deploy`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
+    const container = job?.executor === "cf-container";
+    const body = container ? { ref: dep.ref, environment: dep.environment } : dep.commit ? { ref: dep.commit } : {};
+    const r = await fetch(`/api/projects/${encodeURIComponent(dep.projectId)}/${container ? "builds" : "deploy"}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
     const b = await r?.json().catch(() => ({}));
     setBusy("");
     if (!r?.ok) { setActionErr(b?.error ?? "Redeploy failed"); return; }
-    location.href = `/deployments/${encodeURIComponent(b.deployment.id)}`;
+    location.href = `/deployments/${encodeURIComponent(container ? b.deploymentId : b.deployment.id)}`;
   }
 
   if (load.kind === "loading") return <div className="mx-auto w-full max-w-4xl space-y-3 px-4 py-8"><Skeleton className="h-8 w-64" /><Skeleton className="h-24 w-full" /><Skeleton className="h-64 w-full" /></div>;
@@ -89,13 +117,14 @@ export function DeploymentDetail({ id }: { id: string }) {
       <a href={`/projects/${encodeURIComponent(dep.projectId)}`} className="inline-flex items-center gap-1 text-sm text-subtle hover:text-fg"><ArrowLeft className="h-4 w-4" aria-hidden />{th ? "กลับไปที่โปรเจกต์" : "Back to project"}</a>
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-fg">{th ? "Deployment" : "Deployment"}</h1>
-        <StatusPill status={dep.status} />
+        <span aria-live="polite" aria-atomic="true"><StatusPill status={dep.status} /></span>
         {job && <span className="font-mono text-xs text-subtle">job: {job.status}{job.cancelRequested && job.active ? " · cancel requested" : ""}</span>}
         <div className="ml-auto flex gap-2">
           {active && <button type="button" disabled={busy !== "" || job?.cancelRequested} onClick={() => void cancel()} className={buttonClasses("secondary", "sm")}><Ban className="h-4 w-4" aria-hidden />{busy === "cancel" ? "…" : th ? "ยกเลิก" : "Cancel"}</button>}
           {!active && <button type="button" disabled={busy !== ""} onClick={() => void redeploy()} className={buttonClasses("primary", "sm")}><RotateCw className="h-4 w-4" aria-hidden />{busy === "redeploy" ? "…" : dep.commit ? (th ? "Deploy commit นี้อีกครั้ง" : "Redeploy this commit") : (th ? "Deploy อีกครั้ง" : "Redeploy")}</button>}
         </div>
       </div>
+      {reconnecting && <p role="status" className="mt-3 rounded-lg border border-warning bg-warning-soft px-3 py-2 text-sm text-fg">{th ? "การเชื่อมต่อขาด กำลังเชื่อมต่อใหม่…" : "Connection lost. Reconnecting…"}</p>}
       {actionErr && <p role="alert" className="mt-3 rounded-lg border border-fg/40 px-3 py-2 text-sm text-fg">{actionErr}</p>}
 
       <Card className="mt-5 grid gap-3 p-5 text-sm sm:grid-cols-2">
@@ -104,7 +133,8 @@ export function DeploymentDetail({ id }: { id: string }) {
         <div><div className="text-subtle">{th ? "สภาพแวดล้อม" : "Environment"}</div><div className="text-fg">{dep.environment} · {dep.trigger}</div></div>
         <div><div className="text-subtle">{th ? "เวลา" : "Started / finished"}</div><div className="font-mono text-xs text-fg">{new Date(dep.createdAt).toLocaleString()}{dep.finishedAt ? ` → ${Math.max(0, Math.round((dep.finishedAt - dep.createdAt) / 1000))}s` : ""}</div></div>
         {dep.url && dep.status === "live" && <div className="sm:col-span-2"><LiveUrl url={dep.url} /></div>}
-        {dep.status === "failed" && dep.errorCode && <div className="sm:col-span-2"><div className="text-subtle">{th ? "ข้อผิดพลาด" : "Error"}</div><div className="font-mono text-fg">{dep.errorCode}</div></div>}
+        {dep.errorCode === "site_url_blocked" && <div className="sm:col-span-2 rounded-lg border border-warning bg-warning-soft px-3 py-2 text-fg">{th ? "Build สำเร็จแล้ว แต่ลิงก์สาธารณะยังใช้ไม่ได้จนกว่าจะตั้งค่า DNS *.devstack.bid (Blocked)" : "Build succeeded. The public URL is blocked until the *.devstack.bid wildcard DNS and route are set up."}</div>}
+        {dep.status === "failed" && dep.errorCode && dep.errorCode !== "site_url_blocked" && <div className="sm:col-span-2"><div className="text-subtle">{th ? "ข้อผิดพลาด" : "Error"}</div><div className="font-mono text-fg">{dep.errorCode}</div></div>}
       </Card>
 
       <h2 className="mt-6 text-base font-semibold text-fg">{th ? "ลำดับขั้น" : "Timeline"}</h2>
@@ -121,9 +151,9 @@ export function DeploymentDetail({ id }: { id: string }) {
       {!dep.buildJobId ? (
         <p className="mt-2 text-sm text-subtle">{th ? "deployment นี้สร้างก่อนมีระบบ build job จึงไม่มี log ทีละบรรทัด" : "This deployment predates build jobs, so there are no line-by-line logs."}</p>
       ) : (
-        <pre ref={logBox} aria-live="polite" className="mt-2 max-h-[28rem] overflow-auto whitespace-pre-wrap rounded-xl border border-border bg-surface p-3 font-mono text-[12px] leading-5 text-fg">
+        <pre ref={logBox} onScroll={(e) => { stick.current = nearBottom(e.currentTarget); }} className="mt-2 max-h-[28rem] overflow-auto whitespace-pre-wrap rounded-xl border border-border bg-surface p-3 font-mono text-[12px] leading-5 text-fg">
           {events.length === 0 ? <span className="text-subtle">{th ? "ยังไม่มี log" : "No log lines yet."}</span> : events.map((e) => (
-            <div key={e.seq} className={e.level === "error" ? "text-fg" : e.level === "warn" ? "text-fg" : "text-subtle"}>
+            <div key={e.seq} data-level={e.level} className={lineClass(e.level)}>
               <span className="select-none text-subtle">{String(e.seq).padStart(3, " ")} {new Date(e.created_at).toLocaleTimeString()} {e.phase ? `[${e.phase}]` : ""} </span>{e.level === "error" ? "ERROR " : e.level === "warn" ? "WARN " : ""}{e.message}
             </div>
           ))}

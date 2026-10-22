@@ -20,11 +20,49 @@ registerSocketConnect(connect as unknown as ConnectFn);
 // @ts-ignore -- generated
 export { DOQueueHandler, DOShardedTagCache, BucketCachePurge } from "./.open-next/worker.js";
 
-type Env = { DB?: D1Like } & Record<string, unknown>;
+import { Container } from "@cloudflare/containers";
+import { buildBindings } from "@/lib/build/bindings";
+import { runContainerJob } from "@/lib/build/executor";
+import { resolveSealKeys } from "@/lib/connections/credentials";
+
+type Env = { DB?: D1Like; CHAT_COOKIE_SECRET?: string } & Record<string, unknown>;
+
+/**
+ * One container per build job (named build-<jobId>). Egress is limited to GitHub and the package
+ * registries; the container holds no DevStack secrets (the per-job GitHub token arrives in the request).
+ */
+export class BuildContainer extends Container {
+  defaultPort = 8080;
+  sleepAfter = "16m";
+  enableInternet = true;
+  allowedHosts = [
+    "github.com", "codeload.github.com", "objects.githubusercontent.com",
+    "registry.npmjs.org", "registry.yarnpkg.com", "repo.yarnpkg.com", "registry.npmmirror.com",
+    "nodejs.org", "*.bun.sh", "bun.sh",
+  ];
+}
+
+type QueueMessage = { body: unknown; ack(): void; retry(opts?: { delaySeconds?: number }): void };
 type Ctx = { waitUntil(p: Promise<unknown>): void };
 
 export default {
   fetch: (handler as { fetch: (req: Request, env: Env, ctx: Ctx) => Promise<Response> }).fetch,
+  /** Queue consumer for BUILD_QUEUE (max_batch_size 1): one build per invocation. */
+  async queue(batch: { messages: QueueMessage[] }, env: Env) {
+    for (const m of batch.messages) {
+      const jobId = (m.body as { jobId?: unknown })?.jobId;
+      if (!env.DB || !env.CHAT_COOKIE_SECRET || typeof jobId !== "string") { m.ack(); continue; }
+      try {
+        const keys = await resolveSealKeys(env.CHAT_COOKIE_SECRET, env);
+        const r = await runContainerJob(env.DB, keys, buildBindings(env), jobId);
+        if (typeof r === "object") m.retry({ delaySeconds: Math.min(Math.max(r.retryInSeconds, 5), 900) });
+        else m.ack();
+      } catch (e) {
+        console.warn(JSON.stringify({ at: "build-queue", jobId, error: String((e as Error)?.name ?? "error") }));
+        m.retry({ delaySeconds: 60 });
+      }
+    }
+  },
   async scheduled(_event: unknown, env: Env, ctx: Ctx) {
     if (!env.DB) return;
     ctx.waitUntil(

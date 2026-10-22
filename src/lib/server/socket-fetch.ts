@@ -16,6 +16,7 @@ export type ConnectFn = (address: { hostname: string; port: number }, options: {
 
 const ALLOWED_HOSTS = new Set(["github.com", "api.github.com"]);
 const MAX_BYTES = 10_000_000;
+export const SOCKET_TIMEOUT_MS = 15_000;
 
 // Stored on globalThis: custom-worker.ts and the Next.js server chunks hold separate copies of this module.
 const KEY = Symbol.for("devstack.socketConnect");
@@ -53,6 +54,7 @@ export function dechunk(body: Uint8Array): Uint8Array {
     if (!Number.isFinite(size)) throw new Error("bad chunk");
     if (size === 0) break;
     const start = j + 2;
+    if (j + 1 >= body.length || start + size > body.length) throw new Error("truncated chunk");
     parts.push(body.subarray(start, start + size));
     total += size;
     i = start + size + 2;
@@ -74,6 +76,11 @@ export function parseHttpResponse(raw: Uint8Array): Response {
   }
   let body = raw.subarray(end + 4);
   if (/chunked/i.test(headers.get("transfer-encoding") ?? "")) body = dechunk(body);
+  else if (headers.has("content-length")) {
+    const len = Number(headers.get("content-length"));
+    if (!Number.isInteger(len) || len < 0 || body.length < len) throw new Error("truncated body");
+    body = body.subarray(0, len);
+  }
   headers.delete("transfer-encoding");
   const status = Number(m[1]);
   const nullBody = status === 204 || status === 304 || (status >= 100 && status < 200);
@@ -81,7 +88,7 @@ export function parseHttpResponse(raw: Uint8Array): Response {
 }
 
 /** Minimal HTTPS request over a raw TLS socket. Only for allow-listed GitHub hosts. */
-export async function socketFetch(input: string, init: RequestInit = {}, connectFn?: ConnectFn): Promise<Response> {
+export async function socketFetch(input: string, init: RequestInit = {}, connectFn?: ConnectFn, timeoutMs = SOCKET_TIMEOUT_MS): Promise<Response> {
   const url = new URL(input);
   if (url.protocol !== "https:" || !ALLOWED_HOSTS.has(url.hostname)) throw new Error("socketFetch: host not allowed");
   const connect = connectFn ?? (globalThis as G)[KEY];
@@ -101,7 +108,17 @@ export async function socketFetch(input: string, init: RequestInit = {}, connect
   });
   head += "\r\n";
   const socket = connect({ hostname: url.hostname, port: 443 }, { secureTransport: "on", allowHalfOpen: false });
-  try {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("socketFetch: timeout")), timeoutMs);
+  });
+  const abort = init.signal
+    ? new Promise<never>((_, reject) => {
+        if (init.signal!.aborted) reject(new Error("socketFetch: aborted"));
+        init.signal!.addEventListener("abort", () => reject(new Error("socketFetch: aborted")), { once: true });
+      })
+    : null;
+  const run = async () => {
     const w = socket.writable.getWriter();
     await w.write(new TextEncoder().encode(head));
     if (body) await w.write(body);
@@ -117,7 +134,11 @@ export async function socketFetch(input: string, init: RequestInit = {}, connect
       if (total > MAX_BYTES) throw new Error("socketFetch: response too large");
     }
     return parseHttpResponse(concat(chunks, total));
+  };
+  try {
+    return await Promise.race([run(), timeout, ...(abort ? [abort] : [])]);
   } finally {
+    clearTimeout(timer);
     await Promise.resolve(socket.close()).catch(() => {});
   }
 }

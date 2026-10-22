@@ -1,0 +1,13 @@
+{
+  // User-site router: *.devstack.bid → static build output in R2 (see src/lib/hosting).
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "devstack-sites",
+  "main": "index.ts",
+  "compatibility_date": "2026-10-06",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "*.devstack.bid/*", "zone_name": "devstack.bid" }],
+  "r2_buckets": [{ "binding": "SITES", "bucket_name": "devstack-sites" }],
+  "vars": { "PLATFORM_DOMAIN": "devstack.bid" },
+  "observability": { "enabled": true }
+}

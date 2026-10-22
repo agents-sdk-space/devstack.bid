@@ -30,7 +30,20 @@
   // docs/reference/d1-schema.md. Apply with `npm run db:migrate:remote` (approval required).
   // R2 bucket for chat stream persistence (streamed text + thinking steps per turn). Owner enabled R2
   // 2026-10-15; the bucket must exist before the next deploy (`wrangler r2 bucket create nvx-chat-streams`).
-  "r2_buckets": [{ "binding": "CHAT_STREAMS", "bucket_name": "nvx-chat-streams" }],
+  "r2_buckets": [
+    { "binding": "CHAT_STREAMS", "bucket_name": "nvx-chat-streams" },
+    // Milestone 2 build executor (owner-approved Containers/Queue/R2). Buckets must exist before deploy.
+    { "binding": "BUILD_ARTIFACTS", "bucket_name": "devstack-build-artifacts" },
+    { "binding": "SITES", "bucket_name": "devstack-sites" }
+  ],
+  "queues": {
+    "producers": [{ "binding": "BUILD_QUEUE", "queue": "devstack-build-jobs" }],
+    "consumers": [{ "queue": "devstack-build-jobs", "max_batch_size": 1, "max_batch_timeout": 1, "max_retries": 10, "max_concurrency": 2 }]
+  },
+  // One container instance per build job; at most 2 run at once (also enforced in D1 by claimWithCap).
+  "containers": [{ "class_name": "BuildContainer", "image": "./container/Dockerfile", "max_instances": 2, "instance_type": "standard-1" }],
+  "durable_objects": { "bindings": [{ "name": "BUILD_CONTAINER", "class_name": "BuildContainer" }] },
+  "migrations": [{ "tag": "v1-build-container", "new_sqlite_classes": ["BuildContainer"] }],
   // CREDENTIALS_KEY (32 random bytes, base64) lives in Cloudflare Secrets Store, not as a Worker secret.
   // Code reads it with `await env.CREDENTIALS_KEY.get()` (src/lib/connections/credentials.ts).
   "secrets_store_secrets": [
@@ -105,7 +118,8 @@
     "STUDIO_PROVIDER": "wai",
     "STUDIO_MAX_TOKENS": "4000",
     "STUDIO_DAILY_CALLS": "60",
-    "STUDIO_GLOBAL_CALLS_PER_DAY": "3000"
+    "STUDIO_GLOBAL_CALLS_PER_DAY": "3000",
+    "SITES_DNS_READY": "0"
   },
   // Workers Rate Limiting API (no separate resource to create; counters are per Cloudflare location).
   // namespace_id is an arbitrary account-unique integer string chosen for this app.

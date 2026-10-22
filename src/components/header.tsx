@@ -16,7 +16,6 @@ import { CookiePreferences } from "./cookie-preferences";
 
 export const NAV = [
   { href: "/", key: "nav.home", Icon: House },
-  { href: "/new", key: "nav.newProject", Icon: FolderPlus },
   { href: "/templates", key: "nav.templates", Icon: LayoutGrid },
   { href: "/builder", key: "nav.builder", Icon: Blocks },
   { href: "/chat", key: "nav.chat", Icon: MessagesSquare },
@@ -52,8 +51,7 @@ function NavLink({
 }
 
 /** The links in the bar (nextjs.org-style restraint). Everything else lives in the menu sheet. */
-export const PRIMARY: { href: string; key: "nav.newProject" | "nav.templates" | "nav.builderShort" | "nav.chat" | "nav.docs" }[] = [
-  { href: "/new", key: "nav.newProject" },
+export const PRIMARY: { href: string; key: "nav.templates" | "nav.builderShort" | "nav.chat" | "nav.docs" }[] = [
   { href: "/templates", key: "nav.templates" },
   { href: "/builder", key: "nav.builderShort" },
   { href: "/chat", key: "nav.chat" },
@@ -107,8 +105,12 @@ export function Header() {
           <PaletteTrigger onClick={() => setPaletteOpen(true)} />
           <AccountButton next={pathname} />
           <span className="hidden sm:contents">
-            <Link href="/builder" className={buttonClasses("primary", "sm")}>
+            <Link href="/builder" className={buttonClasses("secondary", "sm", "max-xl:hidden")}>
               {t("nav.start")}
+            </Link>
+            <Link href="/new" data-testid="header-new-project" aria-current={pathname === "/new" ? "page" : undefined} className={buttonClasses("primary", "sm")}>
+              <FolderPlus className="h-4 w-4" aria-hidden />
+              {t("nav.newProject")}
             </Link>
           </span>
           <Tooltip content={t("palette.open")}>

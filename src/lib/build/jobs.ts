@@ -5,7 +5,7 @@
  */
 import type { D1Like } from "@/lib/chat/store";
 import { ServiceError } from "@/lib/connections/github-service";
-import { sanitizeLog } from "@/lib/deploy/sanitize";
+import { sanitizeLog, shortSecrets } from "@/lib/deploy/sanitize";
 import { backoffMs, canTransition, isActive, isTerminal, PHASE_TIMEOUT_MS, shouldRetry, ACTIVE_STATES, type BuildState } from "./state";
 
 export type Executor = "direct" | "cf-container" | "workers-builds";
@@ -209,6 +209,49 @@ export async function appendEvent(db: D1Like, jobId: string, e: { level?: LogLev
     .bind(jobId, e.level ?? "info", e.phase ?? null, msg, MAX_EVENTS_PER_JOB)
     .first<{ seq: number }>();
   return r?.seq ?? null;
+}
+
+/**
+ * Line-buffered log writer for streamed build output. Raw chunks are held until a newline so a
+ * secret split across two chunks is still whole when sanitizeLog sees it. Lines over `maxLine`
+ * are cut only after redaction. Warns once when some secrets are too short to redact.
+ */
+export function createLogStream(
+  sink: (line: { level: LogLevel; phase: BuildState | null; message: string }) => Promise<unknown>,
+  opts: { secrets: (string | null | undefined)[]; phase?: BuildState | null; maxBuffer?: number }
+) {
+  let buf = "";
+  let phase: BuildState | null = opts.phase ?? null;
+  const maxBuffer = opts.maxBuffer ?? 64_000;
+  const all: string[] = [];
+  const emit = async (raw: string, level: LogLevel = "info") => {
+    const message = sanitizeLog(raw.replace(/\r$/, ""), opts.secrets, 2000);
+    all.push(message);
+    await sink({ level, phase, message });
+  };
+  const warned = (async () => {
+    const n = shortSecrets(opts.secrets);
+    if (n > 0) await emit(`${n} environment value(s) are shorter than 6 characters and cannot be redacted from logs; avoid printing them.`, "warn");
+  })();
+  return {
+    setPhase(p: BuildState) { phase = p; },
+    async write(chunk: string) {
+      await warned;
+      buf += chunk;
+      let nl: number;
+      while ((nl = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, nl);
+        buf = buf.slice(nl + 1);
+        if (line.trim()) await emit(line);
+      }
+      // A runaway line without newlines: redact the whole buffer before cutting it.
+      if (buf.length > maxBuffer) { const line = buf; buf = ""; await emit(line); }
+    },
+    async line(message: string, level: LogLevel = "info") { await warned; await emit(message, level); },
+    async flush() { await warned; if (buf.trim()) { const line = buf; buf = ""; await emit(line); } buf = ""; },
+    /** Redacted transcript (for the R2 log object). */
+    transcript: () => all.join("\n") + "\n",
+  };
 }
 
 /** Owner-scoped log tail (poll with `after` = last seq seen). */

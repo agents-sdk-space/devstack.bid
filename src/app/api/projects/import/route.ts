@@ -5,6 +5,8 @@ import { serviceErrorBody } from "@/lib/connections/github-service";
 import { projectView } from "@/lib/connections/projects";
 import { gate, isResponse } from "@/lib/connections/route-kit";
 import { importRepo } from "@/lib/projects/import";
+import { routeBuildBindings } from "@/lib/build/bindings";
+import { startContainerBuild } from "@/lib/build/executor";
 import { HttpError, readJsonBody } from "@/lib/server/http";
 
 /** POST /api/projects/import {repo, branch?, rootDirectory?, name?, build?} — link an existing GitHub repo (no copy). */
@@ -22,7 +24,16 @@ export async function POST(req: Request) {
   if (!token) return json({ error: "Connect GitHub first. / เชื่อมต่อ GitHub ก่อน", code: "reauth" }, 401);
   try {
     const p = await importRepo(a.db, token, a.uid, body);
-    return json({ ok: true, project: projectView(p) }, 201);
+    // Import → first production build (Vercel-style). Missing infrastructure is reported as blocked, never faked.
+    let build: Record<string, unknown>;
+    try {
+      const b = await startContainerBuild(a.db, a.keys, await routeBuildBindings(), a.uid, p, { environment: "production" });
+      build = { status: "queued", jobId: b.job.id, deploymentId: b.deploymentId, previewUrl: b.previewUrl, productionUrl: b.productionUrl };
+    } catch (err) {
+      const e = serviceErrorBody(err);
+      build = { status: (e.body as { code?: string }).code === "blocked" ? "blocked" : "not_started", ...e.body };
+    }
+    return json({ ok: true, project: projectView(p), build }, 201);
   } catch (err) {
     const e = serviceErrorBody(err);
     return json(e.body, e.status);

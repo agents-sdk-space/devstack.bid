@@ -86,6 +86,7 @@ Studio (`/studio`) ไม่มี secret ของตัวเอง ใช้ 
 | `STUDIO_MAX_INPUT_CHARS` | var | 60000 | — | ความยาวรวมของ messages ต่อคำขอ |
 | `STUDIO_DAILY_CALLS` | var | 60 | `60` | การเรียก LLM ฟรีต่อวันต่อ cookie (สร้างแอปหนึ่งครั้งใช้ราว 3–6) เพดานต่อ IP = ค่านี้ × `FREE_IP_MULTIPLIER` |
 | `STUDIO_GLOBAL_CALLS_PER_DAY` | var | 3000 | `3000` | การเรียกรวมทั้งเว็บต่อวัน |
+| `SITES_DNS_READY` | var | `0` | `0` | ตั้งเป็น `1` หลังสร้าง DNS wildcard `*.devstack.bid` และ route ของ `devstack-sites` แล้วเท่านั้น ก่อนหน้านั้นลิงก์ของเว็บที่ build จะแสดงเป็น Blocked |
 | `STUDIO_BURST_PER_MIN` | var | 20 | — | limit in-memory สำรองเมื่อไม่มี `NVX_STUDIO_LIMITER` |
 | `STUDIO_TIMEOUT_MS` | var | 90000 | — | timeout ของการเรียก HF หนึ่งครั้งจาก Studio |
 
@@ -109,6 +110,10 @@ Studio (`/studio`) ไม่มี secret ของตัวเอง ใช้ 
 | `NVX_STUDIO_LIMITER` | ratelimit (namespace `4715`) | 20 / 60 วินาที | burst ของ `/api/studio/llm/chat` และ `/api/studio/image` (เพิ่มใน v0.8.0-rc, ยังไม่เคย deploy) |
 
 | `CHAT_STREAMS` | R2 bucket `nvx-chat-streams` | — | เก็บข้อความที่สตรีมและขั้นตอน thinking (ไม่รวม reasoning ดิบ) ของแต่ละ turn เป็น `chat/<uid>/<conversationId>/<messageId>.json` ข้อมูลเดิมใน D1 ไม่เปลี่ยน ต้องสร้าง bucket ก่อน deploy: `wrangler r2 bucket create nvx-chat-streams` |
+| `BUILD_ARTIFACTS` | R2 bucket `devstack-build-artifacts` | — | เก็บ log ที่ redact แล้ว (`logs/<jobId>.txt`) และไฟล์ output ของแต่ละ build (`artifacts/<jobId>.tar`) ต้องสร้างก่อน deploy: `wrangler r2 bucket create devstack-build-artifacts` |
+| `SITES` | R2 bucket `devstack-sites` | — | ไฟล์เว็บที่ build แล้ว (`sites/<deploymentId>/…`) และ hostname → deployment (`hosts/<label>.json`) อ่านโดย Worker `devstack-sites` ต้องสร้างก่อน deploy: `wrangler r2 bucket create devstack-sites` |
+| `BUILD_QUEUE` | Queue `devstack-build-jobs` | — | คิวงาน build (producer + consumer ใน Worker หลัก, ครั้งละ 1 ข้อความ, พร้อมกันสูงสุด 2) ต้องสร้างก่อน deploy: `wrangler queues create devstack-build-jobs` |
+| `BUILD_CONTAINER` | Durable Object + Container `BuildContainer` | — | 1 container ต่อ 1 build จาก `container/Dockerfile` (max_instances 2) ต้องใช้ Workers Paid และ Docker ตอน deploy |
 | `CREDENTIALS_KEY` | Secrets Store (`default_secrets_store` `b56dddabe7d74172932cf26f4a2ab03f`, secret `CREDENTIALS_KEY`) | 32 ไบต์ base64 | คีย์เข้ารหัส v2 ของ token ลูกค้า (connections, Environment) โค้ดอ่านด้วย `await env.CREDENTIALS_KEY.get()` ถ้าไม่มี binding จะใช้ Worker secret ชื่อเดียวกัน แล้วค่อยถอยไป v1 ไม่มีสำเนาสำรอง (เจ้าของตัดสินใจ 2026-10-15) ถ้าคีย์หาย ลูกค้าต้องผูกบัญชีใหม่ |
 
 `ASSETS_BUCKET` (R2 bucket `nvx-assets`) **ยังไม่ได้เพิ่ม** เพราะบัญชียังไม่เปิด R2 ขั้นตอนอยู่ที่ [d1-database.md](../operations/d1-database.md) อย่าใส่ binding ก่อนมี bucket จริง เพราะ deploy จะล้ม

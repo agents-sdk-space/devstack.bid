@@ -1,0 +1,87 @@
+/**
+ * Serve a built static site from R2 by hostname (user-site router, separate Worker).
+ * R2 layout: hosts/<label>.json → {"deploymentId": "..."}; sites/<deploymentId>/<path>.
+ * No cookies, no platform secrets; strict headers so user content cannot frame the platform.
+ */
+import { parseHost } from "./hostnames";
+
+export interface R2ObjectLike { body: ReadableStream; httpEtag?: string; size?: number; httpMetadata?: { contentType?: string } }
+export interface R2BucketLike {
+  get(key: string): Promise<(R2ObjectLike & { json?<T>(): Promise<T>; text?(): Promise<string> }) | null>;
+  put(key: string, value: ArrayBuffer | Uint8Array | string | ReadableStream, opts?: { httpMetadata?: { contentType?: string } }): Promise<unknown>;
+}
+
+const TYPES: Record<string, string> = {
+  html: "text/html; charset=utf-8", css: "text/css; charset=utf-8", js: "text/javascript; charset=utf-8", mjs: "text/javascript; charset=utf-8",
+  json: "application/json", svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp",
+  avif: "image/avif", ico: "image/x-icon", txt: "text/plain; charset=utf-8", xml: "application/xml", woff: "font/woff", woff2: "font/woff2",
+  wasm: "application/wasm", map: "application/json", webmanifest: "application/manifest+json", pdf: "application/pdf", mp4: "video/mp4",
+};
+export const contentType = (path: string) => TYPES[path.split(".").pop()?.toLowerCase() ?? ""] ?? "application/octet-stream";
+
+const BASE_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "X-Robots-Tag": "noindex",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+};
+
+/** Safe object path from a URL path: decoded, no traversal, no hidden files. */
+export function objectPath(pathname: string): string | null {
+  let p: string;
+  try { p = decodeURIComponent(pathname); } catch { return null; }
+  if (p.includes("\0") || p.includes("\\")) return null;
+  const parts = p.split("/").filter(Boolean);
+  if (parts.some((x) => x === ".." || x === "." || x.startsWith("."))) return null;
+  return parts.join("/");
+}
+
+function notFound(msg = "Not found") {
+  return new Response(msg, { status: 404, headers: { ...BASE_HEADERS, "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } });
+}
+
+export async function resolveDeployment(bucket: R2BucketLike, label: string): Promise<string | null> {
+  const o = await bucket.get(`hosts/${label}.json`);
+  if (!o) return null;
+  const text = o.text ? await o.text() : await new Response(o.body).text();
+  try {
+    const id = (JSON.parse(text) as { deploymentId?: unknown }).deploymentId;
+    return typeof id === "string" && /^[a-z0-9-]{8,64}$/.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function serveSite(req: Request, bucket: R2BucketLike, domain?: string): Promise<Response> {
+  if (req.method !== "GET" && req.method !== "HEAD") return new Response("Method not allowed", { status: 405, headers: { ...BASE_HEADERS, Allow: "GET, HEAD" } });
+  const url = new URL(req.url);
+  const host = parseHost(url.hostname, domain);
+  if (host.kind !== "site") return notFound("Unknown site");
+  const deploymentId = await resolveDeployment(bucket, host.label);
+  if (!deploymentId) return notFound("This site has no deployment yet.");
+  const path = objectPath(url.pathname);
+  if (path === null) return notFound();
+  const candidates = path === "" ? ["index.html"] : /\.[a-z0-9]+$/i.test(path) ? [path] : [`${path}.html`, `${path}/index.html`, path];
+  for (const c of candidates) {
+    const obj = await bucket.get(`sites/${deploymentId}/${c}`);
+    if (obj) return fileResponse(req, obj, c, 200);
+  }
+  // SPA fallback (only when the build produced 200.html) then custom 404.html.
+  const spa = await bucket.get(`sites/${deploymentId}/200.html`);
+  if (spa && !/\.[a-z0-9]+$/i.test(path)) return fileResponse(req, spa, "200.html", 200);
+  const nf = await bucket.get(`sites/${deploymentId}/404.html`);
+  if (nf) return fileResponse(req, nf, "404.html", 404);
+  return notFound();
+}
+
+function fileResponse(req: Request, obj: R2ObjectLike, path: string, status: number): Response {
+  const immutable = /(^|\/)(_next\/static|assets)\//.test(path) || /\.[0-9a-f]{8,}\.(js|css|woff2?)$/.test(path);
+  const headers: Record<string, string> = {
+    ...BASE_HEADERS,
+    "Content-Type": obj.httpMetadata?.contentType ?? contentType(path),
+    "Cache-Control": immutable ? "public, max-age=31536000, immutable" : "public, max-age=0, must-revalidate",
+  };
+  if (obj.httpEtag) headers.ETag = obj.httpEtag;
+  if (obj.httpEtag && req.headers.get("if-none-match") === obj.httpEtag) return new Response(null, { status: 304, headers });
+  return new Response(req.method === "HEAD" ? null : obj.body, { status, headers });
+}

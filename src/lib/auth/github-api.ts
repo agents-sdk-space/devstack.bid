@@ -34,6 +34,8 @@ export async function ghFetch(
 ): Promise<Response> {
   const res = await (deps.f ?? fetch)(input, init);
   if (res.status !== 525) return res;
+  // Safe to resend (even POST/PUT): 525 means Cloudflare's TLS handshake to GitHub failed, so the
+  // first request never reached GitHub's origin and had no side effects there.
   return (deps.socket ?? socketFetch)(input, init).catch(() => res);
 }
 

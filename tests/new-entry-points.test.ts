@@ -13,13 +13,14 @@ describe("/new entry points", () => {
     expect(/\p{Extended_Pictographic}/u.test(t("nav.newProject", "th") + t("nav.newProject", "en"))).toBe(false);
   });
 
-  it("header bar, menu list and menu button link to /new", () => {
+  it("desktop header has a primary New Project button; the mobile sheet has one button and no duplicate list item", () => {
     const h = src("src/components/header.tsx");
     const primary = h.slice(h.indexOf("export const PRIMARY"), h.indexOf("];", h.indexOf("export const PRIMARY")));
-    expect(primary).toContain('{ href: "/new", key: "nav.newProject" }');
+    expect(primary).not.toContain("/new");
     const nav = h.slice(h.indexOf("export const NAV"), h.indexOf("] as const;"));
-    expect(nav).toContain('{ href: "/new", key: "nav.newProject"');
-    expect(h).toMatch(/<Link href="\/new" onClick=\{\(\) => setMenuOpen\(false\)\}/);
+    expect(nav).not.toContain('"/new"');
+    expect(h).toMatch(/<Link href="\/new" data-testid="header-new-project"[^>]*buttonClasses\("primary", "sm"\)/);
+    expect(h.match(/<Link href="\/new" onClick=\{\(\) => setMenuOpen\(false\)\}/g)).toHaveLength(1);
   });
 
   it("/projects has a header button and an empty-state button to /new", () => {

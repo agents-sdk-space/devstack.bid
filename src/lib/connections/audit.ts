@@ -3,6 +3,7 @@ import type { D1Like } from "@/lib/chat/store";
 /** Event types only. `subject` is a non-secret identifier (kind, repo full name, project id). */
 export type AuditEvent =
   | "credential.saved"
+  | "build.started"
   | "credential.removed"
   | "github.revoked"
   | "project.created"

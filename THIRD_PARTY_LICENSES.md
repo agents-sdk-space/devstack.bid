@@ -15,7 +15,7 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 
 | Set | Packages | Licenses | Flagged |
 |---|---|---|---|
-| Site (devstack.bid, Next.js Worker) | 157 | MIT ×128, ISC ×11, Apache-2.0 ×7, UNKNOWN ×2, BSD-3-Clause ×2, SEE LICENSE IN ./LICENSE ×1, CC-BY-4.0 ×1, BSD-2-Clause ×1, W3C-20150513 ×1, (MIT OR GPL-3.0-or-later) ×1, (MIT AND Zlib) ×1, 0BSD ×1 | 0 |
+| Site (devstack.bid, Next.js Worker) | 158 | MIT ×128, ISC ×11, Apache-2.0 ×7, UNKNOWN ×2, BSD-3-Clause ×2, MIT OR Apache-2.0 ×1, SEE LICENSE IN ./LICENSE ×1, CC-BY-4.0 ×1, BSD-2-Clause ×1, W3C-20150513 ×1, (MIT OR GPL-3.0-or-later) ×1, (MIT AND Zlib) ×1, 0BSD ×1 | 0 |
 | Studio (/studio/, browser bundle) | 49 | MIT ×39, Apache-2.0 ×3, OFL-1.1 ×3, (MPL-2.0 OR Apache-2.0) ×1, ISC ×1, (MIT OR GPL-3.0-or-later) ×1, (MIT AND Zlib) ×1 | 0 |
 
 ## Exceptions and notes
@@ -52,6 +52,7 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 
 | Package | Version | License |
 |---|---|---|
+| `@cloudflare/containers` | 0.3.7 | MIT OR Apache-2.0 |
 | `@codemirror/autocomplete` | 6.20.3 | MIT |
 | `@codemirror/commands` | 6.11.1 | MIT |
 | `@codemirror/lang-css` | 6.3.1 | MIT |

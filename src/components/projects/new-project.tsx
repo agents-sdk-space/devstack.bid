@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FolderGit2, GitBranch, Lock, RefreshCw, Search } from "lucide-react";
-import { Badge, buttonClasses, Card, EmptyState, Input, Label, Segmented, Select, Skeleton } from "@/components/ui";
+import { Badge, buttonClasses, Card, EmptyState, Input, Label, Segmented, Select, Skeleton, Spinner } from "@/components/ui";
 import { useLang } from "@/components/prefs";
 import { UploadZipPanel } from "./upload-zip-panel";
 import { githubConnectHref } from "@/lib/auth/github-policy";
@@ -22,6 +22,21 @@ export function isMode(v: string | null): v is Mode {
 /** Connect-GitHub link that returns to this exact page (path + query), same-origin only. */
 function ConnectLink({ className, children }: { className: string; children: React.ReactNode }) {
   return <a href={githubConnectHref("/new")} className={className} onClick={(e) => { e.currentTarget.href = githubConnectHref(`${location.pathname}${location.search}`); }}>{children}</a>;
+}
+
+/** Same rule as the server (safeWorkerName / validateSlug): lowercase, digits, inner dashes, 1–63. */
+export const SLUG_PATTERN = "[a-z0-9](?:[a-z0-9\\-]{0,61}[a-z0-9])?";
+export function suggestName(repoName: string): string {
+  return repoName.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 63).replace(/-+$/, "");
+}
+
+/** Keep fields the user edited; fill the rest from detection. */
+export function mergeDetected(cur: { install: string; build: string; output: string }, touched: { install?: boolean; build?: boolean; output?: boolean }, fw: { install: string | null; build: string | null; output: string | null }) {
+  return {
+    install: touched.install ? cur.install : fw.install ?? "",
+    build: touched.build ? cur.build : fw.build ?? "",
+    output: touched.output ? cur.output : fw.output ?? "",
+  };
 }
 
 const FRAMEWORK_IDS = ["nextjs", "vite", "astro", "sveltekit", "remix", "react-router", "nuxt", "static", "worker", "node", "unknown"] as const;
@@ -125,12 +140,15 @@ function ImportGit({ th }: { th: boolean }) {
             {list.repos.map((r) => (
               <li key={r.id} className="flex items-center gap-3 px-4 py-3">
                 <FolderGit2 className="h-4 w-4 shrink-0 text-subtle" aria-hidden />
-                <span className="min-w-0 truncate font-medium text-fg">{r.fullName}</span>
+                <span className="min-w-0 truncate font-medium text-fg" title={r.fullName}>{r.fullName}</span>
                 {r.private && <Badge variant="outline"><Lock className="mr-1 h-3 w-3" aria-hidden />{th ? "ส่วนตัว" : "Private"}</Badge>}
                 <button type="button" onClick={() => setPicked(r)} className={`${buttonClasses("primary", "sm")} ml-auto`}>{th ? "นำเข้า" : "Import"}</button>
               </li>
             ))}
           </ul>
+        )}
+        {list.kind === "ok" && query && list.hasMore && (
+          <p className="mt-3 text-xs text-subtle" role="status">{th ? "แสดงผลลัพธ์แรกเท่านั้น พิมพ์คำค้นให้ละเอียดขึ้น" : "Showing the first results. Refine your search to narrow it down."}</p>
         )}
         {list.kind === "ok" && !query && (page > 1 || list.hasMore) && (
           <div className="mt-3 flex justify-between">
@@ -148,23 +166,31 @@ function Configure({ th, repo, onBack }: { th: boolean; repo: Repo; onBack: () =
   const [err, setErr] = useState("");
   const [branch, setBranch] = useState(repo.defaultBranch);
   const [root, setRoot] = useState("");
-  const [name, setName] = useState(repo.fullName.split("/")[1].toLowerCase().replace(/[^a-z0-9-]+/g, "-").slice(0, 63));
+  const [name, setName] = useState(suggestName(repo.fullName.split("/")[1]));
   const [fw, setFw] = useState("unknown");
   const [install, setInstall] = useState("");
   const [build, setBuild] = useState("");
   const [output, setOutput] = useState("");
   const [node, setNode] = useState("22");
   const [busy, setBusy] = useState(false);
+  const [inspecting, setInspecting] = useState(true);
+  const touched = useRef<{ install?: boolean; build?: boolean; output?: boolean }>({});
 
-  const reset = () => { setErr(""); setInfo(null); };
+  // Keep the form on screen while re-inspecting; only clear the error.
+  const reset = () => { setErr(""); setInspecting(true); };
   const fetchInspect = useCallback(async (): Promise<{ info: Inspect } | { error: string }> => {
     const r = await getJson(`/api/github/inspect?repo=${encodeURIComponent(repo.fullName)}&ref=${encodeURIComponent(branch)}&root=${encodeURIComponent(root)}`).catch((e: unknown) => ({ ok: false, status: 0, body: { error: String(e) } as Record<string, unknown> & { error?: string } }));
     return r.ok ? { info: r.body as unknown as Inspect } : { error: r.body.error ?? "Inspect failed" };
   }, [repo.fullName, branch, root]);
   const apply = useCallback((x: { info: Inspect } | { error: string }) => {
+    setInspecting(false);
     if ("error" in x) { setErr(x.error); return; }
     const i = x.info;
-    setInfo(i); setFw(i.framework.id); setInstall(i.framework.install ?? ""); setBuild(i.framework.build ?? ""); setOutput(i.framework.output ?? "");
+    const t = touched.current;
+    setInfo(i); setFw(i.framework.id);
+    setInstall((cur) => mergeDetected({ install: cur, build: "", output: "" }, t, i.framework).install);
+    setBuild((cur) => mergeDetected({ install: "", build: cur, output: "" }, t, i.framework).build);
+    setOutput((cur) => mergeDetected({ install: "", build: "", output: cur }, t, i.framework).output);
   }, []);
   const inspect = useCallback(() => fetchInspect().then(apply), [fetchInspect, apply]);
 
@@ -192,6 +218,7 @@ function Configure({ th, repo, onBack }: { th: boolean; repo: Repo; onBack: () =
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-base font-semibold text-fg">{th ? "ตั้งค่าโปรเจกต์" : "Configure Project"}</h2>
         <span className="font-mono text-sm text-subtle">{repo.fullName}</span>
+        {info && inspecting && <span role="status" className="inline-flex items-center gap-1.5 text-xs text-subtle"><Spinner size="sm" />{th ? "กำลังตรวจสอบ..." : "Inspecting..."}</span>}
         <button type="button" onClick={onBack} className={`${buttonClasses("ghost", "sm")} ml-auto`}>{th ? "เปลี่ยน repo" : "Change repo"}</button>
       </div>
       {!info && !err && <div className="mt-4 space-y-2"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>}
@@ -203,19 +230,19 @@ function Configure({ th, repo, onBack }: { th: boolean; repo: Repo; onBack: () =
       )}
       {info && (
         <form onSubmit={submit} className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2"><Label htmlFor="np-name">{th ? "ชื่อโปรเจกต์" : "Project name"}</Label><Input id="np-name" value={name} onChange={(e) => setName(e.target.value)} required maxLength={63} className="font-mono" /></div>
+          <div className="sm:col-span-2"><Label htmlFor="np-name">{th ? "ชื่อโปรเจกต์" : "Project name"}</Label><Input id="np-name" value={name} onChange={(e) => setName(e.target.value)} required maxLength={63} pattern={SLUG_PATTERN} title={th ? "ตัวพิมพ์เล็ก ตัวเลข และขีด (ไม่ขึ้นต้นหรือลงท้ายด้วยขีด)" : "Lowercase letters, digits and dashes (not at the start or end)"} className="font-mono" /></div>
           <div><Label htmlFor="np-branch"><GitBranch className="mr-1 inline h-3.5 w-3.5" aria-hidden />Branch</Label>
-            <Select id="np-branch" value={branch} onChange={(e) => { reset(); setBranch(e.target.value); }}>{(info.branches.length ? info.branches : [info.ref]).map((b) => <option key={b} value={b}>{b}</option>)}</Select></div>
+            <Select id="np-branch" value={branch} onChange={(e) => { reset(); setRoot(""); setBranch(e.target.value); }}>{(info.branches.length ? info.branches : [info.ref]).map((b) => <option key={b} value={b}>{b}</option>)}</Select></div>
           <div><Label htmlFor="np-root">{th ? "Root directory" : "Root directory"}</Label>
-            <Select id="np-root" value={root} onChange={(e) => { reset(); setRoot(e.target.value); }}>{info.roots.map((x) => <option key={x || "."} value={x}>{x || "./"}</option>)}</Select></div>
+            <Select id="np-root" value={root} onChange={(e) => { reset(); setRoot(e.target.value); }}>{(info.roots.includes(root) ? info.roots : [root, ...info.roots]).map((x) => <option key={x || "."} value={x}>{x || "./"}</option>)}</Select></div>
           <div><Label htmlFor="np-fw">Framework {info.framework.id !== "unknown" && <Badge variant="success" className="ml-1">{th ? "ตรวจพบ" : "detected"}</Badge>}</Label>
             <Select id="np-fw" value={fw} onChange={(e) => setFw(e.target.value)}>{FRAMEWORK_IDS.map((f) => <option key={f} value={f}>{f === info.framework.id ? info.framework.label : f}</option>)}</Select></div>
           <div><Label htmlFor="np-node">Node.js</Label><Select id="np-node" value={node} onChange={(e) => setNode(e.target.value)}>{["20", "22", "24"].map((v) => <option key={v} value={v}>{v}</option>)}</Select></div>
-          <div><Label htmlFor="np-install">Install command</Label><Input id="np-install" value={install} onChange={(e) => setInstall(e.target.value)} className="font-mono" maxLength={200} /></div>
-          <div><Label htmlFor="np-build">Build command</Label><Input id="np-build" value={build} onChange={(e) => setBuild(e.target.value)} className="font-mono" maxLength={200} /></div>
-          <div className="sm:col-span-2"><Label htmlFor="np-out">Output directory</Label><Input id="np-out" value={output} onChange={(e) => setOutput(e.target.value)} className="font-mono" maxLength={200} /></div>
+          <div><Label htmlFor="np-install">Install command</Label><Input id="np-install" value={install} onChange={(e) => { touched.current.install = true; setInstall(e.target.value); }} className="font-mono" maxLength={200} /></div>
+          <div><Label htmlFor="np-build">Build command</Label><Input id="np-build" value={build} onChange={(e) => { touched.current.build = true; setBuild(e.target.value); }} className="font-mono" maxLength={200} /></div>
+          <div className="sm:col-span-2"><Label htmlFor="np-out">Output directory</Label><Input id="np-out" value={output} onChange={(e) => { touched.current.output = true; setOutput(e.target.value); }} className="font-mono" maxLength={200} /></div>
           {info.truncated && <p className="text-xs text-subtle sm:col-span-2">{th ? "repo ใหญ่มาก รายการโฟลเดอร์อาจไม่ครบ" : "Large repository: the folder list may be incomplete."}</p>}
-          <div className="sm:col-span-2"><button type="submit" disabled={busy || !name} className={buttonClasses("primary", "md")}>{busy ? (th ? "กำลังนำเข้า..." : "Importing...") : (th ? "นำเข้าโปรเจกต์" : "Import project")}</button></div>
+          <div className="sm:col-span-2"><button type="submit" disabled={busy || inspecting || !name} className={buttonClasses("primary", "md")}>{busy ? (th ? "กำลังนำเข้า..." : "Importing...") : (th ? "นำเข้าโปรเจกต์" : "Import project")}</button></div>
         </form>
       )}
     </Card>
@@ -234,7 +261,7 @@ function FromTemplate({ th, templates }: { th: boolean; templates: TemplateOptio
     const r = await getJson("/api/projects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, private: priv, templateId: id }) })
       .catch((x: unknown) => ({ ok: false, status: 0, body: { error: String(x) } as Record<string, unknown> & { error?: string } }));
     setBusy(false);
-    if (!r.ok) { setErr(r.body.code === "reauth" ? `${r.body.error ?? ""}` : r.body.error ?? "Failed"); return; }
+    if (!r.ok) { setErr(r.body.error ?? "Failed"); return; }
     location.href = `/projects/${encodeURIComponent((r.body.project as { id: string }).id)}`;
   }
   return (
