@@ -111,7 +111,7 @@
     "STUDIO_MAX_TOKENS": "4000",
     "STUDIO_DAILY_CALLS": "60",
     "STUDIO_GLOBAL_CALLS_PER_DAY": "3000",
-    "SITES_DNS_READY": "0"
+    "SITES_DNS_READY": "1"
   },
   "ratelimits": [
     {
