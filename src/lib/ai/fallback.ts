@@ -57,7 +57,8 @@ export function chooseTemplate(prompt: string): StackTemplate {
       bestScore = s;
     }
   }
-  if (bestScore <= 0) return getTemplate(wantsPython ? "fastapi-ai" : "nextjs-dashboard")!;
+  // No keyword matched: a plain website is the safest general default (not the dashboard).
+  if (bestScore <= 0) return getTemplate(wantsPython ? "fastapi-ai" : "static-website")!;
   return best;
 }
 

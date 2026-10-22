@@ -8,6 +8,7 @@ import nodeCliNpx from "./node-cli-npx";
 import pypiPackage from "./pypi-package";
 import reactAdminTool from "./react-admin-tool";
 import streamlitDashboard from "./streamlit-dashboard";
+import staticWebsite from "./static-website";
 import viteReactGame from "./vite-react-game";
 
 /**
@@ -25,6 +26,7 @@ export const TEMPLATES: StackTemplate[] = [
   collabWorkspace,
   reactAdminTool,
   nextjsAiChat,
+  staticWebsite,
 ];
 
 export const TEMPLATE_IDS = TEMPLATES.map((t) => t.id);

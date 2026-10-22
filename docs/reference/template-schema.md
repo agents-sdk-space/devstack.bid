@@ -70,5 +70,6 @@
 | `collab-workspace` | collab | node | 7 | 8 | ws-server, dev-server (longRunning) |
 | `react-admin-tool` | internal-tool | node | 7 | 8 | dev-server |
 | `nextjs-ai-chat` | ai | node | 6 | 7 | dev-server |
+| `static-website` | website | node | 5 | 6 | — |
 
 ตัวเลข "หลังประกอบ" มาจาก `composeSteps(configForTemplate(id))` (npm, Node LTS, Python 3.12/pip, add-on เริ่มต้น) ณ v0.5 และเปลี่ยนตามตัวเลือก

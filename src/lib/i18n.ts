@@ -584,6 +584,7 @@ export const CATEGORY_LABELS: Record<string, { en: string; th: string }> = {
   collab: { en: "Collaborative", th: "ทำงานร่วมกัน" },
   "internal-tool": { en: "Internal tool", th: "ระบบภายใน" },
   "web-app": { en: "Web app", th: "เว็บแอป" },
+  website: { en: "Website", th: "เว็บไซต์" },
 };
 
 export const PLUGIN_CATEGORY_LABELS: Record<string, { en: string; th: string }> = {

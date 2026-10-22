@@ -18,10 +18,11 @@ describe("deploy mapping table", () => {
     }
   });
   it("maps the expected targets", () => {
-    expect(DEPLOY_PROFILES["nextjs-dashboard"].target).toBe("opennext");
+    expect(DEPLOY_PROFILES["nextjs-dashboard"].target).toBe("worker-assets");
+    expect(DEPLOY_PROFILES["nextjs-dashboard"].assetsDir).toBe("out");
     expect(DEPLOY_PROFILES["vite-react-game"].target).toBe("worker-assets");
     expect(DEPLOY_PROFILES["express-api"].target).toBe("not-deployable");
-    expect(DEPLOY_PROFILES["collab-workspace"].flags.join(" ")).toMatch(/BREAKS/);
+    expect(DEPLOY_PROFILES["collab-workspace"].flags.join(" ")).toMatch(/BroadcastChannel/);
     expect(DEPLOY_PROFILES.studio.flags.join(" ")).toMatch(/Pages/);
   });
   it("documents every profile in docs/deploy-templates.md", () => {
@@ -45,8 +46,8 @@ describe("detection and config files", () => {
     expect(w.path).toBe("wrangler.jsonc");
     expect(cfg.assets).toEqual({ directory: "./dist", not_found_handling: "single-page-application" });
     expect(cfg).not.toHaveProperty("pages_build_output_dir");
-    const next = deployConfigFiles(DEPLOY_PROFILES["nextjs-ai-chat"], "chat");
-    expect(next.map((f) => f.path)).toEqual(["wrangler.jsonc", "open-next.config.ts", ".dev.vars.example"]);
+    const next = deployConfigFiles(detectProfile(["package.json", "next.config.ts"]), "chat");
+    expect(next.map((f) => f.path)).toEqual(["wrangler.jsonc", "open-next.config.ts"]);
     expect(JSON.parse(next[0].content).main).toBe(".open-next/worker.js");
     expect(deployConfigFiles(DEPLOY_PROFILES["express-api"], "x")).toEqual([]);
     expect(openNextPackagePatch({ scripts: { dev: "next dev" } })).toMatchObject({ scripts: { dev: "next dev", deploy: expect.stringContaining("opennextjs-cloudflare deploy") } });

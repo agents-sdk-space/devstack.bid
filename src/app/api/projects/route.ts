@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     files = v.files;
   } else if (templateId) {
     // Seed the chosen template's own files; without this every template repo was the same README-only repo.
-    files = templateSeedFiles(templateId, String(body.name ?? ""));
+    files = templateSeedFiles(templateId, String(body.name ?? ""), typeof body.description === "string" ? body.description : undefined);
   }
   try {
     const r = await createProjectRepo(a.db, token, a.uid, { name: String(body.name ?? ""), private: body.private !== false, templateId, description: typeof body.description === "string" ? body.description : undefined, files });

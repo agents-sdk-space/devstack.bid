@@ -1,4 +1,5 @@
 import "server-only";
+import { templateBuild } from "@/lib/projects/template-seed";
 import {
   commitFiles,
   createBranch,
@@ -47,7 +48,7 @@ export async function createProjectRepo(
   let commit: string | undefined;
   if (spec.files?.length) commit = (await commitFiles(token, { owner, repo: rname, branch: repo.defaultBranch, message: "chore: scaffold from DevStack", files: spec.files })).sha;
   const project: ProjectRow = { id: crypto.randomUUID(), user_id: uid, name, template_id: spec.templateId ?? null, repo_full_name: repo.fullName, default_branch: repo.defaultBranch, created_at: Date.now() };
-  await insertProject(db, { id: project.id, userId: uid, name, templateId: project.template_id, repo: repo.fullName, branch: repo.defaultBranch });
+  await insertProject(db, { id: project.id, userId: uid, name, templateId: project.template_id, repo: repo.fullName, branch: repo.defaultBranch, build: spec.templateId ? templateBuild(spec.templateId) : null });
   await audit(db, uid, "project.created", repo.fullName);
   return { project, htmlUrl: repo.htmlUrl, commit };
 }

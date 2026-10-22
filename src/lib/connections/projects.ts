@@ -21,7 +21,17 @@ export interface ProjectRow {
   provider?: string | null;
 }
 
-export async function insertProject(db: D1Like, p: { id: string; userId: string; name: string; templateId: string | null; repo: string | null; branch: string | null }): Promise<void> {
+export async function insertProject(
+  db: D1Like,
+  p: { id: string; userId: string; name: string; templateId: string | null; repo: string | null; branch: string | null; build?: { framework: string; install: string; build: string; output: string } | null }
+): Promise<void> {
+  if (p.build) {
+    await db
+      .prepare("INSERT INTO projects (id, user_id, name, template_id, repo_full_name, default_branch, framework, install_command, build_command, output_directory, node_version) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, '22')")
+      .bind(p.id, p.userId, p.name, p.templateId, p.repo, p.branch, p.build.framework, p.build.install, p.build.build, p.build.output)
+      .run();
+    return;
+  }
   await db
     .prepare("INSERT INTO projects (id, user_id, name, template_id, repo_full_name, default_branch) VALUES (?1, ?2, ?3, ?4, ?5, ?6)")
     .bind(p.id, p.userId, p.name, p.templateId, p.repo, p.branch)

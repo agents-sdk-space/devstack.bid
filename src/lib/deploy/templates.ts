@@ -41,25 +41,19 @@ const STATIC_FILES = ["wrangler.jsonc (assets.directory)"];
 
 export const DEPLOY_PROFILES: Record<string, DeployProfile> = {
   "nextjs-dashboard": {
-    id: "nextjs-dashboard", source: "stack-template", target: "opennext", path: "cf-build",
-    build: "npx opennextjs-cloudflare build", entry: ".open-next/worker.js", assetsDir: ".open-next/assets",
-    requiredFiles: NEXT_FILES, secrets: [],
-    flags: ["create-next-app output has no wrangler.jsonc / open-next.config.ts — DevStack adds them in a 'Prepare for Cloudflare' PR before deploy."],
+    id: "nextjs-dashboard", source: "stack-template", target: "worker-assets", path: "cf-build",
+    build: "npm run build", entry: null, assetsDir: "out", requiredFiles: STATIC_FILES, secrets: [],
+    flags: [],
   },
   "nextjs-ai-chat": {
-    id: "nextjs-ai-chat", source: "stack-template", target: "opennext", path: "cf-build",
-    build: "npx opennextjs-cloudflare build", entry: ".open-next/worker.js", assetsDir: ".open-next/assets",
-    requiredFiles: NEXT_FILES, secrets: ["OPENAI_API_KEY"],
-    flags: [
-      "Same OpenNext config gap as nextjs-dashboard (added by the prepare PR).",
-      "Reads OPENAI_API_KEY from .env.local locally; on Workers it must be a Worker secret (listed in .dev.vars.example for the Deploy button).",
-    ],
+    id: "nextjs-ai-chat", source: "stack-template", target: "worker-assets", path: "cf-build",
+    build: "npm run build", entry: null, assetsDir: "out", requiredFiles: STATIC_FILES, secrets: [],
+    flags: ["Static export: no API route or server key. The page calls NEXT_PUBLIC_CHAT_API (your own endpoint that holds the model key) or runs in demo mode."],
   },
   "collab-workspace": {
-    id: "collab-workspace", source: "stack-template", target: "opennext", path: "cf-build",
-    build: "npx opennextjs-cloudflare build", entry: ".open-next/worker.js", assetsDir: ".open-next/assets",
-    requiredFiles: NEXT_FILES, secrets: [],
-    flags: ["BREAKS: the `ws` script runs a y-websocket Node server that cannot run on Workers. Only the Next.js page deploys; realtime sync needs a Durable Objects rewrite (e.g. y-partyserver) — not done automatically."],
+    id: "collab-workspace", source: "stack-template", target: "worker-assets", path: "cf-build",
+    build: "npm run build", entry: null, assetsDir: "out", requiredFiles: STATIC_FILES, secrets: [],
+    flags: ["Static export: realtime sync is between tabs of one browser (BroadcastChannel). Cross-device sync needs a backend (e.g. Durable Objects)."],
   },
   "vite-react-game": {
     id: "vite-react-game", source: "stack-template", target: "worker-assets", path: "cf-build",
@@ -96,6 +90,11 @@ export const DEPLOY_PROFILES: Record<string, DeployProfile> = {
     build: null, entry: null, assetsDir: null, requiredFiles: [], secrets: [],
     flags: ["Python package — publish to PyPI, not a website."],
   },
+  "static-website": {
+    id: "static-website", source: "stack-template", target: "worker-assets", path: "cf-build",
+    build: "npm run build", entry: null, assetsDir: "dist", requiredFiles: STATIC_FILES, secrets: [],
+    flags: [],
+  },
   studio: {
     id: "studio", source: "studio", target: "worker-assets", path: "cf-build",
     build: "npm run build", entry: null, assetsDir: "dist", requiredFiles: STATIC_FILES, secrets: [], spa: true,
@@ -118,6 +117,14 @@ export const DEPLOY_PROFILES: Record<string, DeployProfile> = {
   },
 };
 
+/** A Next.js repo of unknown origin: assume a server app built with OpenNext. */
+const DETECTED_NEXT: DeployProfile = {
+  id: "detected-next", source: "chat", target: "opennext", path: "cf-build",
+  build: "npx opennextjs-cloudflare build", entry: ".open-next/worker.js", assetsDir: ".open-next/assets",
+  requiredFiles: NEXT_FILES, secrets: [],
+  flags: ["create-next-app output has no wrangler.jsonc / open-next.config.ts — DevStack adds them in a 'Prepare for Cloudflare' PR before deploy."],
+};
+
 export function profileById(id: string | null | undefined): DeployProfile | null {
   return id && Object.hasOwn(DEPLOY_PROFILES, id) ? DEPLOY_PROFILES[id] : null;
 }
@@ -126,7 +133,7 @@ export function profileById(id: string | null | undefined): DeployProfile | null
 export function detectProfile(paths: string[]): DeployProfile {
   const has = (p: string) => paths.includes(p);
   const pkg = has("package.json");
-  if (paths.some((p) => /^next\.config\.(js|mjs|ts)$/.test(p))) return { ...DEPLOY_PROFILES["nextjs-dashboard"], id: "detected-next", source: "chat" };
+  if (paths.some((p) => /^next\.config\.(js|mjs|ts)$/.test(p))) return DETECTED_NEXT;
   if (paths.some((p) => /^vite\.config\.(js|mjs|ts)$/.test(p))) return { ...DEPLOY_PROFILES.studio, id: "detected-vite", source: "chat", flags: [] };
   if (!pkg && has("src/index.js")) return DEPLOY_PROFILES["chat-worker"];
   if (!pkg && has("index.html")) return DEPLOY_PROFILES["chat-static"];

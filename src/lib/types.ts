@@ -32,7 +32,8 @@ export type Category =
   | "package"
   | "collab"
   | "internal-tool"
-  | "web-app";
+  | "web-app"
+  | "website";
 
 /**
  * Step kinds:

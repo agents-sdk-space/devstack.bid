@@ -16,6 +16,7 @@ Stack Template คือ "สูตร" ตั้งค่าโปรเจก�
 | `collab-workspace` | Realtime Collaborative Workspace | Node | typescript, tailwind, eslint, testing, docker, ci | typescript, tailwind, eslint |
 | `react-admin-tool` | Internal Tool (React Admin) | Node | typescript, eslint, testing, docker, ci | typescript |
 | `nextjs-ai-chat` | Next.js AI Chat App | Node | typescript, tailwind, eslint, testing, docker, ci | typescript, tailwind, eslint |
+| `static-website` | Website (landing page) | Node | eslint, docker, ci | — |
 
 เราไม่อยากให้ตารางนี้ล้าสมัย จึงให้ `npm run docs:check` ตรวจกับโค้ดอัตโนมัติ (ทุก template id ต้องปรากฏในเอกสาร) ถ้ามีคนเพิ่มเทมเพลตใหม่แล้วลืมอัปเดตเอกสาร CI จะล้มทันที
 

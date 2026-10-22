@@ -36,7 +36,7 @@ describe("remote MCP interface", () => {
     const platform = await readResource("devstack://platform");
     const templates = await readResource("devstack://templates");
     expect(platform.contents[0].text).toContain("Platform functions");
-    expect(JSON.parse(templates.contents[0].text)).toHaveLength(10);
+    expect(JSON.parse(templates.contents[0].text)).toHaveLength(11);
   });
 
   it("accepts trusted site and localhost browser origins and rejects foreign origins", () => {
