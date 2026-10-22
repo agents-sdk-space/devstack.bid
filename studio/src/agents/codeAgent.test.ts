@@ -80,19 +80,22 @@ describe('runCodeAgent', () => {
     expect(llm.calls[1]?.messages.at(-1)?.content).toMatch(/rejected: Syntax error/);
   });
 
-  it('falls back to the template when the model keeps failing', async () => {
+  it('reports a failure (no silent template) when the model keeps failing, leaving files unchanged', async () => {
     const fs = new MemoryFs(getInitialSandboxFiles());
+    const before = await fs.readFile('src/App.jsx');
     const llm = new ScriptedLLM({ code: ['not json', 'still not json'] });
-    const r = await runCodeAgent(new EventBroker(), fs, llm, { ...input, userPrompt: 'todo app please' });
-    expect(r.source).toBe('template');
-    expect(r.note).toMatch(/rejected/);
-    expect(await fs.readFile('src/App.jsx')).toContain('todos');
+    await expect(runCodeAgent(new EventBroker(), fs, llm, { ...input, userPrompt: 'todo app please' })).rejects.toThrow(/generation failed/);
+    expect(await fs.readFile('src/App.jsx')).toBe(before);
   });
 
   it('does not retry on transport failure', async () => {
     const llm = new ScriptedLLM({ code: ['__THROW__'] });
-    const r = await runCodeAgent(new EventBroker(), new MemoryFs(getInitialSandboxFiles()), llm, input);
-    expect(r.source).toBe('template');
+    await expect(runCodeAgent(new EventBroker(), new MemoryFs(getInitialSandboxFiles()), llm, input)).rejects.toThrow(/generation failed/);
     expect(llm.calls).toHaveLength(1);
+  });
+
+  it('system prompt follows the requested design instead of forcing one theme', async () => {
+    const { codeSystemPrompt } = await import('./prompts');
+    expect(codeSystemPrompt({ schemaSql: '', heroPath: null })).toMatch(/follow the colours, theme/);
   });
 });

@@ -20,8 +20,9 @@ Rules:
 - Database schema already created:
 ${opts.schemaSql || '(no tables — keep data in React state/localStorage)'}
 ${opts.heroPath ? `- Show the generated hero image near the top: <img src="${opts.heroPath}" alt="" /> (width 100%, rounded, 1px border).` : ''}
-- Style inline or in a CSS file: background #000000, accent #2997FF (buttons #0071E3 with white text), 1px borders #2A2A2D, muted text #98989D,
-  font-family Inter/system-ui. The main <h1> must clearly name the app. Include accessible labels on inputs.
+- Design: follow the colours, theme, layout and mood the user asks for, and make it fit the app's subject. Every app should
+  look distinct; do not reuse one fixed theme. Only if the user gives no style at all, default to background #000000,
+  accent #2997FF, 1px borders #2A2A2D, muted text #98989D, font-family Inter/system-ui. The main <h1> must clearly name the app. Include accessible labels on inputs.
 - Keep it under 250 lines total. Code must be valid JSX/ES modules (compiled in the browser with Sucrase; only "react" and "react-dom" exist, no npm install).`;
 }
 

@@ -32,32 +32,52 @@ export function hasKeyword(text: string, keyword: string): boolean {
   return text.includes(kw);
 }
 
-function score(template: StackTemplate, text: string, wantsPython: boolean, wantsNode: boolean): number {
-  let total = 0;
-  for (const kw of template.keywords) {
-    if (hasKeyword(text, kw)) total += kw.includes(" ") ? 3 : 2;
+const isAscii = (kw: string) => /^[a-z0-9 .\-/+]+$/.test(kw.toLowerCase());
+
+/** Every keyword (all templates) found in the text. Thai keywords use substring match, so a Thai keyword
+ * that only occurs inside a longer matched keyword is dropped (longest match wins: "เว็บแอป" is not "เว็บ"). */
+function matchedKeywords(text: string): Set<string> {
+  const all = new Set<string>();
+  for (const t of TEMPLATES) for (const kw of [...t.keywords, ...(t.weakKeywords ?? [])]) if (hasKeyword(text, kw)) all.add(kw.toLowerCase());
+  const thai = [...all].filter((k) => !isAscii(k));
+  for (const k of thai) {
+    const longer = thai.filter((o) => o.length > k.length && o.includes(k));
+    if (!longer.length) continue;
+    // Keep k only if it also appears somewhere outside every longer match.
+    let rest = text;
+    for (const o of longer) rest = rest.split(o).join(" ");
+    if (!rest.includes(k)) all.delete(k);
   }
+  return all;
+}
+
+function score(template: StackTemplate, text: string, matched: Set<string>, wantsPython: boolean, wantsNode: boolean): { total: number; hits: number } {
+  let total = 0;
+  let hits = 0;
+  for (const kw of template.keywords) {
+    if (matched.has(kw.toLowerCase())) { total += kw.includes(" ") ? 3 : 2; hits++; }
+  }
+  const weak = (template.weakKeywords ?? []).filter((kw) => matched.has(kw.toLowerCase())).length;
+  if (weak) { total += 1; hits += weak; }
   if (text.includes(template.id.replace(/-/g, " "))) total += 3;
   if (wantsPython && template.runtimes.includes("python")) total += 2;
   if (wantsNode && template.runtimes.includes("node")) total += 1;
   if (wantsPython && !wantsNode && !template.runtimes.includes("python")) total -= 2;
-  return total;
+  return { total, hits };
 }
 
 export function chooseTemplate(prompt: string): StackTemplate {
   const text = ` ${prompt.toLowerCase()} `;
   const wantsPython = PYTHON_HINTS.some((h) => hasKeyword(text, h.trim()));
   const wantsNode = NODE_HINTS.some((h) => hasKeyword(text, h.trim()));
-  let best = TEMPLATES[0];
-  let bestScore = 0;
-  for (const t of TEMPLATES) {
-    const s = score(t, text, wantsPython, wantsNode);
-    if (s > bestScore) {
-      best = t;
-      bestScore = s;
-    }
-  }
-  if (bestScore <= 0) return getTemplate(wantsPython ? "fastapi-ai" : "nextjs-dashboard")!;
+  const matched = matchedKeywords(text);
+  // Deterministic ranking: score, then number of keyword hits, then id (never TEMPLATES order).
+  const ranked = TEMPLATES.map((t) => ({ t, ...score(t, text, matched, wantsPython, wantsNode) }))
+    .sort((a, b) => b.total - a.total || b.hits - a.hits || (a.t.id < b.t.id ? -1 : 1));
+  const best = ranked[0].t;
+  const bestScore = ranked[0].total;
+  // No keyword matched: a plain website is the safest general default (not the dashboard).
+  if (bestScore <= 0) return getTemplate(wantsPython ? "fastapi-ai" : "static-website")!;
   return best;
 }
 

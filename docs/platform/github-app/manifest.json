@@ -1,0 +1,24 @@
+{
+  "name": "DevStack Deploy",
+  "url": "https://devstack.bid",
+  "description": "Import repositories into DevStack and deploy them automatically on every push.",
+  "public": true,
+  "hook_attributes": {
+    "url": "https://devstack.bid/api/github/webhook",
+    "active": true
+  },
+  "redirect_url": "https://devstack.bid/api/github/app/manifest-callback",
+  "setup_url": "https://devstack.bid/api/github/app/setup",
+  "setup_on_update": true,
+  "request_oauth_on_install": false,
+  "default_permissions": {
+    "contents": "write",
+    "metadata": "read",
+    "pull_requests": "read",
+    "statuses": "write"
+  },
+  "default_events": [
+    "push",
+    "pull_request"
+  ]
+}

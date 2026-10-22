@@ -1,4 +1,5 @@
 import "server-only";
+import { sanitizeLog } from "@/lib/deploy/sanitize";
 import { TEMPLATES } from "@/data/templates";
 import type { Lang } from "../types";
 import { DEFAULT_MODEL, serverEnv } from "../server/env";
@@ -22,9 +23,8 @@ export class OpenAIError extends Error {
 
 /** Remove anything that looks like an API key from error text before it leaves the server. */
 export function redactSecrets(text: string, ...secrets: (string | undefined)[]): string {
-  let out = text;
-  for (const secret of secrets) if (secret && secret.length >= 8) out = out.split(secret).join("***");
-  return out
+  // One redaction engine for the whole app (sanitizeLog); the extra rules below are stricter fallbacks.
+  return sanitizeLog(text, secrets, Number.MAX_SAFE_INTEGER)
     .replace(/sk-[A-Za-z0-9_\-*]{4,}/g, "sk-***")
     .replace(/Bearer\s+\S+/gi, "Bearer ***")
     .replace(/\b(cfat|cfut)_[A-Za-z0-9]{8,}/g, "$1_***");

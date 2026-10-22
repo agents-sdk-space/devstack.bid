@@ -5,8 +5,19 @@ import { homeMarkdown, notFoundMarkdown } from "@/lib/agent/markdown-pages";
 import { isKnownApiPath } from "@/lib/agent/api-paths";
 import { isKnownSitePath } from "@/lib/agent/site-paths";
 import { apiError } from "@/lib/server/api-error";
+import { legacyAuthMigration } from "@/lib/chat/identity";
+
+/** Attach legacy-cookie migration headers (nvx_auth -> __Host-nvx_auth) to a response. */
+function withCookieMigration(req: NextRequest, res: Response): Response {
+  for (const c of legacyAuthMigration(req.headers.get("cookie"), req.nextUrl.protocol === "https:")) res.headers.append("Set-Cookie", c);
+  return res;
+}
 
 export function middleware(req: NextRequest) {
+  return withCookieMigration(req, route(req));
+}
+
+function route(req: NextRequest): Response {
   const { pathname } = req.nextUrl;
 
   if (pathname.startsWith("/api/") && !isKnownApiPath(pathname) && req.method !== "OPTIONS") {

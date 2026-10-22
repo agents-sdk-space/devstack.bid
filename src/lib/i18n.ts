@@ -192,6 +192,7 @@ const dict = {
   },
   "chat.factoryLink": { en: "Need more? Use your own key in the Sandbox Factory", th: "อยากใช้มากกว่านี้? ใช้ key ของตัวเองใน Sandbox Factory" },
   "nav.devChat": { en: "Dev Chat", th: "Dev Chat" },
+  "nav.aiBuild": { en: "Build with AI", th: "สร้างเว็บด้วย AI" },
   "chat.mode.agent": { en: "Orchestrator agent", th: "Orchestrator agent" },
   "chat.sandboxAgentOnly": { en: "The sandbox runs with the Orchestrator agent. Pick it in the model picker for images, research and files.", th: "sandbox ทำงานกับ Orchestrator agent เลือกในตัวเลือกโมเดลเพื่อสร้างภาพ ค้นคว้า และสร้างไฟล์" },
   "chat.attach": { en: "Attach a file", th: "แนบไฟล์" },
@@ -268,7 +269,13 @@ const dict = {
   "auth.captcha": { en: "We couldn't confirm you're human. Wait for the check to finish, then try again.", th: "ยืนยันไม่ได้ว่าคุณเป็นมนุษย์ รอให้การตรวจสอบเสร็จ แล้วลองอีกครั้ง" },
   "auth.weakTitle": { en: "Use a longer password", th: "ใช้รหัสผ่านที่ยาวกว่านี้" },
   "auth.emailInvalid": { en: "Enter a valid email address.", th: "กรอกอีเมลให้ถูกต้อง" },
-  "auth.weak": { en: "Passwords need 10 to 200 characters, with no control characters.", th: "รหัสผ่านต้องมี 10 ถึง 200 ตัวอักษร และไม่มีอักขระควบคุม" },
+  "auth.weak": { en: "Passwords need 10 to 200 characters. Letters, numbers, symbols and spaces are all fine.", th: "รหัสผ่านต้องยาว 10 ถึง 200 ตัว ใช้ตัวอักษร ตัวเลข สัญลักษณ์ หรือเว้นวรรคได้ทั้งหมด" },
+  "auth.passwordCount": { en: "{n} characters typed (need at least 10)", th: "พิมพ์แล้ว {n} ตัว (ต้องอย่างน้อย 10 ตัว)" },
+  "auth.passwordCountOk": { en: "{n} characters typed: length OK", th: "พิมพ์แล้ว {n} ตัว: ความยาวผ่านแล้ว" },
+  "auth.passwordLengthOk": { en: "Password length is OK", th: "ความยาวรหัสผ่านผ่านแล้ว" },
+  "auth.passwordLengthShort": { en: "Password needs at least 10 characters", th: "รหัสผ่านต้องมีอย่างน้อย 10 ตัว" },
+  "auth.showPassword": { en: "Show password", th: "แสดงรหัสผ่าน" },
+  "auth.hidePassword": { en: "Hide password", th: "ซ่อนรหัสผ่าน" },
   "auth.historyEmpty": { en: "Chats on this account show up here.", th: "แชตของบัญชีนี้จะแสดงที่นี่" },
   "auth.privacy": {
     en: "Signed in. Chats are stored for this account. Don't share secrets or personal data.",
@@ -384,6 +391,7 @@ const dict = {
   "docs.forAgents": { en: "For AI agents: llms.txt", th: "สำหรับ AI agent: llms.txt" },
   "nav.menu": { en: "Open menu", th: "เปิดเมนู" },
   "nav.builderShort": { en: "Builder", th: "ตัวสร้าง" },
+  "nav.newProject": { en: "New Project", th: "สร้างโปรเจกต์ใหม่" },
   "nav.start": { en: "Start building", th: "เริ่มสร้าง" },
   "footer.product": { en: "Product", th: "ผลิตภัณฑ์" },
   "footer.resources": { en: "Resources", th: "แหล่งข้อมูล" },
@@ -582,6 +590,7 @@ export const CATEGORY_LABELS: Record<string, { en: string; th: string }> = {
   collab: { en: "Collaborative", th: "ทำงานร่วมกัน" },
   "internal-tool": { en: "Internal tool", th: "ระบบภายใน" },
   "web-app": { en: "Web app", th: "เว็บแอป" },
+  website: { en: "Website", th: "เว็บไซต์" },
 };
 
 export const PLUGIN_CATEGORY_LABELS: Record<string, { en: string; th: string }> = {

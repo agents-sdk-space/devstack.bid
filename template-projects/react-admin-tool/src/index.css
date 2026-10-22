@@ -1,0 +1,8 @@
+body { margin: 0; font-family: system-ui, sans-serif; background: #f1f5f9; color: #0f172a; }
+main { max-width: 900px; margin: 0 auto; padding: 28px 16px; }
+table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+form { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+input { padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; }
+button { padding: 8px 12px; border: 0; border-radius: 8px; background: #059669; color: #fff; cursor: pointer; }
+button.ghost { background: transparent; color: #b91c1c; }

@@ -1,6 +1,6 @@
 {
   "name": "nvx-stack-builder",
-  "version": "0.8.0-rc.3",
+  "version": "0.13.0-rc.3",
   "private": true,
   "scripts": {
     "predev": "node scripts/build-docs.mjs",
@@ -37,9 +37,14 @@
     "licenses:check": "node scripts/third-party-licenses.mjs --check",
     "plugins:sync": "node scripts/sync-plugin-catalog.mjs",
     "plugins:check": "node scripts/sync-plugin-catalog.mjs --check",
-    "cli:test": "npm --prefix packages/nvx21st test"
+    "cli:test": "npm --prefix packages/nvx21st test",
+    "cf:release-config": "node scripts/gen-release-config.mjs",
+    "deploy:hotfix": "npm run cf:build && opennextjs-cloudflare deploy",
+    "deploy:release": "node scripts/gen-release-config.mjs && npm run cf:build && opennextjs-cloudflare deploy -c wrangler.release.jsonc",
+    "cli:devstack:test": "npm --prefix packages/cli test"
   },
   "dependencies": {
+    "@cloudflare/containers": "^0.3.7",
     "@codesandbox/sandpack-react": "^2.20.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
@@ -78,6 +83,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "hast-util-to-string": "^3.0.1",
     "jsdom": "^29.1.1",
+    "json5": "^2.2.3",
     "lowlight": "^3.3.0",
     "mermaid": "^12.2.0",
     "rehype-sanitize": "^6.0.0",

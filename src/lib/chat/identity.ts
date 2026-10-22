@@ -7,6 +7,11 @@
 export const CHAT_COOKIE = "nvx_chat_uid";
 /** Sign-in session after Cursor, Google, GitHub or DevStack sign-in: `<uid>.<sid>.<HMAC>` backed by `auth_sessions` (0009). */
 export const AUTH_COOKIE = "nvx_auth";
+/**
+ * Preferred session cookie name over HTTPS. The __Host- prefix forces Secure, Path=/ and NO Domain, so a user
+ * site on *.devstack.bid can neither set nor overwrite it (cookie tossing). The legacy name is still read.
+ */
+export const HOST_AUTH_COOKIE = "__Host-nvx_auth";
 /** Short-lived CSRF state for OAuth callbacks. Path is /api/auth so every provider can read it. */
 export const OAUTH_STATE_COOKIE = "nvx_oauth_state";
 const MAX_AGE = 60 * 60 * 24 * 365;
@@ -114,9 +119,48 @@ export async function readSession(value: string | undefined, secret: string): Pr
 /** Checks that a session id is still live for this user. Absent means session cookies are refused. */
 export type SessionCheck = (uid: string, sid: string) => Promise<boolean>;
 
+/** Hard sunset: the legacy (tossable) nvx_auth cookie is not read at or after this instant (2026-11-21 00:00 Asia/Bangkok). */
+export const LEGACY_AUTH_SUNSET = Date.parse("2026-11-21T00:00:00+07:00");
+const MIGRATED_MAX_AGE = 60 * 60 * 24 * 30;
+
+/**
+ * Raw session cookie. __Host-nvx_auth always wins; when it is present the legacy cookie is ignored entirely
+ * (a cookie tossed from a *.devstack.bid site can never override it). Legacy nvx_auth is read only when no
+ * __Host- cookie exists and only before LEGACY_AUTH_SUNSET.
+ */
+export function readAuthRaw(header: string | null, now = Date.now()): string | undefined {
+  const host = readCookie(header, HOST_AUTH_COOKIE);
+  if (host !== undefined) return host;
+  return now < LEGACY_AUTH_SUNSET ? readCookie(header, AUTH_COOKIE) : undefined;
+}
+
+/**
+ * Migrate-on-read (run by middleware on every HTTPS request): legacy-only → issue __Host-nvx_auth with the same value
+ * and clear nvx_auth; both present, or past the sunset → just clear nvx_auth. The value is still verified on every read.
+ */
+export function legacyAuthMigration(header: string | null, secure: boolean, now = Date.now()): string[] {
+  if (!secure) return [];
+  const legacy = readCookie(header, AUTH_COOKIE);
+  if (legacy === undefined) return [];
+  const hasHost = readCookie(header, HOST_AUTH_COOKIE) !== undefined;
+  if (hasHost || now >= LEGACY_AUTH_SUNSET || !legacy) return [clearCookie(AUTH_COOKIE, true)];
+  return [namedCookie(HOST_AUTH_COOKIE, legacy, true, MIGRATED_MAX_AGE), clearCookie(AUTH_COOKIE, true)];
+}
+
+/** Set-Cookie headers for a new session: __Host- over HTTPS (and clear the legacy name), legacy over plain http (dev). */
+export function authSetCookies(value: string, secure: boolean, maxAge: number): string[] {
+  if (!secure) return [namedCookie(AUTH_COOKIE, value, false, maxAge)];
+  return [namedCookie(HOST_AUTH_COOKIE, value, true, maxAge), clearCookie(AUTH_COOKIE, true)];
+}
+
+/** Clear both session cookie names. */
+export function authClearCookies(secure: boolean): string[] {
+  return secure ? [clearCookie(HOST_AUTH_COOKIE, true), clearCookie(AUTH_COOKIE, true)] : [clearCookie(AUTH_COOKIE, false)];
+}
+
 /** The signed-in uid from `nvx_auth`: a live session, or a legacy `<uid>.<HMAC>` value. */
 export async function readAuthCookie(req: Request, secret: string, check?: SessionCheck): Promise<string | null> {
-  const raw = readCookie(req.headers.get("cookie"), AUTH_COOKIE);
+  const raw = readAuthRaw(req.headers.get("cookie"));
   const session = await readSession(raw, secret);
   if (session) return check && (await check(session.uid, session.sid).catch(() => false)) ? session.uid : null;
   return verifyUid(raw, secret);

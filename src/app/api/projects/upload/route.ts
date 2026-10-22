@@ -1,3 +1,7 @@
+import { ServiceError } from "@/lib/connections/github-service";
+import { assertSlugUsable } from "@/lib/projects/slug-gate";
+import { siteSlug } from "@/lib/hosting/hostnames";
+import { routeBuildBindings } from "@/lib/build/bindings";
 import { connection } from "next/server";
 import { json } from "@/lib/chat/runtime";
 import { consume, windows } from "@/lib/chat/limits";
@@ -46,8 +50,15 @@ export async function POST(req: Request) {
     if (!name) return json({ error: "Invalid project name.", code: "invalid" }, 400);
     const count = await a.db.prepare("SELECT COUNT(*) AS n FROM projects WHERE user_id = ?1").bind(a.uid).first<{ n: number }>();
     if (Number(count?.n ?? 0) >= 100) return json({ error: "Project limit reached (100).", code: "limit" }, 409);
+    const slug = siteSlug(name);
+    if (slug) {
+      try { await assertSlugUsable(a.db, slug, null, (await routeBuildBindings()).sites); } catch (e) {
+        if (e instanceof ServiceError) return json({ error: e.message, code: e.code }, e.status);
+        throw e;
+      }
+    }
     project = { id: crypto.randomUUID(), user_id: a.uid, name, template_id: parsed.profile.id, repo_full_name: null, default_branch: null, created_at: Date.now() };
-    await insertProject(a.db, { id: project.id, userId: a.uid, name, templateId: project.template_id, repo: null, branch: null });
+    await insertProject(a.db, { id: project.id, userId: a.uid, name, templateId: project.template_id, repo: null, branch: null, slug });
     await audit(a.db, a.uid, "project.created", `upload:${project.id}`);
   }
   await saveProjectFiles(a.db, project.id, parsed.files);

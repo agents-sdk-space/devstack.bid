@@ -1,4 +1,5 @@
 import "server-only";
+import { socketFetch } from "@/lib/server/socket-fetch";
 import { redactSecrets } from "@/lib/ai/openai";
 
 /** GitHub REST + OAuth token exchange. Tokens are passed in headers and never logged. */
@@ -21,11 +22,28 @@ export class GithubApiError extends Error {
 }
 
 /** Retry transient edge/upstream failures (5xx incl. Cloudflare 52x, network errors) with a short backoff. */
-export async function fetchRetry(input: string, init: RequestInit, attempts = 3, f: typeof fetch = fetch): Promise<Response> {
+/**
+ * fetch() for GitHub hosts. On a custom-domain Worker, github.com/api.github.com answer 525
+ * (cloudflare/workerd#7042), so a 525 is retried once over a raw TLS socket (socketFetch).
+ * Every server-side GitHub call in this module goes through here.
+ */
+export async function ghFetch(
+  input: string,
+  init: RequestInit = {},
+  deps: { f?: typeof fetch; socket?: (input: string, init: RequestInit) => Promise<Response> } = {}
+): Promise<Response> {
+  const res = await (deps.f ?? fetch)(input, init);
+  if (res.status !== 525) return res;
+  // Safe to resend (even POST/PUT): 525 means Cloudflare's TLS handshake to GitHub failed, so the
+  // first request never reached GitHub's origin and had no side effects there.
+  return (deps.socket ?? socketFetch)(input, init).catch(() => res);
+}
+
+export async function fetchRetry(input: string, init: RequestInit, attempts = 3, f: typeof fetch = fetch, socketFallback?: (input: string, init: RequestInit) => Promise<Response>): Promise<Response> {
   let last: unknown;
   for (let i = 0; i < attempts; i++) {
     try {
-      const res = await f(input, init);
+      const res = await ghFetch(input, init, { f, socket: socketFallback });
       if (res.status < 500 || i === attempts - 1) return res;
       last = res;
     } catch (err) {
@@ -72,7 +90,7 @@ export async function exchangeCode(opts: { clientId: string; clientSecret: strin
 }
 
 /** Revoke this app's OAuth grant for the user at GitHub (Basic auth with the app's client id/secret). */
-export async function revokeGrant(opts: { clientId: string; clientSecret: string; token: string }, f: typeof fetch = fetch): Promise<boolean> {
+export async function revokeGrant(opts: { clientId: string; clientSecret: string; token: string }, f: typeof fetch = ghFetch as typeof fetch): Promise<boolean> {
   const res = await f(`${API}/applications/${encodeURIComponent(opts.clientId)}/grant`, {
     method: "DELETE",
     headers: {
@@ -102,7 +120,7 @@ export async function fetchProfile(token: string): Promise<GhProfile> {
   if (!u.id || !u.login || !/^[A-Za-z0-9-]{1,39}$/.test(u.login)) throw new GithubApiError("GitHub profile was incomplete", 502);
   let email = u.email && /^[^\s@]+@[^\s@]+$/.test(u.email) ? u.email : null;
   if (!email) {
-    const emails = await fetch(`${API}/user/emails`, { headers: headers(token) });
+    const emails = await ghFetch(`${API}/user/emails`, { headers: headers(token) });
     if (emails.ok) {
       const list = (await emails.json()) as { email?: string; primary?: boolean; verified?: boolean }[];
       const pick = list.find((e) => e.primary && e.verified) ?? list.find((e) => e.verified);
@@ -119,15 +137,26 @@ export interface GhRepo {
   defaultBranch: string;
 }
 
-export async function listWritableRepos(token: string): Promise<GhRepo[]> {
-  const res = await fetch(`${API}/user/repos?per_page=50&sort=updated&affiliation=owner,collaborator`, { headers: headers(token) });
-  if (res.status === 401) throw new GithubApiError("GitHub rejected the saved sign-in. Sign in again. / GitHub ไม่รับการเข้าสู่ระบบที่บันทึกไว้ กรุณาเข้าใหม่", 401);
-  if (!res.ok) throw new GithubApiError("Couldn't list repositories. / ดึงรายการรีโพซิทอรีไม่สำเร็จ", res.status);
-  const rows = (await res.json()) as { full_name?: string; private?: boolean; default_branch?: string; permissions?: { push?: boolean } }[];
-  return rows
-    .filter((r) => r.permissions?.push && r.full_name && r.default_branch)
-    .slice(0, 40)
-    .map((r) => ({ fullName: r.full_name!, private: Boolean(r.private), defaultBranch: r.default_branch! }));
+/** Repos the user can push to: own, collaborator and organization member repos; paginated (100/page, bounded). */
+export async function listWritableRepos(token: string, maxPages = 5, limit = 300): Promise<GhRepo[]> {
+  type Row = { full_name?: string; private?: boolean; default_branch?: string; permissions?: { push?: boolean } };
+  const out: GhRepo[] = [];
+  const seen = new Set<string>();
+  for (let page = 1; page <= maxPages; page++) {
+    const res = await ghFetch(`${API}/user/repos?per_page=100&page=${page}&sort=updated&affiliation=owner,collaborator,organization_member`, { headers: headers(token) });
+    if (res.status === 401) throw new GithubApiError("GitHub rejected the saved sign-in. Sign in again. / GitHub ไม่รับการเข้าสู่ระบบที่บันทึกไว้ กรุณาเข้าใหม่", 401);
+    if (!res.ok) throw new GithubApiError("Couldn't list repositories. / ดึงรายการรีโพซิทอรีไม่สำเร็จ", res.status);
+    const rows = (await res.json()) as Row[];
+    if (!Array.isArray(rows)) break;
+    for (const r of rows) {
+      if (!r.permissions?.push || !r.full_name || !r.default_branch || seen.has(r.full_name)) continue;
+      seen.add(r.full_name);
+      out.push({ fullName: r.full_name, private: Boolean(r.private), defaultBranch: r.default_branch });
+      if (out.length >= limit) return out;
+    }
+    if (rows.length < 100) break;
+  }
+  return out;
 }
 
 function utf8ToB64(s: string): string {
@@ -145,7 +174,7 @@ export async function putFile(
 ): Promise<{ url: string; commit: string }> {
   const path = spec.path.split("/").map(encodeURIComponent).join("/");
   const url = `${API}/repos/${encodeURIComponent(spec.owner)}/${encodeURIComponent(spec.repo)}/contents/${path}`;
-  const get = await fetch(`${url}?ref=${encodeURIComponent(spec.branch)}`, { headers: headers(token) });
+  const get = await ghFetch(`${url}?ref=${encodeURIComponent(spec.branch)}`, { headers: headers(token) });
   let sha: string | undefined;
   if (get.status === 200) {
     const existing = (await get.json()) as { sha?: string; type?: string };
@@ -154,7 +183,7 @@ export async function putFile(
   } else if (get.status !== 404) {
     throw new GithubApiError("Couldn't read the existing file. / อ่านไฟล์เดิมไม่สำเร็จ", get.status);
   }
-  const put = await fetch(url, {
+  const put = await ghFetch(url, {
     method: "PUT",
     headers: headers(token, { "Content-Type": "application/json" }),
     body: JSON.stringify({
@@ -179,7 +208,7 @@ export async function putFile(
 
 async function gh<T>(token: string, method: string, path: string, body?: unknown, okStatuses: number[] = []): Promise<{ status: number; data: T }> {
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch(`${API}${path}`, {
+    const res = await ghFetch(`${API}${path}`, {
       method,
       headers: headers(token, body ? { "Content-Type": "application/json" } : {}),
       body: body ? JSON.stringify(body) : undefined,
@@ -231,11 +260,13 @@ export interface TreeEntry {
   type: "blob" | "tree";
   size?: number;
   sha?: string;
+  /** Git file mode, e.g. "100644"; "120000" = symlink. */
+  mode?: string;
 }
 
 export async function readTree(token: string, owner: string, repo: string, ref: string): Promise<{ entries: TreeEntry[]; truncated: boolean }> {
-  const { data } = await gh<{ tree?: { path: string; type: string; size?: number; sha?: string }[]; truncated?: boolean }>(token, "GET", `${rp(owner, repo)}/git/trees/${encodeURIComponent(ref)}?recursive=1`);
-  const entries = (data.tree ?? []).filter((e) => e.type === "blob" || e.type === "tree").slice(0, 2000).map((e) => ({ path: e.path, type: e.type as "blob" | "tree", size: e.size, sha: e.sha }));
+  const { data } = await gh<{ tree?: { path: string; type: string; size?: number; sha?: string; mode?: string }[]; truncated?: boolean }>(token, "GET", `${rp(owner, repo)}/git/trees/${encodeURIComponent(ref)}?recursive=1`);
+  const entries = (data.tree ?? []).filter((e) => e.type === "blob" || e.type === "tree").slice(0, 2000).map((e) => ({ path: e.path, type: e.type as "blob" | "tree", size: e.size, sha: e.sha, mode: e.mode }));
   return { entries, truncated: Boolean(data.truncated) || (data.tree?.length ?? 0) > 2000 };
 }
 
@@ -323,4 +354,73 @@ export async function readBlob(token: string, owner: string, repo: string, sha: 
   if (data.encoding !== "base64" || typeof data.content !== "string") throw new GithubApiError("Unexpected blob encoding", 502);
   const bin = atob(data.content.replace(/\n/g, ""));
   return Uint8Array.from(bin, (c) => c.charCodeAt(0));
+}
+
+/* ---------- New Project platform (Milestone 1): read-only import helpers ---------- */
+
+export interface GhRepoListing {
+  id: number;
+  fullName: string;
+  owner: string;
+  private: boolean;
+  defaultBranch: string;
+  canPush: boolean;
+  updatedAt: string | null;
+}
+
+type RawRepo = { id?: number; full_name?: string; owner?: { login?: string }; private?: boolean; default_branch?: string; permissions?: { pull?: boolean; push?: boolean; admin?: boolean }; updated_at?: string };
+
+const toListing = (r: RawRepo): GhRepoListing | null =>
+  r.id && r.full_name && r.default_branch && r.permissions?.pull !== false
+    ? { id: r.id, fullName: r.full_name, owner: r.owner?.login ?? r.full_name.split("/")[0], private: Boolean(r.private), defaultBranch: r.default_branch, canPush: Boolean(r.permissions?.push), updatedAt: r.updated_at ?? null }
+    : null;
+
+/**
+ * Repositories the token can read (owner, collaborator, organization member), newest first.
+ * `q` filters by name across up to 3 pages of 100; without `q`, returns one page of `perPage`.
+ */
+export async function listAccessibleRepos(token: string, opts: { page?: number; perPage?: number; q?: string } = {}): Promise<{ repos: GhRepoListing[]; page: number; hasMore: boolean }> {
+  const q = (opts.q ?? "").trim().toLowerCase().slice(0, 100);
+  const perPage = Math.min(Math.max(opts.perPage ?? 30, 1), 100);
+  const page = Math.min(Math.max(Math.floor(opts.page ?? 1), 1), 50);
+  const base = "/user/repos?sort=updated&affiliation=owner,collaborator,organization_member";
+  if (!q) {
+    const { data } = await gh<RawRepo[]>(token, "GET", `${base}&per_page=${perPage}&page=${page}`);
+    const rows = Array.isArray(data) ? data : [];
+    return { repos: rows.map(toListing).filter((x): x is GhRepoListing => !!x), page, hasMore: rows.length === perPage };
+  }
+  const out: GhRepoListing[] = [];
+  let more = false;
+  for (let p = 1; p <= 3; p++) {
+    const { data } = await gh<RawRepo[]>(token, "GET", `${base}&per_page=100&page=${p}`);
+    const rows = Array.isArray(data) ? data : [];
+    for (const r of rows) {
+      const l = toListing(r);
+      if (l && l.fullName.toLowerCase().includes(q)) out.push(l);
+    }
+    more = rows.length === 100;
+    if (!more) break;
+  }
+  return { repos: out.slice(0, perPage), page: 1, hasMore: out.length > perPage || more };
+}
+
+/** Repo metadata incl. the stable numeric id (survives renames). 404 = no access or not found. */
+export async function getRepoMeta(token: string, owner: string, repo: string): Promise<{ id: number; fullName: string; private: boolean; defaultBranch: string; canPush?: boolean }> {
+  const { data } = await gh<RawRepo>(token, "GET", rp(owner, repo));
+  if (!data.id || !data.full_name) throw new GithubApiError("Repository not found or not accessible.", 404);
+  return { id: data.id, fullName: data.full_name, private: Boolean(data.private), defaultBranch: data.default_branch ?? "main", canPush: Boolean(data.permissions?.push || data.permissions?.admin) };
+}
+
+export async function listBranches(token: string, owner: string, repo: string): Promise<string[]> {
+  const { data } = await gh<{ name?: string }[]>(token, "GET", `${rp(owner, repo)}/branches?per_page=100`);
+  return (Array.isArray(data) ? data : []).map((b) => b.name).filter((n): n is string => typeof n === "string").slice(0, 100);
+}
+
+/** Merge `head` into `base` (server-side merge commit, never a force update). 201 merged, 204 already up to date, 409 conflict. */
+export async function mergeInto(token: string, owner: string, repo: string, base: string, head: string, onMerged?: (sha: string) => Promise<void> | void): Promise<"merged" | "up_to_date" | "conflict"> {
+  const { status, data } = await gh<{ sha?: string }>(token, "POST", `${rp(owner, repo)}/merges`, { base, head, commit_message: `Merge ${head} into ${base} (devstack AI sync)` }, [204, 409]);
+  if (status === 204) return "up_to_date";
+  if (status === 409) return "conflict";
+  if (onMerged && typeof data?.sha === "string" && /^[a-f0-9]{40}$/i.test(data.sha)) await onMerged(data.sha.toLowerCase());
+  return "merged";
 }

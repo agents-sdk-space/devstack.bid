@@ -1,0 +1,33 @@
+/* Colours are chosen from the project name and description when the project is created. */
+:root {
+  --primary: __PRIMARY__;
+  --primary-ink: __PRIMARY_INK__;
+  --accent: __ACCENT__;
+  --bg: __BG__;
+  --surface: __SURFACE__;
+  --fg: __FG__;
+  --muted: __MUTED__;
+  --radius: __RADIUS__;
+  --font: __FONT__;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--fg); line-height: 1.6; }
+a { color: var(--primary); }
+.nav { position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 24px; background: var(--surface); border-bottom: 1px solid color-mix(in srgb, var(--fg) 10%, transparent); z-index: 1; }
+.nav nav { display: flex; gap: 18px; flex-wrap: wrap; }
+.nav a { text-decoration: none; color: var(--fg); }
+.brand { font-weight: 700; }
+main > section { max-width: 1040px; margin: 0 auto; padding: 64px 24px; }
+.hero { text-align: center; padding-top: 96px !important; padding-bottom: 96px !important; }
+.layout-split .hero { text-align: left; }
+.eyebrow { color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 13px; }
+h1 { font-size: clamp(36px, 6vw, 64px); line-height: 1.1; margin: 8px 0 16px; }
+.lead { font-size: 20px; color: var(--muted); max-width: 640px; margin: 0 auto 28px; }
+.layout-split .lead { margin-left: 0; }
+.button { display: inline-block; padding: 12px 22px; border-radius: var(--radius); background: var(--primary); color: var(--primary-ink); text-decoration: none; font-weight: 600; }
+.band { background: var(--surface); border-radius: var(--radius); }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--surface); border-radius: var(--radius); padding: 20px; border-top: 4px solid var(--accent); }
+.footer { text-align: center; padding: 32px; color: var(--muted); }
+@media (max-width: 600px) { .nav { flex-direction: column; } main > section { padding: 48px 18px; } }

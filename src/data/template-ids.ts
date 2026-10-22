@@ -13,4 +13,5 @@ export const KNOWN_TEMPLATE_IDS = [
   "collab-workspace",
   "react-admin-tool",
   "nextjs-ai-chat",
+  "static-website",
 ] as const;

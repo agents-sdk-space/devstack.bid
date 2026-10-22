@@ -41,11 +41,26 @@ export function planAccountLink(anonId: string | null, existingId: string | null
   return { userId: freshId, promoteAnon: false, create: true, moveFrom: null };
 }
 
-/** Same-site path only. Rejects protocol-relative and API URLs. */
-export function safeNext(raw: string | null | undefined): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\") || /[\u0000-\u001f]/.test(raw)) return "/chat";
-  if (raw.startsWith("/api/") || raw.startsWith("/api?")) return "/chat";
-  return raw.slice(0, 200);
+/** Same-site path only. Rejects protocol-relative, absolute, API and /login (loop) URLs. */
+export function safeNext(raw: string | null | undefined, fallback = "/chat"): string {
+  if (!raw || raw.length > 200 || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\") || /[\u0000-\u001f\u007f]/.test(raw)) return fallback;
+  let path: URL;
+  try {
+    path = new URL(raw, "https://same-origin.invalid");
+  } catch {
+    return fallback;
+  }
+  if (path.origin !== "https://same-origin.invalid") return fallback;
+  const p = path.pathname;
+  if (p.startsWith("//") || p.includes("\\")) return fallback;
+  if (p === "/api" || p.startsWith("/api/") || p === "/login" || p.startsWith("/login/")) return fallback;
+  return `${p}${path.search}${path.hash}`;
+}
+
+/** Link that starts GitHub OAuth and comes back to `returnTo` (same-origin path + query). */
+export function githubConnectHref(returnTo: string, scope?: "public"): string {
+  const next = safeNext(returnTo, "/");
+  return `/api/auth/github?${scope ? `scope=${scope}&` : ""}next=${encodeURIComponent(next)}`;
 }
 
 const PATH_RE = /^[A-Za-z0-9][A-Za-z0-9._@~/-]{0,199}$/;
@@ -100,7 +115,26 @@ export function sameOrigin(req: Request): boolean {
     }
   }
   const site = req.headers.get("sec-fetch-site");
-  return site === "same-origin" || site === "same-site" || site === "none";
+  // "same-site" is NOT accepted: user sites on *.devstack.bid are same-site with the apex.
+  return site === "same-origin" || site === "none";
+}
+
+export const PLATFORM_ORIGIN = "https://devstack.bid";
+
+/**
+ * Strict write check for signed-in APIs: an Origin header is required and must be this exact origin.
+ * On the devstack.bid zone that means exactly https://devstack.bid; *.devstack.bid (user sites) is rejected.
+ */
+export function strictOrigin(req: Request): boolean {
+  const origin = req.headers.get("origin");
+  const host = (req.headers.get("host") ?? "").toLowerCase();
+  if (!origin || !host) return false;
+  let o: URL;
+  try { o = new URL(origin); } catch { return false; }
+  if (o.origin !== origin.toLowerCase().replace(/\/$/, "")) return false;
+  const h = host.replace(/:\d+$/, "");
+  if (h === "devstack.bid" || h.endsWith(".devstack.bid")) return origin === PLATFORM_ORIGIN && h === "devstack.bid";
+  return o.host === host;
 }
 
 const FILE_LINE = /^(?:\/\/|#|--)\s*file:\s*(\S+)\s*$/;

@@ -22,10 +22,19 @@ export function contentSecurityPolicy(dev = false): string {
     // Home live example (Sandpack, Apache-2.0): its bundler runs in a cross-origin
     // *.codesandbox.io iframe in the visitor's browser. The only third-party frame we allow.
     // Cloudflare Turnstile widget on /login (script + challenge iframe).
-    "frame-src https://*.codesandbox.io https://challenges.cloudflare.com",
+    // AI chat builder preview: user sites on *.devstack.bid (separate origin, sandboxed iframe; never the apex).
+    "frame-src https://*.codesandbox.io https://challenges.cloudflare.com https://*.devstack.bid",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
   ].join("; ");
+}
+
+/** CSP for /api/github/app/manifest only: the page's form posts the App manifest to github.com. No scripts. */
+export function githubManifestContentSecurityPolicy(dev = false): string {
+  return contentSecurityPolicy(dev)
+    .split("; ")
+    .map((d) => (d.startsWith("form-action ") ? "form-action https://github.com" : d.startsWith("script-src ") ? "script-src 'none'" : d))
+    .join("; ");
 }
 
 /**

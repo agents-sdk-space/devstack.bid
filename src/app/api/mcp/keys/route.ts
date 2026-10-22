@@ -4,7 +4,7 @@ import { sameOrigin } from "@/lib/auth/github-policy";
 
 import { chatEnv, chatRuntime, json } from "@/lib/chat/runtime";
 import { getAccount } from "@/lib/chat/store";
-import { hashMcpKey, isMcpScope, MCP_SCOPES, mintMcpKey } from "@/lib/mcp/auth";
+import { hashMcpKey, isCliKey, isMcpKey, isMcpScope, KEY_SLIDE_MS, MCP_SCOPES, mintMcpKey } from "@/lib/mcp/auth";
 import { HttpError, readJsonBody } from "@/lib/server/http";
 
 const createSchema = z.object({
@@ -26,10 +26,10 @@ export async function GET(req: Request) {
   const auth = await signedIn(req);
   if ("response" in auth) return auth.response;
   const rows = await auth.db
-    .prepare("SELECT id, name, scopes, rate_limit, created_at FROM api_clients WHERE user_id = ?1 AND revoked_at IS NULL ORDER BY created_at DESC LIMIT 50")
-    .bind(auth.uid)
-    .all<{ id: string; name: string; scopes: string; rate_limit: number; created_at: number }>();
-  return json({ scopes: MCP_SCOPES, clients: (rows.results ?? []).map((r) => ({ id: r.id, name: r.name, scopes: JSON.parse(r.scopes) as string[], rateLimit: r.rate_limit, createdAt: r.created_at })) });
+    .prepare("SELECT id, name, scopes, rate_limit, created_at, expires_at, last_used_at FROM api_clients WHERE user_id = ?1 AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at >= ?2) ORDER BY created_at DESC LIMIT 50")
+    .bind(auth.uid, Date.now())
+    .all<{ id: string; name: string; scopes: string; rate_limit: number; created_at: number; expires_at: number | null; last_used_at: number | null }>();
+  return json({ scopes: MCP_SCOPES, clients: (rows.results ?? []).map((r) => ({ id: r.id, name: r.name, scopes: JSON.parse(r.scopes) as string[], rateLimit: r.rate_limit, createdAt: r.created_at, expiresAt: r.expires_at, lastUsedAt: r.last_used_at })) });
 }
 
 export async function POST(req: Request) {
@@ -45,17 +45,19 @@ export async function POST(req: Request) {
   const body = createSchema.safeParse(raw);
   if (!body.success || body.data.scopes.some((s) => !isMcpScope(s))) return json({ error: "Invalid name or scope", code: "invalid" }, 400);
   const uniqueScopes = [...new Set(body.data.scopes)];
+  if (!isCliKey(uniqueScopes) && !isMcpKey(uniqueScopes)) return json({ error: "A key is either a CLI key (cli:*) or an MCP key, not both", code: "invalid" }, 400);
+  const cli = isCliKey(uniqueScopes);
   if (uniqueScopes.some((s) => s.startsWith("github:") )) {
     const account = await getAccount(auth.db, auth.uid);
     if (account?.provider !== "github") return json({ error: "Sign in with GitHub before granting GitHub tools", code: "github_required" }, 400);
   }
-  const current = await auth.db.prepare("SELECT COUNT(*) AS n FROM api_clients WHERE user_id = ?1 AND revoked_at IS NULL").bind(auth.uid).first<{ n: number }>();
+  const current = await auth.db.prepare("SELECT COUNT(*) AS n FROM api_clients WHERE user_id = ?1 AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at >= ?2)").bind(auth.uid, Date.now()).first<{ n: number }>();
   if (Number(current?.n ?? 0) >= 20) return json({ error: "Maximum of 20 active MCP keys", code: "key_limit" }, 409);
   const key = await mintMcpKey();
   const id = crypto.randomUUID();
   await auth.db
-    .prepare("INSERT INTO api_clients (id, user_id, name, key_hash, scopes, rate_limit) VALUES (?1, ?2, ?3, ?4, ?5, 60)")
-    .bind(id, auth.uid, body.data.name, await hashMcpKey(key), JSON.stringify(uniqueScopes))
+    .prepare("INSERT INTO api_clients (id, user_id, name, key_hash, scopes, rate_limit, expires_at) VALUES (?1, ?2, ?3, ?4, ?5, 60, ?6)")
+    .bind(id, auth.uid, body.data.name, await hashMcpKey(key), JSON.stringify(uniqueScopes), cli ? Date.now() + KEY_SLIDE_MS : null)
     .run();
   return json({ client: { id, name: body.data.name, scopes: uniqueScopes, rateLimit: 60 }, key }, 201);
 }

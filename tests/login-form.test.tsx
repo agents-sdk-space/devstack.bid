@@ -68,3 +68,26 @@ describe("LoginForm create-account feedback", () => {
     expect(loginFormProblem("ab.co", "x".repeat(10))?.field).toBe("email");
   });
 });
+
+/** Regression (2026-10-22): mobile users saw the 10–200 error with a password they believed was long enough. */
+describe("LoginForm password field (fix/password-auth)", () => {
+  it("shows a live character count and keeps the value across re-renders", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    const { container, rerender } = render(<LoginForm next="/chat" auth="" provider="" />);
+    const pw = container.querySelector('input[name="password"]') as HTMLInputElement;
+    fireEvent.change(pw, { target: { value: "Pass word!#1" } });
+    expect(screen.getByTestId("password-count").textContent).toMatch(/12/);
+    rerender(<LoginForm next="/chat" auth="captcha" provider="password" />);
+    expect((container.querySelector('input[name="password"]') as HTMLInputElement).value).toBe("Pass word!#1");
+    expect(pw.autocapitalize === "none" || pw.getAttribute("autocapitalize") === "none").toBe(true);
+  });
+
+  it("accepts symbols, spaces and Thai characters on both client and server", async () => {
+    const { acceptPassword } = await import("@/lib/auth/password");
+    for (const p of ["P@ss w0rd!#$%", "รหัสผ่านยาวพอแล้ว", "aaaaaaaaaa"]) {
+      expect(loginFormProblem("qa@example.test", p)).toBeNull();
+      expect(acceptPassword(p)).toBe(p);
+    }
+    expect(acceptPassword("short")).toBeNull();
+  });
+});

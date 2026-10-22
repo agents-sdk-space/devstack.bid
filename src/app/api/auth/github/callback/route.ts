@@ -28,9 +28,9 @@ export async function GET(req: Request) {
   const opened = await readOAuthState(url.searchParams.get("state") ?? "", readCookie(req.headers.get("cookie"), OAUTH_STATE_COOKIE), secret, "github");
   if (!opened) return oauthFail(url.origin, secure, "error", "github");
   const code = url.searchParams.get("code") ?? "";
-  if (!/^[\w.-]{8,200}$/.test(code)) return oauthFail(url.origin, secure, "error", "github");
+  if (!/^[\w.-]{8,200}$/.test(code)) return oauthFail(url.origin, secure, "error", "github", opened?.next);
   const { db } = await chatRuntime();
-  if (!db) return oauthFail(url.origin, secure, "error", "github");
+  if (!db) return oauthFail(url.origin, secure, "error", "github", opened?.next);
   try {
     const { token, scope } = await exchangeCodeWithScope({
       clientId: server.GITHUB_CLIENT_ID,
@@ -50,6 +50,6 @@ export async function GET(req: Request) {
     return signedInRedirect(url.origin, secure, opened.next, await issueSession(db, plan.userId, secret));
   } catch (err) {
     console.warn(JSON.stringify({ at: "api/auth/github", event: "failed", name: (err as Error)?.name, status: (err as { status?: number }).status, step: (err as { step?: string }).step, ghError: (err as { ghError?: string }).ghError }));
-    return oauthFail(url.origin, secure, "error", "github");
+    return oauthFail(url.origin, secure, "error", "github", opened?.next);
   }
 }

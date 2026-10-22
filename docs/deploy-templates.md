@@ -9,11 +9,12 @@ Source of truth: `src/lib/deploy/templates.ts` (`DEPLOY_PROFILES`). Deploy provi
 
 | Profile | Source | Target | Path | Build | Entry | Assets | Needs (added by prepare PR) | Secrets | Audit flags |
 |---|---|---|---|---|---|---|---|---|---|
-| `nextjs-dashboard` | Stack template | opennext | cf-build | `npx opennextjs-cloudflare build` | .open-next/worker.js | .open-next/assets | wrangler.jsonc, open-next.config.ts, `package.json` scripts and deps | none | Warning: create-next-app ships no Workers config |
-| `nextjs-ai-chat` | Stack template | opennext | cf-build | same | same | same | same, plus .dev.vars.example | `OPENAI_API_KEY` | Warning: key must be a Worker secret, not `.env.local` |
-| `collab-workspace` | Stack template | opennext | cf-build | same | same | same | same | none | **Breaks:** the y-websocket Node server (`npm run ws`) can't run on Workers. Only the page deploys; realtime needs a Durable Objects rewrite |
+| `nextjs-dashboard` | Stack template | worker-assets | cf-build | `npm run build` (Next.js `output: "export"`) | none | `out` | wrangler.jsonc | none | none: /new commits a complete static-export project (template-projects/) |
+| `nextjs-ai-chat` | Stack template | worker-assets | cf-build | same | none | `out` | wrangler.jsonc | none | Static export: no API route or server key; the page calls `NEXT_PUBLIC_CHAT_API` (your own endpoint) or runs in demo mode |
+| `collab-workspace` | Stack template | worker-assets | cf-build | same | none | `out` | wrangler.jsonc | none | Static export: realtime sync only between tabs of one browser (BroadcastChannel); cross-device needs a backend |
 | `vite-react-game` | Stack template | worker-assets | cf-build | `npm run build` | none | `dist` (SPA) | wrangler.jsonc | none | Warning: only Docker config in template |
 | `react-admin-tool` | Stack template | worker-assets | cf-build | `npm run build` | none | `dist` (SPA) | wrangler.jsonc | none | Warning: needs a public data API |
+| `static-website` | Stack template | worker-assets | cf-build | `npm run build` (Vite) | none | `dist` | wrangler.jsonc | none | none: colours derived from the project name and description |
 | `express-api` | Stack template | not-deployable | none | none | src/index.js | none | none | none | `app.listen()` Node server. Use Docker or port to Hono |
 | `fastapi-ai` | Stack template | not-deployable | none | none | main.py | none | none | `OPENAI_API_KEY` | Python/uvicorn. Use Docker |
 | `streamlit-dashboard` | Stack template | not-deployable | none | none | app.py | none | none | none | long-running Python server |

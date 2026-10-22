@@ -8,13 +8,38 @@ export interface ProjectRow {
   repo_full_name: string | null;
   default_branch: string | null;
   created_at: number;
+  /** Migration 0013 (absent on rows read before it is applied). */
+  slug?: string | null;
+  source?: string | null;
+  root_directory?: string | null;
+  framework?: string | null;
+  install_command?: string | null;
+  build_command?: string | null;
+  output_directory?: string | null;
+  node_version?: string | null;
+  production_branch?: string | null;
+  provider?: string | null;
 }
 
-export async function insertProject(db: D1Like, p: { id: string; userId: string; name: string; templateId: string | null; repo: string | null; branch: string | null }): Promise<void> {
+export async function insertProject(
+  db: D1Like,
+  p: { id: string; userId: string; name: string; templateId: string | null; repo: string | null; branch: string | null; build?: { framework: string; install: string; build: string; output: string } | null; slug?: string | null }
+): Promise<void> {
+  // The site host comes from slug || name: reserve it in the slug column (checked by assertSlugUsable beforehand).
+  const withSlug = async () => { if (p.slug) await db.prepare("UPDATE projects SET slug = ?1 WHERE id = ?2 AND user_id = ?3 AND slug IS NULL").bind(p.slug, p.id, p.userId).run(); };
+  if (p.build) {
+    await db
+      .prepare("INSERT INTO projects (id, user_id, name, template_id, repo_full_name, default_branch, framework, install_command, build_command, output_directory, node_version) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, '22')")
+      .bind(p.id, p.userId, p.name, p.templateId, p.repo, p.branch, p.build.framework, p.build.install, p.build.build, p.build.output)
+      .run();
+    await withSlug();
+    return;
+  }
   await db
     .prepare("INSERT INTO projects (id, user_id, name, template_id, repo_full_name, default_branch) VALUES (?1, ?2, ?3, ?4, ?5, ?6)")
     .bind(p.id, p.userId, p.name, p.templateId, p.repo, p.branch)
     .run();
+  await withSlug();
 }
 
 export async function listProjects(db: D1Like, userId: string): Promise<ProjectRow[]> {
@@ -40,5 +65,12 @@ export const projectView = (p: ProjectRow) => ({
   defaultBranch: p.default_branch,
   repoUrl: p.repo_full_name ? `https://github.com/${p.repo_full_name}` : null,
   source: p.repo_full_name ? ("github" as const) : ("upload" as const),
+  origin: p.source ?? "legacy",
+  slug: p.slug ?? null,
+  rootDirectory: p.root_directory ?? "",
+  framework: p.framework ?? null,
+  build: { installCommand: p.install_command ?? null, buildCommand: p.build_command ?? null, outputDirectory: p.output_directory ?? null, nodeVersion: p.node_version ?? null },
+  productionBranch: p.production_branch ?? p.default_branch,
+  provider: p.provider ?? "cloudflare",
   createdAt: p.created_at,
 });

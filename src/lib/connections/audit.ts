@@ -2,18 +2,29 @@ import type { D1Like } from "@/lib/chat/store";
 
 /** Event types only. `subject` is a non-secret identifier (kind, repo full name, project id). */
 export type AuditEvent =
+  | "cli.login"
+  | "cli.logout"
+  | "cli.device.approved"
+  | "cli.device.denied"
   | "credential.saved"
+  | "build.started"
   | "credential.removed"
   | "github.revoked"
   | "project.created"
+  | "project.imported"
   | "pr.opened"
   | "deploy.started"
   | "deploy.live"
   | "deploy.failed"
+  | "deploy.cancel"
   | "fix.committed"
   | "cli.scaffold"
   | "env.saved"
-  | "env.removed";
+  | "env.removed"
+  | "ai_site.turn"
+  | "project.ai_turn"
+  | "ai_site.promote"
+  | "ai_site.export";
 
 export async function audit(db: D1Like, userId: string, event: AuditEvent, subject?: string): Promise<void> {
   try {

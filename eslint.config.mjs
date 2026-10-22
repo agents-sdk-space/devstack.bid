@@ -53,6 +53,9 @@ const eslintConfig = defineConfig([
     "public/studio/**",
     // Verbatim upstream template copies kept for licence attribution
     "third_party/**",
+    // Complete starter projects committed to customer repos (own package.json); embedded via scripts/gen-template-projects.mjs
+    "template-projects/**",
+    "src/data/template-projects.generated.ts",
   ]),
 ]);
 

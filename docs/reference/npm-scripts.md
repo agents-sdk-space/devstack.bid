@@ -17,6 +17,9 @@
 | `npm run preview` | build + `opennextjs-cloudflare preview` ใน workerd ที่ :8787 | ตรวจพฤติกรรม/ภาพแบบ production |
 | `npm run preview:local` | `opennextjs-cloudflare populateCache local` แล้ว `wrangler dev` (ใช้หลัง `npm run cf:build`) | รัน build ที่มีอยู่ใน workerd ในเครื่อง ถ้ารัน `wrangler dev` ตรงๆ โดยไม่ populate cache ทุกหน้า App Router จะค้างแล้วได้ 500 |
 | `npm run deploy` | `npm run cf:build` + `opennextjs-cloudflare deploy` | **ต้องได้รับอนุมัติก่อน** ดู [deploy-cloudflare.md](../operations/deploy-cloudflare.md) |
+| `npm run deploy:hotfix` | เหมือน `npm run deploy` (ใช้ `wrangler.jsonc`) | hotfix ไม่ต้องมี Docker ไม่มี binding ของ build executor **ต้องได้รับอนุมัติก่อน** |
+| `npm run deploy:release` | `cf:release-config` + `cf:build` + `opennextjs-cloudflare deploy -c wrangler.release.jsonc` | full release พร้อม Containers/Queue/R2 ของ build executor ต้องมี Docker **ต้องได้รับอนุมัติก่อน** ดู [BUILD-EXECUTOR.md](../platform/BUILD-EXECUTOR.md) |
+| `npm run cf:release-config` | `scripts/gen-release-config.mjs` | สร้าง `wrangler.release.jsonc` จาก `wrangler.jsonc` + `release/build-bindings.jsonc` (`--check` = ตรวจว่าไม่ค้าง) |
 | `npm run cf:typegen` | `wrangler types ...` → `cloudflare-env.d.ts` | หลังแก้ binding ใน wrangler.jsonc |
 | `npm run db:migrate:local` | `wrangler d1 migrations apply nvx-db --local` | ทดสอบ migration ในฐานข้อมูลจำลองบนเครื่อง |
 | `npm run db:migrate:remote` | `wrangler d1 migrations apply nvx-db --remote` | **ต้องได้รับอนุมัติก่อน** apply บน D1 จริง ดู [d1-database.md](../operations/d1-database.md) |
@@ -36,6 +39,7 @@
 | `npm run plugins:sync` | `node scripts/sync-plugin-catalog.mjs` | ดึง `catalog/plugins.json` จาก commit ที่ปักไว้ของ devstack-plugins ตรวจ แล้วเขียน `src/data/plugin-catalog.json` (ต้องใช้เน็ต) |
 | `npm run plugins:check` | `node scripts/sync-plugin-catalog.mjs --check` | ตรวจว่า snapshot ตรงกับ commit ที่ปักไว้ |
 | `npm run cli:test` | `npm --prefix packages/nvx21st test` | รันเทสต์ของ CLI `nvx21st` (`packages/nvx21st`) |
+| `npm run cli:devstack:test` | `npm --prefix packages/cli test` | รันเทสต์ของ CLI `devstack` (`packages/cli`, แพ็กเกจ npm `devstack-bid`) |
 
 ## ตัวเลือกของ `npm run export`
 

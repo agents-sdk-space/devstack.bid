@@ -5,6 +5,236 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0-rc.3] - 2026-10-22
+
+### Fixed (Subdev + Supdev review of rc.2)
+- One AI turn now produces exactly one build job and one quota count: `ai-turn` passes the webhook's idempotency key
+  `gh:preview:devstack/ai:<sha>` to `startContainerBuild`, and a matching active job is reused before any quota
+  (daily/hourly) is spent. Sync merge commits (base → `devstack/ai`) are remembered in KV (10 min TTL) and the
+  webhook skips them (`ignored:ai_sync_merge`).
+- `ai-turn` reserves the daily AI turn BEFORE syncing `devstack/ai`, so a full quota leaves no dangling merge commit.
+- `postcss.config.*`, `tailwind.config.*`, `babel.config.*` and `.babelrc` are read-only for the AI (basename match).
+- Docs: preview environment variables must never hold production secrets (app code runs at build/SSG and in the preview Worker).
+- `listWritableRepos` includes `organization_member` repos and paginates (100/page, up to 5 pages), so org repos
+  appear in import and AI push pickers.
+
+## [0.13.0-rc.2] - 2026-10-22
+
+### Fixed (Subdev + Supdev review of rc.1)
+- `ai-turn` checks the GitHub token and build quota (daily D1 + hourly KV, read-only) BEFORE reserving the AI
+  turn or calling the model. If the build cannot start after the commit, it returns 202 with the commit and
+  `build.status: "build_quota"` (or `build_not_started`) instead of 429.
+- Tier limits apply to every build trigger: `startContainerBuild` resolves the owner's tier itself, and webhook
+  builds (`autodeploy.ts`) pass `limitsForUser` + KV explicitly. The webhook 20/hour per-project cap still applies too.
+- Direct deploys (`takeQuota("deploy")`) use the tier's `deploysPerDay` instead of the capacity value.
+- The hourly KV build window is consumed only after the token and branch/commit checks pass.
+- `devstack/ai` is synced with the default branch before each AI turn using GitHub's merges API (merge commit;
+  never reset or force). A merge conflict returns 409 `ai_branch_diverged`.
+- `ai-turn` has its own per-minute key `ai-turn:<uid>` (not shared with the static AI builder); the daily AI cap is shared.
+- (Supdev, Medium) The AI may not write `package.json`, `next.config.*`, `vite.config.*`, `tsconfig*.json`
+  (read-only context, writes rejected with `ai_output_rejected`); `.npmrc` and `middleware.[jt]s` are fully blocked.
+  No dependency edits in this version.
+- (Supdev) Tiers match stable ids: `DEVSTACK_ADMIN_UIDS` / `DEVSTACK_PAID_UIDS` (users.id) and
+  `DEVSTACK_ADMIN_GITHUB_IDS` / `DEVSTACK_PAID_GITHUB_IDS` (numeric GitHub id). Login lists are DEPRECATED for tiers
+  and honoured only with `DEVSTACK_TIER_ALLOW_LOGINS=1`.
+- (Supdev) Symlink (120000) and submodule (160000) tree entries are never read for AI context.
+
+No migrations.
+
+## [0.13.0-rc.1] - 2026-10-22
+
+### Changed
+- Every Stack Template goes through the real build pipeline. The Next.js templates (`nextjs-dashboard`,
+  `nextjs-ai-chat`, `collab-workspace`) are no longer static exports: they build with OpenNext
+  (`opennextjs-cloudflare build` → `.open-next/`) and deploy as a per-project server Worker. They ship
+  `open-next.config.ts`, `wrangler.jsonc` and pinned `@opennextjs/cloudflare` 1.20.10 / `wrangler` 4.149.0 with
+  regenerated lockfiles. Vite templates keep building to `dist/` in the container. Deploy profiles updated.
+
+### Added
+- `POST /api/projects/:id/ai-turn`: AI chat builder for any repo-backed project/template. The AI edit is validated
+  (no `.env`, `.github/`, lockfiles, wrangler/open-next config, build output), committed as ONE commit on
+  `devstack/ai`, then built by the container pipeline as a preview. Nothing is published directly.
+- Per-user tiers (`src/lib/limits/tiers.ts`): free / paid (`DEVSTACK_PAID_LOGINS`) / admin (`AISITE_ADMIN_LOGINS`),
+  overridable with `DEVSTACK_TIER_<TIER>_<FIELD>`. Defaults (AI/day, AI/min, builds/hour, builds/day, deploys/day):
+  free 20/4/3/10/5, paid 200/10/20/60/50, admin 1000/30/60/300/200. AI daily caps are atomic in D1 (`ai_quota`),
+  builds/day counted in D1 (`build_jobs`), AI/min and builds/hour are KV fixed windows.
+  Applied to AI site turns, project AI turns, manual builds and import builds (webhook builds keep their 20/hour cap).
+
+No migrations.
+
+## [0.12.0-rc.5] - 2026-10-22
+
+### Fixed (review nits)
+- A host tombstone with no owner (`projectId` null) blocks every project in `assertSlugUsable` (moved to
+  `src/lib/projects/slug-gate.ts`).
+- The slug gate (with the `SITES` bucket) now runs on every creation path: import, template / CLI / chat-tool create
+  (`createProjectRepo`, checked before the GitHub repo is created), zip upload, and AI site create. Those paths also
+  store the reserved slug. AI fallback suffixes are 7 chars so they are never preview-shaped.
+- The 410 page picks one language from the highest-q (first on tie) Accept-Language tag; Thai only for `th`/`th-*`,
+  English otherwise; both only when the header is missing.
+
+## [0.12.0-rc.4] - 2026-10-22
+
+### Fixed / hardened
+- Confirmed: the cron's preview cleanup passes the `SITES` bucket, so `removeAliases` writes the
+  `{projectId, expired:true}` tombstone; tested end to end (cleanup → same host → 410).
+- The 410 "preview expired" page is Thai or English from `Accept-Language`, both when unclear (`Vary: Accept-Language`).
+- Migration **0021** (local only): unlinking (connection deleted or no longer `active`) deletes the project's
+  `git_pending_builds`; project delete already cascades. `drainPending` re-checks the link (active, same owner,
+  push/installation gate) before starting a build.
+- `assertSlugUsable()` is the single slug gate (taken, preview-shaped `<existing-slug>-<6>`, R2 host record or expired
+  tombstone held by another project). Import uses it with the `SITES` bucket; there is no rename/slug-change route
+  today, and any future one must call it.
+- `projectHash()` is shared by Worker naming and cleanup; tested against an independent sha256.
+
+## [0.12.0-rc.3] - 2026-10-22
+
+### Fixed (Subdev review of 275322f)
+- Jobs closed by the sweeper (`timed_out`) or by `requeueOrphans` (`queue_lost`) now start the newest waiting commit
+  for their slot; the cron also runs `drainFreeSlots`, which starts every `git_pending_builds` row whose slot is free.
+- A pending commit overwritten by a newer push gets a `failure` status "Superseded by newer commit <sha>".
+- `failJob` does not schedule a retry when a newer commit is waiting for the same slot.
+- Delivery claim extracted to `claimDelivery`; tested that a redelivery stuck in `processing` > 15 min is reprocessed
+  without a second build (idempotency key), and finished deliveries stay deduped.
+
+## [0.12.0-rc.2] - 2026-10-22
+
+### Fixed (Subdev review of 10faf17)
+- **Concurrent pushes no longer error out.** Newest commit wins per slot (production, or one preview branch):
+  an older *queued* build is canceled (`superseded`, failure status "Superseded by <sha>"); a *running* one gets
+  `cancel_requested` and the newest commit is stored in `git_pending_builds` (one row per slot, overwritten by newer
+  pushes) and starts automatically when that build ends.
+- Migration **0020** (local only, not applied remotely): the one-active index is split into production
+  (per project) and preview (per project **and branch**), so different branches/PRs build in parallel.
+- Commit status context includes the project slug: `devstack/<slug>/production|preview`.
+- `webhook_deliveries.status` aggregates every linked project, e.g. `queued:2,rate_limited:1`.
+- The webhook answers 202 right after verify + dedupe; build work runs in `ctx.waitUntil` (status `processing` until done).
+- Rate-limited pushes get a `failure` status with a clear message instead of `error`.
+
+### Security (Supdev review of 10faf17)
+- **M1: linking a public repo no longer grants auto-deploy.** Import records `can_push` (importer had push/admin).
+  A connection without an installation auto-deploys only when `can_push = 1`; the first signed delivery carrying
+  `installation.id` binds it, after which only that installation's deliveries build (`installation_mismatch` otherwise).
+  Existing connections default to `can_push = 0` → re-import (or bind via the GitHub App) to enable auto-deploy.
+- Rate limit is one atomic conditional upsert (`git_rate`, migration 0020).
+- A repo renamed/transferred under the same id updates `repo_full_name`.
+- Redelivered webhooks that are still `received`, `failed:*` or stuck `processing` (>15 min) are reprocessed.
+- Expired preview hosts keep a tombstone `{projectId, expired:true}` → 410 "preview expired", never claimable by another
+  project; new project names shaped `<existing-slug>-<6 chars>` are refused.
+- Failed/canceled/timed-out jobs no longer hold their idempotency key (same commit can be rebuilt).
+
+## [0.12.0-rc.1] - 2026-10-22
+
+### Added — Git auto-deploy (Vercel-style)
+- `POST /api/github/webhook` now acts on verified `push` and `pull_request` deliveries for repositories linked to a
+  project (`project_connections.repo_id`):
+  - push to the project's production branch (`production_branch`, else `default_branch`) → production build;
+  - push to any other branch, or PR `opened` / `synchronize` / `reopened` → preview build with its own URL;
+  - the exact pushed commit is built (pinned SHA from the signed payload); the same commit/branch/environment is
+    built once (idempotency key `gh:<env>:<branch>:<sha>`), so push + PR synchronize don't double-build.
+- GitHub commit status `devstack/preview` / `devstack/production`: `pending` with the URL when queued, `success`
+  with the live URL or `failure` with the error code when the build finishes, `error` when it could not start.
+- New `src/lib/github/autodeploy.ts` (+ `tests/git-webhook-deploy.test.ts`, 9 tests).
+
+### Security
+- Signature (`X-Hub-Signature-256`, HMAC-SHA256, constant-time `crypto.subtle.verify`) is checked before JSON parse
+  (unchanged); delivery dedupe on `X-GitHub-Delivery`; outcome recorded on `webhook_deliveries.status/build_job_id`.
+- Unlinked repos, tags, branch deletions and **fork PRs are ignored** (fork code never runs with the owner's token
+  or env vars). At most 20 webhook builds per project per hour (plus the existing daily per-user cap).
+- No payload, signature or token is logged; status bodies never contain the token.
+
+## [0.11.0-rc.3] - 2026-10-22
+
+### Fixed (review lows)
+- Preview cleanup always keeps the newest 5 per project (delete = beyond 5 AND older than 14 days) and requires the
+  owner tag's project hash to match the name; deleted previews lose their host aliases and show "preview expired".
+- Badge injection falls back to document end (no `<body>`, XHTML); rewritten bodies drop `Content-Encoding`.
+
+### Security (Supdev re-review of 5cd9d3f)
+- N1: the server-site proxy builds its target from the fixed `https://<worker>.<sub>.workers.dev` host and only sets
+  pathname/search, then asserts the host; paths like `//evil.com/x`, `/\evil.com`, `/%2F%2Fevil.com` can no longer
+  redirect the subrequest (open proxy / proxy-key leak). Hot-fixed in 043e6a9.
+- N2: workers.dev disabled on every legacy `site-<slug>` Worker (only `site-e2e-next-1022`).
+- One shared platform-Worker denylist (`PLATFORM_WORKERS` in serve.ts) for proxy and uploader.
+
+### Added
+- Cron cleanup of preview server Workers (strict `site-<20hex>-<12hex>` + devstack owner tag; keep newest 5 per
+  project, delete older than 14 days). Runs only when server builds are configured.
+- Migration 0019: `build_jobs.requeue_count`; requeue backoff/cap now uses it. `requeued` is a typed event phase.
+
+### Changed
+- Report badge on proxied HTML is injected with `HTMLRewriter` (streamed) instead of buffering the body.
+
+## [0.11.0-rc.2] - 2026-10-22
+
+### Security (Supdev review of cff8391 = FAIL, fixed)
+- `devstack-sites` proxy forwards only an allowlist of request headers (no `Cookie`, `Authorization`, `CF-*`) and
+  removes every `Set-Cookie` from server-site responses (no cookie tossing onto devstack.bid).
+- Server-site responses now carry the platform security headers (`frame-ancestors`, `nosniff`, …) and the report badge.
+- Customer `server.json` is ignored: compatibility flags are fixed to `nodejs_compat` + `global_fetch_strictly_public`
+  and the date is pinned (closes an SSRF path).
+- Server Worker names come from the project id (`site-<hash>`), previews get their own Worker
+  (`site-<hash>-<hash>`), names are hard-checked against `^site-[a-f0-9]{20}(-[a-f0-9]{12})?$` and a platform
+  denylist, and an owner tag is checked before every upload (no slug-reuse overwrite).
+- Each server Worker is wrapped in a platform guard that rejects direct `workers.dev` requests without the
+  per-worker proxy key (HMAC of `SITES_PROXY_SECRET`) and hides that key from customer code.
+- Upstream workers.dev 404/5xx that are not from the project Worker show "Site temporarily unavailable".
+- Container start errors are redacted with `sanitizeLog`; Cloudflare API errors are logged server-side and users see
+  only an error code.
+
+### Fixed
+- Orphaned queued jobs are re-delivered with atomic exponential backoff (`UPDATE … RETURNING`) and failed with
+  `queue_lost` and a clear message after 4 re-deliveries.
+- Login: the password counter no longer announces every keystroke (only the 10-character threshold), shows an
+  "OK" text at 10+, and the show-password toggle resets on submit and `pagehide`.
+- Removed `packages/cli/node_modules` from git.
+
+## [0.11.0-rc.1] - 2026-10-22
+
+### Added
+- Server (Next.js/OpenNext) sites: the build container bundles `.open-next` into one Worker module; the platform
+  uploads it as Worker `site-<slug>` via the Cloudflare API and `devstack-sites` proxies `<slug>.devstack.bid` to it
+  (docs/platform/SERVER-SITES.md). Requires the `SITES_CF_API_TOKEN` secret.
+- Cron re-delivers orphaned queued build jobs.
+- Template work from `fix/templates`: buildable template projects, `static-website` template, picker routing.
+
+### Fixed
+- `executor_lost` errors now include the container start failure reason.
+- OpenNext builds no longer fail with `missing_index`.
+- Restored `src/lib/build/*`, `/chat/build` page and the user guide PDF deleted by mistake in f040e19.
+
+## [0.10.0-rc.1] - 2026-10-22
+
+### Added
+- AI chat builder at /chat/build: chat with AI to create and edit static sites, versioned snapshots, static publish to
+  `<slug>-<id>.devstack.bid`, promote to `<slug>.devstack.bid`, restore, inline build log, export to GitHub (migration 0016).
+- Site safety: report badge + /report (site_reports), atomic AI quota, globally unique slugs (migration 0017).
+- LLM calls routed through Cloudflare AI Gateway `devstack-ai`; Workers AI titles; KV rate-limit counters.
+
+### Security
+- Session cookie `__Host-nvx_auth` with migrate-on-read of the legacy cookie (legacy reads stop 2026-11-21).
+- Strict `Origin: https://devstack.bid` on signed-in writes; sites CSP `frame-ancestors https://devstack.bid`.
+
+### Fixed
+- Build executor: ContainerProxy export, deployment relink on retry, clone credential scrubbed (from 0.9.x build fixes).
+
+### Notes
+- `feat/cli` has `0016_cli_device_codes.sql`, which conflicts with 0016 here: renumber it to 0018 before merging.
+
+## [0.9.0-rc.1] - 2026-10-22
+
+Branch `feat/new-project-platform` merged with `feat/restore-rc5`.
+
+### Added
+
+- **New Project platform** at `/new`: import a GitHub repository (search, branch, root directory, framework detection, build settings), upload a zip, or start from a template; deployment detail pages; D1 migrations 0013–0015.
+- **rc.5 restored**: full setup-script copy (PR #39) and AI planner links to Expo, Android Studio, Replit and GitHub Codespaces.
+
+### Fixed
+
+- **GitHub connect returns to the page it started from** (`/new`, keeping `?mode=`). Return paths are same-origin only (no open redirect, no `/login` or `/api` loops), re-checked on success, and kept on `/login` after a failure.
+- **GitHub sign-in and API calls failing with HTTP 525**: a Worker on a custom domain gets 525 from `github.com`/`api.github.com` (cloudflare/workerd#7042). All server-side GitHub calls now go through `ghFetch`, which retries a 525 once over a `cloudflare:sockets` TLS connection (GitHub hosts only).
+
 ## [0.8.0-rc.3] - 2026-10-17
 
 Release branch `release/2026-10-17`: `fix/github-oauth-525` + `feat/ui-glowcard-spline` + chat knowledge and persona.
@@ -27,6 +257,7 @@ Release branch `release/2026-10-17`: `fix/github-oauth-525` + `feat/ui-glowcard-
 
 ### Added
 
+- AI planner now has optional links to Expo, Android Studio, Replit and GitHub Codespaces as alternative development platforms; these are external resources, not generated templates.
 - **Create token menu** next to every token/key input (Connections, direct deploy, AI agent panel, Sandbox Factory, Environment): links to the official Cloudflare, GitHub fine-grained, OpenAI, Vercel and Hugging Face token pages (URLs verified against provider docs 2026-10-15). Monochrome, keyboard operable, our own component.
 - **Remember checkbox** (default off) next to each token input. Off = used once for that request, never persisted. On = sealed with CREDENTIALS_KEY v2 into the new **/settings/environment** page (name + created/updated/last-used only, delete). D1 migration `0012_user_environment.sql`; API `/api/environment`. Direct deploy accepts a one-off Cloudflare token and falls back to remembered `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`.
 - **Chat stream archive to R2** (binding `CHAT_STREAMS`, bucket `nvx-chat-streams`): each turn's streamed reply and thinking steps are written to `chat/<uid>/<conversationId>/<messageId>.json`. D1 history and the UI are unchanged.
@@ -39,6 +270,8 @@ Release branch `release/2026-10-17`: `fix/github-oauth-525` + `feat/ui-glowcard-
 - Sandbox Factory no longer keeps the OpenAI key in `sessionStorage`.
 
 ### Fixed
+
+- **Copied setup script skipped starter files.** The Builder's script panel and copy buttons now use the same full scripts as `setup.sh` / `setup.ps1` downloads: starter files are written before the build, and dev-server, manual and publish steps stay commented out. The AI preview also includes AI-generated starter files using the same custom steps as loading the plan into Builder. The chat site plan no longer lists dev-server, manual or publish commands. Regression tests: `tests/copy-complete-scripts.test.ts`. Not yet run on a real Windows PowerShell.
 
 - **Sign-up looked dead.** On `/login`, "Create a DevStack account" relied on the browser's native validation (`required`, `type=email`, `minLength=10`). When the email or a password under 10 characters was invalid, the browser blocked the POST and only showed a native bubble, in English, which is easy to miss and missing in some in-app or mobile browsers. The form now uses `noValidate` and checks its own rules, matching the server (valid email, 10–200 characters). It always shows a visible TH/EN message and focuses the field. A double submit is ignored, and the pending state resets after back/forward navigation. Regression test: `tests/login-form.test.tsx`.
 - `/api/connections`, `/api/projects`, `/api/deployments` and `/api/environment` reads were throttled by the fixed 4 / 60 s `NVX_CHAT_LIMITER` binding (deploy-status polling every 3 s returned 429). Reads now use the per-isolate limiter at each route's `perMinute`; writes keep the shared binding.

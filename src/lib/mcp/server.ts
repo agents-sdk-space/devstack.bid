@@ -19,7 +19,7 @@ import { POST as factoryTurnPost } from "@/app/api/factory/turn/route";
 import { clientIp } from "@/lib/server/http";
 import type { Lang } from "@/lib/types";
 import { sanitizeStep } from "@/lib/sanitize";
-import { authenticateMcpClient, consumeMcpClient, type McpClient, type McpScope } from "./auth";
+import { authenticateMcpClient, consumeMcpClient, isMcpKey, type McpClient, type McpScope } from "./auth";
 
 const PROTOCOL_VERSION = "2025-11-25";
 const MAX_RPC_BODY = 96 * 1024;
@@ -181,9 +181,10 @@ async function readSse(response: Response) {
   return { text: final, conversationId: meta?.conversationId, events: events.filter((e) => ["image", "file", "usage", "quota"].includes(String(e.t))) };
 }
 
-async function needScope(req: Request, scope: McpScope, db: NonNullable<Awaited<ReturnType<typeof chatRuntime>>["db"]>) {
+export async function needScope(req: Request, scope: McpScope, db: NonNullable<Awaited<ReturnType<typeof chatRuntime>>["db"]>) {
   const auth = await authenticateMcpClient(req, db);
   if (!auth.client) throw Object.assign(new Error(auth.error === "missing" ? "Connect a DevStack API key with the required scope." : "The DevStack API key is invalid or has been revoked."), { status: 401, code: "unauthorized" });
+  if (!isMcpKey(auth.client.scopes)) throw Object.assign(new Error("CLI keys cannot be used for MCP. Create an MCP key at devstack.bid/settings/mcp."), { status: 403, code: "missing_scope" });
   if (!auth.client.scopes.includes(scope)) throw Object.assign(new Error(`This API key needs the ${scope} scope.`), { status: 403, code: "missing_scope" });
   const rate = await consumeMcpClient(db, auth.client);
   if (!rate.ok) throw Object.assign(new Error(`API key rate limit reached. Retry in ${rate.retryAfter} seconds.`), { status: 429, code: "rate_limited", retryAfter: rate.retryAfter });

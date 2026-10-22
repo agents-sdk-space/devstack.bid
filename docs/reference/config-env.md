@@ -25,6 +25,9 @@
 | `TURNSTILE_SECRET_KEY` | **secret** | ข้อความ (Turnstile secret) | ไม่มี → ปิดการตรวจ Turnstile บน /login (ฟอร์มยังใช้ได้) | `wrangler secret put` (stdin) | ใช้เรียก Siteverify สำหรับฟอร์มรหัสผ่าน (login/register); dev ใช้ test secret `1x0000000000000000000000000000000AA` |
 | `TURNSTILE_SITE_KEY` | var (public) | `0x…` | ไม่มี → ไม่แสดง widget | `wrangler.jsonc` vars | site key สาธารณะของ widget; dev ใช้ `1x00000000000000000000AA` |
 | `TURNSTILE_HOSTNAMES` | var | รายการคั่นด้วย `,` | ว่าง + secret จริง → ปฏิเสธทุกคำขอ | `wrangler.jsonc` vars | hostname ที่ Siteverify ต้องตอบกลับ (prod: `devstack.bid`); ไม่ใส่ localhost ใน prod |
+| `GITHUB_APP_ADMIN_IDS` | var | GitHub user id (ตัวเลข) คั่นด้วย `,` | ว่าง → ไม่มีใครสร้าง GitHub App ได้ | `wrangler.jsonc` vars | ผู้ที่เปิด `/api/github/app/manifest` และ callback ได้ (prod: `326990420` = @thanabartbb) |
+| `DEVSTACK_ADMIN_GITHUB_IDS` | var | GitHub user id (ตัวเลข) คั่นด้วย `,` | ว่าง → ไม่มี admin tier | `wrangler.jsonc` vars | ผู้ใช้ที่ได้ tier admin (ไม่จำกัดโควตา free) — prod: `326990420` = @thanabartbb |
+| `SITES_CF_ACCOUNT_ID` | var | Cloudflare account id | ว่าง → server build (Next.js) ถูก Blocked | `wrangler.jsonc` vars | บัญชีที่ใช้สร้าง Worker ต่อโปรเจกต์ (คู่กับ secret `SITES_CF_API_TOKEN` สิทธิ์ Workers Scripts: Edit และ `SITES_PROXY_SECRET`) |
 | `GOOGLE_CLIENT_ID` | **secret** | `^[A-Za-z0-9][A-Za-z0-9._-]{7,180}$` | ไม่มี → ปุ่ม Google พากลับ `/login?auth=missing&provider=google` | `wrangler secret put` (stdin) | OAuth client id callback `{origin}/api/auth/google/callback` |
 | `GOOGLE_CLIENT_SECRET` | **secret** | `^[\w-]{16,200}$` | ไม่มี → เข้าสู่ระบบ Google ปิด | `wrangler secret put` (stdin) | ใช้แลก code ครั้งเดียว ไม่ถูกเก็บใน D1 |
 | `CURSOR_APP_ID` | **secret** | `^app_[A-Za-z0-9]{6,80}$` | ไม่มี → ปุ่ม Cursor พากลับ `/login?auth=missing&provider=cursor` | `wrangler secret put` (stdin) | รหัสแอป Origin ที่เป็นสาธารณะ ไม่เก็บ private key ตรวจใบเสร็จจาก JWKS ของ Origin บน production ตั้งแล้วที่เวอร์ชัน `ffbd53ae-957b-4b48-b411-3a882f14f8ae` (`app_01m4xk8788f7s941zg4cpjxcer`) |
@@ -86,6 +89,7 @@ Studio (`/studio`) ไม่มี secret ของตัวเอง ใช้ 
 | `STUDIO_MAX_INPUT_CHARS` | var | 60000 | — | ความยาวรวมของ messages ต่อคำขอ |
 | `STUDIO_DAILY_CALLS` | var | 60 | `60` | การเรียก LLM ฟรีต่อวันต่อ cookie (สร้างแอปหนึ่งครั้งใช้ราว 3–6) เพดานต่อ IP = ค่านี้ × `FREE_IP_MULTIPLIER` |
 | `STUDIO_GLOBAL_CALLS_PER_DAY` | var | 3000 | `3000` | การเรียกรวมทั้งเว็บต่อวัน |
+| `SITES_DNS_READY` | var | `0` | `0` | ตั้งเป็น `1` หลังสร้าง DNS wildcard `*.devstack.bid` และ route ของ `devstack-sites` แล้วเท่านั้น ก่อนหน้านั้นลิงก์ของเว็บที่ build จะแสดงเป็น Blocked |
 | `STUDIO_BURST_PER_MIN` | var | 20 | — | limit in-memory สำรองเมื่อไม่มี `NVX_STUDIO_LIMITER` |
 | `STUDIO_TIMEOUT_MS` | var | 90000 | — | timeout ของการเรียก HF หนึ่งครั้งจาก Studio |
 
@@ -109,6 +113,12 @@ Studio (`/studio`) ไม่มี secret ของตัวเอง ใช้ 
 | `NVX_STUDIO_LIMITER` | ratelimit (namespace `4715`) | 20 / 60 วินาที | burst ของ `/api/studio/llm/chat` และ `/api/studio/image` (เพิ่มใน v0.8.0-rc, ยังไม่เคย deploy) |
 
 | `CHAT_STREAMS` | R2 bucket `nvx-chat-streams` | — | เก็บข้อความที่สตรีมและขั้นตอน thinking (ไม่รวม reasoning ดิบ) ของแต่ละ turn เป็น `chat/<uid>/<conversationId>/<messageId>.json` ข้อมูลเดิมใน D1 ไม่เปลี่ยน ต้องสร้าง bucket ก่อน deploy: `wrangler r2 bucket create nvx-chat-streams` |
+| `BUILD_ARTIFACTS` | R2 bucket `devstack-build-artifacts` | — | เก็บ log ที่ redact แล้ว (`logs/<jobId>.txt`) และไฟล์ output ของแต่ละ build (`artifacts/<jobId>.tar`) ต้องสร้างก่อน deploy: `wrangler r2 bucket create devstack-build-artifacts` |
+| `SITES` | R2 bucket `devstack-sites` | — | ไฟล์เว็บที่ build แล้ว (`sites/<deploymentId>/…`) และ hostname → deployment (`hosts/<label>.json`) อ่านโดย Worker `devstack-sites` ต้องสร้างก่อน deploy: `wrangler r2 bucket create devstack-sites` |
+| `BUILD_QUEUE` | Queue `devstack-build-jobs` | — | คิวงาน build (producer + consumer ใน Worker หลัก, ครั้งละ 1 ข้อความ, พร้อมกันสูงสุด 2) ต้องสร้างก่อน deploy: `wrangler queues create devstack-build-jobs` |
+| `BUILD_CONTAINER` | Durable Object + Container `BuildContainer` | — | 1 container ต่อ 1 build จาก `container/Dockerfile` (max_instances 2) ต้องใช้ Workers Paid และ Docker ตอน deploy |
+
+`BUILD_ARTIFACTS`, `SITES`, `BUILD_QUEUE` และ `BUILD_CONTAINER` อยู่ใน [`release/build-bindings.jsonc`](../../release/build-bindings.jsonc) เท่านั้น (ไม่อยู่ใน `wrangler.jsonc`) ใช้ตอน `npm run deploy:release` (`-c wrangler.release.jsonc`, ต้องมี Docker) ส่วน `npm run deploy:hotfix` ใช้ `wrangler.jsonc` และไม่ต้องมี Docker ดู [BUILD-EXECUTOR.md](../platform/BUILD-EXECUTOR.md)
 | `CREDENTIALS_KEY` | Secrets Store (`default_secrets_store` `b56dddabe7d74172932cf26f4a2ab03f`, secret `CREDENTIALS_KEY`) | 32 ไบต์ base64 | คีย์เข้ารหัส v2 ของ token ลูกค้า (connections, Environment) โค้ดอ่านด้วย `await env.CREDENTIALS_KEY.get()` ถ้าไม่มี binding จะใช้ Worker secret ชื่อเดียวกัน แล้วค่อยถอยไป v1 ไม่มีสำเนาสำรอง (เจ้าของตัดสินใจ 2026-10-15) ถ้าคีย์หาย ลูกค้าต้องผูกบัญชีใหม่ |
 
 `ASSETS_BUCKET` (R2 bucket `nvx-assets`) **ยังไม่ได้เพิ่ม** เพราะบัญชียังไม่เปิด R2 ขั้นตอนอยู่ที่ [d1-database.md](../operations/d1-database.md) อย่าใส่ binding ก่อนมี bucket จริง เพราะ deploy จะล้ม

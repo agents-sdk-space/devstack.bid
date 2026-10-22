@@ -264,7 +264,8 @@
     "pypi-package",
     "collab-workspace",
     "react-admin-tool",
-    "nextjs-ai-chat"
+    "nextjs-ai-chat",
+    "static-website"
   ],
   "routes": [
     {

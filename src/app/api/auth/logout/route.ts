@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import { sameOrigin } from "@/lib/auth/github-policy";
 import { chatEnv } from "@/lib/chat/config";
 import { revokeSessions } from "@/lib/auth/session";
-import { AUTH_COOKIE, CHAT_COOKIE, clearCookie, readCookie, readSession, verifyUid } from "@/lib/chat/identity";
+import { CHAT_COOKIE, authClearCookies, clearCookie, readAuthRaw, readCookie, readSession, verifyUid } from "@/lib/chat/identity";
 import { chatRuntime } from "@/lib/chat/runtime";
 import { deleteGithubCredential } from "@/lib/chat/store";
 
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   const headers = new Headers({ "Cache-Control": "no-store", "Content-Type": "application/json; charset=utf-8" });
   const secret = env.CHAT_COOKIE_SECRET;
   if (secret) {
-    const raw = readCookie(req.headers.get("cookie"), AUTH_COOKIE);
+    const raw = readAuthRaw(req.headers.get("cookie"));
     const session = await readSession(raw, secret);
     const uid = session?.uid ?? (await verifyUid(raw, secret));
     const everywhere = new URL(req.url).searchParams.get("everywhere") === "1";
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         await deleteGithubCredential(db, uid).catch(() => undefined);
       }
     }
-    headers.append("Set-Cookie", clearCookie(AUTH_COOKIE, secure));
+    for (const c of authClearCookies(secure)) headers.append("Set-Cookie", c);
     if (uid && anon === uid) headers.append("Set-Cookie", clearCookie(CHAT_COOKIE, secure));
   }
   return new Response(JSON.stringify({ ok: true }), { status: 200, headers });

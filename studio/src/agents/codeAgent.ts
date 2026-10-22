@@ -76,7 +76,7 @@ export async function runCodeAgent(
   await broker.emit('agent:thinking', { active: true, agent: 'code' });
   let files: Record<string, string>;
   let source: CodeAgentResult['source'] = 'template';
-  let note: string | undefined;
+  const note: string | undefined = undefined;
 
   if (llm.id === 'mock') {
     files = templateFiles(`${input.intent} ${input.userPrompt}`);
@@ -107,8 +107,10 @@ export async function runCodeAgent(
       files = accepted;
       source = 'llm';
     } else {
-      note = `LLM code generation rejected (${lastError}); used built-in template`;
-      files = templateFiles(`${input.intent} ${input.userPrompt}`);
+      // No silent template fallback: writing the same built-in app for every prompt looked like success but ignored
+      // the request. Leave the existing files untouched and report the failure so the user can retry or rephrase.
+      await broker.emit('agent:thinking', { active: false, agent: 'code' });
+      throw new Error(`LLM code generation failed (${lastError || 'no output'}); existing files were not changed`);
     }
   }
 

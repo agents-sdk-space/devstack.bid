@@ -4,7 +4,9 @@
   // next.config.ts), approved by the owner on 2026-10-11. workers.dev stays enabled as a fallback.
   // Do not add other routes/domains without approval.
   "name": "nvx-stack-builder",
-  "main": ".open-next/worker.js",
+  "main": "custom-worker.ts",
+  // custom-worker.ts imports server modules (sweeper) outside Next's bundler; "server-only" is a no-op there.
+  "alias": { "server-only": "./node_modules/server-only/empty.js" },
   "compatibility_date": "2026-10-06",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "workers_dev": true,
@@ -28,7 +30,12 @@
   // docs/reference/d1-schema.md. Apply with `npm run db:migrate:remote` (approval required).
   // R2 bucket for chat stream persistence (streamed text + thinking steps per turn). Owner enabled R2
   // 2026-10-15; the bucket must exist before the next deploy (`wrangler r2 bucket create nvx-chat-streams`).
-  "r2_buckets": [{ "binding": "CHAT_STREAMS", "bucket_name": "nvx-chat-streams" }],
+  "r2_buckets": [
+    { "binding": "CHAT_STREAMS", "bucket_name": "nvx-chat-streams" }
+  ],
+  // Build executor bindings (Containers, Durable Object, Queue, build R2) are NOT here, so a hotfix
+  // deploy never needs Docker. They live in release/build-bindings.jsonc and are merged into
+  // wrangler.release.jsonc by `npm run cf:release-config` (used by `npm run deploy:release`).
   // CREDENTIALS_KEY (32 random bytes, base64) lives in Cloudflare Secrets Store, not as a Worker secret.
   // Code reads it with `await env.CREDENTIALS_KEY.get()` (src/lib/connections/credentials.ts).
   "secrets_store_secrets": [
@@ -48,6 +55,10 @@
     // Cloudflare Turnstile on /login (public site key). The secret is TURNSTILE_SECRET_KEY (wrangler secret).
     "TURNSTILE_SITE_KEY": "0x4AAAAAAFXrTVkaNC9mWvUR",
     "TURNSTILE_HOSTNAMES": "devstack.bid",
+    "GITHUB_APP_ADMIN_IDS": "326990420",
+    "DEVSTACK_ADMIN_GITHUB_IDS": "326990420",
+    // Account for per-project server Workers (token: SITES_CF_API_TOKEN secret, Workers Scripts: Edit).
+    "SITES_CF_ACCOUNT_ID": "2d92bd5b25768fa9093d6adc0a8887fc",
     "OPENAI_MODEL": "gpt-6.1-sol",
     "OPENAI_MAX_OUTPUT_TOKENS": "6000",
     "OPENAI_TIMEOUT_MS": "75000",
@@ -103,7 +114,8 @@
     "STUDIO_PROVIDER": "wai",
     "STUDIO_MAX_TOKENS": "4000",
     "STUDIO_DAILY_CALLS": "60",
-    "STUDIO_GLOBAL_CALLS_PER_DAY": "3000"
+    "STUDIO_GLOBAL_CALLS_PER_DAY": "3000",
+    "SITES_DNS_READY": "1"
   },
   // Workers Rate Limiting API (no separate resource to create; counters are per Cloudflare location).
   // namespace_id is an arbitrary account-unique integer string chosen for this app.
@@ -139,6 +151,8 @@
       "simple": { "limit": 20, "period": 60 }
     }
   ],
+  // Build-job sweeper (src/lib/build/sweep.ts): times out stale jobs every 5 minutes. Takes effect only on deploy.
+  "triggers": { "crons": ["*/5 * * * *"] },
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
