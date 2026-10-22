@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0-rc.2] - 2026-10-22
+
+### Fixed (Subdev review of 10faf17)
+- **Concurrent pushes no longer error out.** Newest commit wins per slot (production, or one preview branch):
+  an older *queued* build is canceled (`superseded`, failure status "Superseded by <sha>"); a *running* one gets
+  `cancel_requested` and the newest commit is stored in `git_pending_builds` (one row per slot, overwritten by newer
+  pushes) and starts automatically when that build ends.
+- Migration **0020** (local only, not applied remotely): the one-active index is split into production
+  (per project) and preview (per project **and branch**), so different branches/PRs build in parallel.
+- Commit status context includes the project slug: `devstack/<slug>/production|preview`.
+- `webhook_deliveries.status` aggregates every linked project, e.g. `queued:2,rate_limited:1`.
+- The webhook answers 202 right after verify + dedupe; build work runs in `ctx.waitUntil` (status `processing` until done).
+- Rate-limited pushes get a `failure` status with a clear message instead of `error`.
+
+### Security (Supdev review of 10faf17)
+- **M1: linking a public repo no longer grants auto-deploy.** Import records `can_push` (importer had push/admin).
+  A connection without an installation auto-deploys only when `can_push = 1`; the first signed delivery carrying
+  `installation.id` binds it, after which only that installation's deliveries build (`installation_mismatch` otherwise).
+  Existing connections default to `can_push = 0` → re-import (or bind via the GitHub App) to enable auto-deploy.
+- Rate limit is one atomic conditional upsert (`git_rate`, migration 0020).
+- A repo renamed/transferred under the same id updates `repo_full_name`.
+- Redelivered webhooks that are still `received`, `failed:*` or stuck `processing` (>15 min) are reprocessed.
+- Expired preview hosts keep a tombstone `{projectId, expired:true}` → 410 "preview expired", never claimable by another
+  project; new project names shaped `<existing-slug>-<6 chars>` are refused.
+- Failed/canceled/timed-out jobs no longer hold their idempotency key (same commit can be rebuilt).
+
 ## [0.12.0-rc.1] - 2026-10-22
 
 ### Added — Git auto-deploy (Vercel-style)

@@ -261,8 +261,9 @@ export async function removeAliases(bucket: R2BucketLike, worker: string): Promi
   const removed: string[] = [];
   for (const label of idx?.labels ?? []) {
     if (!/^[a-z0-9-]{1,63}$/.test(label)) continue;
-    const rec = await readJson<{ worker?: string }>(bucket, `hosts/${label}.json`);
-    if (rec?.worker === worker) { await bucket.delete(`hosts/${label}.json`); removed.push(label); }
+    const rec = await readJson<{ worker?: string; projectId?: string }>(bucket, `hosts/${label}.json`);
+    // Keep a tombstone (same owner) so the host answers 410 "preview expired" and can't be claimed by another project.
+    if (rec?.worker === worker) { await bucket.put(`hosts/${label}.json`, JSON.stringify({ projectId: rec.projectId ?? null, expired: true, updatedAt: Date.now() }), { httpMetadata: { contentType: "application/json" } }); removed.push(label); }
   }
   await bucket.delete(workerIndexKey(worker));
   return removed;

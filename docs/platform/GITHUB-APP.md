@@ -38,7 +38,10 @@ Generate a new private key in the GitHub App settings, run `wrangler secret put 
 | PR opened / synchronize / reopened (same repo) | preview build |
 | fork PR, tag push, branch delete, PR closed, unlinked repo | ignored (recorded in `webhook_deliveries.status`) |
 
-The commit gets a status (`devstack/preview` or `devstack/production`) with the URL. Until the GitHub App exists,
+The commit gets a status (`devstack/<slug>/preview` or `devstack/<slug>/production`) with the URL.
+Newest commit wins: a newer push cancels the older queued build, or (if it is already running) asks it to stop and
+builds the newest commit as soon as it ends (`git_pending_builds`, migration 0020). Different branches and PRs build
+in parallel. The webhook answers 202 immediately; builds start in the background. Until the GitHub App exists,
 statuses are posted with the project owner's GitHub OAuth token (scope `repo` covers `repo:status`) and the clone uses
 the same token as manual builds. Limits: 20 webhook builds per project per hour, plus the daily per-user cap.
 
@@ -50,3 +53,12 @@ the same token as manual builds. Limits: 20 webhook builds per project per hour,
 - **Per-repository webhook (works today, no App):** repo → Settings → Webhooks → Add: Payload URL
   `https://devstack.bid/api/github/webhook`, content type `application/json`, secret = the same value as
   `GITHUB_APP_WEBHOOK_SECRET`, events "push" and "pull requests".
+
+### Who can trigger builds (security)
+- Auto-deploy runs only if the project's connection is bound to the delivering GitHub App installation, or (before
+  binding) the importer had push/admin on the repo at import time. Importing someone else's public repo never
+  auto-deploys.
+- **Anyone with push access to a linked repo can run code in a preview build that sees the project's `preview`
+  environment variables.** Put only preview-safe values there; production values are used only for production-branch
+  builds. Fork PRs never build.
+- Follow-up: post statuses with a short-lived GitHub App installation token instead of the owner's OAuth token.

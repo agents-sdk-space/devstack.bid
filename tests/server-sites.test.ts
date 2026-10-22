@@ -220,11 +220,11 @@ describe("preview worker cleanup", () => {
       ["hosts/shop-aaaaaa.json", JSON.stringify({ projectId: "proj-A", worker: pv(P, 5) })],
       ["hosts/shop.json", JSON.stringify({ projectId: "proj-A", worker: P })],
     ]);
-    const bucket = { get: async (k: string) => (store.has(k) ? { text: async () => store.get(k)! } : null), put: async () => undefined, delete: async (k: string) => { store.delete(k); } } as never;
+    const bucket = { get: async (k: string) => (store.has(k) ? { text: async () => store.get(k)! } : null), put: async (k: string, v: string) => { store.set(k, v); }, delete: async (k: string) => { store.delete(k); } } as never;
     const out = await cleanupPreviewWorkers({ accountId: "a", token: "t", fetcher }, { now, bucket });
     expect(out).toEqual([pv(P, 5)]);
     expect(deleted).toEqual([pv(P, 5)]);
-    expect(store.has("hosts/shop-aaaaaa.json")).toBe(false);
+    expect(JSON.parse(store.get("hosts/shop-aaaaaa.json")!)).toMatchObject({ projectId: "proj-A", expired: true }); // tombstone → 410
     expect(store.has("hosts/shop.json")).toBe(true); // production alias points elsewhere → untouched
     expect(store.has(`workers/${pv(P, 5)}.json`)).toBe(false);
   });

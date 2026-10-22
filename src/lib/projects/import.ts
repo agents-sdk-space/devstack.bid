@@ -94,6 +94,10 @@ export async function importRepo(
   const dupe = await db.prepare("SELECT id FROM projects WHERE user_id = ?1 AND repo_full_name = ?2 AND root_directory = ?3").bind(uid, meta!.fullName, root).first<{ id: string }>();
   if (dupe) throw new ServiceError("conflict", "This repository (and root) is already a project. / repo นี้ถูกนำเข้าแล้ว", 409);
   const slugTaken = await db.prepare("SELECT id FROM projects WHERE slug = ?1").bind(slugV.slug).first<{ id: string }>();
+  // <existing-slug>-<6 chars> is the preview hostname shape of another project: never hand it out.
+  const previewShape = /^(.+)-[a-z0-9]{6}$/.exec(slugV.slug);
+  if (previewShape && (await db.prepare("SELECT id FROM projects WHERE slug = ?1").bind(previewShape[1]).first<{ id: string }>()))
+    throw new ServiceError("conflict", `Project name "${slugV.slug}" looks like a preview address of another project. / ชื่อนี้ซ้ำกับรูปแบบลิงก์ preview`, 409);
   if (slugTaken) throw new ServiceError("conflict", `Project name "${slugV.slug}" is already used. / ชื่อนี้ถูกใช้แล้ว`, 409);
 
   const c = cfgV.config;
@@ -104,8 +108,8 @@ export async function importRepo(
     db.prepare(
       "INSERT INTO projects (id, user_id, name, template_id, repo_full_name, default_branch, slug, source, root_directory, framework, install_command, build_command, output_directory, node_version, production_branch, provider, updated_at) VALUES (?1, ?2, ?3, NULL, ?4, ?5, ?6, 'github_import', ?7, ?8, ?9, ?10, ?11, ?12, ?13, 'cloudflare', ?14)"
     ).bind(id, uid, slugV.slug, meta!.fullName, branch!, slugV.slug, root, c.framework, c.installCommand, c.buildCommand, c.outputDirectory, c.nodeVersion, branch!, now),
-    db.prepare("INSERT INTO project_connections (id, project_id, user_id, provider, installation_id, repo_id, repo_full_name, private) VALUES (?1, ?2, ?3, 'github', NULL, ?4, ?5, ?6)")
-      .bind(crypto.randomUUID(), id, uid, meta!.id, meta!.fullName, meta!.private ? 1 : 0),
+    db.prepare("INSERT INTO project_connections (id, project_id, user_id, provider, installation_id, repo_id, repo_full_name, private, can_push) VALUES (?1, ?2, ?3, 'github', NULL, ?4, ?5, ?6, ?7)")
+      .bind(crypto.randomUUID(), id, uid, meta!.id, meta!.fullName, meta!.private ? 1 : 0, meta!.canPush ? 1 : 0),
   ]).catch((e: unknown) => {
     if (/UNIQUE/i.test(String((e as Error)?.message)) && /slug/i.test(String((e as Error)?.message))) throw new ServiceError("conflict", `Project name "${slugV.slug}" is already used. / ชื่อนี้ถูกใช้แล้ว`, 409);
     throw e;

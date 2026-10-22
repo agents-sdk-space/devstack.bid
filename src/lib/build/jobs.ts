@@ -67,7 +67,8 @@ export function snapshotConfig(config: Record<string, unknown> = {}): string {
 const errText = (e: unknown) => String((e as Error)?.message ?? e);
 /** SQLite/D1 report the violated columns: idempotency index vs the one-active-per-environment index. */
 const isIdemViolation = (e: unknown) => /UNIQUE/i.test(errText(e)) && /idempotency_key/.test(errText(e));
-const isActiveViolation = (e: unknown) => /UNIQUE/i.test(errText(e)) && /environment/.test(errText(e));
+// Migration 0020 split the index: SQLite reports "build_jobs.project_id" (production) or "index 'build_jobs_active_preview_uq'".
+const isActiveViolation = (e: unknown) => /UNIQUE/i.test(errText(e)) && !isIdemViolation(e) && /build_jobs\.project_id|build_jobs_active_|environment/.test(errText(e));
 
 export async function getJob(db: D1Like, uid: string, id: string): Promise<BuildJobRow | null> {
   if (!/^[a-z0-9-]{8,64}$/.test(id)) return null;
@@ -75,7 +76,7 @@ export async function getJob(db: D1Like, uid: string, id: string): Promise<Build
 }
 
 async function byIdem(db: D1Like, projectId: string, key: string) {
-  return db.prepare("SELECT * FROM build_jobs WHERE project_id = ?1 AND idempotency_key = ?2").bind(projectId, key).first<BuildJobRow>();
+  return db.prepare("SELECT * FROM build_jobs WHERE project_id = ?1 AND idempotency_key = ?2 AND status NOT IN ('failed','canceled','timed_out')").bind(projectId, key).first<BuildJobRow>();
 }
 
 /**
@@ -90,6 +91,8 @@ export async function createBuildJob(db: D1Like, j: NewJob): Promise<{ job: Buil
   }
   const id = crypto.randomUUID();
   const config = snapshotConfig(j.config);
+  // A failed/canceled job with this key must not block a rebuild: free the key (keeps the old row for history).
+  if (key) await db.prepare("UPDATE build_jobs SET idempotency_key = NULL WHERE project_id = ?1 AND idempotency_key = ?2 AND status IN ('failed','canceled','timed_out')").bind(j.projectId, key).run();
   try {
     const row = await db
       .prepare(

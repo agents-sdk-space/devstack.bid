@@ -355,7 +355,7 @@ export interface GhRepoListing {
   updatedAt: string | null;
 }
 
-type RawRepo = { id?: number; full_name?: string; owner?: { login?: string }; private?: boolean; default_branch?: string; permissions?: { pull?: boolean; push?: boolean }; updated_at?: string };
+type RawRepo = { id?: number; full_name?: string; owner?: { login?: string }; private?: boolean; default_branch?: string; permissions?: { pull?: boolean; push?: boolean; admin?: boolean }; updated_at?: string };
 
 const toListing = (r: RawRepo): GhRepoListing | null =>
   r.id && r.full_name && r.default_branch && r.permissions?.pull !== false
@@ -392,10 +392,10 @@ export async function listAccessibleRepos(token: string, opts: { page?: number; 
 }
 
 /** Repo metadata incl. the stable numeric id (survives renames). 404 = no access or not found. */
-export async function getRepoMeta(token: string, owner: string, repo: string): Promise<{ id: number; fullName: string; private: boolean; defaultBranch: string }> {
+export async function getRepoMeta(token: string, owner: string, repo: string): Promise<{ id: number; fullName: string; private: boolean; defaultBranch: string; canPush?: boolean }> {
   const { data } = await gh<RawRepo>(token, "GET", rp(owner, repo));
   if (!data.id || !data.full_name) throw new GithubApiError("Repository not found or not accessible.", 404);
-  return { id: data.id, fullName: data.full_name, private: Boolean(data.private), defaultBranch: data.default_branch ?? "main" };
+  return { id: data.id, fullName: data.full_name, private: Boolean(data.private), defaultBranch: data.default_branch ?? "main", canPush: Boolean(data.permissions?.push || data.permissions?.admin) };
 }
 
 export async function listBranches(token: string, owner: string, repo: string): Promise<string[]> {

@@ -57,6 +57,14 @@ function notFound(msg = "Not found") {
   return new Response(msg, { status: 404, headers: { ...BASE_HEADERS, "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } });
 }
 
+/** True when hosts/<label>.json is an expired-preview tombstone. */
+export async function isExpiredHost(bucket: R2BucketLike, label: string): Promise<boolean> {
+  const o = await bucket.get(`hosts/${label}.json`);
+  if (!o) return false;
+  const text = o.text ? await o.text() : await new Response(o.body).text();
+  try { return (JSON.parse(text) as { expired?: unknown }).expired === true; } catch { return false; }
+}
+
 export async function resolveDeployment(bucket: R2BucketLike, label: string): Promise<string | null> {
   const o = await bucket.get(`hosts/${label}.json`);
   if (!o) return null;
@@ -199,7 +207,7 @@ export async function serveSite(req: Request, bucket: R2BucketLike, domain?: str
   const host = parseHost(url.hostname, domain);
   if (host.kind !== "site") return notFound("Unknown site");
   const deploymentId = await resolveDeployment(bucket, host.label);
-  if (!deploymentId) return notFound("This site has no deployment yet.");
+  if (!deploymentId) return (await isExpiredHost(bucket, host.label)) ? previewExpired() : notFound("This site has no deployment yet.");
   const path = objectPath(url.pathname);
   if (path === null) return notFound();
   const candidates = path === "" ? ["index.html"] : /\.[a-z0-9]+$/i.test(path) ? [path] : [`${path}.html`, `${path}/index.html`, path];

@@ -12,10 +12,10 @@ import { isSymlinkEntry, parseDeployZip, UploadError } from "@/lib/deploy/upload
 const tree = (paths: string[]) => ({ entries: paths.map((path) => ({ path, type: "blob", sha: "a".repeat(40), size: 10 })), truncated: false });
 
 /** Recorded-shape GitHub reader (tests only; production uses the real REST client). */
-function reader(opts: { paths?: string[]; pkg?: object | null; status?: number; private?: boolean } = {}): GithubReader {
+function reader(opts: { paths?: string[]; pkg?: object | null; status?: number; private?: boolean; canPush?: boolean } = {}): GithubReader {
   const fail = () => { if (opts.status) throw new GithubApiError("x", opts.status); };
   return {
-    async getRepoMeta(_t, owner, repo) { fail(); return { id: 4242, fullName: `${owner}/${repo}`, private: opts.private ?? true, defaultBranch: "main" }; },
+    async getRepoMeta(_t, owner, repo) { fail(); return { id: 4242, fullName: `${owner}/${repo}`, private: opts.private ?? true, defaultBranch: "main", canPush: opts.canPush }; },
     async listBranches() { fail(); return ["main", "dev"]; },
     async readTree() { fail(); return tree(opts.paths ?? ["package.json", "next.config.ts", "apps/web/package.json", "apps/web/vite.config.ts"]) as never; },
     async readFile(_t, _o, _r, path) { return path.endsWith("package.json") && opts.pkg !== null ? { content: JSON.stringify(opts.pkg ?? {}), sha: "b" } : null; },
@@ -85,6 +85,14 @@ describe("importRepo (real SQLite + migrations 0001–0014)", () => {
     const conn = db.raw.prepare("SELECT * FROM project_connections WHERE project_id = ?").get(p.id) as Record<string, unknown>;
     expect(conn).toMatchObject({ user_id: "userA", provider: "github", repo_id: 4242, private: 1 });
     expect((await getProject(db, "userA", p.id))?.build_command).toBe("npm run build");
+  });
+  it("records push permission (auto-deploy gate) and blocks preview-shaped slugs of other projects", async () => {
+    const db = sqliteD1(); seedUsers(db);
+    const p = await importRepo(db, "t", "userA", { repo: "acme/web" }, reader({ canPush: true }));
+    expect(db.raw.prepare("SELECT can_push, installation_id FROM project_connections WHERE project_id = ?").get(p.id)).toEqual({ can_push: 1, installation_id: null });
+    const q = await importRepo(db, "t", "userB", { repo: "public/lib" }, reader({ canPush: false }));
+    expect(db.raw.prepare("SELECT can_push FROM project_connections WHERE project_id = ?").get(q.id)).toEqual({ can_push: 0 });
+    await expect(importRepo(db, "t", "userB", { repo: "x/y", name: "web-a1b2c3" }, reader())).rejects.toMatchObject({ code: "conflict" });
   });
   it("rejects duplicates and slug collisions; allows another root of the same repo", async () => {
     const db = sqliteD1(); seedUsers(db);

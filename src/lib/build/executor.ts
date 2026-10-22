@@ -22,7 +22,7 @@ import { BUILD_TIMEOUT_MS, claimWithCap, DAILY_BUILDS_PER_USER, userBuildsToday 
 import { appendEvent, createBuildJob, createLogStream, failJob, finishCanceled, heartbeat, transitionJob, type BuildJobRow, type Environment } from "./jobs";
 import type { BuildState } from "./state";
 import { readTar } from "./tar";
-import { reportBuildResult } from "@/lib/github/autodeploy";
+import { drainPending, reportBuildResult } from "@/lib/github/autodeploy";
 
 export interface QueueLike { send(body: unknown, opts?: { delaySeconds?: number }): Promise<void> }
 export interface ContainerStub { fetch(input: string, init?: RequestInit): Promise<Response>; stop?(): Promise<void> }
@@ -152,6 +152,8 @@ export async function runContainerJob(db: D1Like, keys: SealKeys, b: BuildBindin
       url: status === "live" ? (job.environment === "production" ? patch.alias ?? patch.url ?? null : patch.url ?? null) : null,
       message: status === "live" ? (job.environment === "production" ? "Production deployment ready" : "Preview deployment ready") : `Deployment failed (${patch.code ?? "error"})`,
     }, b.fetch ?? fetch);
+    // The slot is free now: start the newest commit that arrived while this build ran (git auto-deploy).
+    await drainPending(db, keys, b, job, b.fetch ?? fetch, now);
   };
   const fail = async (code: string, message: string) => {
     await log.line(message, "error");
