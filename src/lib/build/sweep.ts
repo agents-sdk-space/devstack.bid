@@ -16,3 +16,17 @@ export async function sweepBuilds(db: D1Like, now = Date.now()): Promise<{ timed
     .all<{ id: string }>();
   return { timedOut, deploymentsClosed: closed.results?.length ?? 0 };
 }
+
+/**
+ * Re-deliver queued container jobs whose queue message was lost (never claimed after `staleMs`).
+ * runContainerJob only claims rows still in `queued`, so a duplicate delivery is a no-op.
+ */
+export async function requeueOrphans(db: D1Like, send: (body: { jobId: string }) => Promise<unknown>, now = Date.now(), staleMs = 3 * 60_000): Promise<number> {
+  const rows = await db
+    .prepare("SELECT id FROM build_jobs WHERE status = 'queued' AND executor = 'cf-container' AND cancel_requested = 0 AND started_at IS NULL AND created_at < ?1 AND (next_attempt_at IS NULL OR next_attempt_at < ?1) AND created_at > ?2 LIMIT 10")
+    .bind(now - staleMs, now - 24 * 3600_000)
+    .all<{ id: string }>();
+  let n = 0;
+  for (const r of rows.results ?? []) { await send({ jobId: r.id }); n++; }
+  return n;
+}

@@ -175,7 +175,11 @@ export async function runContainerJob(db: D1Like, keys: SealKeys, b: BuildBindin
       // Public repos clone anonymously: the owner token is sent only when the repo is private (or unknown).
       body: JSON.stringify({ repo: project.repo_full_name, commit: job.commit_sha, root: cfg.root ?? "", install: cfg.install, build: cfg.build, output: cfg.output, env, token: conn && conn.private === 0 ? null : token }),
     });
-    if (!res.ok || !res.body) return fail("executor_lost", `Build container did not start (HTTP ${res.status}).`);
+    if (!res.ok || !res.body) {
+      // Surface the Containers runtime reason (e.g. "Failed to start container: …"); it never carries secrets.
+      const why = (await res.text().catch(() => "")).replace(/\s+/g, " ").trim().slice(0, 300);
+      return fail("executor_lost", `Build container did not start (HTTP ${res.status})${why ? `: ${why}` : ""}.`);
+    }
     const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
     let pending = "";
     let result: { ok: boolean; code?: string; message?: string } | null = null;
