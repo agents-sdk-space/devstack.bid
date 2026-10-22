@@ -3,14 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { getTemplate } from "@/data/templates";
 import type { AgentPlan } from "@/lib/ai/types";
-import { applyEdits, composeSteps, configForTemplate, flattenCommands } from "@/lib/composer";
+import { customStepsForPlan } from "@/lib/ai/steps";
+import { applyEdits, composeSteps, configForTemplate } from "@/lib/composer";
+import { toBash } from "@/lib/scripts";
 import { CreateTokenMenu } from "@/components/tokens/create-token-menu";
 import { RememberToggle } from "@/components/tokens/remember-toggle";
 import { rememberSecret } from "@/components/tokens/remember-secret";
 import { Badge, Button, Card, Checkbox, EmptyState, Input, Skeleton, Textarea } from "@/components/ui";
 import { CodeBlock } from "./copy-button";
 import { useLang } from "./prefs";
-import { MessageSquareText, RotateCw, Sparkles, TriangleAlert } from "lucide-react";
+import { ArrowUpRight, MessageSquareText, RotateCw, Sparkles, TriangleAlert } from "lucide-react";
 import { ToolTile } from "./brand/tool-icon";
 
 const EXAMPLES = {
@@ -31,6 +33,13 @@ const EXAMPLES = {
     "เครื่องมือ CLI ที่รันผ่าน npx",
   ],
 };
+
+const PLATFORMS = [
+  { label: "Expo", href: "https://expo.dev" },
+  { label: "Android Studio", href: "https://developer.android.com/studio" },
+  { label: "Replit", href: "https://replit.com" },
+  { label: "GitHub Codespaces", href: "https://github.com/features/codespaces" },
+];
 
 export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
   const { lang, t } = useLang();
@@ -81,10 +90,11 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
   }
 
   const preview = useMemo(() => {
-    if (!plan) return [];
+    if (!plan) return "";
     const config = configForTemplate(plan.templateId, { projectName: plan.projectName, addons: plan.addons, jsPm: plan.jsPm, pyPm: plan.pyPm });
-    return flattenCommands(applyEdits(composeSteps(config), { custom: plan.extraSteps }));
-  }, [plan]);
+    // Full setup.sh (starter files included), same text as the Builder's download; dev server/publish stay commented.
+    return toBash(applyEdits(composeSteps(config), { custom: customStepsForPlan(plan) }), config, lang);
+  }, [plan, lang]);
 
   const template = plan ? getTemplate(plan.templateId) : undefined;
   const canSubmit = !busy && prompt.trim().length >= 3;
@@ -140,6 +150,21 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
               >
                 {ex}
               </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 text-sm">
+            <span className="mr-1 text-subtle">{lang === "th" ? "แพลตฟอร์มพัฒนาแอป" : "Explore app platforms"}</span>
+            {PLATFORMS.map((platform) => (
+              <a
+                key={platform.href}
+                href={platform.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={lang === "th" ? `เปิด ${platform.label} ในแท็บใหม่` : `Open ${platform.label} in a new tab`}
+                className="focus-ring motion-fast inline-flex items-center gap-1 rounded-full border border-border bg-surface-2 px-3 py-1 text-xs text-muted hover:border-border-strong hover:text-fg"
+              >
+                {platform.label} <ArrowUpRight className="h-3 w-3" aria-hidden />
+              </a>
             ))}
           </div>
           <Checkbox label={t("agent.ownKey")} checked={useOwnKey} onCheckedChange={setUseOwnKey} />
@@ -255,7 +280,7 @@ export function AgentPanel({ onLoad }: { onLoad: (plan: AgentPlan) => void }) {
             <div className="grid gap-5 lg:grid-cols-2">
               <div className="min-w-0">
                 <h4 className="mb-2 font-semibold text-fg">{t("agent.commands")}</h4>
-                <CodeBlock code={preview.join("\n")} prompt maxHeight="22rem" />
+                <CodeBlock code={preview} title="setup.sh" maxHeight="22rem" />
                 {plan.extraSteps.length > 0 && (
                   <>
                     <h4 className="mb-2 mt-4 font-semibold text-fg">{t("agent.extra")}</h4>
