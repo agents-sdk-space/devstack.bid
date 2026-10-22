@@ -116,14 +116,32 @@ export function unavailable(status = 503): Response {
 type Appendable = { append(c: string, o: { html: boolean }): void };
 interface HTMLRewriterLike { on(sel: string, h: { element(e: Appendable): void }): HTMLRewriterLike; onDocument(h: { end(e: Appendable): void }): HTMLRewriterLike; transform(r: Response): Response }
 
-/** 410 for an expired preview host. Thai or English from Accept-Language; both when unclear. */
+/**
+ * One language from Accept-Language: the tag with the highest q (first wins on a tie). Thai → "th", anything
+ * else → "en". Header missing or empty → "both".
+ */
+export function pickLanguage(header: string | null | undefined): "th" | "en" | "both" {
+  const raw = (header ?? "").trim();
+  if (!raw) return "both";
+  let best: { tag: string; q: number } | null = null;
+  for (const part of raw.split(",").slice(0, 20)) {
+    const [tag, ...params] = part.trim().toLowerCase().split(";");
+    if (!tag) continue;
+    const qp = params.map((x) => x.trim()).find((x) => x.startsWith("q="));
+    const q = qp ? Number(qp.slice(2)) : 1;
+    if (!Number.isFinite(q) || q <= 0) continue;
+    if (!best || q > best.q) best = { tag, q };
+  }
+  if (!best) return "both";
+  return best.tag === "th" || best.tag.startsWith("th-") ? "th" : "en";
+}
+
+/** 410 for an expired preview host, in the visitor's language (both only when Accept-Language is missing). */
 export function previewExpired(acceptLanguage: string | null = null): Response {
-  const al = (acceptLanguage ?? "").toLowerCase();
-  const th = /(^|,)\s*th\b/.test(al);
-  const en = /(^|,)\s*en\b/.test(al);
+  const lang = pickLanguage(acceptLanguage);
   const thai = "<h1 lang=th>พรีวิวนี้หมดอายุแล้ว</h1><p lang=th>พรีวิวเก่าบน devstack.bid จะถูกลบอัตโนมัติ เปิดที่อยู่หลักของโปรเจกต์ หรือ deploy พรีวิวใหม่</p>";
   const eng = "<h1 lang=en>This preview has expired</h1><p lang=en>Old preview deployments on devstack.bid are removed automatically. Open the project's main address or deploy a new preview.</p>";
-  const body = th && !en ? thai : en && !th ? eng : `${thai}<hr>${eng}`;
+  const body = lang === "th" ? thai : lang === "en" ? eng : `${thai}<hr>${eng}`;
   return new Response(
     `<!doctype html><meta charset=utf-8><title>Preview expired / พรีวิวหมดอายุ</title><body style="font:16px system-ui;margin:3rem">${body}</body>`,
     { status: 410, headers: { ...BASE_HEADERS, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", Vary: "Accept-Language" } },

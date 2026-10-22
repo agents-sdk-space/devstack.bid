@@ -1,6 +1,6 @@
 // New Project platform (Milestone 1): unit + security tests. D1 = real SQLite with the real migrations.
 import JSZip from "jszip";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { sqliteD1 } from "./helpers/sqlite-d1";
 import { getProject, listProjects } from "@/lib/connections/projects";
 import { ServiceError } from "@/lib/connections/github-service";
@@ -98,6 +98,10 @@ describe("importRepo (real SQLite + migrations 0001–0014)", () => {
     await expect(importRepo(db, "t", "userB", { repo: "x/old", name: "old-site" }, reader(), sites)).rejects.toMatchObject({ code: "conflict" });
     await expect(assertSlugUsable(db, "old-site", "proj-gone", sites)).resolves.toBeUndefined();
     await expect(assertSlugUsable(db, "web-a1b2c3", p.id)).resolves.toBeUndefined(); // a project may take its own preview shape
+    // Tombstone without an owner blocks every project, including "no project yet".
+    const orphan = { get: async (k: string) => (k === "hosts/orphan.json" ? { text: async () => JSON.stringify({ projectId: null, expired: true }) } : null), put: async () => undefined } as never;
+    await expect(assertSlugUsable(db, "orphan", null, orphan)).rejects.toMatchObject({ code: "conflict" });
+    await expect(assertSlugUsable(db, "orphan", p.id, orphan)).rejects.toMatchObject({ code: "conflict" });
   });
   it("rejects duplicates and slug collisions; allows another root of the same repo", async () => {
     const db = sqliteD1(); seedUsers(db);
@@ -162,5 +166,20 @@ describe("security: malicious zip uploads", () => {
     const out = await parseDeployZip(await zip.generateAsync({ type: "uint8array" })).catch((e: unknown) => e);
     if (out instanceof UploadError) expect(out.code).toBe("bad_path");
     else for (const f of (out as { files: { path: string }[] }).files) expect(f.path.split("/")).not.toContain("..");
+  });
+});
+
+describe("createProjectRepo slug gate (template / CLI / chat create)", () => {
+  it("refuses a taken or tombstoned site name before creating the GitHub repo", async () => {
+    const { createProjectRepo } = await import("@/lib/connections/github-service");
+    const db = sqliteD1(); seedUsers(db);
+    db.raw.exec("INSERT INTO projects (id, user_id, name, slug) VALUES ('p-shop-01', 'userA', 'shop', 'shop')");
+    const f = vi.spyOn(globalThis, "fetch");
+    await expect(createProjectRepo(db, "tok", "userB", { name: "shop", private: true })).rejects.toMatchObject({ code: "conflict" });
+    await expect(createProjectRepo(db, "tok", "userB", { name: "shop-a1b2c3", private: true })).rejects.toMatchObject({ code: "conflict" });
+    const sites = { get: async (k: string) => (k === "hosts/gone.json" ? { text: async () => JSON.stringify({ projectId: "p-old", expired: true }) } : null), put: async () => undefined } as never;
+    await expect(createProjectRepo(db, "tok", "userB", { name: "gone", private: true }, sites)).rejects.toMatchObject({ code: "conflict" });
+    expect(f).not.toHaveBeenCalled(); // no GitHub call happened
+    f.mockRestore();
   });
 });

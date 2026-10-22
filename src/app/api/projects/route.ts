@@ -1,3 +1,4 @@
+import { routeBuildBindings } from "@/lib/build/bindings";
 import { connection } from "next/server";
 import { json } from "@/lib/chat/runtime";
 import { loadGithubToken } from "@/lib/connections/credentials";
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
     files = templateSeedFiles(templateId, String(body.name ?? ""), typeof body.description === "string" ? body.description : undefined);
   }
   try {
-    const r = await createProjectRepo(a.db, token, a.uid, { name: String(body.name ?? ""), private: body.private !== false, templateId, description: typeof body.description === "string" ? body.description : undefined, files });
+    const r = await createProjectRepo(a.db, token, a.uid, { name: String(body.name ?? ""), private: body.private !== false, templateId, description: typeof body.description === "string" ? body.description : undefined, files }, (await routeBuildBindings()).sites);
     return json({ ok: true, project: projectView(r.project), url: r.htmlUrl, commit: r.commit ?? null });
   } catch (err) {
     const e = serviceErrorBody(err);

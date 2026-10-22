@@ -333,3 +333,20 @@ describe("expired previews and worker naming", () => {
   });
 });
 
+describe("pickLanguage / previewExpired", () => {
+  it("picks one language by highest q (first on tie); both only when the header is missing", async () => {
+    const { pickLanguage, previewExpired } = await import("@/lib/hosting/serve");
+    expect(pickLanguage("th-TH,th;q=0.9,en;q=0.8")).toBe("th");
+    expect(pickLanguage("en-US,th;q=0.9")).toBe("en");
+    expect(pickLanguage("th;q=0.5,en;q=0.9")).toBe("en");
+    expect(pickLanguage("en;q=0.7,th;q=0.7")).toBe("en");
+    expect(pickLanguage("fr-FR")).toBe("en");
+    expect(pickLanguage("th;q=0,en")).toBe("en");
+    expect(pickLanguage(null)).toBe("both");
+    expect(pickLanguage("")).toBe("both");
+    const mixed = await previewExpired("en-US,th;q=0.9").text();
+    expect(mixed).toContain("This preview has expired");
+    expect(mixed).not.toContain("พรีวิวนี้หมดอายุแล้ว");
+  });
+});
+

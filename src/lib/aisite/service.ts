@@ -1,3 +1,4 @@
+import { assertSlugUsable } from "@/lib/projects/slug-gate";
 /**
  * AI site builder service: one AI project = a `projects` row (source 'ai') + versioned file snapshots
  * (ai_site_versions) + transcript (ai_site_messages). Each version is published as plain static output through
@@ -9,9 +10,9 @@ import { ServiceError } from "@/lib/connections/github-service";
 import { appendEvent, createBuildJob, transitionJob, type BuildJobRow } from "@/lib/build/jobs";
 import { previewHost, siteSlug } from "@/lib/hosting/hostnames";
 import { HostTakenError, promoteProduction, publishPreview, writeSite } from "@/lib/hosting/publish";
-import type { R2BucketLike } from "@/lib/hosting/serve";
 import { applyEdits, editContext, FileError, validateSnapshot, type SiteFileText } from "./files";
 import type { ModelEdit } from "./llm";
+import type { R2BucketLike } from "@/lib/hosting/serve";
 
 export const DAILY_AI_TURNS_PER_USER = 25;
 export const MAX_PROMPT_CHARS = 4000;
@@ -59,22 +60,27 @@ export async function reserveAiTurn(db: D1Like, uid: string, cap = DAILY_AI_TURN
 }
 
 /** Free slug: base, base-2, base-3 ... (per-user unique index + global host ownership in R2). */
-async function freeSlug(db: D1Like, uid: string, base: string): Promise<string> {
+async function freeSlug(db: D1Like, uid: string, base: string, sites: R2BucketLike | null): Promise<string> {
   for (let i = 1; i < 50; i++) {
     const s = i === 1 ? base : `${base.slice(0, 50)}-${i}`;
-    const taken = await db.prepare("SELECT id FROM projects WHERE slug = ?1 LIMIT 1").bind(s).first();
-    if (!taken) return s;
+    if (await slugOk(db, s, sites)) return s;
   }
-  return `${base.slice(0, 40)}-${crypto.randomUUID().slice(0, 6)}`;
+  return `${base.slice(0, 40)}-${crypto.randomUUID().slice(0, 7)}`;
 }
 
-export async function createAiProject(db: D1Like, uid: string, title: string): Promise<{ id: string; name: string; slug: string }> {
+/** Shared slug gate (taken / preview-shaped / R2 host record or tombstone). */
+async function slugOk(db: D1Like, slug: string, sites: R2BucketLike | null): Promise<boolean> {
+  try { await assertSlugUsable(db, slug, null, sites); return true; } catch (e) { if (e instanceof ServiceError) return false; throw e; }
+}
+
+export async function createAiProject(db: D1Like, uid: string, title: string, sites: R2BucketLike | null = null): Promise<{ id: string; name: string; slug: string }> {
   const n = await db.prepare("SELECT COUNT(*) AS n FROM projects WHERE user_id = ?1 AND source = 'ai'").bind(uid).first<{ n: number }>();
   if (Number(n?.n ?? 0) >= MAX_AI_PROJECTS_PER_USER) throw new ServiceError("limit", `AI project limit reached (${MAX_AI_PROJECTS_PER_USER}). / ครบจำนวนโปรเจกต์ AI แล้ว`, 429);
   const base = siteSlug(title) ?? "ai-site";
   // Slugs are globally unique (index projects_slug_global_uq): retry with a fresh suffix if we lose a race.
   for (let attempt = 0; attempt < 4; attempt++) {
-    const slug = attempt === 0 ? await freeSlug(db, uid, base) : `${base.slice(0, 40)}-${crypto.randomUUID().slice(0, 6)}`;
+    const slug = attempt === 0 ? await freeSlug(db, uid, base, sites) : `${base.slice(0, 40)}-${crypto.randomUUID().slice(0, 7)}`;
+    if (attempt > 0 && !(await slugOk(db, slug, sites))) continue;
     const id = crypto.randomUUID();
     try {
       await db.prepare("INSERT INTO projects (id, user_id, name, slug, source, framework, output_directory, provider, updated_at) VALUES (?1, ?2, ?3, ?4, 'ai', 'static', '.', 'devstack-sites', ?5)")

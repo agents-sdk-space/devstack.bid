@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0-rc.5] - 2026-10-22
+
+### Fixed (review nits)
+- A host tombstone with no owner (`projectId` null) blocks every project in `assertSlugUsable` (moved to
+  `src/lib/projects/slug-gate.ts`).
+- The slug gate (with the `SITES` bucket) now runs on every creation path: import, template / CLI / chat-tool create
+  (`createProjectRepo`, checked before the GitHub repo is created), zip upload, and AI site create. Those paths also
+  store the reserved slug. AI fallback suffixes are 7 chars so they are never preview-shaped.
+- The 410 page picks one language from the highest-q (first on tie) Accept-Language tag; Thai only for `th`/`th-*`,
+  English otherwise; both only when the header is missing.
+
 ## [0.12.0-rc.4] - 2026-10-22
 
 ### Fixed / hardened
