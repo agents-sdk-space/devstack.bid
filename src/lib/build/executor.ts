@@ -115,7 +115,12 @@ export async function runContainerJob(db: D1Like, keys: SealKeys, b: BuildBindin
   if (!(await claimWithCap(db, jobId, now()))) return { retryInSeconds: 30 };
   const cfg = JSON.parse(job.config_snapshot || "{}") as BuildSpecSettings & { slug: string };
   const project = await db.prepare("SELECT * FROM projects WHERE id = ?1 AND user_id = ?2").bind(job.project_id, job.user_id).first<ProjectRow>();
-  const dep = await db.prepare("SELECT id FROM deployments WHERE build_job_id = ?1").bind(jobId).first<{ id: string }>();
+  let dep = await db.prepare("SELECT id FROM deployments WHERE build_job_id = ?1").bind(jobId).first<{ id: string }>();
+  // Automatic retries get a new job id; the deployment row still points at the original attempt, so re-link it.
+  if (!dep && job.retry_of) {
+    dep = await db.prepare("SELECT id FROM deployments WHERE build_job_id = ?1").bind(job.retry_of).first<{ id: string }>();
+    if (dep) await db.prepare("UPDATE deployments SET build_job_id = ?2, status = 'queued', error_code = NULL, error_log = NULL, finished_at = NULL WHERE id = ?1").bind(dep.id, jobId).run();
+  }
   let state = "claimed" as BuildState;
   const token = await loadGithubToken(db, keys, job.user_id);
   const env = await loadEnvVars(db, keys, job);
@@ -167,7 +172,8 @@ export async function runContainerJob(db: D1Like, keys: SealKeys, b: BuildBindin
     const res = await box.fetch("http://container/build", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ repo: project.repo_full_name, commit: job.commit_sha, root: cfg.root ?? "", install: cfg.install, build: cfg.build, output: cfg.output, env, token }),
+      // Public repos clone anonymously: the owner token is sent only when the repo is private (or unknown).
+      body: JSON.stringify({ repo: project.repo_full_name, commit: job.commit_sha, root: cfg.root ?? "", install: cfg.install, build: cfg.build, output: cfg.output, env, token: conn && conn.private === 0 ? null : token }),
     });
     if (!res.ok || !res.body) return fail("executor_lost", `Build container did not start (HTTP ${res.status}).`);
     const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();

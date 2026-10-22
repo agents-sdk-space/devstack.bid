@@ -121,7 +121,7 @@ describe("build executor", () => {
     expect(all).not.toContain("ZZZZZZZZ");
     expect(all).not.toContain("s3cr3t");
     expect(events(db, job.id).map((e) => e.phase)).toEqual(expect.arrayContaining(["installing", "building", "uploading"]));
-    expect(JSON.parse(box.bodies[0]).token).toBe(token); // only in the container request body
+    expect(JSON.parse(box.bodies[0]).token).toBeNull(); // public repo: clone anonymously, token never sent to the container
     expect(new TextDecoder().decode(b.artifacts.map.get(`logs/${job.id}.txt`)!)).not.toContain("s3cr3t");
     const dep = db.raw.prepare("SELECT status, url, error_code, alias_url FROM deployments WHERE build_job_id = ?").get(job.id) as Record<string, string>;
     expect(dep).toMatchObject({ status: "failed", url: null, error_code: "site_url_blocked", alias_url: "https://svelte-app.devstack.bid" });
