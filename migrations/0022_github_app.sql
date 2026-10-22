@@ -10,3 +10,9 @@ CREATE TABLE IF NOT EXISTS github_app (
   created_by TEXT NOT NULL,
   created_at INTEGER NOT NULL
 );
+
+-- Single-use manifest `state` nonces (rows older than a day are pruned on use).
+CREATE TABLE IF NOT EXISTS github_app_state (
+  nonce TEXT PRIMARY KEY,
+  used_at INTEGER NOT NULL
+);
