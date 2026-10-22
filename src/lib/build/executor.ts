@@ -22,6 +22,7 @@ import { BUILD_TIMEOUT_MS, claimWithCap, DAILY_BUILDS_PER_USER, userBuildsToday 
 import { appendEvent, createBuildJob, createLogStream, failJob, finishCanceled, heartbeat, transitionJob, type BuildJobRow, type Environment } from "./jobs";
 import type { BuildState } from "./state";
 import { readTar } from "./tar";
+import { reportBuildResult } from "@/lib/github/autodeploy";
 
 export interface QueueLike { send(body: unknown, opts?: { delaySeconds?: number }): Promise<void> }
 export interface ContainerStub { fetch(input: string, init?: RequestInit): Promise<Response>; stop?(): Promise<void> }
@@ -34,6 +35,8 @@ export interface BuildBindings {
   dnsReady: boolean;
   /** Cloudflare API access for per-project server Workers; null → server builds are Blocked. */
   cfApi?: CfApi | null;
+  /** Injected in tests for GitHub commit statuses; defaults to global fetch. */
+  fetch?: typeof fetch;
 }
 
 /** Which pieces are missing (reported as Blocked, never faked). */
@@ -59,7 +62,7 @@ export async function startContainerBuild(
   b: BuildBindings,
   uid: string,
   project: ProjectRow,
-  opts: { ref?: string | null; environment?: Environment; trigger?: "manual" | "push" | "redeploy" } = {},
+  opts: { ref?: string | null; environment?: Environment; trigger?: "manual" | "push" | "pr" | "redeploy"; commit?: string | null; idempotencyKey?: string | null } = {},
   lookup: typeof getBranchSha = getBranchSha
 ): Promise<{ job: BuildJobRow; deploymentId: string; previewUrl: string; productionUrl: string | null }> {
   const missing = missingInfra(b);
@@ -73,13 +76,22 @@ export async function startContainerBuild(
   const ref = safeBranch(opts.ref || project.production_branch || project.default_branch || "main");
   if (!ref) throw new ServiceError("invalid", "Invalid branch.", 400);
   const [owner, repo] = project.repo_full_name.split("/");
-  const commit = await lookup(token, owner, repo, ref);
+  // Webhook builds pin the exact pushed commit (GitHub-signed payload); others resolve the branch head.
+  const pinned = opts.commit && /^[a-f0-9]{40}$/i.test(opts.commit) ? opts.commit.toLowerCase() : null;
+  const commit = pinned ?? (await lookup(token, owner, repo, ref));
   if (!commit) throw new ServiceError("invalid", `Branch ${ref} not found.`, 404);
   const environment = opts.environment ?? "production";
-  const { job } = await createBuildJob(db, {
+  const { job, created } = await createBuildJob(db, {
     projectId: project.id, userId: uid, executor: "cf-container", environment, trigger: opts.trigger ?? "manual", commitSha: commit, ref, maxAttempts: 2,
-    config: { ...buildSettings(project), slug },
+    config: { ...buildSettings(project), slug }, idempotencyKey: opts.idempotencyKey ?? null,
   });
+  if (!created) {
+    // Same commit/ref/environment already queued or built (e.g. push + PR synchronize): reuse it.
+    const existing = await db.prepare("SELECT id FROM deployments WHERE build_job_id = ?1").bind(job.id).first<{ id: string }>();
+    if (!existing) throw new ServiceError("conflict", "This commit is already being built. / commit นี้กำลัง build อยู่", 409);
+    const depId = existing.id;
+    return { job, deploymentId: depId, previewUrl: `https://${previewHost(slug, depId)}`, productionUrl: environment === "production" ? `https://${productionHost(slug)}` : null };
+  }
   const deploymentId = crypto.randomUUID();
   await db.prepare("INSERT INTO deployments (id, project_id, user_id, ref, commit_sha, target, status, build_job_id, trigger, environment) VALUES (?1, ?2, ?3, ?4, ?5, 'devstack-sites', 'queued', ?6, ?7, ?8)")
     .bind(deploymentId, project.id, uid, ref, commit, job.id, job.trigger, environment).run();
@@ -134,6 +146,12 @@ export async function runContainerJob(db: D1Like, keys: SealKeys, b: BuildBindin
     if (!dep) return;
     await db.prepare("UPDATE deployments SET status = ?2, url = ?3, error_code = ?4, error_log = ?5, alias_url = ?6, finished_at = ?7 WHERE id = ?1")
       .bind(dep.id, status, patch.url ?? null, patch.code ?? null, patch.error ?? null, patch.alias ?? null, now()).run();
+    // Git auto-deploys (push/pr): final commit status on GitHub with the URL. Best effort, never throws.
+    await reportBuildResult(db, keys, job, {
+      ok: status === "live",
+      url: status === "live" ? (job.environment === "production" ? patch.alias ?? patch.url ?? null : patch.url ?? null) : null,
+      message: status === "live" ? (job.environment === "production" ? "Production deployment ready" : "Preview deployment ready") : `Deployment failed (${patch.code ?? "error"})`,
+    }, b.fetch ?? fetch);
   };
   const fail = async (code: string, message: string) => {
     await log.line(message, "error");

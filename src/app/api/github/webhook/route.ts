@@ -1,10 +1,14 @@
 import { connection } from "next/server";
 import { chatRuntime } from "@/lib/chat/runtime";
 import { verifyWebhook } from "@/lib/github/webhook";
+import { handleGitEvent } from "@/lib/github/autodeploy";
+import { routeBuildBindings } from "@/lib/build/bindings";
+import { resolveSealKeys } from "@/lib/connections/credentials";
 
 /**
  * POST /api/github/webhook — GitHub App deliveries. Verified and recorded (idempotent on
- * X-GitHub-Delivery). Builds from push events start once the GitHub App exists (Milestone 5).
+ * X-GitHub-Delivery). push / pull_request on a linked repo start a production or preview build
+ * (see lib/github/autodeploy). Unlinked repos and fork PRs are ignored.
  * Never logs the body or the signature.
  */
 export async function POST(req: Request) {
@@ -29,5 +33,20 @@ export async function POST(req: Request) {
     .prepare("INSERT INTO webhook_deliveries (delivery_id, provider, event, installation_id, repo_id, signature_ok, status) VALUES (?1, 'github', ?2, ?3, ?4, 1, 'received') ON CONFLICT (delivery_id) DO NOTHING RETURNING delivery_id")
     .bind(result.delivery, result.event, result.installationId, typeof repoId === "number" ? repoId : null)
     .first<{ delivery_id: string }>();
-  return Response.json({ ok: true, duplicate: !ins });
+  if (!ins) return Response.json({ ok: true, duplicate: true }, { status: 200 });
+  let status = "ignored:event";
+  let jobId: string | null = null;
+  if ((result.event === "push" || result.event === "pull_request") && !env.CHAT_COOKIE_SECRET) status = "blocked:no_seal_key";
+  else if (result.event === "push" || result.event === "pull_request") {
+    try {
+      const r = await handleGitEvent(db, await resolveSealKeys(env.CHAT_COOKIE_SECRET!), await routeBuildBindings(), result.event, result.payload);
+      status = r.status;
+      jobId = r.buildJobId ?? null;
+    } catch {
+      status = "failed:internal";
+    }
+  }
+  await db.prepare("UPDATE webhook_deliveries SET status = ?2, build_job_id = ?3 WHERE delivery_id = ?1").bind(result.delivery, status.slice(0, 60), jobId).run().catch(() => null);
+  console.log(JSON.stringify({ at: "api/github/webhook", event: result.event, status }));
+  return Response.json({ ok: true, duplicate: false, status }, { status: 202 });
 }

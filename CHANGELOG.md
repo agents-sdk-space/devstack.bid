@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0-rc.1] - 2026-10-22
+
+### Added — Git auto-deploy (Vercel-style)
+- `POST /api/github/webhook` now acts on verified `push` and `pull_request` deliveries for repositories linked to a
+  project (`project_connections.repo_id`):
+  - push to the project's production branch (`production_branch`, else `default_branch`) → production build;
+  - push to any other branch, or PR `opened` / `synchronize` / `reopened` → preview build with its own URL;
+  - the exact pushed commit is built (pinned SHA from the signed payload); the same commit/branch/environment is
+    built once (idempotency key `gh:<env>:<branch>:<sha>`), so push + PR synchronize don't double-build.
+- GitHub commit status `devstack/preview` / `devstack/production`: `pending` with the URL when queued, `success`
+  with the live URL or `failure` with the error code when the build finishes, `error` when it could not start.
+- New `src/lib/github/autodeploy.ts` (+ `tests/git-webhook-deploy.test.ts`, 9 tests).
+
+### Security
+- Signature (`X-Hub-Signature-256`, HMAC-SHA256, constant-time `crypto.subtle.verify`) is checked before JSON parse
+  (unchanged); delivery dedupe on `X-GitHub-Delivery`; outcome recorded on `webhook_deliveries.status/build_job_id`.
+- Unlinked repos, tags, branch deletions and **fork PRs are ignored** (fork code never runs with the owner's token
+  or env vars). At most 20 webhook builds per project per hour (plus the existing daily per-user cap).
+- No payload, signature or token is logged; status bodies never contain the token.
+
 ## [0.11.0-rc.3] - 2026-10-22
 
 ### Fixed (review lows)

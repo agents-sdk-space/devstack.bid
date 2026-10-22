@@ -1,0 +1,178 @@
+// Git auto-deploy: GitHub push / pull_request webhooks → production or preview builds + commit statuses.
+import { describe, expect, it, vi } from "vitest";
+vi.mock("server-only", () => ({}));
+import { runContainerJob, type BuildBindings, type ContainerStub } from "@/lib/build/executor";
+import { sealKeys, seal } from "@/lib/connections/credentials";
+import { handleGitEvent, planFromEvent, WEBHOOK_BUILDS_PER_HOUR } from "@/lib/github/autodeploy";
+import { verifyWebhook } from "@/lib/github/webhook";
+import type { R2BucketLike } from "@/lib/hosting/serve";
+import { sqliteD1 } from "./helpers/sqlite-d1";
+
+const keys = sealKeys("test-cookie-secret-0123456789abcdef", {});
+const SHA = "5b3da65ea310f98480c5258af97ff4d5c6f9d5b0";
+const SHA2 = "1111111111111111111111111111111111111111";
+const REPO_ID = 4242;
+const OWNER_TOKEN = "gho_testOwnerTokenNotReal0000000000000";
+
+function memBucket(): R2BucketLike {
+  const map = new Map<string, Uint8Array>();
+  return {
+    async get(k) { const v = map.get(k); return v ? { body: new Response(v as BlobPart).body!, text: async () => new TextDecoder().decode(v) } : null; },
+    async put(k, v) { map.set(k, typeof v === "string" ? new TextEncoder().encode(v) : v instanceof Uint8Array ? v : new Uint8Array(v as ArrayBuffer)); },
+  };
+}
+
+function tarOf(files: Record<string, string>): Uint8Array {
+  const blocks: Uint8Array[] = [];
+  for (const [name, content] of Object.entries(files)) {
+    const data = new TextEncoder().encode(content);
+    const h = new Uint8Array(512);
+    h.set(new TextEncoder().encode(name), 0);
+    h.set(new TextEncoder().encode(data.length.toString(8).padStart(11, "0")), 124);
+    h[156] = 48;
+    blocks.push(h, data, new Uint8Array((512 - (data.length % 512)) % 512));
+  }
+  blocks.push(new Uint8Array(1024));
+  const out = new Uint8Array(blocks.reduce((n, b) => n + b.length, 0));
+  let o = 0;
+  for (const b of blocks) { out.set(b, o); o += b.length; }
+  return out;
+}
+
+function ghFetch() {
+  const calls: { url: string; body: Record<string, unknown>; auth: string | null }[] = [];
+  const f = (async (url: string, init?: RequestInit) => {
+    calls.push({ url, body: JSON.parse(String(init?.body ?? "{}")), auth: new Headers(init?.headers).get("authorization") });
+    return new Response("{}", { status: 201 });
+  }) as unknown as typeof fetch;
+  return { f, calls };
+}
+
+function bindings(extra: Partial<BuildBindings> = {}): BuildBindings & { sent: unknown[] } {
+  const sent: unknown[] = [];
+  return { queue: { send: async (b: unknown) => { sent.push(b); } }, artifacts: memBucket(), sites: memBucket(), container: () => ({ fetch: async () => new Response("unused") }), dnsReady: true, sent, ...extra } as never;
+}
+
+async function setup(opts: { linked?: boolean; token?: boolean } = {}) {
+  const db = sqliteD1();
+  db.raw.exec(`INSERT INTO users (id) VALUES ('userA');
+    INSERT INTO projects (id, user_id, name, repo_full_name, default_branch, production_branch, slug, output_directory) VALUES ('projA-0001', 'userA', 'Svelte App', 'acme/site', 'main', 'main', 'svelte-app', 'public');`);
+  if (opts.linked !== false) db.raw.exec(`INSERT INTO project_connections (id, project_id, user_id, provider, repo_id, repo_full_name, private) VALUES ('c1', 'projA-0001', 'userA', 'github', ${REPO_ID}, 'acme/site', 0);`);
+  if (opts.token !== false) db.raw.prepare("INSERT INTO github_credentials (user_id, token_enc, scope) VALUES (?, ?, 'repo')").run("userA", await seal(keys, "github", "userA", OWNER_TOKEN));
+  return db;
+}
+
+const push = (branch: string, sha = SHA, extra: Record<string, unknown> = {}) => ({ ref: `refs/heads/${branch}`, after: sha, deleted: false, repository: { id: REPO_ID }, ...extra });
+const pr = (action: string, headRepo = REPO_ID, sha = SHA) => ({ action, number: 7, repository: { id: REPO_ID }, pull_request: { number: 7, head: { ref: "feature/x", sha, repo: { id: headRepo } } } });
+
+describe("planFromEvent", () => {
+  it("maps push and PR events and ignores everything else", () => {
+    expect(planFromEvent("push", push("main"))).toMatchObject({ kind: "push", branch: "main", sha: SHA });
+    expect(planFromEvent("push", push("main", "0".repeat(40)))).toEqual({ skip: "no_commit" });
+    expect(planFromEvent("push", { ...push("main"), ref: "refs/tags/v1" })).toEqual({ skip: "not_a_branch" });
+    expect(planFromEvent("push", push("main", SHA, { deleted: true }))).toEqual({ skip: "branch_deleted" });
+    expect(planFromEvent("pull_request", pr("opened"))).toMatchObject({ kind: "pr", branch: "feature/x", prNumber: 7 });
+    expect(planFromEvent("pull_request", pr("synchronize"))).toMatchObject({ kind: "pr" });
+    expect(planFromEvent("pull_request", pr("closed"))).toEqual({ skip: "pr_closed" });
+    expect(planFromEvent("pull_request", pr("opened", 999))).toEqual({ skip: "fork_pr" });
+    expect(planFromEvent("ping", { repository: { id: 1 } })).toEqual({ skip: "event_ignored" });
+  });
+});
+
+describe("webhook signature", () => {
+  async function signed(secret: string, body: string, sigSecret = secret) {
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(sigSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const mac = Buffer.from(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body))).toString("hex");
+    return new Request("https://devstack.bid/api/github/webhook", { method: "POST", body, headers: { "x-hub-signature-256": `sha256=${mac}`, "x-github-delivery": "72d3162e-cc78-11e3-81ab-4c9367dc0958", "x-github-event": "push" } });
+  }
+  it("accepts the right secret and rejects a wrong one", async () => {
+    const body = JSON.stringify(push("main"));
+    expect(await verifyWebhook(await signed("s3cret-test", body), async () => "s3cret-test")).toMatchObject({ ok: true, event: "push" });
+    expect(await verifyWebhook(await signed("s3cret-test", body, "other"), async () => "s3cret-test")).toMatchObject({ ok: false, status: 401, reason: "bad_signature" });
+  });
+});
+
+describe("handleGitEvent", () => {
+  it("ignores repositories that are not linked to a project", async () => {
+    const db = await setup({ linked: false });
+    const b = bindings();
+    expect(await handleGitEvent(db, keys, b, "push", push("main"), ghFetch().f)).toEqual({ status: "ignored:not_linked" });
+    expect(b.sent).toHaveLength(0);
+  });
+
+  it("push to the production branch → production build + pending status with the production URL", async () => {
+    const db = await setup();
+    const b = bindings();
+    const gh = ghFetch();
+    const r = await handleGitEvent(db, keys, b, "push", push("main"), gh.f);
+    expect(r.status).toBe("queued");
+    expect(r.url).toBe("https://svelte-app.devstack.bid");
+    const job = db.raw.prepare("SELECT environment, trigger, commit_sha, ref FROM build_jobs WHERE id = ?").get(r.buildJobId) as Record<string, string>;
+    expect(job).toEqual({ environment: "production", trigger: "push", commit_sha: SHA, ref: "main" });
+    expect(b.sent).toEqual([{ jobId: r.buildJobId }]);
+    expect(gh.calls).toHaveLength(1);
+    expect(gh.calls[0].url).toBe(`https://api.github.com/repos/acme/site/statuses/${SHA}`);
+    expect(gh.calls[0].body).toMatchObject({ state: "pending", context: "devstack/production", target_url: "https://svelte-app.devstack.bid" });
+  });
+
+  it("other branches and PRs → preview builds with their own URL; same commit is built once", async () => {
+    const db = await setup();
+    const b = bindings();
+    const gh = ghFetch();
+    const r1 = await handleGitEvent(db, keys, b, "push", push("feature/x"), gh.f);
+    expect(r1.status).toBe("queued");
+    expect(r1.url).toMatch(/^https:\/\/svelte-app-[a-z0-9]{6}\.devstack\.bid$/);
+    const env = db.raw.prepare("SELECT environment FROM build_jobs WHERE id = ?").get(r1.buildJobId) as { environment: string };
+    expect(env.environment).toBe("preview");
+    // PR opened for the same branch+commit: reuses the queued preview instead of a second build.
+    const r2 = await handleGitEvent(db, keys, b, "pull_request", pr("opened"), gh.f);
+    expect(r2.buildJobId).toBe(r1.buildJobId);
+    expect(b.sent).toHaveLength(1);
+    expect(gh.calls.every((c) => c.body.context === "devstack/preview")).toBe(true);
+  });
+
+  it("fork PRs never build", async () => {
+    const db = await setup();
+    const b = bindings();
+    expect((await handleGitEvent(db, keys, b, "pull_request", pr("opened", 999), ghFetch().f)).status).toBe("ignored:fork_pr");
+    expect(b.sent).toHaveLength(0);
+  });
+
+  it("rate-limits automatic builds per project per hour and reports it on the commit", async () => {
+    const db = await setup();
+    const ins = db.raw.prepare("INSERT INTO build_jobs (id, project_id, user_id, environment, trigger, status, executor, config_snapshot) VALUES (?, 'projA-0001', 'userA', 'preview', 'push', 'succeeded', 'cf-container', '{}')");
+    for (let i = 0; i < WEBHOOK_BUILDS_PER_HOUR; i++) ins.run(`old-job-${String(i).padStart(4, "0")}`);
+    const gh = ghFetch();
+    const b = bindings();
+    expect((await handleGitEvent(db, keys, b, "push", push("feature/y", SHA2), gh.f)).status).toBe("rate_limited");
+    expect(b.sent).toHaveLength(0);
+    expect(gh.calls[0].body.state).toBe("error");
+  });
+
+  it("missing build infrastructure is reported, not faked", async () => {
+    const db = await setup();
+    const gh = ghFetch();
+    const r = await handleGitEvent(db, keys, bindings({ queue: null }), "push", push("main"), gh.f);
+    expect(r.status).toBe("failed:blocked");
+    expect(gh.calls[0].body.state).toBe("error");
+  });
+
+  it("the executor posts the final success status with the live URL; the token is never in a status body", async () => {
+    const db = await setup();
+    const gh = ghFetch();
+    const box: ContainerStub = {
+      async fetch(url) {
+        if (url.endsWith("/build")) return new Response(JSON.stringify({ t: "phase", phase: "uploading" }) + "\n" + JSON.stringify({ t: "result", ok: true }) + "\n");
+        if (url.endsWith("/artifact")) return new Response(tarOf({ "index.html": "ok" }) as BlobPart);
+        return new Response("ok");
+      },
+      async stop() {},
+    };
+    const b = bindings({ container: () => box, fetch: gh.f });
+    const r = await handleGitEvent(db, keys, b, "push", push("feature/x"), gh.f);
+    await runContainerJob(db, keys, b, r.buildJobId!);
+    const last = gh.calls.at(-1)!;
+    expect(last.body).toMatchObject({ state: "success", context: "devstack/preview", target_url: r.url });
+    expect(JSON.stringify(gh.calls.map((c) => c.body))).not.toContain(OWNER_TOKEN);
+  });
+});
