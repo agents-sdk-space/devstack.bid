@@ -56,8 +56,8 @@ test("device login surfaces denial honestly", async () => {
     "POST /api/cli/device": { deviceCode: DEVICE, userCode: "BCDF-GHJK", verificationUri: "x", verificationUriComplete: "x", expiresIn: 600, interval: 5 },
     "POST /api/cli/device/token": { status: 403, body: { error: "Sign-in was denied.", code: "denied" } },
   });
-  assert.equal(await run(["login"], h.ctx), 1);
-  assert.match(h.err.join(), /denied/);
+  assert.equal(await run(["login"], h.ctx), 2);
+  assert.match(h.err.join(), /denied in the browser\. Nothing was saved/);
   assert.ok(!existsSync(join(h.home, "devstack", "auth.json")));
 });
 
@@ -99,7 +99,7 @@ test("deploy streams logs and prints the URL; failures are not reported as succe
   assert.equal(JSON.parse(ok.calls[0].body).environment, "production");
   const bad = mk("failed");
   writeLink(bad.cwd, { projectId: "p1", name: "app", repo: "o/app" });
-  assert.equal(await run(["deploy"], bad.ctx), 2);
+  assert.equal(await run(["deploy"], bad.ctx), 1);
   assert.match(bad.err.join(), /failed \(build_failed\)/);
   assert.ok(!bad.out.join().includes("Ready"));
 });
@@ -147,4 +147,43 @@ test("api base must be https except loopback; redact hides secrets", () => {
   assert.throws(() => apiBase({ DEVSTACK_API: "http://evil.example" }));
   assert.equal(apiBase({ DEVSTACK_API: "http://localhost:3000/" }), "http://localhost:3000");
   assert.equal(redact(`x ${TOKEN} ${DEVICE}`), "x nvx_live_*** dvc_***");
+});
+
+test("unknown flags suggest, missing values error, both exit 2", async () => {
+  const h = harness({});
+  assert.equal(await run(["deploy", "--prdo"], h.ctx), 2);
+  assert.match(h.err.join(), /Unknown option --prdo.*Did you mean --prod\?/);
+  assert.equal(await run(["create", "app", "--template"], h.ctx), 2);
+  assert.match(h.err.join(), /--template needs a value/);
+  assert.equal(await run(["deplyo"], h.ctx), 2);
+  assert.match(h.err.join(), /Did you mean deploy\?/);
+});
+
+test("saved token is bound to its API; env token elsewhere warns", async () => {
+  const h = harness({ "GET /api/cli/whoami": { login: "octo", key: "k" } });
+  const { writeAuth } = await import("../dist/config.js");
+  writeAuth({ token: TOKEN, api: "https://devstack.bid" }, h.ctx.env);
+  h.ctx.env.DEVSTACK_API = "https://evil.example";
+  assert.equal(await run(["whoami"], h.ctx), 1);
+  assert.match(h.err.join(), /will not be sent there/);
+  assert.equal(h.calls.length, 0);
+  h.ctx.env.DEVSTACK_TOKEN = TOKEN;
+  assert.equal(await run(["whoami"], h.ctx), 0);
+  assert.match(h.err.join(), /Warning: sending DEVSTACK_TOKEN to https:\/\/evil\.example/);
+});
+
+test("401/403 add a login hint and name the scope", async () => {
+  const h = harness({ "POST /api/projects/p1/builds": { status: 403, body: { error: "This key lacks the cli:deploy scope.", code: "scope", scope: "cli:deploy" } } }, { env: { DEVSTACK_TOKEN: TOKEN } });
+  const { writeLink } = await import("../dist/config.js");
+  writeLink(h.cwd, { projectId: "p1", name: "a", repo: "o/a" });
+  assert.equal(await run(["deploy"], h.ctx), 1);
+  assert.match(h.err.join(), /needs the cli:deploy scope\. Run devstack login/);
+});
+
+test("login warns when replacing an existing login", async () => {
+  const h = harness({ "GET /api/cli/whoami": { login: "new", key: "k" } }, { prompts: [TOKEN] });
+  const { writeAuth } = await import("../dist/config.js");
+  writeAuth({ token: TOKEN, api: "https://devstack.bid", login: "old" }, h.ctx.env);
+  assert.equal(await run(["login", "--token"], h.ctx), 0);
+  assert.match(h.err.join(), /Already signed in as old; this login will replace it/);
 });

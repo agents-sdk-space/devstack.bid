@@ -8,6 +8,7 @@
 import handler from "./.open-next/worker.js";
 import type { D1Like } from "@/lib/chat/store";
 import { sweepBuilds } from "@/lib/build/sweep";
+import { cleanupDeviceCodes } from "@/lib/cli/device";
 import { connect } from "cloudflare:sockets";
 import { registerSocketConnect, type ConnectFn } from "@/lib/server/socket-fetch";
 
@@ -73,5 +74,7 @@ export default {
         .then((r) => console.log(JSON.stringify({ at: "build-sweeper", timedOut: r.timedOut.length, deploymentsClosed: r.deploymentsClosed })))
         .catch((e) => console.warn(JSON.stringify({ at: "build-sweeper", error: String((e as Error)?.message ?? e).slice(0, 200) })))
     );
+    ctx.waitUntil(cleanupDeviceCodes(env.DB).catch(() => undefined)); // expired CLI device codes
+
   },
 };

@@ -11,7 +11,7 @@
   "type": "module",
   "bin": { "devstack": "dist/index.js" },
   "files": ["dist", "README.md", "README.th.md", "LICENSE"],
-  "engines": { "node": ">=18" },
+  "engines": { "node": ">=20" },
   "publishConfig": { "access": "public", "provenance": true },
   "scripts": {
     "build": "tsc -p tsconfig.json && chmod +x dist/index.js",

@@ -23,17 +23,37 @@ export function apiBase(env: NodeJS.ProcessEnv = process.env, saved?: string): s
 
 export const TOKEN_RE = /^nvx_live_[A-Za-z0-9_-]{43}$/;
 
-export function readAuth(env: NodeJS.ProcessEnv = process.env): Auth | null {
+export interface ResolvedAuth extends Auth { source: "env" | "file"; warning?: string }
+
+/**
+ * The saved token is bound to the API origin it was issued for. If DEVSTACK_API points elsewhere the saved
+ * token is never sent; only DEVSTACK_TOKEN from the environment may be used there (with a warning).
+ */
+export function readAuth(env: NodeJS.ProcessEnv = process.env): ResolvedAuth | null {
   const fromEnv = env.DEVSTACK_TOKEN?.trim();
   const file = join(configDir(env), "auth.json");
   let saved: Partial<Auth> = {};
   if (existsSync(file)) {
     try { saved = JSON.parse(readFileSync(file, "utf8")) as Partial<Auth>; } catch { saved = {}; }
   }
-  const token = fromEnv || saved.token;
-  if (!token) return null;
-  if (!TOKEN_RE.test(token)) throw new Error(fromEnv ? "DEVSTACK_TOKEN has an invalid format" : `${file} contains an invalid token; run devstack logout`);
-  return { token, api: apiBase(env, saved.api), login: saved.login ?? null };
+  const api = apiBase(env, saved.api);
+  if (fromEnv) {
+    if (!TOKEN_RE.test(fromEnv)) throw new Error("DEVSTACK_TOKEN has an invalid format");
+    const warning = api !== DEFAULT_API ? `Warning: sending DEVSTACK_TOKEN to ${api} (not ${DEFAULT_API}).` : undefined;
+    return { token: fromEnv, api, login: null, source: "env", warning };
+  }
+  if (!saved.token) return null;
+  if (!TOKEN_RE.test(saved.token)) throw new Error(`${file} contains an invalid token; run devstack logout`);
+  const savedApi = apiBase({}, saved.api);
+  if (api !== savedApi) throw new Error(`Your saved login is for ${savedApi}, but DEVSTACK_API is ${api}. The saved token will not be sent there; set DEVSTACK_TOKEN for that server or unset DEVSTACK_API.`);
+  return { token: saved.token, api, login: saved.login ?? null, source: "file" };
+}
+
+/** Saved login (file only), ignoring env, for "already signed in" notices. */
+export function savedLogin(env: NodeJS.ProcessEnv = process.env): Auth | null {
+  const file = join(configDir(env), "auth.json");
+  if (!existsSync(file)) return null;
+  try { const a = JSON.parse(readFileSync(file, "utf8")) as Auth; return a.token ? a : null; } catch { return null; }
 }
 
 /** Writes ~/.config/devstack/auth.json with 0600 (dir 0700). */

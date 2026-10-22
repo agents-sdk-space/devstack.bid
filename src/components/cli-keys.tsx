@@ -6,7 +6,9 @@ import { buttonClasses, Card } from "@/components/ui";
 import { useLang } from "@/components/prefs";
 import { Credits } from "@/components/credits/credits";
 
-type Client = { id: string; name: string; scopes: string[]; rateLimit: number; createdAt: number };
+type Client = { id: string; name: string; scopes: string[]; rateLimit: number; createdAt: number; expiresAt?: number | null; lastUsedAt?: number | null };
+type Activity = { event: string; subject: string | null; createdAt: number };
+const fmt = (ms: number) => new Date(ms).toLocaleString();
 
 const ONE_LINER = "curl -fsSL https://devstack.bid/setup.sh | bash -s -- my-app";
 const ONE_LINER_ENV = "read -rs DEVSTACK_KEY && export DEVSTACK_KEY && curl -fsSL https://devstack.bid/setup.sh | bash -s -- my-app";
@@ -20,6 +22,7 @@ export function CliKeys() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [starter, setStarter] = useState("my-app");
+  const [activity, setActivity] = useState<Activity[]>([]);
 
   const load = useCallback(async () => {
     const r = await fetch("/api/mcp/keys", { cache: "no-store" });
@@ -31,6 +34,7 @@ export function CliKeys() {
   useEffect(() => {
     let on = true;
     load().then((c) => on && setClients(c)).catch((e: unknown) => on && setError(e instanceof Error ? e.message : String(e)));
+    fetch("/api/cli/activity", { cache: "no-store" }).then((r) => (r.ok ? r.json() : { events: [] })).then((b: { events?: Activity[] }) => on && setActivity(b.events ?? [])).catch(() => undefined);
     return () => { on = false; };
   }, [load]);
 
@@ -105,9 +109,15 @@ export function CliKeys() {
         <h2 className="text-base font-semibold text-fg">{th ? "CLI key ที่ใช้งานอยู่" : "Active CLI keys"}</h2>
         {clients.length === 0 ? <p className="mt-3 text-sm text-subtle">{th ? "ยังไม่มีคีย์" : "No active keys."}</p> : <ul className="mt-3 space-y-3">
           {clients.map((c) => <li key={c.id} className="flex items-center justify-between gap-3 rounded-xl border border-border p-4">
-            <div className="min-w-0"><p className="truncate text-sm font-medium text-fg">{c.name}</p><p className="mt-1 text-xs text-subtle">{c.scopes.join(", ")} · {c.rateLimit}/min</p></div>
+            <div className="min-w-0"><p className="truncate text-sm font-medium text-fg">{c.name}</p><p className="mt-1 text-xs text-subtle">{c.scopes.join(", ")} · {c.rateLimit}/min</p><p className="mt-1 text-xs text-subtle">{th ? "ใช้ล่าสุด" : "Last used"}: {c.lastUsedAt ? fmt(c.lastUsedAt) : (th ? "ยังไม่เคย" : "never")}{c.expiresAt ? ` · ${th ? "หมดอายุ" : "Expires"}: ${fmt(c.expiresAt)}` : ""}</p></div>
             <button type="button" disabled={busy} onClick={() => void revoke(c.id)} className={buttonClasses("ghost", "sm")}><Trash2 className="h-4 w-4" aria-hidden />{th ? "เพิกถอน" : "Revoke"}</button>
           </li>)}
+        </ul>}
+      </section>
+      <section className="mt-8">
+        <h2 className="text-base font-semibold text-fg">{th ? "กิจกรรมการเข้าสู่ระบบ CLI" : "CLI sign-in activity"}</h2>
+        {activity.length === 0 ? <p className="mt-3 text-sm text-subtle">{th ? "ยังไม่มีกิจกรรม" : "No activity yet."}</p> : <ul className="mt-3 space-y-1 text-xs text-subtle">
+          {activity.map((a, i) => <li key={i}><span className="text-fg">{a.event}</span> · {a.subject ?? ""} · {fmt(a.createdAt)}</li>)}
         </ul>}
       </section>
       <Credits className="mt-10" />

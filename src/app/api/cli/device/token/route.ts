@@ -22,6 +22,6 @@ export async function POST(req: Request) {
     await audit(db, r.userId, "cli.login", r.clientId);
     return json({ ok: true, token: r.token, clientId: r.clientId }, 200, { "Cache-Control": "no-store" });
   }
-  const msg: Record<string, string> = { pending: "Waiting for approval in the browser.", slow_down: "Polling too fast.", expired: "Code expired. Run `devstack login` again.", denied: "Sign-in was denied.", invalid: "Unknown device code.", key_limit: "You have 20 active keys. Revoke one at devstack.bid/settings/cli." };
+  const msg: Record<string, string> = { pending: "Waiting for approval in the browser.", slow_down: "Polling too fast.", expired: "The code expired.", denied: "Sign-in was denied in the browser.", invalid: "Unknown device code.", key_limit: "You have 20 active keys. Revoke one at devstack.bid/settings/cli." };
   return json({ error: msg[r.status], code: r.status }, STATUS[r.status], { "Cache-Control": "no-store" });
 }

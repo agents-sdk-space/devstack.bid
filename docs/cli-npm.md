@@ -1,13 +1,15 @@
 # devstack CLI (npm package `@lsuperdev/devstack`)
 
-Source: `packages/cli` (TypeScript → ESM, Node ≥ 18, no runtime deps, bin `devstack`, MIT, SemVer 0.1.0).
+Source: `packages/cli` (TypeScript → ESM, Node ≥ 20, no runtime deps, bin `devstack`, MIT, SemVer 0.1.0).
 
 ## Server endpoints added
 | Endpoint | Auth | Notes |
 | --- | --- | --- |
-| `POST /api/cli/device` | none | Starts device sign-in. 10-min expiry, 5/min per IP. Device code stored as SHA-256 hash only (`cli_device_codes`, migration 0016). |
+| `POST /api/cli/device` | none | Starts device sign-in. 10-min expiry, 5/min per IP. Device code stored as SHA-256 hash only (`cli_device_codes`, migration 0018). |
 | `POST /api/cli/device/token` | device code | Poll. `428 pending`, `429 slow_down`, `410 expired`, `403 denied`. On approval mints one `api_clients` key (hashed, scopes `cli:setup`+`cli:deploy`, 60 req/min), row deleted (single use). Max 20 active keys. |
-| `POST /api/cli/device/approve` | cookie + same-origin | Page `/cli/device?code=XXXX-XXXX`; user must press Approve/Deny. |
+| `GET /api/cli/device?code=` | cookie | Request details for the approve page: client name (unverified), time, coarse IP + country, account. |
+| `POST /api/cli/device/approve` | cookie + same-origin | `{userCode, approve, deploy}`. Page `/cli/device` (code is typed, never in the URL). `cli:deploy` is opt-in. Atomic `UPDATE … RETURNING`; key cap checked first. |
+| `GET /api/cli/activity` | cookie | Recent `cli.*` audit events (Settings → CLI). |
 | `POST /api/cli/logout` | Bearer | Revokes the calling key. |
 | `GET /api/cli/templates` | none | Starters + repo templates. |
 | `GET /api/cli/whoami` | Bearer | Now accepts `cli:deploy` or `cli:setup`; returns scopes. |
@@ -45,3 +47,10 @@ jobs:
 
 Owner must: use npm account `lsuperdev` (2FA on), create a **granular automation token** limited to `@lsuperdev/devstack`
 (publish only), add it as repo secret `NPM_TOKEN` in an `npm` environment with required reviewers. Then tag `cli-v0.1.0`.
+
+## Hardening (Supdev review of 6bdbc03)
+- Keys: `expires_at` (90 days, sliding on use) and `last_used_at`, shown in Settings → CLI with sign-in activity. No email is sent (the app has no email sender).
+- CLI keys (only `cli:*`) and MCP keys (no `cli:*`) are separate: MCP rejects CLI keys, CLI routes reject MCP keys, mixed keys can't be created.
+- At most 10,000 pending device codes; expired rows are deleted on create and by the 5-minute cron.
+- User codes use rejection sampling; UNIQUE collisions are retried.
+- The CLI binds the saved token to the server it was issued for.

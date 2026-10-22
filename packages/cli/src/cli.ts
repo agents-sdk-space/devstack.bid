@@ -3,7 +3,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { Api, ApiError, redact, type Fetch } from "./api.js";
-import { apiBase, clearAuth, readAuth, readLink, TOKEN_RE, writeAuth, writeLink, type Link } from "./config.js";
+import { apiBase, clearAuth, readAuth, readLink, savedLogin, TOKEN_RE, writeAuth, writeLink, type Link } from "./config.js";
 import { extractZip, readZip } from "./unzip.js";
 
 export const VERSION = "0.1.0";
@@ -20,6 +20,18 @@ export interface Io {
 export interface Ctx { io: Io; env: NodeJS.ProcessEnv; cwd: string; fetch: Fetch }
 
 type Flags = Record<string, string | boolean>;
+const VALUE_FLAGS = ["template", "project", "repo", "branch", "name", "ref", "root"];
+const BOOL_FLAGS = ["help", "version", "token", "no-browser", "prod", "follow"];
+/** Allowed flags per command (help/version are always allowed). */
+export const COMMAND_FLAGS: Record<string, string[]> = {
+  login: ["token", "no-browser"], logout: [], whoami: [], templates: [],
+  create: ["template", "name"], init: ["template"], link: ["project", "repo", "branch", "root"],
+  deploy: ["prod", "ref"], status: [], logs: ["follow"], help: [], version: [],
+};
+
+class UserError extends Error {}
+class BuildFailed extends Error {}
+
 export function parseArgs(argv: string[]): { cmd: string; pos: string[]; flags: Flags } {
   const pos: string[] = [];
   const flags: Flags = {};
@@ -28,9 +40,11 @@ export function parseArgs(argv: string[]): { cmd: string; pos: string[]; flags: 
     if (a === "--") { pos.push(...argv.slice(i + 1)); break; }
     if (a.startsWith("--")) {
       const [k, v] = a.slice(2).split("=", 2);
-      if (v !== undefined) flags[k] = v;
-      else if (["template", "project", "repo", "branch", "name", "ref", "root"].includes(k) && argv[i + 1] && !argv[i + 1].startsWith("-")) flags[k] = argv[++i];
-      else flags[k] = true;
+      if (VALUE_FLAGS.includes(k)) {
+        const val = v ?? (argv[i + 1] && !argv[i + 1].startsWith("-") ? argv[++i] : "");
+        if (!val) throw new UserError(`--${k} needs a value`);
+        flags[k] = val;
+      } else flags[k] = v ?? true;
     } else if (a === "-h") flags.help = true;
     else if (a === "-v") flags.version = true;
     else pos.push(a);
@@ -38,30 +52,55 @@ export function parseArgs(argv: string[]): { cmd: string; pos: string[]; flags: 
   return { cmd: pos.shift() ?? "", pos, flags };
 }
 
-const HELP = `devstack ${VERSION} — CLI for devstack.bid
+function distance(a: string, b: string): number {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)] as number[]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+const suggest = (x: string, options: string[]) => options.map((o) => [o, distance(x, o)] as const).filter(([, n]) => n <= 2).sort((p, q) => p[1] - q[1])[0]?.[0];
+
+export function checkFlags(cmd: string, flags: Flags): void {
+  const allowed = [...(COMMAND_FLAGS[cmd] ?? []), "help", "version"];
+  for (const k of Object.keys(flags)) {
+    if (allowed.includes(k)) continue;
+    const s = suggest(k, allowed);
+    throw new UserError(`Unknown option --${k} for "${cmd}".${s ? ` Did you mean --${s}?` : ""} See devstack help.`);
+  }
+  void BOOL_FLAGS;
+}
+
+const HELP = `devstack ${VERSION}: CLI for devstack.bid
 
 Usage: devstack <command> [options]
 
-  login [--token] [--no-browser]   Sign in (browser device code, or paste a key from devstack.bid/settings/cli)
-  logout                           Revoke this machine's key and delete local credentials
-  whoami                           Show the signed-in account
-  templates                        List templates
-  create <name> --template <id>    New project from a template (starter zip, or a GitHub repo for repo templates)
-  init [--template static|worker]  Scaffold a starter into the current (empty) folder
-  link [--project <id|name>] [--repo owner/name] [--branch b] [--root dir]
-                                   Link this folder to a project; --repo imports a GitHub repo via your GitHub connection
-  deploy [--prod] [--ref <git ref>] Build & deploy the linked project's GitHub repo, streaming logs
-  status                           Linked project and recent deployments
-  logs <deployment-id> [--follow]  Build log for a deployment
+Commands:
+  login [--token] [--no-browser]       Sign in in the browser, or paste a key (--token; reads stdin when piped)
+  logout                               Revoke this machine's key and delete local credentials
+  whoami                               Show the signed-in account
+  templates                            List templates
+  create <name> [--template <id>]      New project from a template (default: static)
+  init [--template static|worker]      Scaffold a starter into the current empty folder (default: static)
+  link [--project <id|name>]           Link this folder to an existing project
+       [--repo owner/name] [--branch <b>] [--root <dir>]
+                                       ...or import a GitHub repo via your GitHub connection
+  deploy [--prod] [--ref <git ref>]    Build and deploy the linked GitHub repo, streaming logs
+  status                               Linked project and recent deployments
+  logs <deployment-id> [--follow]      Build log for a deployment
+
+Examples:
+  devstack login
+  devstack link --repo you/my-site
+  devstack deploy --prod
+  echo "$KEY" | devstack login --token
 
 Env: DEVSTACK_TOKEN (CI), DEVSTACK_API (default https://devstack.bid)
-Credentials: ~/.config/devstack/auth.json (mode 0600)`;
-
-class UserError extends Error {}
+Credentials: ~/.config/devstack/auth.json (mode 0600), bound to the server they were issued for`;
 
 function api(ctx: Ctx): Api {
   const a = readAuth(ctx.env);
   if (!a) throw new UserError("Not signed in. Run `devstack login` (or set DEVSTACK_TOKEN).");
+  if (a.warning) ctx.io.err(a.warning);
   return new Api(a.api, a.token, ctx.fetch);
 }
 
@@ -75,6 +114,8 @@ const siteHost = (base: string, slug?: string | null) => (slug ? `https://${slug
 
 async function login(ctx: Ctx, flags: Flags) {
   const base = apiBase(ctx.env);
+  const prev = savedLogin(ctx.env);
+  if (prev) ctx.io.err(`Already signed in${prev.login ? ` as ${prev.login}` : ""}; this login will replace it. (The old key stays valid until you revoke it at devstack.bid/settings/cli.)`);
   if (flags.token) {
     const token = (await ctx.io.prompt("Paste your devstack CLI key (input hidden): ", true)).trim();
     if (!TOKEN_RE.test(token)) throw new UserError("That does not look like a devstack key (nvx_live_…). Create one at devstack.bid/settings/cli.");
@@ -85,9 +126,9 @@ async function login(ctx: Ctx, flags: Flags) {
   }
   const anon = new Api(base, null, ctx.fetch);
   const host = (() => { try { return execFileSync("hostname", { encoding: "utf8" }).trim(); } catch { return "computer"; } })();
-  const d = await anon.req<{ deviceCode: string; userCode: string; verificationUri: string; verificationUriComplete: string; expiresIn: number; interval: number }>("POST", "/api/cli/device", { clientName: `devstack CLI (${host})` });
-  ctx.io.out(`Open ${d.verificationUri} and confirm this code:\n\n    ${d.userCode}\n`);
-  if (!flags["no-browser"] && ctx.io.isTTY) ctx.io.openUrl(d.verificationUriComplete);
+  const d = await anon.req<{ deviceCode: string; userCode: string; verificationUri: string; expiresIn: number; interval: number }>("POST", "/api/cli/device", { clientName: `devstack CLI (${host})` });
+  ctx.io.out(`Open ${d.verificationUri} and type this code:\n\n    ${d.userCode}\n`);
+  if (!flags["no-browser"] && ctx.io.isTTY) ctx.io.openUrl(d.verificationUri);
   ctx.io.out("Waiting for approval…");
   let interval = Math.max(1, d.interval) * 1000;
   const deadline = Date.now() + d.expiresIn * 1000;
@@ -103,10 +144,12 @@ async function login(ctx: Ctx, flags: Flags) {
       if (!(e instanceof ApiError)) throw e;
       if (e.code === "pending") continue;
       if (e.code === "slow_down") { interval += 5000; continue; }
+      if (e.code === "denied") throw new UserError("Sign-in was denied in the browser. Nothing was saved. Run devstack login to try again.");
+      if (e.code === "expired") throw new UserError("The code expired (10 minutes). Run devstack login to get a new one.");
       throw e;
     }
   }
-  throw new UserError("The code expired before it was approved. Run `devstack login` again.");
+  throw new UserError("The code expired (10 minutes). Run devstack login to get a new one.");
 }
 
 async function logout(ctx: Ctx) {
@@ -131,7 +174,7 @@ async function templates(ctx: Ctx) {
   const t = await new Api(apiBase(ctx.env), null, ctx.fetch).req<TemplateList>("GET", "/api/cli/templates");
   ctx.io.out("Starters (local files):");
   for (const s of t.starters) ctx.io.out(`  ${s.id.padEnd(22)} ${s.name}`);
-  ctx.io.out("Repo templates (creates a GitHub repo in your connected account):");
+  ctx.io.out("Repo templates (create a GitHub repo in your connected account):");
   for (const s of t.templates) ctx.io.out(`  ${s.id.padEnd(22)} ${s.name}`);
 }
 
@@ -185,7 +228,7 @@ async function link(ctx: Ctx, flags: Flags) {
     ctx.io.out(`Imported ${repo} as project ${r.project.name} and linked this folder.`);
     const b = r.build ?? {};
     if (b.status === "queued") ctx.io.out(`First build queued (deployment ${String(b.deploymentId)}). Watch: devstack logs ${String(b.deploymentId)} --follow`);
-    else ctx.io.out(`First build not started: ${String(b.error ?? b.status ?? "unknown")}`);
+    else ctx.io.out(b.error ? `First build not started: ${String(b.error)}` : "No build started yet. Run devstack deploy to start one.");
     return;
   }
   const { projects } = await a.req<{ projects: Project[] }>("GET", "/api/projects");
@@ -231,16 +274,16 @@ async function deploy(ctx: Ctx, flags: Flags) {
     const { projects } = await a.req<{ projects: Project[] }>("GET", "/api/projects");
     const p = projects.find((x) => x.id === l.projectId);
     if (!p) throw new UserError("Linked project no longer exists. Run devstack link.");
-    if (!p.repo) throw new UserError("This project has no GitHub repo. devstack.bid builds from GitHub; local folder upload to *.devstack.bid hosting is not supported by the server yet. Push to GitHub and run devstack link --repo <owner/name>.");
+    if (!p.repo) throw new UserError("This project has no GitHub repo. devstack.bid builds from GitHub; uploading a local folder to *.devstack.bid is not supported by the server yet, and the CLI reports this clearly instead of pretending. Push to GitHub and run devstack link --repo <owner/name>.");
   }
   const environment = flags.prod ? "production" : "preview";
   const r = await a.req<{ deploymentId: string; previewUrl?: string | null; productionUrl?: string | null }>("POST", `/api/projects/${encodeURIComponent(l.projectId)}/builds`, { environment, ref: typeof flags.ref === "string" ? flags.ref : undefined });
-  ctx.io.out(`Deploying ${l.name} (${environment}) — deployment ${r.deploymentId}`);
+  ctx.io.out(`Deploying ${l.name} (${environment}), deployment ${r.deploymentId}`);
   const final = await streamLogs(ctx, a, r.deploymentId, true);
   const ok = final.job ? final.job.status === "succeeded" || final.job.status === "success" : ["ready", "live", "succeeded"].includes(final.deployment.status);
   const url = final.deployment.url ?? (environment === "production" ? r.productionUrl : r.previewUrl) ?? siteHost(a.base, l.slug);
-  if (!ok) throw new UserError(`Deployment ${final.deployment.status}${final.job?.errorCode || final.deployment.errorCode ? ` (${final.job?.errorCode ?? final.deployment.errorCode})` : ""}. See: devstack logs ${r.deploymentId}`);
-  ctx.io.out(`\n✔ Ready: ${url ?? "(no URL returned by server)"}`);
+  if (!ok) throw new BuildFailed(`Deployment ${final.deployment.status}${final.job?.errorCode || final.deployment.errorCode ? ` (${final.job?.errorCode ?? final.deployment.errorCode})` : ""}. See: devstack logs ${r.deploymentId}`);
+  ctx.io.out(`\nReady: ${url ?? "(no URL returned by server)"}`);
 }
 
 async function status(ctx: Ctx) {
@@ -256,8 +299,9 @@ async function status(ctx: Ctx) {
 }
 
 export async function run(argv: string[], ctx: Ctx): Promise<number> {
-  const { cmd, pos, flags } = parseArgs(argv);
   try {
+    const { cmd, pos, flags } = parseArgs(argv);
+    if (cmd && COMMAND_FLAGS[cmd]) checkFlags(cmd, flags);
     if (flags.version || cmd === "version") { ctx.io.out(VERSION); return 0; }
     if (!cmd || flags.help || cmd === "help") { ctx.io.out(HELP); return 0; }
     switch (cmd) {
@@ -276,11 +320,15 @@ export async function run(argv: string[], ctx: Ctx): Promise<number> {
         ctx.io.out(`status: ${r.deployment.status}${r.deployment.url ? `  ${r.deployment.url}` : ""}`);
         break;
       }
-      default: ctx.io.err(`Unknown command: ${cmd}\n\n${HELP}`); return 2;
+      default: { const s = suggest(cmd, Object.keys(COMMAND_FLAGS)); ctx.io.err(`Unknown command: ${cmd}.${s ? ` Did you mean ${s}?` : ""} Run devstack help.`); return 2; }
     }
     return 0;
   } catch (e) {
-    const msg = e instanceof ApiError ? `${e.message}${e.status ? ` (HTTP ${e.status}${e.code ? `, ${e.code}` : ""})` : ""}` : (e as Error).message;
+    let msg = e instanceof ApiError ? `${e.message}${e.status ? ` (HTTP ${e.status}${e.code ? `, ${e.code}` : ""})` : ""}` : (e as Error).message;
+    if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+      const scope = (e.body as { scope?: string } | undefined)?.scope ?? (e.message.match(/cli:\w+/)?.[0]);
+      msg += scope ? `\nThis needs the ${scope} scope. Run devstack login and allow it on the approval page.` : "\nRun devstack login.";
+    }
     ctx.io.err(`Error: ${redact(msg)}`);
     return e instanceof UserError ? 2 : 1;
   }

@@ -7,7 +7,7 @@ import { getAccount, type D1Like } from "@/lib/chat/store";
 import { clientIp } from "@/lib/server/http";
 import { checkRateLimit } from "@/lib/server/rate-limit";
 import { resolveSealKeys, type SealKeys } from "./credentials";
-import { authenticateMcpClient, consumeMcpClient } from "@/lib/mcp/auth";
+import { authenticateMcpClient, consumeMcpClient, isCliKey } from "@/lib/mcp/auth";
 
 export interface Actor {
   uid: string;
@@ -50,7 +50,7 @@ async function bearerGate(req: Request): Promise<Actor | Response> {
   if (!db || !env.CHAT_COOKIE_SECRET) return json({ error: "Storage unavailable. / ระบบจัดเก็บไม่พร้อม", code: "no_database" }, 503);
   const { client } = await authenticateMcpClient(req, db);
   if (!client) return json({ error: "Invalid or revoked token. Run `devstack login`. / token ไม่ถูกต้องหรือถูกเพิกถอน", code: "unauthorized" }, 401);
-  if (!client.scopes.includes("cli:deploy")) return json({ error: "This key lacks the cli:deploy scope. / คีย์นี้ไม่มีสิทธิ์ cli:deploy", code: "scope" }, 403);
+  if (!isCliKey(client.scopes) || !client.scopes.includes("cli:deploy")) return json({ error: "This key lacks the cli:deploy scope. Run `devstack login` and tick \"Allow deploys\". / คีย์นี้ไม่มีสิทธิ์ cli:deploy", code: "scope", scope: "cli:deploy" }, 403);
   const rl = await consumeMcpClient(db, client);
   if (!rl.ok) return json({ error: "Too many requests. / ส่งคำขอถี่เกินไป", code: "rate_limited" }, 429, { "Retry-After": String(rl.retryAfter) });
   const account = await getAccount(db, client.userId).catch(() => null);
