@@ -9,7 +9,6 @@ let mod: { scrubGitEnv(e: Record<string, string>): void; scrubCheckout(src: stri
 
 beforeAll(async () => {
   process.env.BUILD_SERVER_NO_LISTEN = "1";
-  // @ts-expect-error plain ESM module
   mod = await import("../container/build-server.mjs");
 });
 
