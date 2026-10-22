@@ -42,10 +42,13 @@ const template: StackTemplate = {
   defaultAddons: [],
   defaultName: "my-website",
   keywords: [
-    "website", "web site", "landing page", "landing", "homepage", "home page", "portfolio", "blog", "shop", "store", "restaurant", "cafe", "coffee",
-    "bakery", "dentist", "clinic", "hospital", "school", "company", "business", "agency", "hotel", "salon", "spa", "gym", "wedding", "event", "personal site",
-    "เว็บไซต์", "เว็บ", "หน้าเว็บ", "แลนดิ้ง", "หน้าแรก", "ร้าน", "ร้านกาแฟ", "ร้านอาหาร", "คาเฟ่", "คลินิก", "ทันตกรรม", "หมอฟัน", "โรงเรียน", "บล็อก", "พอร์ต", "ผลงาน",
-    "บริษัท", "ธุรกิจ", "โรงแรม", "ร้านเสริมสวย", "ฟิตเนส", "งานแต่ง", "ขายของ",
+    "website", "web site", "landing page", "landing", "homepage", "home page", "portfolio", "blog", "personal site",
+    "เว็บไซต์", "หน้าเว็บ", "ทำเว็บ", "แลนดิ้ง", "หน้าแรก", "บล็อก", "พอร์ต", "ผลงาน",
+  ],
+  weakKeywords: [
+    "shop", "store", "restaurant", "cafe", "coffee", "bakery", "dentist", "clinic", "hospital", "school", "company", "business", "agency",
+    "hotel", "salon", "spa", "gym", "wedding", "event",
+    "ร้านกาแฟ", "ร้านอาหาร", "ร้านค้า", "คาเฟ่", "คลินิก", "ทันตกรรม", "หมอฟัน", "โรงเรียน", "บริษัท", "ธุรกิจ", "โรงแรม", "ร้านเสริมสวย", "ฟิตเนส", "งานแต่ง", "ขายของ",
   ],
   fileTree: ["{{name}}/", "  index.html", "  main.js", "  public/style.css", "  package.json", "  package-lock.json"],
   steps: [

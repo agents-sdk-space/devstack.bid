@@ -85,6 +85,8 @@ export interface StackTemplate {
   defaultName: string;
   /** Keywords (EN + TH) used by the rule-based fallback planner. */
   keywords: string[];
+  /** Weak hints (business types like "coffee shop", "clinic"): together worth at most 1 point, so app-type keywords win. */
+  weakKeywords?: string[];
   /** Approximate file tree after the steps run. */
   fileTree: string[];
   steps: StepDef[];

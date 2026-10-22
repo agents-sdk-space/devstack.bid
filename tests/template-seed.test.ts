@@ -85,12 +85,28 @@ describe("website template design", () => {
 
 describe("rule-based picker routing", () => {
   it.each([
-    ["ทำเว็บร้านกาแฟ", "static-website"], ["landing page for a dentist", "static-website"], ["บล็อกส่วนตัว", "static-website"],
-    ["เว็บโรงเรียน", "static-website"], ["coffee shop website", "static-website"], ["portfolio ช่างภาพ", "static-website"],
-    ["ร้านอาหารญี่ปุ่น", "static-website"], ["something nice", "static-website"],
-    ["dashboard ยอดขาย", "nextjs-dashboard"], ["analytics dashboard with charts", "nextjs-dashboard"], ["เกมงู", "vite-react-game"],
-    ["REST API ด้วย express", "express-api"], ["python fastapi", "fastapi-ai"], ["cli tool npx", "node-cli-npx"], ["realtime collab doc", "collab-workspace"],
+    // general websites, Thai + English
+    ["ทำเว็บร้านกาแฟ", "static-website"], ["coffee shop website", "static-website"],
+    ["landing page for a dentist", "static-website"], ["เว็บไซต์คลินิกทันตกรรม", "static-website"],
+    ["บล็อกส่วนตัว", "static-website"], ["personal blog", "static-website"],
+    ["เว็บโรงเรียน", "static-website"], ["school website", "static-website"],
+    ["portfolio ช่างภาพ", "static-website"], ["ร้านอาหารญี่ปุ่น", "static-website"], ["restaurant", "static-website"],
+    ["something nice", "static-website"],
+    // business words lose to app-type words
+    ["clinic dashboard", "nextjs-dashboard"], ["dentist clinic dashboard", "nextjs-dashboard"],
+    ["shop admin", "react-admin-tool"], ["coffee shop admin", "react-admin-tool"],
+    ["เว็บแอป AI", "nextjs-ai-chat"], ["dashboard ยอดขาย", "nextjs-dashboard"],
+    // other templates unchanged
+    ["analytics dashboard with charts", "nextjs-dashboard"], ["เกมงู", "vite-react-game"], ["REST API ด้วย express", "express-api"],
+    ["python fastapi", "fastapi-ai"], ["cli tool npx", "node-cli-npx"], ["realtime collab doc", "collab-workspace"],
   ])("%s -> %s", (prompt, id) => expect(chooseTemplate(prompt).id).toBe(id));
+
+  it("is independent of TEMPLATES order", () => {
+    const prompts = ["clinic dashboard", "เว็บแอป AI", "coffee shop admin", "ทำเว็บร้านกาแฟ", "admin", "chat"];
+    const before = prompts.map((p) => chooseTemplate(p).id);
+    TEMPLATES.reverse();
+    try { expect(prompts.map((p) => chooseTemplate(p).id)).toEqual(before); } finally { TEMPLATES.reverse(); }
+  });
 });
 
 // Real install + build like the build container (npm ci, npm run build, index.html in the output dir).
