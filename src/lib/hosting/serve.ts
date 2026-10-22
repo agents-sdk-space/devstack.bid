@@ -68,9 +68,13 @@ export async function resolveDeployment(bucket: R2BucketLike, label: string): Pr
   }
 }
 
+/** Preview Workers only (cleanup may delete these and nothing else). */
+export const PREVIEW_WORKER = /^site-[a-f0-9]{20}-[a-f0-9]{12}$/;
+
 /** Per-project server Worker name: site-<20 hex of project> or site-<20 hex>-<12 hex of deployment>. */
 export const SERVER_WORKER = /^site-[a-f0-9]{20}(?:-[a-f0-9]{12})?$/;
-const PLATFORM_WORKER_NAMES = new Set(["nvx-stack-builder", "devstack-sites", "dev", "devtest", "implemented-stream", "odd-violet-5e66", "stack-hub"]);
+/** Every non-customer Worker on the platform account. Shared by the proxy and the uploader. */
+export const PLATFORM_WORKERS: ReadonlySet<string> = new Set(["nvx-stack-builder", "devstack-sites", "dev", "devtest", "implemented-stream", "odd-violet-5e66", "stack-hub"]);
 
 export async function resolveServerWorker(bucket: R2BucketLike, label: string): Promise<string | null> {
   const o = await bucket.get(`hosts/${label}.json`);
@@ -78,7 +82,7 @@ export async function resolveServerWorker(bucket: R2BucketLike, label: string): 
   const text = o.text ? await o.text() : await new Response(o.body).text();
   try {
     const w = (JSON.parse(text) as { worker?: unknown }).worker;
-    return typeof w === "string" && SERVER_WORKER.test(w) && !PLATFORM_WORKER_NAMES.has(w) ? w : null;
+    return typeof w === "string" && SERVER_WORKER.test(w) && !PLATFORM_WORKERS.has(w) ? w : null;
   } catch {
     return null;
   }
@@ -100,6 +104,8 @@ export function unavailable(status = 503): Response {
   );
 }
 
+interface HTMLRewriterLike { on(sel: string, h: { element(e: { append(c: string, o: { html: boolean }): void }): void }): HTMLRewriterLike; transform(r: Response): Response }
+
 export interface ProxyOpts { proxyKey?: string | null; fetcher?: typeof fetch }
 
 /**
@@ -115,7 +121,7 @@ export async function proxyToWorker(req: Request, worker: string, subdomain: str
   const url = new URL(req.url);
   // Never resolve the request path against the base: "//evil.com/x" would change the host (open proxy / key leak).
   const expectedHost = `${worker}.${subdomain}.workers.dev`;
-  if (!SERVER_WORKER.test(worker) || PLATFORM_WORKER_NAMES.has(worker) || !/^[a-z0-9-]{1,63}$/.test(subdomain)) return unavailable(502);
+  if (!SERVER_WORKER.test(worker) || PLATFORM_WORKERS.has(worker) || !/^[a-z0-9-]{1,63}$/.test(subdomain)) return unavailable(502);
   const target = new URL(`https://${expectedHost}`);
   target.pathname = url.pathname;
   target.search = url.search;
@@ -143,7 +149,14 @@ export async function proxyToWorker(req: Request, worker: string, subdomain: str
   if (loc) { try { const l = new URL(loc, target); if (l.host === target.host) { l.host = url.host; out.set("location", l.toString()); } } catch { out.delete("location"); } }
   const type = out.get("content-type") ?? "";
   if (type.toLowerCase().startsWith("text/html") && req.method !== "HEAD" && res.status !== 204 && res.status !== 304 && res.body) {
-    const html = await res.text();
+    const Rewriter = (globalThis as { HTMLRewriter?: new () => HTMLRewriterLike }).HTMLRewriter;
+    const plain = new Response(res.body, { status: res.status, statusText: res.statusText, headers: out });
+    if (Rewriter) {
+      // Streamed: no buffering of large pages, no memory spikes.
+      const badge = reportBadge(url.hostname);
+      return new Rewriter().on("body", { element(e) { e.append(badge, { html: true }); } }).transform(plain);
+    }
+    const html = await plain.text();
     out.delete("content-encoding");
     return new Response(injectBadge(html, url.hostname), { status: res.status, statusText: res.statusText, headers: out });
   }

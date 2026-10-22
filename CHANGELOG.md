@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0-rc.3] - 2026-10-22
+
+### Security (Supdev re-review of 5cd9d3f)
+- N1: the server-site proxy builds its target from the fixed `https://<worker>.<sub>.workers.dev` host and only sets
+  pathname/search, then asserts the host; paths like `//evil.com/x`, `/\evil.com`, `/%2F%2Fevil.com` can no longer
+  redirect the subrequest (open proxy / proxy-key leak). Hot-fixed in 043e6a9.
+- N2: workers.dev disabled on every legacy `site-<slug>` Worker (only `site-e2e-next-1022`).
+- One shared platform-Worker denylist (`PLATFORM_WORKERS` in serve.ts) for proxy and uploader.
+
+### Added
+- Cron cleanup of preview server Workers (strict `site-<20hex>-<12hex>` + devstack owner tag; keep newest 5 per
+  project, delete older than 14 days). Runs only when server builds are configured.
+- Migration 0019: `build_jobs.requeue_count`; requeue backoff/cap now uses it. `requeued` is a typed event phase.
+
+### Changed
+- Report badge on proxied HTML is injected with `HTMLRewriter` (streamed) instead of buffering the body.
+
 ## [0.11.0-rc.2] - 2026-10-22
 
 ### Security (Supdev review of cff8391 = FAIL, fixed)

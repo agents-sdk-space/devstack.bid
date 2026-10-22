@@ -24,14 +24,14 @@ export const REQUEUE_BASE_MS = 2 * 60_000;
  * Re-deliver queued container jobs whose queue message was lost (never claimed after `staleMs`).
  * Each candidate is claimed atomically: one UPDATE … RETURNING pushes next_attempt_at out with
  * exponential backoff (2, 4, 8, 16 min) and returns how many re-deliveries it already had
- * (counted from its `requeued` log events), so overlapping cron runs never double-send.
+ * (build_jobs.requeue_count, migration 0019), so overlapping cron runs never double-send.
  * After MAX_REQUEUES re-deliveries the job is failed with a clear message instead of staying queued.
  * runContainerJob only claims rows still in `queued`, so a duplicate delivery is a no-op.
  */
 export async function requeueOrphans(db: D1Like, send: (body: { jobId: string }) => Promise<unknown>, now = Date.now(), staleMs = 3 * 60_000): Promise<number> {
   const rows = await db
     .prepare(
-      "UPDATE build_jobs SET next_attempt_at = ?1 + ?4 * (1 << MIN((SELECT COUNT(*) FROM build_events e WHERE e.build_job_id = build_jobs.id AND e.phase = 'requeued'), 4)) WHERE id IN (SELECT id FROM build_jobs WHERE status = 'queued' AND executor = 'cf-container' AND cancel_requested = 0 AND started_at IS NULL AND created_at < ?2 AND (next_attempt_at IS NULL OR next_attempt_at < ?1) AND created_at > ?3 LIMIT 10) AND status = 'queued' AND (next_attempt_at IS NULL OR next_attempt_at < ?1) RETURNING id, (SELECT COUNT(*) FROM build_events e WHERE e.build_job_id = build_jobs.id AND e.phase = 'requeued') AS requeues"
+      "UPDATE build_jobs SET requeue_count = requeue_count + 1, next_attempt_at = ?1 + ?4 * (1 << MIN(requeue_count, 4)) WHERE id IN (SELECT id FROM build_jobs WHERE status = 'queued' AND executor = 'cf-container' AND cancel_requested = 0 AND started_at IS NULL AND created_at < ?2 AND (next_attempt_at IS NULL OR next_attempt_at < ?1) AND created_at > ?3 LIMIT 10) AND status = 'queued' AND (next_attempt_at IS NULL OR next_attempt_at < ?1) RETURNING id, requeue_count - 1 AS requeues"
     )
     .bind(now, now - staleMs, now - 24 * 3600_000, REQUEUE_BASE_MS)
     .all<{ id: string; requeues: number }>();
@@ -42,7 +42,7 @@ export async function requeueOrphans(db: D1Like, send: (body: { jobId: string })
       await failJob(db, r.id, "queued", "queue_lost", now).catch(() => null);
       continue;
     }
-    await appendEvent(db, r.id, { level: "warn", phase: "requeued" as never, message: `Build was not picked up; re-delivered to the build queue (${(r.requeues ?? 0) + 1}/${MAX_REQUEUES}).` }).catch(() => null);
+    await appendEvent(db, r.id, { level: "warn", phase: "requeued", message: `Build was not picked up; re-delivered to the build queue (${(r.requeues ?? 0) + 1}/${MAX_REQUEUES}).` }).catch(() => null);
     await send({ jobId: r.id });
     n++;
   }

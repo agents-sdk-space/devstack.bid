@@ -9,7 +9,8 @@
  * platform guard module that only answers requests carrying the per-worker proxy key that
  * devstack-sites injects. The API token never enters the container (SITES_CF_API_TOKEN).
  */
-import { SERVER_WORKER } from "./serve";
+import { PLATFORM_WORKERS, PREVIEW_WORKER, SERVER_WORKER } from "./serve";
+export { PLATFORM_WORKERS };
 
 export interface BundleFile { path: string; bytes: Uint8Array }
 export interface ServerBundle { worker: Uint8Array; assets: BundleFile[]; compatibilityDate: string; compatibilityFlags: string[] }
@@ -19,8 +20,6 @@ export const SERVER_COMPAT_DATE = "2026-10-01";
 export const SERVER_COMPAT_FLAGS = Object.freeze(["nodejs_compat", "global_fetch_strictly_public"]) as readonly string[];
 export const MAX_WORKER_BYTES = 10 * 1024 * 1024;
 
-/** Every Worker that exists on the platform account and is not a customer site. Never writable by a build. */
-export const PLATFORM_WORKERS = new Set(["nvx-stack-builder", "devstack-sites", "dev", "devtest", "implemented-stream", "odd-violet-5e66", "stack-hub"]);
 
 async function hex(s: string, n: number): Promise<string> {
   const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
@@ -172,4 +171,38 @@ export async function deployServerWorker(api: CfApi, name: string, b: ServerBund
   const up = await call<{ id?: string; deployment_id?: string | null }>(api, `/workers/scripts/${name}`, { method: "PUT", body: form });
   await call(api, `/workers/scripts/${name}/subdomain`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ enabled: true, previews_enabled: false }) });
   return { versionId: up?.deployment_id ?? up?.id ?? null, assets: b.assets.length };
+}
+
+export interface CleanupOpts { maxAgeDays?: number; keepPerProject?: number; now?: number; max?: number }
+
+/**
+ * Delete old preview Workers. Only names matching PREVIEW_WORKER (site-<20hex>-<12hex>) that carry a
+ * devstack owner tag are ever touched; production Workers and platform Workers can never match.
+ * Per project the newest `keepPerProject` previews are kept; older ones past `maxAgeDays` and any
+ * beyond the cap are deleted. Returns deleted names.
+ */
+export async function cleanupPreviewWorkers(api: CfApi, o: CleanupOpts = {}): Promise<string[]> {
+  const now = o.now ?? Date.now();
+  const maxAge = (o.maxAgeDays ?? 14) * 86_400_000;
+  const keep = o.keepPerProject ?? 5;
+  const list = await call<{ id: string; created_on?: string; modified_on?: string }[]>(api, "/workers/scripts", { method: "GET" });
+  const byProject = new Map<string, { id: string; at: number }[]>();
+  for (const s of list ?? []) {
+    if (!PREVIEW_WORKER.test(s.id) || PLATFORM_WORKERS.has(s.id)) continue;
+    const at = Date.parse(s.modified_on ?? s.created_on ?? "") || 0;
+    const k = s.id.slice(0, "site-".length + 20);
+    byProject.set(k, [...(byProject.get(k) ?? []), { id: s.id, at }]);
+  }
+  const doomed: string[] = [];
+  for (const arr of byProject.values()) {
+    arr.sort((a, b) => b.at - a.at);
+    arr.forEach((w, i) => { if (i >= keep || now - w.at > maxAge) doomed.push(w.id); });
+  }
+  const deleted: string[] = [];
+  for (const name of doomed.slice(0, o.max ?? 25)) {
+    const st = await call<{ tags?: string[] | null }>(api, `/workers/scripts/${name}/script-settings`, { method: "GET" }).catch(() => null);
+    if (!(st?.tags ?? []).some((t) => t.startsWith("devstack-project-"))) continue; // not ours → never delete
+    await call(api, `/workers/scripts/${name}?force=true`, { method: "DELETE" }).then(() => deleted.push(name)).catch(() => null);
+  }
+  return deleted;
 }

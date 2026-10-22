@@ -8,6 +8,7 @@
 import handler from "./.open-next/worker.js";
 import type { D1Like } from "@/lib/chat/store";
 import { requeueOrphans, sweepBuilds } from "@/lib/build/sweep";
+import { cleanupPreviewWorkers } from "@/lib/hosting/server-worker";
 import { cleanupDeviceCodes } from "@/lib/cli/device";
 import { connect } from "cloudflare:sockets";
 import { registerSocketConnect, type ConnectFn } from "@/lib/server/socket-fetch";
@@ -77,6 +78,9 @@ export default {
     const q = (env as { BUILD_QUEUE?: { send(b: unknown): Promise<unknown> } }).BUILD_QUEUE;
     if (q) ctx.waitUntil(requeueOrphans(env.DB, (b) => q.send(b)).then((n) => { if (n) console.log(JSON.stringify({ at: "build-requeue", n })); }).catch(() => undefined));
     ctx.waitUntil(cleanupDeviceCodes(env.DB).catch(() => undefined)); // expired CLI device codes
+    // Old preview server Workers (only when server builds are configured; strict name + owner tag checks inside).
+    const cf = buildBindings(env as unknown as Record<string, unknown>).cfApi;
+    if (cf) ctx.waitUntil(cleanupPreviewWorkers(cf).then((d) => { if (d.length) console.log(JSON.stringify({ at: "preview-cleanup", deleted: d.length })); }).catch((e) => console.warn(JSON.stringify({ at: "preview-cleanup", error: String((e as Error)?.message ?? "error").slice(0, 60) }))));
 
   },
 };

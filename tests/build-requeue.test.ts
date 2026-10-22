@@ -8,7 +8,7 @@ function mockDb(rows: { id: string; requeues: number }[]) {
       bind: (...args: unknown[]) => {
         log.push({ sql, args });
         return {
-          all: async () => ({ results: sql.startsWith("UPDATE build_jobs SET next_attempt_at") ? rows : [] }),
+          all: async () => ({ results: sql.startsWith("UPDATE build_jobs SET requeue_count") ? rows : [] }),
           first: async () => (sql.includes("RETURNING *") ? null : { seq: 1 }),
           run: async () => ({}),
         };
@@ -26,7 +26,7 @@ describe("requeueOrphans", () => {
     expect(n).toBe(2);
     expect(sent).toEqual([{ jobId: "j1" }, { jobId: "j2" }]);
     const upd = log[0];
-    expect(upd.sql).toMatch(/^UPDATE build_jobs SET next_attempt_at = .*RETURNING id/);
+    expect(upd.sql).toMatch(/^UPDATE build_jobs SET requeue_count = requeue_count \+ 1, next_attempt_at = .*RETURNING id, requeue_count - 1 AS requeues/);
     expect(upd.args).toEqual([1_000_000_000, 1_000_000_000 - 60_000, 1_000_000_000 - 24 * 3600_000, REQUEUE_BASE_MS]);
     expect(log.filter((l) => l.sql.startsWith("INSERT INTO build_events")).map((l) => l.args[2])).toEqual(["requeued", "requeued"]);
   });

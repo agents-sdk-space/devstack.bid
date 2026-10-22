@@ -31,6 +31,7 @@ export interface BuildJobRow {
   error_code: string | null;
   cancel_requested: number;
   next_attempt_at: number | null;
+  requeue_count?: number;
   heartbeat_at: number | null;
   created_at: number;
   started_at: number | null;
@@ -200,7 +201,9 @@ export const MAX_EVENTS_PER_JOB = 5000;
  * Append one redacted log line. `secrets` = every plaintext the executor holds (tokens, env values);
  * sanitizeLog removes them verbatim plus token-shaped strings. seq is assigned atomically in SQL.
  */
-export async function appendEvent(db: D1Like, jobId: string, e: { level?: LogLevel; phase?: BuildState | null; message: string }, secrets: (string | null | undefined)[] = []): Promise<number | null> {
+export type EventPhase = BuildState | "requeued";
+
+export async function appendEvent(db: D1Like, jobId: string, e: { level?: LogLevel; phase?: EventPhase | null; message: string }, secrets: (string | null | undefined)[] = []): Promise<number | null> {
   const msg = sanitizeLog(e.message, secrets, 2000);
   const r = await db
     .prepare(
