@@ -18,10 +18,23 @@ export function readConsent(): Consent | null {
   }
 }
 
-function saveConsent(analytics: boolean) {
+export function saveConsent(analytics: boolean) {
   try {
     localStorage.setItem(CONSENT_KEY, JSON.stringify({ necessary: true, analytics, updatedAt: new Date().toISOString() }));
   } catch {}
+  // Mirror the analytics choice into first-party cookies the server can read (src/lib/activity).
+  const year = 60 * 60 * 24 * 365;
+  document.cookie = `nvx_analytics=${analytics ? 1 : 0}; Path=/; Max-Age=${year}; SameSite=Lax; Secure`;
+  if (analytics) {
+    if (!/(?:^|; )nvx_vid=/.test(document.cookie)) {
+      const id = Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => b.toString(16).padStart(2, "0")).join("");
+      document.cookie = `nvx_vid=${id}; Path=/; Max-Age=${year}; SameSite=Lax; Secure`;
+    }
+  } else {
+    // Opt-out erases this browser's stored events, then drops the id.
+    fetch("/api/activity/me", { method: "DELETE", credentials: "same-origin" }).catch(() => {}).finally(() => { document.cookie = "nvx_vid=; Path=/; Max-Age=0; SameSite=Lax; Secure"; });
+  }
+  window.dispatchEvent(new Event("nvx-consent"));
 }
 
 /** Privacy-choices pill: our own monochrome drawing (check + x), uses currentColor. */
