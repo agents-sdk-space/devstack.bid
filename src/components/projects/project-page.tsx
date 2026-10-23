@@ -8,6 +8,7 @@ import { UploadZipPanel } from "./upload-zip-panel";
 import { DeployButtonPanel } from "./deploy-button-panel";
 import { DirectDeployPanel } from "./direct-deploy-panel";
 import { ProjectDetail } from "./project-detail";
+import { DomainsPanel } from "./domains-panel";
 
 /** Composes the project page; deploy panels plug in here. */
 export function ProjectPage({ id }: { id: string }) {
@@ -23,6 +24,7 @@ export function ProjectPage({ id }: { id: string }) {
                 <Download className="h-4 w-4" aria-hidden />Download deploy zip
               </a>
             )}
+            <DomainsPanel projectId={p.id} />
             <Credits items={creditsFor(x.profile.id)} className="mt-6" />
           </>
         ) : null

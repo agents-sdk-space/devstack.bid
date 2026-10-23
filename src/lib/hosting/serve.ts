@@ -4,6 +4,7 @@
  * No cookies, no platform secrets; strict headers so user content cannot frame the platform.
  */
 import { parseHost } from "./hostnames";
+import { resolveCustomDomain } from "./custom-domains";
 
 export interface R2ObjectLike { body: ReadableStream; httpEtag?: string; size?: number; httpMetadata?: { contentType?: string } }
 export interface R2BucketLike {
@@ -219,24 +220,29 @@ export async function proxyToWorker(req: Request, worker: string, subdomain: str
   return new Response(res.body, { status: res.status, statusText: res.statusText, headers: out });
 }
 
+/** Site label for a request host: <label>.<domain>, or a live custom domain mapped in R2 (domains/<host>.json). */
+export async function siteLabel(bucket: R2BucketLike, hostname: string, domain?: string): Promise<string | null> {
+  const h = parseHost(hostname, domain);
+  if (h.kind === "site") return h.label;
+  if (h.kind === "platform") return null;
+  return resolveCustomDomain(bucket, hostname);
+}
+
 export async function serveSite(req: Request, bucket: R2BucketLike, domain?: string, opts: { workersSubdomain?: string; fetcher?: typeof fetch; proxyKeyFor?: (worker: string) => Promise<string | null> } = {}): Promise<Response> {
-  if (opts.workersSubdomain) {
-    const h = parseHost(new URL(req.url).hostname, domain);
-    if (h.kind === "site") {
-      const worker = await resolveServerWorker(bucket, h.label);
-      if (worker) {
-        // No key → the guard refuses; fail closed with our page instead of leaking upstream errors.
-        const key = opts.proxyKeyFor ? await opts.proxyKeyFor(worker) : null;
-        return proxyToWorker(req, worker, opts.workersSubdomain, { fetcher: opts.fetcher, proxyKey: key });
-      }
+  const url = new URL(req.url);
+  const label = await siteLabel(bucket, url.hostname, domain);
+  if (opts.workersSubdomain && label) {
+    const worker = await resolveServerWorker(bucket, label);
+    if (worker) {
+      // No key → the guard refuses; fail closed with our page instead of leaking upstream errors.
+      const key = opts.proxyKeyFor ? await opts.proxyKeyFor(worker) : null;
+      return proxyToWorker(req, worker, opts.workersSubdomain, { fetcher: opts.fetcher, proxyKey: key });
     }
   }
   if (req.method !== "GET" && req.method !== "HEAD") return new Response("Method not allowed", { status: 405, headers: { ...BASE_HEADERS, Allow: "GET, HEAD" } });
-  const url = new URL(req.url);
-  const host = parseHost(url.hostname, domain);
-  if (host.kind !== "site") return notFound("Unknown site");
-  const deploymentId = await resolveDeployment(bucket, host.label);
-  if (!deploymentId) return (await isExpiredHost(bucket, host.label)) ? previewExpired(req.headers.get("accept-language")) : notFound("This site has no deployment yet.");
+  if (!label) return notFound("Unknown site");
+  const deploymentId = await resolveDeployment(bucket, label);
+  if (!deploymentId) return (await isExpiredHost(bucket, label)) ? previewExpired(req.headers.get("accept-language")) : notFound("This site has no deployment yet.");
   const path = objectPath(url.pathname);
   if (path === null) return notFound();
   const candidates = path === "" ? ["index.html"] : /\.[a-z0-9]+$/i.test(path) ? [path] : [`${path}.html`, `${path}/index.html`, path];
