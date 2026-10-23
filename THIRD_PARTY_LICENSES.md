@@ -15,7 +15,7 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 
 | Set | Packages | Licenses | Flagged |
 |---|---|---|---|
-| Site (devstack.bid, Next.js Worker) | 158 | MIT ×128, ISC ×11, Apache-2.0 ×7, UNKNOWN ×2, BSD-3-Clause ×2, MIT OR Apache-2.0 ×1, SEE LICENSE IN ./LICENSE ×1, CC-BY-4.0 ×1, BSD-2-Clause ×1, W3C-20150513 ×1, (MIT OR GPL-3.0-or-later) ×1, (MIT AND Zlib) ×1, 0BSD ×1 | 0 |
+| Site (devstack.bid, Next.js Worker) | 174 | MIT ×138, ISC ×16, Apache-2.0 ×8, UNKNOWN ×2, BSD-3-Clause ×2, MIT OR Apache-2.0 ×1, SEE LICENSE IN ./LICENSE ×1, CC-BY-4.0 ×1, BSD-2-Clause ×1, W3C-20150513 ×1, (MIT OR GPL-3.0-or-later) ×1, (MIT AND Zlib) ×1, 0BSD ×1 | 0 |
 | Studio (/studio/, browser bundle) | 49 | MIT ×39, Apache-2.0 ×3, OFL-1.1 ×3, (MPL-2.0 OR Apache-2.0) ×1, ISC ×1, (MIT OR GPL-3.0-or-later) ×1, (MIT AND Zlib) ×1 | 0 |
 
 ## Exceptions and notes
@@ -125,14 +125,25 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `@radix-ui/rect` | 1.1.3 | MIT |
 | `@react-hook/intersection-observer` | 3.1.2 | MIT |
 | `@react-hook/passive-layout-effect` | 1.2.1 | MIT |
+| `@rrweb/record` | 2.0.0-alpha.17 | MIT |
+| `@rrweb/types` | 2.1.7 | MIT |
+| `@rrweb/utils` | 2.1.7 | MIT |
 | `@splinetool/react-spline` | 4.1.0 | UNKNOWN |
 | `@splinetool/runtime` | 2.0.93 | UNKNOWN |
+| `@statsig/client-core` | 3.33.5 | ISC |
+| `@statsig/js-client` | 3.33.5 | ISC |
+| `@statsig/react-bindings` | 3.33.5 | ISC |
+| `@statsig/session-replay` | 3.33.5 | ISC |
+| `@statsig/web-analytics` | 3.33.5 | ISC |
 | `@stitches/core` | 1.2.8 | MIT |
 | `@swc/helpers` | 0.5.23 | Apache-2.0 |
+| `@types/css-font-loading-module` | 0.0.7 | MIT |
 | `@types/react` | 19.3.0 | MIT |
 | `@types/react-dom` | 19.3.0 | MIT |
+| `@xstate/fsm` | 1.6.5 | MIT |
 | `anser` | 2.3.5 | MIT |
 | `aria-hidden` | 1.2.6 | MIT |
+| `base64-arraybuffer` | 1.0.2 | MIT |
 | `base64-js` | 1.5.1 | MIT |
 | `baseline-browser-mapping` | 2.11.28 | Apache-2.0 |
 | `blurhash` | 2.0.5 | MIT |
@@ -169,6 +180,7 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `lucide-react` | 1.55.0 | ISC |
 | `lz-string` | 1.5.0 | MIT |
 | `mime-db` | 1.54.0 | MIT |
+| `mitt` | 3.0.1 | MIT |
 | `motion-dom` | 14.3.0 | MIT |
 | `motion-utils` | 14.1.1 | MIT |
 | `nanoid` | 3.3.20 | MIT |
@@ -189,6 +201,9 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `react-remove-scroll-bar` | 2.3.8 | MIT |
 | `react-style-singleton` | 2.2.3 | MIT |
 | `readable-stream` | 2.3.8 | MIT |
+| `rrdom` | 2.1.7 | MIT |
+| `rrweb` | 2.0.0-alpha.17 | MIT |
+| `rrweb-snapshot` | 2.1.7 | MIT |
 | `safe-buffer` | 5.1.2 | MIT |
 | `scheduler` | 0.28.0 | MIT |
 | `semver` | 7.8.5 | ISC |
@@ -209,6 +224,7 @@ with commercial or usage-based terms. For dual licenses we use the permissive op
 | `use-sidecar` | 1.1.3 | MIT |
 | `util-deprecate` | 1.0.2 | MIT |
 | `w3c-keyname` | 2.2.8 | MIT |
+| `web-vitals` | 5.0.3 | Apache-2.0 |
 | `zod` | 4.6.5 | MIT |
 
 ## Studio (/studio/, browser bundle)
