@@ -120,6 +120,24 @@ key ของเซิร์ฟเวอร์เป็น secret ของ Work
 | Generated code does not compile or imports a package other than `react` / `react-dom` | The preview shows the error and the Output tab names the file. Agents, DB, assets and export keep working. |
 | R2 not enabled | Chat attachments return `uploads_disabled` |
 
+## MCP server / ใช้กับ AI (Cursor, Claude)
+
+DevStack is a remote MCP server at `https://devstack.bid/mcp` (Streamable HTTP). Create a scoped key at [`/settings/mcp`](https://devstack.bid/settings/mcp); AI clients can then list templates, create projects, trigger deploys, and read deployment status and build logs for your own account only. Production deploys and cancellations require an explicit `confirm` argument.
+
+Cursor (`~/.cursor/mcp.json`):
+
+```json
+{ "mcpServers": { "devstack": { "url": "https://devstack.bid/mcp", "headers": { "Authorization": "Bearer ${env:DEVSTACK_MCP_KEY}" } } } }
+```
+
+Claude Code:
+
+```bash
+claude mcp add --transport http devstack https://devstack.bid/mcp --header "Authorization: Bearer $DEVSTACK_MCP_KEY"
+```
+
+Full tool list and scopes: [docs/integrations/mcp.md](docs/integrations/mcp.md). ห้ามวางคีย์ในแชทหรือ commit ลง repo
+
 ## Deploy
 
 devstack.bid runs on Cloudflare Workers (Worker `nvx-stack-builder`, custom domains `devstack.bid` + `www`). Deploying, pushing, merging to `main`, DNS changes and new Cloudflare resources all **require the owner's approval** (see [AGENTS.md](./AGENTS.md)).

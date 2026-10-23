@@ -9,6 +9,9 @@ export const MCP_SCOPES = [
   "factory:write",
   "github:read",
   "github:write",
+  "projects:read",
+  "projects:write",
+  "deploy:write",
   "cli:setup",
   "cli:deploy",
 ] as const;
