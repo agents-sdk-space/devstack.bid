@@ -8,6 +8,8 @@
   "compatibility_flags": ["global_fetch_strictly_public"],
   "workers_dev": false,
   "preview_urls": false,
+  // Custom domains (Cloudflare for SaaS) additionally need a "*/*" route on the devstack.bid zone so custom
+  // hostnames reach this Worker; owner approval required before adding it (see docs/custom-domains.md).
   "routes": [{ "pattern": "*.devstack.bid/*", "zone_name": "devstack.bid" }],
   "r2_buckets": [{ "binding": "SITES", "bucket_name": "devstack-sites" }],
   "vars": { "PLATFORM_DOMAIN": "devstack.bid", "WORKERS_SUBDOMAIN": "examplessdk" },

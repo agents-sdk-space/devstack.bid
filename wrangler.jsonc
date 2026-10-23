@@ -57,6 +57,9 @@
     "TURNSTILE_HOSTNAMES": "devstack.bid",
     "GITHUB_APP_ADMIN_IDS": "326990420",
     "DEVSTACK_ADMIN_GITHUB_IDS": "326990420",
+    // Custom domains (Cloudflare for SaaS, see docs/custom-domains.md): set vars SITES_ZONE_ID (devstack.bid zone id)
+    // and SITES_CNAME_TARGET (e.g. "sites.devstack.bid") plus secret SITES_SAAS_API_TOKEN (Zone > SSL and Certificates: Edit).
+    // Until all three exist the API answers 503 custom_domains_not_configured.
     // Account for per-project server Workers (token: SITES_CF_API_TOKEN secret, Workers Scripts: Edit).
     "SITES_CF_ACCOUNT_ID": "2d92bd5b25768fa9093d6adc0a8887fc",
     "OPENAI_MODEL": "gpt-6.1-sol",
