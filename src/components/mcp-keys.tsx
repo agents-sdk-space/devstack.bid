@@ -16,6 +16,9 @@ const SCOPES: Scope[] = [
   { id: "factory:write", label: "Sandbox Factory" },
   { id: "github:read", label: "List GitHub repositories" },
   { id: "github:write", label: "Commit files to GitHub" },
+  { id: "projects:read", label: "Read projects, deployments and logs" },
+  { id: "projects:write", label: "Create projects (GitHub repos)" },
+  { id: "deploy:write", label: "Trigger and cancel deploys" },
 ];
 
 export function McpKeys() {

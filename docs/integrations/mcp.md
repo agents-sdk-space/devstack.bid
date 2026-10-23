@@ -32,8 +32,21 @@ DevStack เปิด MCP server ให้แพลตฟอร์มที่�
 | `factory_create_session`, `factory_send_message` | `factory:write` | Create or continue a Sandbox Factory session using your `x-openai-key` and selected environment. |
 | `github_list_repositories` | `github:read` | List writable repositories for an account signed in to DevStack with GitHub. |
 | `github_commit_file` | `github:write` | Create a real commit for one validated file in a repository. Review the proposed file and ask the user before calling this write tool. |
+| `list_project_templates` | `projects:read` | List the template ids `create_project` can seed a repository from. |
+| `list_projects`, `get_project` | `projects:read` | List your projects (sites) or read one with its 10 most recent deployments. |
+| `list_deployments`, `get_deployment` | `projects:read` | Read a project's deployment timeline or one deployment's status, URL and build job. |
+| `get_deployment_logs` | `projects:read` | Read redacted build log lines; pass the returned `next` as `after` to resume. |
+| `create_project` | `projects:write` | Create a real GitHub repository in your linked account (optionally seeded from a template) and register it as a project. Uses the daily project quota. |
+| `trigger_deploy` | `deploy:write` | Start a container build. Defaults to `preview`. **Destructive for production:** `environment: "production"` replaces the live site and is refused unless the call also passes `confirm: "deploy-production"`. |
+| `cancel_deployment` | `deploy:write` | **Destructive:** cancel a queued or running deployment. Refused unless `confirm` equals the deployment id. |
 
 Public tools do not require a key. Private tools require a DevStack API key with the listed scope. GitHub scopes are available only when your DevStack account is linked through GitHub. The key UI only issues scoped keys for a signed-in account. All chat and AI tools can consume quotas or incur provider cost; the client should show the action to the user before sending prompts or creating Factory sessions. Uploaded file attachments are not exposed because the site's R2 upload storage is not enabled.
+
+### Projects, deploys and logs
+
+The project tools are thin adapters over the same service code as `/api/projects` and `/api/deployments`, so quotas, GitHub checks and log redaction are identical to the website. Every query is filtered by the user that owns the API key: another user's project or deployment id returns `not_found`. CLI keys (`cli:*`) are rejected by `/mcp`, and MCP keys are rejected by the CLI. Tools marked destructive carry the MCP `destructiveHint` annotation and also require a `confirm` argument, so a client that auto-approves still cannot deploy to production or cancel by accident. Custom-domain tools are not available yet; they will be added once custom domains ship on the website.
+
+โปรเจกต์และ deploy: เครื่องมือชุดนี้ใช้โค้ดเดียวกับหน้าเว็บ เห็นเฉพาะโปรเจกต์ของเจ้าของคีย์เท่านั้น การ deploy ขึ้น production และการยกเลิก deploy ต้องส่งค่า `confirm` ทุกครั้ง ให้ AI ถามผู้ใช้ก่อนเสมอ
 
 ## Client configuration example
 
@@ -81,6 +94,41 @@ Add `x-openai-key` as a second secret header only if you use planner BYOK or Fac
 Keep `autoApprove` empty. `plan_stack`, `chat_send`, `dev_chat_send`, the Factory tools and especially `github_commit_file` use quota, can cost money, or change a repository, so Cline should ask before each call. The public tools (templates, docs, script export) need no key; you can omit `headers` if you only use those. The settings file stores the key in plain text on your machine, so do not commit it or paste it into a chat, and revoke the key at `/settings/mcp` if the file leaks.
 
 ผู้ใช้ Cline: เปิดแผง Cline ใน VS Code > ไอคอน **MCP Servers** > แท็บ **Configure** > **Configure MCP Servers** แล้วเพิ่มรายการ `devstack` ตามตัวอย่างด้านบน ต้องมี `"type": "streamableHttp"` เสมอ ถ้าไม่ใส่ Cline จะเข้าใจว่าเป็น server แบบ stdio ในเครื่องและเชื่อมต่อไม่ได้ ควรปล่อย `autoApprove` ว่างไว้เพื่อให้ Cline ถามก่อนเรียกเครื่องมือที่ใช้โควตา มีค่าใช้จ่าย หรือแก้ repository และห้ามนำไฟล์ตั้งค่าที่มีคีย์ไป commit
+
+### Cursor
+
+Add to `~/.cursor/mcp.json` (or `.cursor/mcp.json` in a project you do not commit secrets from):
+
+```json
+{
+  "mcpServers": {
+    "devstack": {
+      "url": "https://devstack.bid/mcp",
+      "headers": { "Authorization": "Bearer ${env:DEVSTACK_MCP_KEY}" }
+    }
+  }
+}
+```
+
+Set `DEVSTACK_MCP_KEY` in your shell environment so the key is not stored in the file.
+
+### Claude
+
+Claude Code: `claude mcp add --transport http devstack https://devstack.bid/mcp --header "Authorization: Bearer $DEVSTACK_MCP_KEY"`.
+
+Claude Desktop (via the `mcp-remote` bridge) in `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "devstack": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://devstack.bid/mcp", "--header", "Authorization:${DEVSTACK_AUTH}"],
+      "env": { "DEVSTACK_AUTH": "Bearer nvx_live_REPLACE_WITH_YOUR_KEY" }
+    }
+  }
+}
+```
 
 ## Security and availability
 

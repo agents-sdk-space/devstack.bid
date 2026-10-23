@@ -19,6 +19,7 @@ import { POST as factoryTurnPost } from "@/app/api/factory/turn/route";
 import { clientIp } from "@/lib/server/http";
 import type { Lang } from "@/lib/types";
 import { sanitizeStep } from "@/lib/sanitize";
+import { PLATFORM_TOOLS, PLATFORM_TOOL_NAMES, runPlatformTool } from "./platform-tools";
 import { authenticateMcpClient, consumeMcpClient, isMcpKey, type McpClient, type McpScope } from "./auth";
 
 const PROTOCOL_VERSION = "2025-11-25";
@@ -95,6 +96,7 @@ export const MCP_TOOLS: Tool[] = [
   { name: "factory_send_message", description: "Send a turn to one of your Factory sessions using the caller's x-openai-key MCP header. Requires factory:write.", inputSchema: object({ conversationId: str(), message: str() }, ["conversationId", "message"]), requiredScope: "factory:write", annotations: { openWorldHint: true } },
   { name: "github_list_repositories", description: "List GitHub repositories this signed-in account can push to. Requires github:read and a GitHub-linked DevStack account.", inputSchema: object({}), requiredScope: "github:read", annotations: { readOnlyHint: true, openWorldHint: true } },
   { name: "github_commit_file", description: "Create or update one file on a GitHub branch. This creates a real commit. Requires github:write; the MCP client should ask the user before calling it.", inputSchema: object({ repo: str("owner/name"), path: str(), message: str("Commit message"), content: str(), branch: str("Branch name; defaults to main") }, ["repo", "path", "message", "content"]), requiredScope: "github:write", annotations: { destructiveHint: true, openWorldHint: true } },
+  ...PLATFORM_TOOLS,
 ];
 
 function result(data: unknown, isError = false, extraContent: Array<Record<string, unknown>> = []) {
@@ -203,6 +205,12 @@ export async function callTool(req: Request, name: string, rawArgs: unknown) {
     if (!db) return toolError("unavailable", "DevStack storage is not available.");
     try { client = await needScope(req, tool.requiredScope, db); }
     catch (error) { return toolError(String((error as { code?: string }).code ?? "unauthorized"), (error as Error).message); }
+  }
+
+  if (PLATFORM_TOOL_NAMES.has(name)) {
+    if (!client || !db) return toolError("unavailable", "DevStack storage is not available.");
+    const out = await runPlatformTool(name, args, client, db, env.CHAT_COOKIE_SECRET);
+    return out.ok ? result(out.data) : toolError(out.code, out.error);
   }
 
   try {
@@ -399,7 +407,7 @@ export async function handleMcpMessage(req: Request, rpc: RpcMessage) {
     const requested = typeof params.protocolVersion === "string" ? params.protocolVersion : PROTOCOL_VERSION;
     const supported = ["2025-11-25", "2025-06-18", "2025-03-26"];
     const negotiated = supported.includes(requested) ? requested : PROTOCOL_VERSION;
-    return respond({ protocolVersion: negotiated, capabilities: { tools: { listChanged: false }, resources: { subscribe: false, listChanged: false } }, serverInfo: { name: "devstack-bid", version: "0.8.0", description: "NVX Stack Builder tools, docs, AI planning, chat, Factory, and GitHub integration." } }, 200, negotiated);
+    return respond({ protocolVersion: negotiated, capabilities: { tools: { listChanged: false }, resources: { subscribe: false, listChanged: false } }, serverInfo: { name: "devstack-bid", version: "0.9.0", description: "NVX Stack Builder tools, docs, AI planning, chat, Factory, GitHub integration, and DevStack projects, deploys and logs." } }, 200, negotiated);
   }
   if (method === "ping") return respond({});
   if (method === "tools/list") return respond({ tools: MCP_TOOLS.map((tool) => Object.fromEntries(Object.entries(tool).filter(([key]) => key !== "requiredScope"))) });

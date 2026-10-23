@@ -3,7 +3,7 @@ import { SITE_URL } from "@/lib/docs";
 export async function GET() {
   return Response.json({
     name: "NVX Stack Builder MCP",
-    description: "Tools for DevStack templates, setup planning, documentation, privacy and personal-safety recommendations, chat, sandbox sessions, and GitHub integration.",
+    description: "Tools for DevStack templates, setup planning, documentation, privacy and personal-safety recommendations, chat, sandbox sessions, GitHub integration, and DevStack projects, deploys and build logs.",
     endpoint: `${SITE_URL}/mcp`,
     transport: "streamable-http",
     transports: [{ type: "streamable-http", url: `${SITE_URL}/mcp` }],
@@ -15,7 +15,7 @@ export async function GET() {
       type: "bearer",
       keyPage: `${SITE_URL}/settings/mcp`,
       header: "Authorization: Bearer nvx_live_…",
-      scopes: ["plan:write", "chat:read", "chat:write", "dev:write", "factory:write", "github:read", "github:write"],
+      scopes: ["plan:write", "chat:read", "chat:write", "dev:write", "factory:write", "github:read", "github:write", "projects:read", "projects:write", "deploy:write"],
     },
     clients: {
       // Cline needs an explicit transport type; without it Cline assumes a local stdio server.
