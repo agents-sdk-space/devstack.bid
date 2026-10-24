@@ -1,6 +1,25 @@
 # GitHub App: creating it from the manifest, and storing its credentials
 
-The manifest is in `docs/platform/github-app/manifest.json`. `/workspace/out/github-app-create.html` posts it to `https://github.com/organizations/agents-sdk-space/settings/apps/new?state=<random>`. The state value is kept next to the HTML file in `github-app-state.txt`. **The app has not been created.** An org owner has to open the HTML page and confirm on GitHub.
+The manifest source is `docs/platform/github-app/manifest.json`. The older manual-HTML creation instructions are archival; **the production GitHub App already exists**.
+
+## Verified production state — October 24, 2026
+
+- App: [devstack-bid-deploy-1](https://github.com/apps/devstack-bid-deploy-1), owned by `agents-sdk-space`. Its metadata and sealed credentials are present in the production `nvx-db.github_app` row. **Do not create, delete, uninstall or rotate it as a recovery shortcut.**
+- `webhook_deliveries` shows signed, verified GitHub push / PR events and installation updates. The GitHub-to-DevStack webhook path is operating.
+- **Installing the GitHub App is not the same as authorizing GitHub OAuth for DevStack.** `/new?mode=git` uses `/api/auth/github`, and an OAuth credential in `github_credentials` is needed to list and import repositories.
+- The admin GitHub identity `@thanabartbb` (numeric id `326990420`) had a DevStack account but **no `github_credentials` token row** at verification. Sign in with that GitHub account through [Import Git](https://devstack.bid/new?mode=git) and click **Connect GitHub**; do not attempt to reinstall the App. The OAuth redirect was tested and reached GitHub sign-in successfully, but completing login still requires the account holder.
+- A repository's automatic build requires a `projects` + `project_connections` entry. Webhook status `ignored:not_linked` means the signature was accepted, but **no DevStack project is linked to that repository**; this is not an installation failure. `agents-sdk-space/devstack.bid` was not present as a linked DevStack project in the checked database.
+- `ignored:no_push_permission` means the importing user lacked push/admin rights at import time; use an authorized GitHub account rather than manually altering `can_push` in D1.
+
+### When GitHub says “only your admin can update it” / ติดตั้งแล้วแต่แก้ไม่ได้
+
+1. **Do not click Install again.** The existing app is already installed in the relevant GitHub accounts.
+2. To edit the organization's installation, an **organization owner** should open [agents-sdk-space → Installed GitHub Apps](https://github.com/organizations/agents-sdk-space/settings/installations), choose `devstack-bid-deploy-1`, check that the desired repository is selected, and save. A repository administrator does not necessarily have organization-wide installation rights; organization policy may forbid changes by repo admins.
+3. For a **personal** installation, the owner of that personal account should open [Installed GitHub Apps](https://github.com/settings/installations) while signed in to that same account.
+4. After GitHub access is granted, open [DevStack → New Project → Import Git](https://devstack.bid/new?mode=git). Use **Connect GitHub** to authorize the DevStack OAuth session, then import the repository and check the project connection. This step is separate from installation.
+5. Only when a project is actually linked should push/PR webhooks cause a build; for an unlinked repository `ignored:not_linked` is intentional security behavior. Never directly bind an unrelated repository or enable auto-deploy by writing a D1 row manually.
+
+The admin-only [DevStack GitHub App setup page](https://devstack.bid/api/github/app/manifest) now directs existing installations to their **Manage installation** pages and the **Import Git** workflow instead of looping back to installation. Do not deploy this documentation ahead of its code change.
 
 ## One-click creation (manifest flow, 0.12.x)
 Signed in with GitHub as an admin (numeric id in `GITHUB_APP_ADMIN_IDS`, prod `326990420` = @thanabartbb), open
@@ -30,7 +49,7 @@ metadata:read, pull_requests:read, statuses:write. The section below describes t
 
 Events: `push`, `pull_request`, `repository`. `installation` and `installation_repositories` are always sent to GitHub Apps, so they can't be listed in `default_events` and don't need to be.
 
-## Redirect code exchange (to build next; these routes don't exist yet)
+## Historical redirect code-exchange design (implemented in 0.12.x)
 1. GitHub redirects to `https://devstack.bid/api/github/app/manifest-callback?code=…&state=…`.
 2. The handler checks `state` against a one-time value stored server-side (D1 row or signed cookie, valid for 10 minutes) and only accepts the request when the signed-in user is the DevStack owner (admin allowlist). Otherwise it returns 403.
 3. It calls `POST https://api.github.com/app-manifests/{code}/conversions` within 1 hour; the code can be used only once. The response holds `id`, `slug`, `client_id`, `client_secret`, `webhook_secret` and `pem`.
