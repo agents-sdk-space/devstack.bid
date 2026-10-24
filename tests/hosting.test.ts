@@ -79,6 +79,44 @@ describe("site router", () => {
     expect((await serveSite(new Request(`${prod}/`, { method: "POST" }), b)).status).toBe(405);
   });
 
+  it("serves Expo single-page exports on direct deep links while preserving missing-asset 404s", async () => {
+    const b = memBucket();
+    const html = "<!doctype html><html><body><div id=\"root\"></div><script src=\"/_expo/static/js/web/index-1234567890abcdef.js\"></script></body></html>";
+    const result = await writeSite(b, DEP, [
+      { path: "index.html", bytes: enc(html) },
+      { path: "_expo/static/js/web/index-1234567890abcdef.js", bytes: enc("console.log('expo')") },
+      { path: "favicon.ico", bytes: enc("favicon") },
+    ]);
+    expect(result.files).toBe(4); // index + bundle + favicon + generated 200.html
+    expect(b.keys()).toContain(`sites/${DEP}/200.html`);
+    const preview = await publishPreview(b, "expo-test", "proj-expo", DEP);
+    const nested = await serveSite(new Request(`${preview}/settings/profile`), b);
+    expect(nested.status).toBe(200);
+    expect(nested.headers.get("content-type")).toMatch(/text\/html/);
+    expect(await nested.text()).toContain("index-1234567890abcdef.js");
+    expect((await serveSite(new Request(`${preview}/missing.css`), b)).status).toBe(404);
+    const bundle = await serveSite(new Request(`${preview}/_expo/static/js/web/index-1234567890abcdef.js`), b);
+    expect(bundle.status).toBe(200);
+    expect(bundle.headers.get("content-type")).toMatch(/javascript/);
+  });
+
+  it("does not silently mark a static deployment live with no entry point", async () => {
+    const b = memBucket();
+    await expect(writeSite(b, DEP, [{ path: "assets/app.js", bytes: enc("console.log('broken')") }]))
+      .rejects.toThrow("missing_index");
+    expect(b.keys()).toEqual([]);
+    expect((await serveSite(new Request("https://my-app.devstack.bid/"), b)).status).toBe(404);
+  });
+
+  it("reports an unreadable uploaded index before preview / production aliases can be published", async () => {
+    const bucket: R2BucketLike = {
+      async put() { /* simulate an upload API that reports success but loses data */ },
+      async get() { return null; },
+    };
+    await expect(writeSite(bucket, DEP, [{ path: "index.html", bytes: enc("<h1>app</h1>") }]))
+      .rejects.toThrow("published_index_unavailable");
+  });
+
   it("a hostname belongs to the first project that claims it", async () => {
     const b = memBucket();
     await promoteProduction(b, "taken", "proj-a", DEP);
