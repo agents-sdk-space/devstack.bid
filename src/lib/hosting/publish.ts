@@ -7,16 +7,40 @@ export const MAX_SITE_FILES = 20_000;
 export const MAX_SITE_BYTES = 500 * 1024 * 1024;
 
 export async function writeSite(bucket: R2BucketLike, deploymentId: string, files: SiteFile[]): Promise<{ files: number; bytes: number }> {
-  if (files.length > MAX_SITE_FILES) throw new Error("too_many_files");
-  let bytes = 0;
-  for (const f of files) {
-    const p = objectPath(f.path);
-    if (!p) continue;
-    bytes += f.bytes.length;
-    if (bytes > MAX_SITE_BYTES) throw new Error("too_large");
-    await bucket.put(`sites/${deploymentId}/${p}`, f.bytes, { httpMetadata: { contentType: contentType(p) } });
+  // Validate the output BEFORE writing or creating a public hostname.
+  // A "successful" static deploy without index.html would serve HTTP 404 at /.
+  const valid = files.flatMap((file) => {
+    const path = objectPath(file.path);
+    return path ? [{ path, bytes: file.bytes }] : [];
+  });
+  const index = valid.find((file) => file.path === "index.html");
+  if (!index) throw new Error("missing_index");
+
+  // Expo's default web.output=single generates one index.html and a Metro
+  // _expo/static/js/web bundle. Our site router already uses 200.html as its
+  // opt-in SPA fallback. Create that artifact only for an Expo single-page
+  // export: SSG sites and non-Expo sites keep their actual 404 behavior.
+  const isExpoSingle = valid.filter((file) => /\.html$/i.test(file.path)).length === 1
+    && valid.some((file) => /^_expo\/static\/js\/web\/[^/]+\.js$/i.test(file.path));
+  const upload = isExpoSingle && !valid.some((file) => file.path === "200.html")
+    ? [...valid, { path: "200.html", bytes: index.bytes }]
+    : valid;
+  if (upload.length > MAX_SITE_FILES) throw new Error("too_many_files");
+  const bytes = upload.reduce((sum, file) => sum + file.bytes.length, 0);
+  if (bytes > MAX_SITE_BYTES) throw new Error("too_large");
+
+  for (const file of upload) {
+    await bucket.put(`sites/${deploymentId}/${file.path}`, file.bytes, {
+      httpMetadata: { contentType: contentType(file.path) },
+    });
   }
-  return { files: files.length, bytes };
+
+  // R2 is strongly consistent. Refuse to mark the deployment live if the
+  // published entry point cannot be read back from the hosting bucket.
+  if (!(await bucket.get(`sites/${deploymentId}/index.html`))) {
+    throw new Error("published_index_unavailable");
+  }
+  return { files: upload.length, bytes };
 }
 
 export class HostTakenError extends Error {
