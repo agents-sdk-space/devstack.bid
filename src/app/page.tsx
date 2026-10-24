@@ -5,6 +5,7 @@ import { Mascot } from "@/components/brand/mascot";
 import { FeaturedTemplates } from "@/components/home/featured-templates";
 import { LiveExample } from "@/components/home/live-example";
 import { T } from "@/components/prefs";
+import { ForYou } from "@/components/activity";
 import { Badge, buttonClasses, Card } from "@/components/ui";
 import type { DictKey } from "@/lib/i18n";
 
@@ -240,12 +241,14 @@ export default function Home() {
         </div>
       </section>
 
+      <ForYou />
+
       <section className="border-t border-border" aria-labelledby="final-cta">
         <div className="mx-auto max-w-content px-4 py-12 text-center sm:py-section-sm">
           <h2 id="final-cta" className="text-3xl font-semibold tracking-tight text-fg sm:text-h2"><T k="home.cta.title" /></h2>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/new" className={buttonClasses("primary", "lg")}><T k="home.ctaDeploy" /></Link>
-            <Link href="/templates" className={buttonClasses("secondary", "lg")}><T k="home.ctaBrowse" /></Link>
+            <Link href="/new" data-track="cta_deploy" className={buttonClasses("primary", "lg")}><T k="home.ctaDeploy" /></Link>
+            <Link href="/templates" data-track="cta_browse" className={buttonClasses("secondary", "lg")}><T k="home.ctaBrowse" /></Link>
           </div>
         </div>
       </section>

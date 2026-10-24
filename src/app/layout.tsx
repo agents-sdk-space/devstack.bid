@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans_Thai, Inter } from "next/font/google";
 import { Footer, Header } from "@/components/header";
 import { Providers } from "@/components/providers";
+import { ActivityTracker } from "@/components/activity";
 import { BackgroundGlow } from "@/components/background-glow";
 import "./globals.css";
 
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             {children}
           </main>
           <Footer />
+          <ActivityTracker />
         </Providers>
       </body>
     </html>

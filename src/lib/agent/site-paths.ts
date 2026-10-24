@@ -30,6 +30,7 @@ const STATIC = new Set([
   "/agent-instructions.txt",
   "/support",
   "/status",
+  "/activity/live",
   "/careers",
   "/terms",
   "/terms/api",
